@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Ads_getCampaigns_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://api.facebook.com/1.0/ http://api.facebook.com/1.0/facebook.xsd" list="true">
+  <ads_campaign>
+    <account_id>59684411</account_id>
+    <campaign_id>6002458967181</campaign_id>
+    <name>Seperia - Jobs</name>
+    <time_start>1261928799</time_start>
+    <time_stop>0</time_stop>
+    <time_updated>1301295808</time_updated>
+    <daily_budget>1500</daily_budget>
+    <campaign_status>1</campaign_status>
+    <daily_imps>0</daily_imps>
+    <budget_remaining>1376</budget_remaining>
+    <topline_id>0</topline_id>
+    <inflation>0</inflation>
+  </ads_campaign>
+  <ads_campaign>
+    <account_id>59684411</account_id>
+    <campaign_id>6002530798581</campaign_id>
+    <name>Donations</name>
+    <time_start>1268543611</time_start>
+    <time_stop>0</time_stop>
+    <time_updated>1290592755</time_updated>
+    <daily_budget>1000</daily_budget>
+    <campaign_status>2</campaign_status>
+    <daily_imps>0</daily_imps>
+    <budget_remaining>1000</budget_remaining>
+    <topline_id>0</topline_id>
+    <inflation>0</inflation>
+  </ads_campaign>
+</Ads_getCampaigns_response>

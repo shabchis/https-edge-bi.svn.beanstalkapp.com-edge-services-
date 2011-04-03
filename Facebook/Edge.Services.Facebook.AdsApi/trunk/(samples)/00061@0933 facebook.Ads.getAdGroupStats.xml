@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Ads_getAdGroupStats_response xmlns="http://api.facebook.com/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://api.facebook.com/1.0/ http://api.facebook.com/1.0/facebook.xsd" list="true">
+  <ads_period_stats>
+    <time_start>1301727600</time_start>
+    <time_stop>1301819622</time_stop>
+    <stats list="true">
+      <ads_stats key="6003089874581">
+        <id>6003089874581</id>
+        <impressions>70369</impressions>
+        <clicks>18</clicks>
+        <spent>1097</spent>
+        <social_impressions>0</social_impressions>
+        <social_clicks>0</social_clicks>
+        <social_spent>0</social_spent>
+        <actions>0</actions>
+      </ads_stats>
+      <ads_stats key="6003096579381">
+        <id>6003096579381</id>
+        <impressions>31561</impressions>
+        <clicks>8</clicks>
+        <spent>527</spent>
+        <social_impressions>0</social_impressions>
+        <social_clicks>0</social_clicks>
+        <social_spent>0</social_spent>
+        <actions>0</actions>
+      </ads_stats>
+    </stats>
+  </ads_period_stats>
+</Ads_getAdGroupStats_response>
