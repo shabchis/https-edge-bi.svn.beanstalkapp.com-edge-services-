@@ -9,11 +9,47 @@ using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Configuration;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using Edge.Data.Pipeline.Readers;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
-	internal class AdCenterInitializerBase : PipelineService
+	public class InitializerService : PipelineService
 	{
+		protected override ServiceOutcome DoWork()
+		{
+			// Create a new delivery
+			this.Delivery = new Delivery(this.Instance.InstanceID)
+			{
+				TargetPeriod = this.TargetPeriod
+			};
+
+			// AccountID as parameter for entire delivery
+			this.Delivery.Parameters["AccountID"] = this.Instance.AccountID;
+
+			// Both keyword and ad performance reports are needed
+			this.Delivery.Files.Add(new DeliveryFile()
+			{
+				Name = "KeywordPerformanceReport",
+				SourceUrl = SubmitReportRequest(NewKeywordPerformanceReportRequest())
+			});
+			ReportProgress(0.49); // progress: 49%
+
+			this.Delivery.Files.Add(new DeliveryFile()
+			{
+				Name = "AdPerformanceReport",
+				SourceUrl = SubmitReportRequest(NewAdPerformanceReportRequest())
+			});
+			ReportProgress(0.98); // progress: 98%
+
+			// Save with success
+			this.Delivery.Save();
+
+			return ServiceOutcome.Success;
+		}
+
+		#region API related
+		//=================
+
 		protected WS.KeywordPerformanceReportRequest NewKeywordPerformanceReportRequest()
 		{
 			// Create the nested report request
@@ -212,7 +248,6 @@ namespace Edge.Services.Microsoft.AdCenter
 			}
 		}
 
-
 		private EnumT[] GetColumnsFromConfig<EnumT>(string reportName) where EnumT : struct
 		{
 			ReportFieldElementCollection fields = this.ReportSettings[reportName];
@@ -250,5 +285,8 @@ namespace Edge.Services.Microsoft.AdCenter
 				}
 			};
 		}
+
+		//=================
+		#endregion
 	}
 }

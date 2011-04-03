@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Edge.Core.Services;
-using System.ServiceModel;
-using Edge.Data.Pipeline;
 using System.IO;
 using System.IO.Compression;
-using System.Xml;
+using System.Linq;
 using System.Reflection;
-using GotDotNet.XPath;
-using Edge.Core.Data;
-using Edge.Data.Pipeline.GkManager;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using System.ServiceModel;
+using System.Text;
+using System.Xml;
 using Edge.Core;
+using Edge.Core.Data;
+using Edge.Core.Services;
+using Edge.Data.Pipeline;
+using Edge.Data.Pipeline.GkManager;
+using Edge.Data.Pipeline.Readers;
+using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
 
 
 namespace Edge.Services.Microsoft.AdCenter
@@ -24,19 +24,55 @@ namespace Edge.Services.Microsoft.AdCenter
         {
 			// TODO: add checks for delivery state
 
-			// Create the readers
-			var keywordReportReader = (XPathRowReader<PpcDataUnit>) this.Delivery.Files["KeywordPerformance"].CreateReader();
-			var adReportReader = (XPathRowReader<PpcDataUnit>)this.Delivery.Files["AdPerformance"].CreateReader();
+			// ...............................................................
+			// Read the ad report, and build a lookup table for later
 
-			keywordReportReader.OnNextRowRequired = delegate(XPathReader innerReader)
+			DeliveryFile adReport = this.Delivery.Files["AdPerformance"];
+
+			// create the ad report reader
+			var adReportReader = new XmlChunkReader
+			(
+				adReport.SavedPath,
+				Instance.Configuration.Options["AdCenter.AdPerformance.XPath"], // ./Report/Table/Row
+				XmlChunkReaderOptions.ElementsAsValues
+			);
+
+			// lookup table by ad ID
+			var ads = new Dictionary<string,AdData>();
+
+			// read
+			using (adReportReader)
 			{
-				SettingsCollection xmlValues = GetElementValues(innerReader);
-				return UnitFromValues(xmlValues);
-			};
+				while (adReportReader.Read())
+				{
+					var ad = new AdData()
+					{
+						AdId = adReportReader.Current[WS.AdPerformanceReportColumn.AdId.ToString()],
+						AdTitle = adReportReader.Current[WS.AdPerformanceReportColumn.AdTitle.ToString()],
+						AdDescription = adReportReader.Current[WS.AdPerformanceReportColumn.AdDescription.ToString()]
+					};
+					ads.Add(ad.AdId, ad);
+				}
+			}
 
+			// mark the delivery file as processed
+			adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 
-			// Start a transaction
-			try
+			// ...............................................................
+			// Read the keyword report, cross reference it with the ad data, and commit
+
+			DeliveryFile keywordReport = this.Delivery.Files["KeywordPerformance"];
+
+			// create the keyword report reader
+			var keywordReportReader = new XmlChunkReader
+			(
+				keywordReport.SavedPath,
+				Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"], // ./Report/Table/Row
+				XmlChunkReaderOptions.ElementsAsValues
+			);
+
+			// read and save in transaction
+			using (keywordReportReader)
 			{
 				using (DataManager.Current.OpenConnection())
 				{
@@ -44,22 +80,33 @@ namespace Edge.Services.Microsoft.AdCenter
 
 					while (keywordReportReader.Read())
 					{
-						keywordReportReader.CurrentRow.Save();
+						// get the unit from the keyword report, and add the missing ad data
+						PpcDataUnit data = CreateUnitFromKeywordReportChunk(keywordReportReader.Current);
+
+						// get the matching ad
+						AdData ad;
+						if (!ads.TryGetValue(data.Extra.Creative_OriginalID, out ad))
+						{
+							// TODO: add to error log this data because there is no matching ad
+							continue;
+						}
+
+						// legacy values
+						data.Extra.Creative_Title = ad.AdTitle;
+						data.Extra.Creative_Desc1 = ad.AdDescription;
+
+						// GKs
+						data.CreativeGK = GkManager.GetCreativeGK(Instance.AccountID, ad.AdTitle, ad.AdDescription, string.Empty);
 					}
 
 					DataManager.Current.CommitTransaction();
 				}
 			}
-			finally
-			{
-				keywordReportReader.Dispose();
-				adReportReader.Dispose();
-			}
 
             return ServiceOutcome.Success;
         }
 
-		private PpcDataUnit UnitFromValues(SettingsCollection values)
+		private PpcDataUnit CreateUnitFromKeywordReportChunk(XmlChunk values)
 		{
 			var data = new PpcDataUnit();
 
@@ -83,10 +130,9 @@ namespace Edge.Services.Microsoft.AdCenter
 			data.Extra.Currency_Code					= values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()];
 
 			// Match type
-			string rawMatchType;
-			MatchType matchType;
-			if (values.TryGetValue(data.Extra.AdgroupKeyword_OriginalMatchType, out rawMatchType))
-				Enum.TryParse<MatchType>(rawMatchType, out matchType);
+			MatchType matchType = MatchType.Unidentified;
+			if (data.Extra.AdgroupKeyword_OriginalMatchType != null)
+				Enum.TryParse<MatchType>(data.Extra.AdgroupKeyword_OriginalMatchType, out matchType);
 
 			// campaign
 			data.CampaignGK = GkManager.GetCampaignGK(
@@ -123,8 +169,8 @@ namespace Edge.Services.Microsoft.AdCenter
 				null
 				);
 
-			// currency conversion
-			data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
+			// TODO: currency conversion data
+			// data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
 
 			//..................
 			// METRICS
@@ -137,19 +183,12 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			return data;
 		}
-
-		private SettingsCollection GetElementValues(XmlReader reader)
-		{
-			var dict = new SettingsCollection();
-			using (var r = reader.ReadSubtree())
-			{
-				while (r.Read())
-				{
-					if (r.NodeType == XmlNodeType.Element)
-						dict[r.Name] = r.ReadElementContentAsString();
-				}
-			}
-			return dict;
-		}
     }
+
+	internal class AdData
+	{
+		public string AdId;
+		public string AdTitle;
+		public string AdDescription;
+	}
 }
