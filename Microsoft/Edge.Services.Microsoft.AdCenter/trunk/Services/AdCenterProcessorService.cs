@@ -28,7 +28,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			var keywordReportReader = (XPathRowReader<PpcDataUnit>) this.Delivery.Files["KeywordPerformance"].CreateReader();
 			var adReportReader = (XPathRowReader<PpcDataUnit>)this.Delivery.Files["AdPerformance"].CreateReader();
 
-			keywordReportReader.OnNextRowRequired = innerReader =>
+			keywordReportReader.OnNextRowRequired = delegate(XPathReader innerReader)
 			{
 				SettingsCollection xmlValues = GetElementValues(innerReader);
 				return UnitFromValues(xmlValues);
@@ -44,6 +44,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 					while (keywordReportReader.Read())
 					{
+						keywordReportReader.CurrentRow.Save();
 					}
 
 					DataManager.Current.CommitTransaction();
