@@ -1,0 +1,41 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Edge.Data.Pipeline;
+using Edge.Core.Configuration;
+
+namespace Edge.Services.Microsoft.AdCenter
+{
+	public class KeywordPerformanceReportReader: RowReader<PpcDataUnit>
+	{
+		string _url;
+		XPathRowReader<PpcDataUnit> _xpathReader;
+
+		public static readonly string XPath = AppSettings.Get(typeof(KeywordPerformanceReportReader), "XPath");
+		
+		public KeywordPerformanceReportReader(string url)
+		{
+		}
+
+		protected override void Open()
+		{
+			_xpathReader = new XPathRowReader<PpcDataUnit>(_url, XPath);
+			_xpathReader.OnNextRowRequired = innerReader => new PpcDataUnit()
+			{
+				AccountID = 
+			};
+		}
+
+		protected override PpcDataUnit NextRow()
+		{
+			return _xpathReader.Read() ? _xpathReader.CurrentRow : null;
+		}
+
+		public override void Dispose()
+		{
+			if (_xpathReader != null)
+				_xpathReader.Dispose();
+		}
+	}
+}
