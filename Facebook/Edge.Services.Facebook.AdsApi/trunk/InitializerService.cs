@@ -51,11 +51,11 @@ namespace Edge.Services.Facebook.AdsApi
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.ParentInstance.Configuration.Options["sessionSecret"].ToString();
 			else
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
-
+			
 
 			DeliveryFile deliveryFile = new DeliveryFile(); 
 			deliveryFile.Name="GetAdGroupStats";
-			deliveryFile.Parameters.Add("AdGroupStatsParameters", GetAdGroupStatsParameters());
+			deliveryFile.Parameters.Add("AdGroupStatsParameters", GetAdGroupStatsParameters());			
 			this.Delivery.Files.Add(deliveryFile);
 
 
@@ -86,8 +86,16 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
-			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");
-			AdGroupStatesParameters.Add("include_deleted", true.ToString());
+			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");			
+			AdGroupStatesParameters.Add("campaign_ids", "");
+			AdGroupStatesParameters.Add("adgroup_ids", "");
+			AdGroupStatesParameters.Add("include_deleted","false");
+
+			//TODO: TALK WITH Doron and amit about timerange + 10 hours diffreance
+
+			string timeRange = string.Format("\"time_ranges\": { \"day_start\":{ :{\"month\":{0},\"day\":{1},\"year\":{2}},\"day_stop\":{\"month\":{3},\"day\":{4},\"year\":{5}}}}", TargetPeriod.Start.Month, TargetPeriod.Start.Day, TargetPeriod.Start.Year, TargetPeriod.End.Month, TargetPeriod.End.Day, TargetPeriod.End.Year);
+												
+												
 
 			return AdGroupStatesParameters;
 		}
@@ -97,7 +105,9 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
 			AdGroupCreativesParameters.Add("include_deleted", "false");
-
+			//TODO:  for API bug 2011-03-21 TALK WITH DORON MAX CAMPAIGNS PER ARRAY
+			AdGroupCreativesParameters.Add("campaign_ids", "");		
+			AdGroupCreativesParameters.Add("adgroup_ids", "");
 
 			return AdGroupCreativesParameters;
 		}
@@ -107,6 +117,8 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupsParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupsParameters.Add("method", "facebook.ads.getAdGroups");
 			AdGroupsParameters.Add("include_deleted", "false");
+			AdGroupsParameters.Add("campaign_ids", "");
+			AdGroupsParameters.Add("adgroup_ids", "");
 
 			return AdGroupsParameters;
 		}
@@ -116,7 +128,7 @@ namespace Edge.Services.Facebook.AdsApi
 			CampaignsParmaters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			CampaignsParmaters.Add("method", "facebook.ads.getCampaigns");
 			CampaignsParmaters.Add("include_deleted", "false");
-
+			CampaignsParmaters.Add("campaign_ids", "");
 
 			return CampaignsParmaters;
 
