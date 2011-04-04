@@ -10,7 +10,7 @@ namespace Edge.Services.Facebook.AdsApi
 	{
 		protected override Core.Services.ServiceOutcome DoWork()
 		{
-			
+			return Core.Services.ServiceOutcome.Success;
 		}
 	}
 }
