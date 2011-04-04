@@ -11,6 +11,7 @@ namespace Edge.Services.Facebook.AdsApi
 	{
 		protected override ServiceOutcome DoWork()
 		{
+			//TODO: TALK WITH DORON I THINK ITS IS PARENTINSTANCEID
 			// Create a new delivery
 			this.Delivery = new Delivery(this.Instance.InstanceID)
 			{
@@ -51,34 +52,32 @@ namespace Edge.Services.Facebook.AdsApi
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.ParentInstance.Configuration.Options["sessionSecret"].ToString();
 			else
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
-			
+			this.ReportProgress(0.2);
 
 			DeliveryFile deliveryFile = new DeliveryFile(); 
 			deliveryFile.Name="GetAdGroupStats";
 			deliveryFile.Parameters.Add("AdGroupStatsParameters", GetAdGroupStatsParameters());			
 			this.Delivery.Files.Add(deliveryFile);
 
-
+			this.ReportProgress(0.4);
 			deliveryFile = new DeliveryFile() ;
 			deliveryFile.Name = "GetAdGroupCreatives";
 			deliveryFile.Parameters.Add("AdGroupCreativesParameters", GetAdGroupCreativesParameters());
 			this.Delivery.Files.Add(deliveryFile);
-
+			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroups";
 			deliveryFile.Parameters.Add("AdGroupsParameters", GetAdGroupsParameters());
 			this.Delivery.Files.Add(deliveryFile);
 
-			this.Delivery.Save();
-
-
+			this.ReportProgress(0.8);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetCampaigns";
 			deliveryFile.Parameters.Add("CampaignsParmaters", GetCampaignsParmaters());
 			this.Delivery.Files.Add(deliveryFile);
-
+			this.ReportProgress(0.98);
 			this.Delivery.Save();
-
+			this.ReportProgress(0.99);
 			return ServiceOutcome.Success;
 		}
 
