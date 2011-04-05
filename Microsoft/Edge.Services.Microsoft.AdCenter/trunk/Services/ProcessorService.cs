@@ -21,7 +21,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			// Some values for progress (guessing)
 			double progress = 0;
-			long totalSize = FileManager.GetFileSystemInfo(adReport).Length + FileManager.GetFileSystemInfo(keywordReport).Length;
+			long totalSize = (long)((FileManager.GetFileSystemInfo(adReport).Length + FileManager.GetFileSystemInfo(keywordReport).Length)*1.1); // add 10% to the total size, just in case
 			const long adSize = 512; // roughly 1/2 KB per row
 			const long kwSize = 1024; // rougly 1 KB per row
 
@@ -37,14 +37,14 @@ namespace Edge.Services.Microsoft.AdCenter
 			);
 
 			// lookup table by ad ID
-			var ads = new Dictionary<string,AdData>();
+			var ads = new Dictionary<string,RawAdData>();
 
 			// read
 			using (adReportReader)
 			{
 				while (adReportReader.Read())
 				{
-					var ad = new AdData()
+					var ad = new RawAdData()
 					{
 						AdId			= adReportReader.Current[WS.AdPerformanceReportColumn.AdId			.ToString()],
 						AdTitle			= adReportReader.Current[WS.AdPerformanceReportColumn.AdTitle		.ToString()],
@@ -53,7 +53,7 @@ namespace Edge.Services.Microsoft.AdCenter
 					ads.Add(ad.AdId, ad);
 
 					// Guess the progress
-					ReportProgress(progress += (double) adSize / (totalSize*1.1));
+					ReportProgress(progress += (double) adSize / (totalSize));
 				}
 			}
 
@@ -84,10 +84,10 @@ namespace Edge.Services.Microsoft.AdCenter
 					while (keywordReportReader.Read())
 					{
 						// get the unit from the keyword report, and add the missing ad data
-						PpcKeywordDataUnit data = CreateUnitFromKeywordReportChunk(keywordReportReader.Current, timePeriodColumn);
+						AdDataUnit data = CreateUnitFromKeywordReportChunk(keywordReportReader.Current, timePeriodColumn);
 
 						// get the matching ad
-						AdData ad;
+						RawAdData ad;
 						if (!ads.TryGetValue(data.Extra.Creative_OriginalID, out ad))
 						{
 							// TODO: add to error log this data because there is no matching ad
@@ -105,7 +105,7 @@ namespace Edge.Services.Microsoft.AdCenter
 						data.Save();
 
 						// Guess the progress
-						ReportProgress(progress += (double)kwSize / (totalSize * 1.1));
+						ReportProgress(progress += (double)kwSize / (totalSize));
 					}
 
 					DataManager.Current.CommitTransaction();
@@ -115,12 +115,12 @@ namespace Edge.Services.Microsoft.AdCenter
             return ServiceOutcome.Success;
         }
 
-		private PpcKeywordDataUnit CreateUnitFromKeywordReportChunk(XmlChunk values, string timePeriodColumn)
+		private AdDataUnit CreateUnitFromKeywordReportChunk(Chunk values, string timePeriodColumn)
 		{
 			if (String.IsNullOrWhiteSpace(timePeriodColumn))
 				throw new ArgumentNullException("timePeriodColumn");
 
-			var data = new PpcKeywordDataUnit();
+			var data = new AdDataUnit();
 
 			//..................
 			// TIME
@@ -207,7 +207,7 @@ namespace Edge.Services.Microsoft.AdCenter
 		}
     }
 
-	internal class AdData
+	internal class RawAdData
 	{
 		public string AdId;
 		public string AdTitle;
