@@ -65,6 +65,7 @@ namespace Edge.Services.Facebook.AdsApi
 			deliveryFile.Parameters.Add("AdGroupCreativesParameters", GetAdGroupCreativesParameters());
 			this.Delivery.Files.Add(deliveryFile);
 			this.ReportProgress(0.6);
+
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroups";
 			deliveryFile.Parameters.Add("AdGroupsParameters", GetAdGroupsParameters());
@@ -91,8 +92,8 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupStatesParameters.Add("include_deleted","false");
 
 			//TODO: TALK WITH Doron and amit about timerange + 10 hours diffreance
-
-			string timeRange = string.Format("\"time_ranges\": { \"day_start\":{ :{\"month\":{0},\"day\":{1},\"year\":{2}},\"day_stop\":{\"month\":{3},\"day\":{4},\"year\":{5}}}}", TargetPeriod.Start.Month, TargetPeriod.Start.Day, TargetPeriod.Start.Year, TargetPeriod.End.Month, TargetPeriod.End.Day, TargetPeriod.End.Year);
+			//TODO: CHANGE TO "TODATETIME"
+			string timeRange = string.Format("\"time_ranges\": { \"day_start\":{ :{\"month\":{0},\"day\":{1},\"year\":{2}},\"day_stop\":{\"month\":{3},\"day\":{4},\"year\":{5}}}}", TargetPeriod.Start.t.Month, TargetPeriod.Start.Day, TargetPeriod.Start.Year, TargetPeriod.End.Month, TargetPeriod.End.Day, TargetPeriod.End.Year);
 												
 												
 
