@@ -1,20 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Reflection;
-using System.ServiceModel;
-using System.Text;
-using System.Xml;
-using Edge.Core;
 using Edge.Core.Data;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.GkManager;
 using Edge.Data.Pipeline.Readers;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
-using System.Globalization;
 
 
 namespace Edge.Services.Microsoft.AdCenter
@@ -25,10 +16,17 @@ namespace Edge.Services.Microsoft.AdCenter
         {
 			// TODO: add checks for delivery state
 
+			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
+			DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
+
+			// Some values for progress (guessing)
+			double progress = 0;
+			long totalSize = FileManager.GetFileSystemInfo(adReport).Length + FileManager.GetFileSystemInfo(keywordReport).Length;
+			const long adSize = 512; // roughly 1/2 KB per row
+			const long kwSize = 1024; // rougly 1 KB per row
+
 			// ...............................................................
 			// Read the ad report, and build a lookup table for later
-
-			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
 
 			// create the ad report reader
 			var adReportReader = new XmlChunkReader
@@ -53,6 +51,9 @@ namespace Edge.Services.Microsoft.AdCenter
 						AdDescription	= adReportReader.Current[WS.AdPerformanceReportColumn.AdDescription	.ToString()]
 					};
 					ads.Add(ad.AdId, ad);
+
+					// Guess the progress
+					ReportProgress(progress += (double) adSize / (totalSize*1.1));
 				}
 			}
 
@@ -61,8 +62,6 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			// ...............................................................
 			// Read the keyword report, cross reference it with the ad data, and commit
-
-			DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
 
 			// The name of the time period column is specified by the initializer, depending on the report
 			string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriod] as string;
@@ -104,6 +103,9 @@ namespace Edge.Services.Microsoft.AdCenter
 						//data.AdgroupCreativeGK = GkManager.GetAdgroupCreativeGK(Instance.AccountID, Delivery.ChannelID
 
 						data.Save();
+
+						// Guess the progress
+						ReportProgress(progress += (double)kwSize / (totalSize * 1.1));
 					}
 
 					DataManager.Current.CommitTransaction();
@@ -186,6 +188,8 @@ namespace Edge.Services.Microsoft.AdCenter
 				data.Extra.AdgroupKeyword_DestUrl,
 				null
 				);
+
+			// TODO: tracker!!!
 
 			// TODO: currency conversion data
 			// data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
