@@ -9,7 +9,7 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	public class InitializerService: PipelineService
 	{
-		protected override ServiceOutcome DoWork()
+		protected override ServiceOutcome DoPipelineWork()
 		{
 			//TODO: TALK WITH DORON I THINK ITS IS PARENTINSTANCEID
 			// Create a new delivery
@@ -42,7 +42,7 @@ namespace Edge.Services.Facebook.AdsApi
 			else
 				this.Delivery.Parameters["FBaccountID"] = this.Instance.Configuration.Options["FBaccountID"].ToString();
 
-			
+
 			if (Instance.Configuration.Options["accountName"] == null)
 				this.Delivery.Parameters["accountName"] = this.Instance.ParentInstance.Configuration.Options["accountName"].ToString();
 			else
@@ -54,13 +54,13 @@ namespace Edge.Services.Facebook.AdsApi
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
 			this.ReportProgress(0.2);
 
-			DeliveryFile deliveryFile = new DeliveryFile(); 
-			deliveryFile.Name="GetAdGroupStats";
-			deliveryFile.Parameters.Add("AdGroupStatsParameters", GetAdGroupStatsParameters());			
+			DeliveryFile deliveryFile = new DeliveryFile();
+			deliveryFile.Name = "GetAdGroupStats";
+			deliveryFile.Parameters.Add("AdGroupStatsParameters", GetAdGroupStatsParameters());
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
-			deliveryFile = new DeliveryFile() ;
+			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroupCreatives";
 			deliveryFile.Parameters.Add("AdGroupCreativesParameters", GetAdGroupCreativesParameters());
 			this.Delivery.Files.Add(deliveryFile);
@@ -137,5 +137,7 @@ namespace Edge.Services.Facebook.AdsApi
 		}
 
 
+
+		
 	}
 }
