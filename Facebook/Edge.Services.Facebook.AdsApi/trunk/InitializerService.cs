@@ -8,6 +8,7 @@ using System.Web;
 using System.Globalization;
 using System.Net;
 using System.IO;
+using System.Dynamic;
 
 namespace Edge.Services.Facebook.AdsApi
 {
@@ -59,31 +60,31 @@ namespace Edge.Services.Facebook.AdsApi
 
 			this.Delivery.ChannelID =int.Parse(this.Instance.Configuration.Options["ChannelID"]);
 
-			string baseAddress = this.Instance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
+			
 			this.ReportProgress(0.2);
 
 
 			DeliveryFile deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroupStats";
-			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupStatsHttpRequest(baseAddress));
+			deliveryFile.Name = "GetAdGroupStats.xml";
+			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
+			/* MOVED TO RETRIVER BECAUSE FACEBOOK BUG (NOT MORE THE 1000 CREATIVES)
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroupCreatives";
-			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupCreativesHttpRequest(baseAddress));
-			this.Delivery.Files.Add(deliveryFile);
-			this.ReportProgress(0.6);
+			deliveryFile.Name = "GetAdGroupCreatives.xml";
+			deliveryFile.Parameters.Add("body", GetAdGroupCreativesHttpRequest());
+			this.Delivery.Files.Add(deliveryFile);*/
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroups";
-			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupsHttpRequest(baseAddress));
+			deliveryFile.Name = "GetAdGroups.xml";
+			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.8);
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetCampaigns";
-			deliveryFile.Parameters.Add("HttpRequest", GetCampaignsHttpRequest(baseAddress));
+			deliveryFile.Name = "GetCampaigns.xml";
+			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 			this.ReportProgress(0.98);
 			this.Delivery.Save();
@@ -91,89 +92,73 @@ namespace Edge.Services.Facebook.AdsApi
 			return ServiceOutcome.Success;
 		}
 
-		private HttpWebRequest GetAdGroupStatsHttpRequest(string baseAddress)
+		private string GetAdGroupStatsHttpRequest()
 		{
-			HttpWebRequest request = CreateRequest(baseAddress);
+			
 			string body;
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");			
-			AdGroupStatesParameters.Add("campaign_ids", "");
-			AdGroupStatesParameters.Add("adgroup_ids", "");
-			AdGroupStatesParameters.Add("include_deleted","false");			
-			string timeRange = string.Format("\"time_ranges\": { \"day_start\":{ :{\"month\":{0},\"day\":{1},\"year\":{2}},\"day_stop\":{\"month\":{3},\"day\":{4},\"year\":{5}}}}", TargetPeriod.Start.ToDateTime().Month, TargetPeriod.Start.ToDateTime().Day, TargetPeriod.End.ToDateTime().Year, TargetPeriod.End.ToDateTime().Month, TargetPeriod.End.ToDateTime().Day, TargetPeriod.End.ToDateTime().Year);
-			AdGroupStatesParameters.Add("time_ranges", timeRange);
+			//AdGroupStatesParameters.Add("campaign_ids", "");
+			//AdGroupStatesParameters.Add("adgroup_ids", "");
+			AdGroupStatesParameters.Add("include_deleted","false");
+			dynamic timeRange = new ExpandoObject();
+			timeRange.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
+			timeRange.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
+			AdGroupStatesParameters.Add("time_ranges", Newtonsoft.Json.JsonConvert.SerializeObject(timeRange));
 			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
-			CreateBody(request.GetRequestStream(),body);
+			
 
-			return request;
+			return body;
 		}
-
-
-		private HttpWebRequest GetAdGroupCreativesHttpRequest(string baseAddress)
+		private string GetAdGroupCreativesHttpRequest()
 		{
-			HttpWebRequest request = CreateRequest(baseAddress);
+			
 			string body;
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
 			AdGroupCreativesParameters.Add("include_deleted", "false");
 			//TODO:  for API bug 2011-03-21 TALK WITH DORON MAX CAMPAIGNS PER ARRAY
-			AdGroupCreativesParameters.Add("campaign_ids", "");		
-			AdGroupCreativesParameters.Add("adgroup_ids", "");
+			//AdGroupCreativesParameters.Add("campaign_ids", "");		
+			//AdGroupCreativesParameters.Add("adgroup_ids", "");
 			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
-			CreateBody(request.GetRequestStream(), body);
-			return request;
+			
+			return body;
 		}
-		private HttpWebRequest GetAdGroupsHttpRequest(string baseAddress)
+		private string GetAdGroupsHttpRequest()
 		{
-			HttpWebRequest request = CreateRequest(baseAddress);
+			
 			string body;
 			Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
 			AdGroupsParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupsParameters.Add("method", "facebook.ads.getAdGroups");
 			AdGroupsParameters.Add("include_deleted", "false");
-			AdGroupsParameters.Add("campaign_ids", "");
-			AdGroupsParameters.Add("adgroup_ids", "");
+			//AdGroupsParameters.Add("campaign_ids", "");
+			//AdGroupsParameters.Add("adgroup_ids", "");
 
 			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
-			CreateBody(request.GetRequestStream(), body);
-			return request;
+			
+			return body;
 		}
-		private HttpWebRequest GetCampaignsHttpRequest(string baseAddress)
+		private string GetCampaignsHttpRequest()
 		{
-			HttpWebRequest request = CreateRequest(baseAddress);
+			
 			string body;
 			Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
 			CampaignsParmaters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			CampaignsParmaters.Add("method", "facebook.ads.getCampaigns");
 			CampaignsParmaters.Add("include_deleted", "false");
-			CampaignsParmaters.Add("campaign_ids", "");
+			//CampaignsParmaters.Add("campaign_ids", "");
 
 			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
-			CreateBody(request.GetRequestStream(), body);
-			return request;
+			
+			return body;
 
 
+		}		
 
-		}
-		private void CreateBody(System.IO.Stream stream, string body)
-		{
-			using (StreamWriter writer = new StreamWriter(stream))
-			{
-				writer.Write(body);
-			}
-
-		}
-
-		private HttpWebRequest CreateRequest(string baseAddress)
-		{
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(baseAddress);
-			request.Method = "POST";
-			request.ContentType = "application/x-www-form-urlencoded";
-
-			return request;
-		}
+		
 		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
 		{
 			StringBuilder builder = new StringBuilder();
