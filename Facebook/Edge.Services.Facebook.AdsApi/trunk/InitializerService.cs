@@ -65,25 +65,25 @@ namespace Edge.Services.Facebook.AdsApi
 
 			DeliveryFile deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroupStats";
-			deliveryFile.Parameters.Add("AdGroupStatsHttpRequest", GetAdGroupStatsHttpRequest(baseAddress));
+			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupStatsHttpRequest(baseAddress));
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroupCreatives";
-			deliveryFile.Parameters.Add("AdGroupCreativesHttpRequest", GetAdGroupCreativesHttpRequest(baseAddress));
+			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupCreativesHttpRequest(baseAddress));
 			this.Delivery.Files.Add(deliveryFile);
 			this.ReportProgress(0.6);
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetAdGroups";
-			deliveryFile.Parameters.Add("AdGroupsHttpRequest", GetAdGroupsHttpRequest(baseAddress));
+			deliveryFile.Parameters.Add("HttpRequest", GetAdGroupsHttpRequest(baseAddress));
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.8);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetCampaigns";
-			deliveryFile.Parameters.Add("CampaignsHttpRequest", GetCampaignsHttpRequest(baseAddress));
+			deliveryFile.Parameters.Add("HttpRequest", GetCampaignsHttpRequest(baseAddress));
 			this.Delivery.Files.Add(deliveryFile);
 			this.ReportProgress(0.98);
 			this.Delivery.Save();

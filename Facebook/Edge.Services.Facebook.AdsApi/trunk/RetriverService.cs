@@ -5,37 +5,33 @@ using System.Text;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using MyFacebook=Facebook;
+using System.Net;
 
 namespace Edge.Services.Facebook.AdsApi
 {
-	//class RetriverService : PipelineService
-	//{
-	//    private MyFacebook.Rest.Api _facebookAPI;
-	//    private MyFacebook.Session.ConnectSession _connSession;
-	//    protected override ServiceOutcome DoWork()
-	//    {
-	//        //TODO: TALK WITH DORON I THINK ITS IS PARENTINSTANCEID
-	//        this.Delivery = new Delivery(this.Instance.InstanceID)
-	//        {
-	//            TargetPeriod = this.TargetPeriod
-	//        };
+	class RetriverService : PipelineService
+	{
+		protected override ServiceOutcome DoPipelineWork()
+		{
+			double progress = 0;
+			foreach (DeliveryFile file in this.Delivery.Files)
+			{
+				HttpWebResponse response = null;
+				try
+				{
+					HttpWebRequest request = (HttpWebRequest)file.Parameters["HttpRequest"];
+					response = (HttpWebResponse)request.GetResponse();
+					FileManager.Download(response.GetResponseStream(), null);
+					progress += 0.249;
+					this.ReportProgress(progress);
+				}
+				catch (WebException ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
+			}
 
-	//        //connect face book settings
-	//        _connSession = new MyFacebook.Session.ConnectSession(this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["applicationSecret"].ToString());
-	//        _connSession.SessionKey = this.Delivery.Parameters["sessionKey"].ToString();
-	//        _connSession.SessionSecret = this.Delivery.Parameters["sessionSecret"].ToString();
-	//        _facebookAPI = new MyFacebook.Rest.Api(_connSession);
-	//        _facebookAPI.Auth.Session.SessionExpires = false;
-
-	//        foreach (DeliveryFile file in this.Delivery.Files)
-	//        {
-	//            //TODO: TALK WITH DORON HOW WE ARE DOING IT
-	//            //
-	//        }
-
-
-	//        return ServiceOutcome.Success;
-	//    }
-
-	//}
+			return ServiceOutcome.Success;
+		}
+	}
 }

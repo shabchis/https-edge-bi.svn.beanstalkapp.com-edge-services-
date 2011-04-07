@@ -164,7 +164,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			unit.CampaignGK = GkManager.GetCampaignGK(
-				Instance.AccountID,
+				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
 				Delivery.ChannelID,
 				unit.Extra.Campaign_Name,
 				unit.Extra.Campaign_OriginalID
@@ -172,7 +172,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			// adgroup
 			unit.AdgroupGK = GkManager.GetAdgroupGK(
-				Instance.AccountID,
+				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
 				Delivery.ChannelID,
 				unit.CampaignGK.Value,
 				unit.Extra.Adgroup_Name,
@@ -181,15 +181,22 @@ namespace Edge.Services.Facebook.AdsApi
 
 			// keyword
 			unit.KeywordGK = GkManager.GetKeywordGK(
-				Instance.AccountID,
+				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
 				unit.Extra.Keyword_Text
 				);
 
+
+			unit.CreativeGK = GkManager.GetCreativeGK(
+				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
+				unit.Extra.Creative_Title,
+				unit.Extra.Creative_Desc1, null
+				);
 			
-
-			// TODO: creative
-
-			// TODO: tracker!!!
+			long identifier=0; //TODO: GET identifier
+			unit.TrackerGK = GkManager.GetTrackerGK(
+				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
+				identifier
+				);	
 
 			// TODO: currency conversion data
 			// data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
