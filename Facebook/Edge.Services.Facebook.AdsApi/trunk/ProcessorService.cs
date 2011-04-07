@@ -24,7 +24,7 @@ namespace Edge.Services.Facebook.AdsApi
 			);
 
 
-			Dictionary<long, CampaignData> campaignsData = new Dictionary<long, CampaignData>();
+			Dictionary<string, CampaignData> campaignsData = new Dictionary<string, CampaignData>();
 			using (campaignsReader)
 			{
 				while (campaignsReader.Read())
@@ -49,14 +49,14 @@ namespace Edge.Services.Facebook.AdsApi
 			XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
 			);
 
-			Dictionary<long, long> adsToCampaigns = new Dictionary<long, long>();
+			Dictionary<string, string> adsToCampaigns = new Dictionary<string, string>();
 
 			using (adGroupsReader)
 			{
 				while (adGroupsReader.Read())
 				{
-					long campaignID=Convert.ToInt64(adGroupsReader.Current["campaign_id"]);
-					long adID=Convert.ToInt64(adGroupsReader.Current["ad_id"]);
+					string campaignID=adGroupsReader.Current["campaign_id"];
+					string adID=adGroupsReader.Current["ad_id"];
 					adsToCampaigns.Add(adID, campaignID);
 				}
 			}
@@ -64,7 +64,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			//GetAdGroupStats
 			DeliveryFile adGroupStats = this.Delivery.Files["GetAdGroupStats"];
-			Dictionary<long, AdData> ads = new Dictionary<long, AdData>();
+			Dictionary<string, AdData> ads = new Dictionary<string, AdData>();
 			var adGroupStatsReader = new XmlChunkReader
 				(adGroupStats.SavedPath,
 				Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
@@ -77,7 +77,7 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					AdData ad = new AdData()
 					{
-					adgroup_id=Convert.ToInt64(adGroupStatsReader.Current["id"]),
+					adgroup_id=adGroupStatsReader.Current["id"],
 					Clicks = Convert.ToInt64(adGroupStatsReader.Current["clicks"]),
 					Cost = Convert.ToDouble(adGroupStatsReader.Current["spent"]),
 					Actions = Convert.ToInt32(adGroupStatsReader.Current["actions"]),
@@ -109,8 +109,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 				while (adGroupCreativesReader.Read())
 				{
-					AdData ad = ads[Convert.ToInt64(adGroupCreativesReader.Current["adgroup_id"])];
-					long campaignID = adsToCampaigns[ad.adgroup_id];
+					AdData ad = ads[adGroupCreativesReader.Current["adgroup_id"]];
+					string campaignID = adsToCampaigns[ad.adgroup_id];
 					CampaignData campaign = campaignsData[campaignID];
 					AdDataUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
 

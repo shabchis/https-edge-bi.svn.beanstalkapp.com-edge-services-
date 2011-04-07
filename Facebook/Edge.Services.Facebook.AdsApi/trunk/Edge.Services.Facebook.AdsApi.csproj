@@ -38,7 +38,9 @@
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -47,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="InitializerService.cs" />
+    <Compile Include="MD5Core.cs" />
     <Compile Include="ProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RetriverService.cs" />
