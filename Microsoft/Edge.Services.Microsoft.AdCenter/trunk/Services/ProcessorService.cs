@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using Edge.Core.Data;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using Edge.Data.Pipeline.GkManager;
 using Edge.Data.Pipeline.Readers;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using Edge.Data.Pipeline.Objects;
+using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Deliveries;
 
 
 namespace Edge.Services.Microsoft.AdCenter
@@ -36,12 +38,17 @@ namespace Edge.Services.Microsoft.AdCenter
 				XmlChunkReaderOptions.ElementsAsValues
 			);
 
+			// How often (every how many items) to report progress
+			const int reportEvery = 30;
+
 			// lookup table by ad ID
 			var ads = new Dictionary<string,RawAdData>();
 
 			// read
 			using (adReportReader)
 			{
+				int adcount = 0;
+
 				while (adReportReader.Read())
 				{
 					var ad = new RawAdData()
@@ -53,8 +60,12 @@ namespace Edge.Services.Microsoft.AdCenter
 					ads.Add(ad.AdId, ad);
 
 					// Guess the progress
-					ReportProgress(progress += (double) adSize / (totalSize));
+					progress += adSize / totalSize;
+					adcount++;
+					if (adcount % reportEvery == 0)
+						ReportProgress(progress);
 				}
+				ReportProgress(progress);
 			}
 
 			// mark the delivery file as processed
@@ -64,7 +75,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Read the keyword report, cross reference it with the ad data, and commit
 
 			// The name of the time period column is specified by the initializer, depending on the report
-			string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriod] as string;
+			string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
 
 			// create the keyword report reader
 			var keywordReportReader = new XmlChunkReader
@@ -77,50 +88,49 @@ namespace Edge.Services.Microsoft.AdCenter
 			// read and save in transaction
 			using (keywordReportReader)
 			{
-				using (DataManager.Current.OpenConnection())
+				using (var session = new AdMetricsImportSession(this.Delivery))
 				{
-					DataManager.Current.StartTransaction();
+					session.Begin();
 
+					int kwcount = 0;
 					while (keywordReportReader.Read())
 					{
 						// get the unit from the keyword report, and add the missing ad data
-						AdDataUnit data = CreateUnitFromKeywordReportChunk(keywordReportReader.Current, timePeriodColumn);
+						AdMetricsUnit unit = CreateUnitFromChunk(keywordReportReader.Current, timePeriodColumn);
 
 						// get the matching ad
 						RawAdData ad;
-						if (!ads.TryGetValue(data.Extra.Creative_OriginalID, out ad))
+						if (!ads.TryGetValue(unit.Ad.OriginalID, out ad))
 						{
 							// TODO: add to error log this data because there is no matching ad
 							continue;
 						}
+						unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = ad.AdTitle });
+						unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Body, Value = ad.AdDescription });
 
-						// legacy values
-						data.Extra.Creative_Title = ad.AdTitle;
-						data.Extra.Creative_Desc1 = ad.AdDescription;
-
-						// GKs
-						data.CreativeGK = GkManager.GetCreativeGK(Instance.AccountID, ad.AdTitle, ad.AdDescription, string.Empty);
-						//data.AdgroupCreativeGK = GkManager.GetAdgroupCreativeGK(Instance.AccountID, Delivery.ChannelID
-
-						data.Save();
+						session.Import(unit);
 
 						// Guess the progress
-						ReportProgress(progress += (double)kwSize / (totalSize));
+						progress += kwSize / totalSize;
+						kwcount++;
+						if (kwcount % reportEvery == 0)
+							ReportProgress(progress);
 					}
-
-					DataManager.Current.CommitTransaction();
+					
+					session.Commit();
+					ReportProgress(progress);
 				}
 			}
 
             return ServiceOutcome.Success;
         }
 
-		private AdDataUnit CreateUnitFromKeywordReportChunk(Chunk values, string timePeriodColumn)
+		private AdMetricsUnit CreateUnitFromChunk(Chunk values, string timePeriodColumn)
 		{
 			if (String.IsNullOrWhiteSpace(timePeriodColumn))
 				throw new ArgumentNullException("timePeriodColumn");
 
-			var data = new AdDataUnit();
+			var unit = new AdMetricsUnit();
 
 			//..................
 			// TIME
@@ -128,84 +138,57 @@ namespace Edge.Services.Microsoft.AdCenter
 			// TODO: figure out in what format this is returned; doesn't look promising...
 			// (http://social.msdn.microsoft.com/Forums/en-US/adcenterdev/thread/155dba04-f541-489b-878c-d259f4a2814b)
 			string rawTime = values[timePeriodColumn];
-			data.TargetDateTime = DateTime.ParseExact(rawTime, "d/M/yyyy", null); // wild guess
+			unit.TimeStamp = DateTime.ParseExact(rawTime, "d/M/yyyy", null); // wild guess
 
 			//..................
 			// IDENTITIES
 
-			// AccountID
-			data.AccountID = Instance.AccountID;
+			unit.Account = new Account() { ID = Instance.AccountID };
+			unit.Channel = this.Delivery.Channel;
 
-			// Raw values (legacy DB schema)
-			data.Extra.Account_OriginalID				= values[WS.KeywordPerformanceReportColumn.AccountNumber	.ToString()];
-			data.Extra.Campaign_Name					= values[WS.KeywordPerformanceReportColumn.CampaignName		.ToString()];
-			data.Extra.Campaign_OriginalID				= values[WS.KeywordPerformanceReportColumn.CampaignId		.ToString()];
-			data.Extra.Adgroup_Name						= values[WS.KeywordPerformanceReportColumn.AdGroupName		.ToString()];
-			data.Extra.Adgroup_OriginalID				= values[WS.KeywordPerformanceReportColumn.AdGroupId		.ToString()];
-			data.Extra.Keyword_Text						= values[WS.KeywordPerformanceReportColumn.Keyword			.ToString()];
-			data.Extra.Keyword_OriginalID				= values[WS.KeywordPerformanceReportColumn.KeywordId		.ToString()];
-			data.Extra.Creative_OriginalID				= values[WS.KeywordPerformanceReportColumn.AdId				.ToString()];
-			data.Extra.AdgroupKeyword_DestUrl			= values[WS.KeywordPerformanceReportColumn.DestinationUrl	.ToString()];
-			data.Extra.AdgroupKeyword_OriginalMatchType	= values[WS.KeywordPerformanceReportColumn.MatchType		.ToString()];
-			data.Extra.Currency_Code					= values[WS.KeywordPerformanceReportColumn.CurrencyCode		.ToString()];
+			// Campaign
+			unit.Campaign = new Campaign()
+			{
+				Name = values[WS.KeywordPerformanceReportColumn.CampaignName.ToString()],
+				OriginalID = values[WS.KeywordPerformanceReportColumn.CampaignId.ToString()]
+			};
 
-			// Match type
-			MatchType matchType = MatchType.Unidentified;
-			if (data.Extra.AdgroupKeyword_OriginalMatchType != null)
-				Enum.TryParse<MatchType>(data.Extra.AdgroupKeyword_OriginalMatchType, out matchType);
+			// Ad
+			unit.Ad = new Ad()
+			{
+				OriginalID = values[WS.KeywordPerformanceReportColumn.AdId.ToString()],
+				DestinationUrl = values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()]
+			};
 
-			// campaign
-			data.CampaignGK = GkManager.GetCampaignGK(
-				Instance.AccountID,
-				Delivery.ChannelID,
-				data.Extra.Campaign_Name,
-				data.Extra.Campaign_OriginalID
-				);
+			// Tracker
+			unit.Tracker = new Tracker(unit.Ad);
 
-			// adgroup
-			data.AdgroupGK = GkManager.GetAdgroupGK(
-				Instance.AccountID,
-				Delivery.ChannelID,
-				data.CampaignGK.Value,
-				data.Extra.Adgroup_Name,
-				data.Extra.Adgroup_OriginalID
-				);
+			// Targeting
+			string rawMatchType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
+			KeywordMatchType matchType = KeywordMatchType.Unidentified;
+			if (rawMatchType != null)
+				Enum.TryParse<KeywordMatchType>(rawMatchType, out matchType);
 
-			// keyword
-			data.KeywordGK = GkManager.GetKeywordGK(
-				Instance.AccountID,
-				data.Extra.Keyword_Text
-				);
+			unit.TargetMatches.Add(new KeywordTarget()
+			{
+				MatchType = matchType,
+				OriginalID = values[WS.KeywordPerformanceReportColumn.KeywordId.ToString()],
+				Value = values[WS.KeywordPerformanceReportColumn.Keyword.ToString()]
+			});
 
-			// adgroup keyword
-			data.AdgroupKeywordGK = GkManager.GetAdgroupKeywordGK(
-				Instance.AccountID,
-				Delivery.ChannelID,
-				data.CampaignGK.Value,
-				data.AdgroupGK.Value,
-				data.KeywordGK.Value,
-				matchType,
-				data.Extra.AdgroupKeyword_DestUrl,
-				null
-				);
-
-			// TODO: creative
-
-			// TODO: tracker!!!
-
-			// TODO: currency conversion data
-			// data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
+			// Currency
+			unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
 
 			//..................
-			// METRICS
+			// MEASURES
 
-			data.Impressions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Impressions		.ToString()]);
-			data.Clicks					= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Clicks			.ToString()]);
-			data.Cost					= Double.Parse	(values[WS.KeywordPerformanceReportColumn.Spend				.ToString()]);
-			data.AveragePosition		= Double.Parse	(values[WS.KeywordPerformanceReportColumn.AveragePosition	.ToString()]);
-			data.Conversions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Conversions		.ToString()]);
+			unit.Impressions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Impressions		.ToString()]);
+			unit.Clicks					= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Clicks			.ToString()]);
+			unit.Cost					= Double.Parse	(values[WS.KeywordPerformanceReportColumn.Spend				.ToString()]);
+			unit.AveragePosition		= Double.Parse	(values[WS.KeywordPerformanceReportColumn.AveragePosition	.ToString()]);
+			//input.Conversions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Conversions		.ToString()]);
 
-			return data;
+			return unit;
 		}
     }
 

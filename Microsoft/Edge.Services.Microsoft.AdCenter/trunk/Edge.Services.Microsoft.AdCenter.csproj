@@ -97,11 +97,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Edge Framework\Edge.Core\Edge.Core.csproj">
+    <ProjectReference Include="..\..\..\Framework\Edge.Core\Edge.Core.csproj">
       <Project>{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}</Project>
       <Name>Edge.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\Edge Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj">
+    <ProjectReference Include="..\..\..\Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj">
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
     </ProjectReference>

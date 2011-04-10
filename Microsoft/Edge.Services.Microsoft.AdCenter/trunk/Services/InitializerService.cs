@@ -8,8 +8,10 @@ using Edge.Core;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Configuration;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using Edge.Data.Pipeline.Deliveries;
 using Edge.Data.Pipeline.Readers;
+using Edge.Data.Pipeline.Services;
+using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
@@ -54,7 +56,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				)),
 				Parameters = new Dictionary<string, object>()
 				{
-					{Const.Parameters.TimePeriod, AdCenterApi.GetTimePeriodColumnName(WS.ReportAggregation.Daily)}
+					{Const.Parameters.TimePeriodColumnName, AdCenterApi.GetTimePeriodColumnName(WS.ReportAggregation.Daily)}
 				}
 			});
 			ReportProgress(0.49); // progress: 49%
