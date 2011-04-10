@@ -96,27 +96,34 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			//AdGroupCreatives + insert data
-			DeliveryFile adGroupCreatives = this.Delivery.Files["GetAdGroupCreatives"];
+			//DeliveryFile adGroupCreatives = this.Delivery.Files["GetAdGroupCreatives"];
+			//TODO : TALK WITH DORON ABOUT THE FILE NAME
+			var creativeFiles = from dfc in this.Delivery.Files
+											   where dfc.Name.StartsWith("GetAdGroupCreatives")
+											   select dfc;
 
-			var adGroupCreativesReader = new XmlChunkReader
-				(adGroupCreatives.SavedPath,
-				Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
-				XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-				);
-			
-			using (adGroupCreativesReader)
+			foreach (var creativeFile in creativeFiles)
 			{
+				var adGroupCreativesReader = new XmlChunkReader
+						(creativeFile.SavedPath,
+						Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
+						XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
+						);
 
-				while (adGroupCreativesReader.Read())
+				using (adGroupCreativesReader)
 				{
-					AdData ad = ads[adGroupCreativesReader.Current["adgroup_id"]];
-					string campaignID = adsToCampaigns[ad.adgroup_id];
-					CampaignData campaign = campaignsData[campaignID];
-					AdDataUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
 
-					data.Save();
-					
-				}
+					while (adGroupCreativesReader.Read())
+					{
+						AdData ad = ads[adGroupCreativesReader.Current["adgroup_id"]];
+						string campaignID = adsToCampaigns[ad.adgroup_id];
+						CampaignData campaign = campaignsData[campaignID];
+						AdDataUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
+
+						data.Save();
+
+					}
+				} 
 			}
 		
 

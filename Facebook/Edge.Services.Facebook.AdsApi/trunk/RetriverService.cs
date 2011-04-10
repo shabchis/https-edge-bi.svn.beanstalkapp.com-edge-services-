@@ -56,6 +56,7 @@ namespace Edge.Services.Facebook.AdsApi
 								CreateCreativeDeliveryFile(ref adGroupsIds,ref counter,ref deliveryFiles);
 							if (deliveryFiles.Count > 0)
 							{
+								//TODO: PROGRESS TALK WITH DORON
 								foreach (DeliveryFile file in deliveryFiles)
 								{
 									this.Delivery.Files.Add(file);
@@ -83,10 +84,11 @@ namespace Edge.Services.Facebook.AdsApi
 		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds,ref int counter,ref List<DeliveryFile> deliveryFiles)
 		{
 			DeliveryFile current = new DeliveryFile();
-			current.Name = string.Format("GetAdGroupCreatives-{0}", counter);
+			current.Name = string.Format("GetAdGroupCreatives-{0}.xml", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
+			counter++;
 		}
 
 		private object GetAdGroupCreativesBody(List<string> adGroupsIds)
@@ -95,9 +97,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
-			AdGroupCreativesParameters.Add("include_deleted", "false");
-			//TODO:  for API bug 2011-03-21 TALK WITH DORON MAX CAMPAIGNS PER ARRAY
-			//AdGroupCreativesParameters.Add("campaign_ids", "");	
+			AdGroupCreativesParameters.Add("include_deleted", "false");			
 			dynamic d = new ExpandoObject();
 			d.adgroup_ids = adGroupsIds;
 

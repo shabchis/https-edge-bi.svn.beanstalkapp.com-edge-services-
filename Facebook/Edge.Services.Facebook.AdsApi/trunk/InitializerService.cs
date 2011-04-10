@@ -81,11 +81,18 @@ namespace Edge.Services.Facebook.AdsApi
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
-			this.ReportProgress(0.8);
+			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "GetCampaigns.xml";
 			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
+
+
+			deliveryFile = new DeliveryFile();
+			deliveryFile.Name = "getAdGroupTargeting.xml";
+			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
+			this.Delivery.Files.Add(deliveryFile);
+
 			this.ReportProgress(0.98);
 			this.Delivery.Save();
 			this.ReportProgress(0.99);
@@ -156,7 +163,21 @@ namespace Edge.Services.Facebook.AdsApi
 			return body;
 
 
-		}		
+		}
+		private string GetgetAdGroupTargeting()
+		{
+			string body;
+			Dictionary<string, string> AdGroupTargetingParameters = new Dictionary<string, string>();
+			AdGroupTargetingParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupTargetingParameters.Add("method", "facebook.ads.getAdGroupTargeting");
+			AdGroupTargetingParameters.Add("include_deleted", "false");
+
+
+
+			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+
+			return body;
+		}
 
 		
 		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
