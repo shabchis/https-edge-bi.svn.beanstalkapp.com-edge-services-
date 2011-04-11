@@ -31,11 +31,10 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Read the ad report, and build a lookup table for later
 
 			// create the ad report reader
-			var adReportReader = new XmlChunkReader
+			var adReportReader = new XmlDynamicReader
 			(
 				adReport.SavedPath,
-				Instance.Configuration.Options["AdCenter.AdPerformance.XPath"], // ./Report/Table/Row
-				XmlChunkReaderOptions.ElementsAsValues
+				Instance.Configuration.Options["AdCenter.AdPerformance.XPath"] // Report/Table/Row
 			);
 
 			// How often (every how many items) to report progress
@@ -78,11 +77,10 @@ namespace Edge.Services.Microsoft.AdCenter
 			string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
 
 			// create the keyword report reader
-			var keywordReportReader = new XmlChunkReader
+			var keywordReportReader = new XmlDynamicReader
 			(
 				keywordReport.SavedPath,
-				Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"], // ./Report/Table/Row
-				XmlChunkReaderOptions.ElementsAsValues
+				Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"] // Report/Table/Row
 			);
 
 			// read and save in transaction
@@ -96,7 +94,7 @@ namespace Edge.Services.Microsoft.AdCenter
 					while (keywordReportReader.Read())
 					{
 						// get the unit from the keyword report, and add the missing ad data
-						AdMetricsUnit unit = CreateUnitFromChunk(keywordReportReader.Current, timePeriodColumn);
+						AdMetricsUnit unit = CreateUnitFromValues(keywordReportReader.Current, timePeriodColumn);
 
 						// get the matching ad
 						RawAdData ad;
@@ -125,7 +123,7 @@ namespace Edge.Services.Microsoft.AdCenter
             return ServiceOutcome.Success;
         }
 
-		private AdMetricsUnit CreateUnitFromChunk(Chunk values, string timePeriodColumn)
+		private AdMetricsUnit CreateUnitFromValues(dynamic values, string timePeriodColumn)
 		{
 			if (String.IsNullOrWhiteSpace(timePeriodColumn))
 				throw new ArgumentNullException("timePeriodColumn");
