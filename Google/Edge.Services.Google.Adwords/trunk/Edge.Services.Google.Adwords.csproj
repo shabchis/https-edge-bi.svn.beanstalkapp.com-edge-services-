@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>0091a30b-23f7-43b6-af8d-5c3450a506cf</ProjectGuid>
+    <ProjectGuid>{2A0FFCF9-03B8-40E4-B410-8B62B088B6D6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Edge.Services.Google.Adwords</RootNamespace>
