@@ -9,6 +9,8 @@ using System.Globalization;
 using System.Net;
 using System.IO;
 using System.Dynamic;
+using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Deliveries;
 
 namespace Edge.Services.Facebook.AdsApi
 {
@@ -16,7 +18,6 @@ namespace Edge.Services.Facebook.AdsApi
 	{
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			//TODO: TALK WITH DORON I THINK ITS IS PARENTINSTANCEID
 			// Create a new delivery
 			this.Delivery = new Delivery(this.Instance.InstanceID)
 			{
@@ -58,14 +59,14 @@ namespace Edge.Services.Facebook.AdsApi
 			else
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
 
-			this.Delivery.ChannelID =int.Parse(this.Instance.Configuration.Options["ChannelID"]);
+			//this.Delivery.Channel =(Edge.Data.Pipeline.Objects.Channel)this.Instance.Configuration.Options["ChannelID"];
 
 			
 			this.ReportProgress(0.2);
 
 
 			DeliveryFile deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroupStats.xml";
+			deliveryFile.Name = "GetAdGroupStats";
 			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
@@ -77,19 +78,20 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery.Files.Add(deliveryFile);*/
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroups.xml";
+			deliveryFile.Name = "GetAdGroups";
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
+			
 
 			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetCampaigns.xml";
+			deliveryFile.Name = "GetCampaigns";
 			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "getAdGroupTargeting.xml";
+			deliveryFile.Name = "getAdGroupTargeting";
 			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
 			this.Delivery.Files.Add(deliveryFile);
 
@@ -105,9 +107,7 @@ namespace Edge.Services.Facebook.AdsApi
 			string body;
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
-			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");			
-			//AdGroupStatesParameters.Add("campaign_ids", "");
-			//AdGroupStatesParameters.Add("adgroup_ids", "");
+			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");				
 			AdGroupStatesParameters.Add("include_deleted","false");
 			dynamic timeRange = new ExpandoObject();
 			timeRange.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
@@ -125,10 +125,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
-			AdGroupCreativesParameters.Add("include_deleted", "false");
-			//TODO:  for API bug 2011-03-21 TALK WITH DORON MAX CAMPAIGNS PER ARRAY
-			//AdGroupCreativesParameters.Add("campaign_ids", "");		
-			//AdGroupCreativesParameters.Add("adgroup_ids", "");
+			AdGroupCreativesParameters.Add("include_deleted", "false");			
 			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
 			
 			return body;
@@ -141,9 +138,6 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupsParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupsParameters.Add("method", "facebook.ads.getAdGroups");
 			AdGroupsParameters.Add("include_deleted", "false");
-			//AdGroupsParameters.Add("campaign_ids", "");
-			//AdGroupsParameters.Add("adgroup_ids", "");
-
 			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
 			
 			return body;
@@ -156,7 +150,7 @@ namespace Edge.Services.Facebook.AdsApi
 			CampaignsParmaters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			CampaignsParmaters.Add("method", "facebook.ads.getCampaigns");
 			CampaignsParmaters.Add("include_deleted", "false");
-			//CampaignsParmaters.Add("campaign_ids", "");
+			
 
 			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
 			
@@ -171,9 +165,6 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupTargetingParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupTargetingParameters.Add("method", "facebook.ads.getAdGroupTargeting");
 			AdGroupTargetingParameters.Add("include_deleted", "false");
-
-
-
 			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
 
 			return body;

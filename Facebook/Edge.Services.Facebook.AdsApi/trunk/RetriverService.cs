@@ -11,6 +11,8 @@ using Edge.Data.Pipeline.Readers;
 using System.Globalization;
 using System.Web;
 using System.Dynamic;
+using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Deliveries;
 
 namespace Edge.Services.Facebook.AdsApi
 {
@@ -27,7 +29,7 @@ namespace Edge.Services.Facebook.AdsApi
 				try
 				{
 					DownloadFile(baseAddress, ref progress, interval, file);
-					
+					file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 				}
 				catch (WebException ex)
 				{
@@ -35,12 +37,12 @@ namespace Edge.Services.Facebook.AdsApi
 				}
 			}
 			DeliveryFile deliveryFile= this.Delivery.Files["GetAdGroups.xml"];
-					
-						var adGroupReader = new XmlChunkReader
+
+			var adGroupReader = new XmlDynamicReader
 				(deliveryFile.SavedPath,
-				Instance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
-				XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-				);
+				Instance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+				
+			
 						using (adGroupReader)
 						{
 							List<string> adGroupsIds = new List<string>();
@@ -48,7 +50,7 @@ namespace Edge.Services.Facebook.AdsApi
 							List<DeliveryFile> deliveryFiles=new List<DeliveryFile>();
 							while(adGroupReader.Read())
 							{
-								adGroupsIds.Add(adGroupReader.Current["adgroup_id"]);
+								adGroupsIds.Add(adGroupReader.Current.adgroup_id);
 								if (adGroupsIds.Count == 999)								
 									CreateCreativeDeliveryFile(ref adGroupsIds,ref counter,ref deliveryFiles);								
 							}
@@ -61,7 +63,7 @@ namespace Edge.Services.Facebook.AdsApi
 								{
 									this.Delivery.Files.Add(file);
 									DownloadFile(baseAddress,ref progress, interval, file);
-									
+									file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 								}
 							}
 						}

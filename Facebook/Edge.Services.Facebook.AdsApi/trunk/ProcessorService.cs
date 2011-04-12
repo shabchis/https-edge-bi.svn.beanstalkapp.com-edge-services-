@@ -4,26 +4,24 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Readers;
-using Edge.Data.Pipeline.GkManager;
+//using Edge.Data.Pipeline.GkManager;
+using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Objects;
+using Edge.Data.Pipeline.Deliveries;
 
 namespace Edge.Services.Facebook.AdsApi
 {
 	public class ProcessorService : PipelineService
 	{
-		
+
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			//Campaigns
 			DeliveryFile campaigns = this.Delivery.Files["GetCampaigns"];
 
-			var campaignsReader = new XmlChunkReader
-			(campaigns.SavedPath,
-			Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"],
-			XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-			);
-
-
+			var campaignsReader = new XmlDynamicReader
+			(campaigns.SavedPath, Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, CampaignData> campaignsData = new Dictionary<string, CampaignData>();
 			using (campaignsReader)
 			{
@@ -31,23 +29,22 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					CampaignData camp = new CampaignData()
 					{
-						CampaignName = campaignsReader.Current["name"],
-						CampaignID = campaignsReader.Current["campaign_id"],
-						AccountID = campaignsReader.Current["account_id"],
-						Status = campaignsReader.Current["campaign_status"]
+						CampaignName = campaignsReader.Current.name,
+						CampaignID = campaignsReader.Current.campaign_id,
+						AccountID = campaignsReader.Current.account_id,
+						Status = campaignsReader.Current.campaign_status
 					};
 					campaignsData.Add(camp.CampaignID, camp);
 				}
+				campaigns.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
 
 			//GetAdGroups
 			DeliveryFile adGroups = this.Delivery.Files["GetAdGroups"];
 
-			var adGroupsReader = new XmlChunkReader
+			var adGroupsReader = new XmlDynamicReader
 			(adGroups.SavedPath,
-			Instance.Configuration.Options["facebook.ads.GetAdGroups.xpath"],
-			XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-			);
+			Instance.Configuration.Options["facebook.ads.GetAdGroups.xpath"]);
 
 			Dictionary<string, string> adsToCampaigns = new Dictionary<string, string>();
 
@@ -55,21 +52,21 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				while (adGroupsReader.Read())
 				{
-					string campaignID=adGroupsReader.Current["campaign_id"];
-					string adID=adGroupsReader.Current["ad_id"];
+					string campaignID = adGroupsReader.Current.campaign_id;
+					string adID = adGroupsReader.Current.ad_id;
 					adsToCampaigns.Add(adID, campaignID);
 				}
+				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
 
 
 			//GetAdGroupStats
 			DeliveryFile adGroupStats = this.Delivery.Files["GetAdGroupStats"];
 			Dictionary<string, AdData> ads = new Dictionary<string, AdData>();
-			var adGroupStatsReader = new XmlChunkReader
-				(adGroupStats.SavedPath,
-				Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
-				XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-				);
+			var adGroupStatsReader = new XmlDynamicReader
+				(adGroupStats.SavedPath, Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+
+
 
 			using (adGroupStatsReader)
 			{
@@ -77,19 +74,58 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					AdData ad = new AdData()
 					{
-					adgroup_id=adGroupStatsReader.Current["id"],
-					Clicks = Convert.ToInt64(adGroupStatsReader.Current["clicks"]),
-					Cost = Convert.ToDouble(adGroupStatsReader.Current["spent"]),
-					Actions = Convert.ToInt32(adGroupStatsReader.Current["actions"]),
-					Impressions = Convert.ToInt64(adGroupStatsReader.Current["impressions"]),
-					Social_clicks = Convert.ToInt64(adGroupStatsReader.Current["social_clicks"]),
-					Social_Cost = Convert.ToDouble(adGroupStatsReader.Current["social_spent"]),
-					Social_impressions = Convert.ToInt64(adGroupStatsReader.Current["social_impressions"])
+						adgroup_id = adGroupStatsReader.Current.id,
+						Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks),
+						Cost = Convert.ToDouble(adGroupStatsReader.Current.spent),
+						Actions = Convert.ToInt32(adGroupStatsReader.Current.actions),
+						Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),
+						Social_clicks = Convert.ToInt64(adGroupStatsReader.Current.social_clicks),
+						Social_Cost = Convert.ToDouble(adGroupStatsReader.Current.social_spent),
+						Social_impressions = Convert.ToInt64(adGroupStatsReader.Current.social_impressions)
 					};
 					ads.Add(ad.adgroup_id, ad);
-					
+
 				}
+				adGroupStats.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
+
+			//getAdGroupTargeting
+
+			DeliveryFile adGroupTargeting = this.Delivery.Files["getAdGroupTargeting"];
+			var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.SavedPath, Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+			using (adGroupTargetingReader)
+			{
+				while (adGroupTargetingReader.Read())
+				{
+					AdData ad = ads[adGroupTargetingReader.Current.adgroup_id];
+					string age_min = adGroupTargetingReader.Current.age_min;
+					if (!string.IsNullOrEmpty(age_min))
+					{
+						AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max), OriginalID = adGroupTargetingReader.Current.adgroup_id };
+						ad.Targets.Add(ageTarget);
+					}
+					//TODO: Gender
+					//string genders = adGroupTargetingReader.Current.genders;
+					//if (!string.IsNullOrEmpty(genders))
+					//{
+					//    GenderTarget genderTarget = new GenderTarget();
+					//    if (genders == "1")
+					//        genderTarget.Gender = Gender.Male;
+					//    else
+					//        genderTarget.Gender = Gender.Female;
+
+					//    genderTarget.OriginalID = adGroupTargetingReader.Current.adgroup_id;
+					//    ad.Targets.Add(genderTarget);
+
+					//}
+
+
+				}
+				adGroupTargeting.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+
+			}
+
+
 
 
 
@@ -99,122 +135,100 @@ namespace Edge.Services.Facebook.AdsApi
 			//DeliveryFile adGroupCreatives = this.Delivery.Files["GetAdGroupCreatives"];
 			//TODO : TALK WITH DORON ABOUT THE FILE NAME
 			var creativeFiles = from dfc in this.Delivery.Files
-											   where dfc.Name.StartsWith("GetAdGroupCreatives")
-											   select dfc;
-
-			foreach (var creativeFile in creativeFiles)
+								where dfc.Name.StartsWith("GetAdGroupCreatives")
+								select dfc;
+			using (var session = new AdMetricsImportSession(this.Delivery))
 			{
-				var adGroupCreativesReader = new XmlChunkReader
-						(creativeFile.SavedPath,
-						Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"],// ./Ads_getAdGroupCreatives_response/ads_creative
-						XmlChunkReaderOptions.AttributesAsValues | XmlChunkReaderOptions.ElementsAsValues
-						);
-
-				using (adGroupCreativesReader)
+				foreach (var creativeFile in creativeFiles)
 				{
+					var adGroupCreativesReader = new XmlDynamicReader
+							(creativeFile.SavedPath, Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
-					while (adGroupCreativesReader.Read())
+
+
+					using (adGroupCreativesReader)
 					{
-						AdData ad = ads[adGroupCreativesReader.Current["adgroup_id"]];
-						string campaignID = adsToCampaigns[ad.adgroup_id];
-						CampaignData campaign = campaignsData[campaignID];
-						AdDataUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
 
-						data.Save();
 
+						while (adGroupCreativesReader.Read())
+						{
+
+							AdData ad = ads[adGroupCreativesReader.Current.adgroup_id];
+							string campaignID = adsToCampaigns[ad.adgroup_id];
+							CampaignData campaign = campaignsData[campaignID];
+							AdMetricsUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
+
+							session.Import(data);
+							//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
+						}
+
+						creativeFile.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 					}
-				} 
+
+				}
+				session.Commit();
 			}
-		
-
-			
-
-
-
-
-
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		private AdDataUnit CreateUnitFromFacebookData(AdData ad, CampaignData campaign, Chunk chunk)
+		private AdMetricsUnit CreateUnitFromFacebookData(AdData ad, CampaignData campaign, dynamic adGroupCreative)
 		{
-			AdDataUnit unit = new AdDataUnit();
-			//campaign
-			unit.Extra.Account_OriginalID = campaign.AccountID;
-			unit.Extra.Campaign_OriginalID = campaign.CampaignID;
-			unit.Extra.Campaign_Name = campaign.CampaignName;
-			unit.Extra.Campaign_OriginalStatus = campaign.Status;
-			//*dailybudget
+			AdMetricsUnit unit = new AdMetricsUnit();
+			//unit.TimeStamp = this.Delivery.TargetPeriod; TODO: WHAT IS TIME STAMP
+			unit.Account = new Account() { ID = Instance.AccountID };
+			// Campaign
+			unit.Campaign = new Campaign()
+			{
+				Name = campaign.CampaignName,
+				OriginalID = campaign.CampaignID
+			};
 
-			//adgroup
-			unit.Extra.Adgroup_Name = ad.title;
-			unit.Extra.Adgroup_OriginalID = ad.adgroup_id;
-			//*adgroup_status
+			// Ad
+			unit.Ad = new Ad()
+			{
+				OriginalID = ad.adgroup_id,
+				DestinationUrl = ad.link_url
+			};
 
+			// Tracker
+			unit.Tracker = new Tracker(unit.Ad);
 
-			//adgroupCreative
+			// Targeting
+			foreach (var target in ad.Targets)
+			{
+				unit.TargetMatches.Add(target);
 
-			unit.Extra.Creative_OriginalID = ad.creative_id;
-			unit.Extra.Creative_Title = ad.title;
-			unit.Extra.Creative_Desc1 = ad.body;
-			//*imageHash
-			unit.Extra.AdgroupCreative_DestUrl = ad.link_url;
-			unit.Extra.AdgroupCreative_VisUrl = ad.link_url;
-			//TODO: unit.Extra.Tracker_Value=EXTRACTURL
-
-			unit.AccountID =Convert.ToInt32( Delivery.Parameters["accountID"]);
-			//TODO : unit.channelid
-			unit.Impressions			= ad.Impressions;
-			unit.Clicks					= ad.Clicks;
-			unit.Cost					= ad.Cost;
+			}
 
 
 
-			unit.CampaignGK = GkManager.GetCampaignGK(
-				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
-				Delivery.ChannelID,
-				unit.Extra.Campaign_Name,
-				unit.Extra.Campaign_OriginalID
-				);
-
-			// adgroup
-			unit.AdgroupGK = GkManager.GetAdgroupGK(
-				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
-				Delivery.ChannelID,
-				unit.CampaignGK.Value,
-				unit.Extra.Adgroup_Name,
-				unit.Extra.Adgroup_OriginalID
-				);
-
-			// keyword
-			unit.KeywordGK = GkManager.GetKeywordGK(
-				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
-				unit.Extra.Keyword_Text
-				);
-
-
-			unit.CreativeGK = GkManager.GetCreativeGK(
-				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
-				unit.Extra.Creative_Title,
-				unit.Extra.Creative_Desc1, null
-				);
-			
-			long identifier=0; //TODO: GET identifier
-			unit.TrackerGK = GkManager.GetTrackerGK(
-				Convert.ToInt32(this.Delivery.Parameters["AccountID"]),
-				identifier
-				);	
-
-			// TODO: currency conversion data
-			// data.CurrencyID = Currency.GetByCode(data.Extra.Currency_Code).ID;
+			// Currency
+			//TODO: CURRENCY?
+			//unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
 
 			//..................
-			// METRICS
-			//GET GK
+			// MEASURES
+
+			unit.Impressions = ad.Impressions;
+			unit.Clicks = ad.Clicks;
+			unit.Cost = ad.Cost;
+
+			//TODO: unit.AveragePosition 
+			//TODO :unit.Conversions
+			//TODO unit.AveragePosition =;
+			//TODO: input.Conversions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Conversions		.ToString()]);
+
+
+			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
+			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Body, Value = adGroupCreative.body });
+			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.DisplayUrl, Value = adGroupCreative.preview_url });
+			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Image, Value = adGroupCreative.image_url });
 			return unit;
+
+
 		}
 
-		
+
 	}
 	internal class CampaignData
 	{
@@ -245,10 +259,10 @@ namespace Edge.Services.Facebook.AdsApi
 		public long Social_clicks;
 		public double Social_Cost;
 		public int Actions;
-
+		public List<Target> Targets = new List<Target>();
 
 
 	}
-	
+
 
 }
