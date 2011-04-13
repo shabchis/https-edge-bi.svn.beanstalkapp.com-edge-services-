@@ -88,6 +88,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile current = new DeliveryFile();
 			current.Name = string.Format("GetAdGroupCreatives-{0}.xml", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
+			current.Parameters.Add("IsCreativeDeliveryFile", true);
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
 			counter++;

@@ -104,20 +104,25 @@ namespace Edge.Services.Facebook.AdsApi
 						AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max), OriginalID = adGroupTargetingReader.Current.adgroup_id };
 						ad.Targets.Add(ageTarget);
 					}
-					//TODO: Gender
-					//string genders = adGroupTargetingReader.Current.genders;
-					//if (!string.IsNullOrEmpty(genders))
-					//{
-					//    GenderTarget genderTarget = new GenderTarget();
-					//    if (genders == "1")
-					//        genderTarget.Gender = Gender.Male;
-					//    else
-					//        genderTarget.Gender = Gender.Female;
+					XmlDynamicObject genders = adGroupTargetingReader.Current.genders as XmlDynamicObject;
 
-					//    genderTarget.OriginalID = adGroupTargetingReader.Current.adgroup_id;
-					//    ad.Targets.Add(genderTarget);
+					if (genders != null)
+					{
+						foreach (string gender in genders.GetArray("xsd:int"))
+						{
+							GenderTarget genderTarget = new GenderTarget();
+							if (gender == "1")
+								genderTarget.Gender = Gender.Male;
+							else if (gender == "2")
+								genderTarget.Gender = Gender.Female;
+							else
+								genderTarget.Gender = Gender.UnSpecified;
 
-					//}
+							genderTarget.OriginalID = gender;
+							ad.Targets.Add(genderTarget);
+						}
+
+					}
 
 
 				}
@@ -133,9 +138,9 @@ namespace Edge.Services.Facebook.AdsApi
 
 			//AdGroupCreatives + insert data
 			//DeliveryFile adGroupCreatives = this.Delivery.Files["GetAdGroupCreatives"];
-			//TODO : TALK WITH DORON ABOUT THE FILE NAME
+			//TODO : TALK WITH DORON ABOUT THE FILE NAME-insert as paramter
 			var creativeFiles = from dfc in this.Delivery.Files
-								where dfc.Name.StartsWith("GetAdGroupCreatives")
+								where dfc.Parameters.ContainsKey("IsCreativeDeliveryFile")
 								select dfc;
 			using (var session = new AdMetricsImportSession(this.Delivery))
 			{
@@ -188,35 +193,32 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				OriginalID = ad.adgroup_id,
 				DestinationUrl = ad.link_url
+				//TODO : TARGETS
 			};
+			// Targeting
+			foreach (var target in ad.Targets)
+			{
+				unit.Ad.Targets.Add(target);
+			}
 
 			// Tracker
 			unit.Tracker = new Tracker(unit.Ad);
 
-			// Targeting
-			foreach (var target in ad.Targets)
-			{
-				unit.TargetMatches.Add(target);
-
-			}
+		
+			
 
 
 
-			// Currency
-			//TODO: CURRENCY?
-			//unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
-
-			//..................
+			// Currency ??
+			
+			
 			// MEASURES
 
 			unit.Impressions = ad.Impressions;
 			unit.Clicks = ad.Clicks;
 			unit.Cost = ad.Cost;
 
-			//TODO: unit.AveragePosition 
-			//TODO :unit.Conversions
-			//TODO unit.AveragePosition =;
-			//TODO: input.Conversions			= Int32.Parse	(values[WS.KeywordPerformanceReportColumn.Conversions		.ToString()]);
+			
 
 
 			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
