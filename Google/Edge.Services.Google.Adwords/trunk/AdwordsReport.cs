@@ -17,12 +17,13 @@ namespace Edge.Services.Google.Adwords
 
         public ReportService.AdWordsType AdWordsType { set; get; }
         public ReportType ReportType { set; get; }
-        public Dictionary<string, string> Fields { set; get; }
+        public Dictionary<string, string> FieldsMapping { set; get; }
         public DateTime StartDate { set; get; } // get from configuration
         public DateTime EndDate { set; get; }// get from configuration
         public bool IsZipped { get; set; }
         public ReportFormat Format { get; set; }
         public bool includeZeroImpression { get; set; }
+        public string[] selectedColumns { set; get; } // Get Selected Columns from configuration 
     }
 
     enum ReportFormat

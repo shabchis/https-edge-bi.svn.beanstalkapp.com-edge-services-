@@ -34,6 +34,35 @@ namespace Edge.Services.Google.Adwords
 
             _job.startDay = _report.StartDate;
             _job.endDay = _report.EndDate;
+            _job.name = "Adword Creative Report";
+            _job.selectedColumns = _report.selectedColumns;
+
+            // Validate report.
+            try
+            {
+                ReportService.validateReportJobRequest(_job);
+
+                // Schedule report.
+                long jobId = ReportService.scheduleReportJob(job);
+
+                // Wait for report to finish.
+                ReportService.ReportJobStatus status = _job.getReportJobStatus(jobId);
+                while (status != ReportJobStatus.Completed &&
+                    status != ReportJobStatus.Failed)
+                {
+                    Console.WriteLine(
+                        "Report job status is \"" + status + "\".");
+                    Thread.Sleep(30000);
+                    status = service.getReportJobStatus(jobId);
+                }
+
+                if (status == ReportJobStatus.Failed)
+                {
+                    Console.WriteLine("Report job generation failed.");
+                    System.Environment.Exit(0);
+                }
+            }
+
 
             //Initializing Delivery
             this.Delivery = new Delivery(Instance.InstanceID);
