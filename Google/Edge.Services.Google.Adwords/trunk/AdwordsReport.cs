@@ -5,17 +5,17 @@ using System.Text;
 
 namespace Edge.Services.Google.Adwords
 {
-    class AdwordsReport
+    class AdwordsReport 
     {
         public AdwordsReport()
         {
             IsZipped = false;
             Format = ReportFormat.XML;
-            AdWordsType = ReportService.AdWordsType.SearchOnly;
+            AdWordsType = AdwordsReportService.AdWordsType.SearchOnly;
             includeZeroImpression = false;
         }
 
-        public ReportService.AdWordsType AdWordsType { set; get; }
+        public AdwordsReportService.AdWordsType AdWordsType { set; get; }
         public ReportType ReportType { set; get; }
         public Dictionary<string, string> FieldsMapping { set; get; }
         public DateTime StartDate { set; get; } // get from configuration
@@ -24,6 +24,7 @@ namespace Edge.Services.Google.Adwords
         public ReportFormat Format { get; set; }
         public bool includeZeroImpression { get; set; }
         public string[] selectedColumns { set; get; } // Get Selected Columns from configuration 
+
     }
 
     enum ReportFormat

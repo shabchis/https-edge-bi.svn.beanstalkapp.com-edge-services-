@@ -5,6 +5,8 @@ using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline.Deliveries;
+using Edge.Services.Google.Adwords.ReportDefinitionServiceV201101;
+
 
 namespace Edge.Services.Google.Adwords
 {
@@ -22,7 +24,17 @@ namespace Edge.Services.Google.Adwords
             //Instance.Configuration.Options["Adwords.Email"]
                        
             //Creating Report
-            ReportService.DefinedReportJob _job = new ReportService.DefinedReportJob();
+            AdwordsReportService.DefinedReportJob _job = new AdwordsReportService.DefinedReportJob();
+
+            //ReportDefinitionServiceV201101.ReportDefinition _reportDefinition = new ReportDefinition();
+            //_reportDefinition.reportName = "Adword Creative Report";
+            //_reportDefinition.reportType = ReportDefinitionServiceV201101.ReportDefinitionReportType.ACCOUNT_PERFORMANCE_REPORT;
+            //_reportDefinition.downloadFormat = ReportDefinitionServiceV201101.DownloadFormat.GZIPPED_CSV;
+            //_reportDefinition.downloadFormatSpecified = true;
+            //_reportDefinition.selector = 
+
+
+
             _job.adWordsType = _report.AdWordsType;
             _job.selectedReportType = _report.ReportType.ToString();
 
@@ -31,7 +43,7 @@ namespace Edge.Services.Google.Adwords
                 _job.crossClient = true; // if not supplied - clientEmails is being ignored.
                 _job.clientEmails = _account.Emails.ToArray<string>();
             }
-
+            
             _job.startDay = _report.StartDate;
             _job.endDay = _report.EndDate;
             _job.name = "Adword Creative Report";
@@ -40,8 +52,12 @@ namespace Edge.Services.Google.Adwords
             // Validate report.
             try
             {
-                ReportService.validateReportJobRequest(_job);
-
+                AdwordsReportService.validateReportJobRequest va = new AdwordsReportService.validateReportJobRequest();
+                va.job = _job;
+                va.
+                service.validateReportJob(job);
+          
+                
                 // Schedule report.
                 long jobId = ReportService.scheduleReportJob(job);
 
