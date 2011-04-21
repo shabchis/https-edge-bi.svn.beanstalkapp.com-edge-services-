@@ -11,6 +11,33 @@ using Edge.Data.Pipeline.Deliveries;
 
 namespace Edge.Services.Facebook.AdsApi
 {
+
+
+	/*
+
+	* step 1:
+	 * (Campaigns)
+	 * 
+	 * step 2:
+	 * - Ad.Guid = Guid.NewGuid()
+	 * - Ad.OriginalID
+	 * - Ad.Campaign
+	 * 
+	 * step 3:
+	 * >>> AdMetricsUnit.Ad.Guid + Impressions, clicks, etc.
+	 * 
+	 * 
+	 * 
+	 * step 4:
+	 * - Ad.targeting
+	 * 
+	* step 5:
+	 * >>>> Ad.creatives + remove from dictionary
+
+
+
+	*/
+
 	public class ProcessorService : PipelineService
 	{
 
