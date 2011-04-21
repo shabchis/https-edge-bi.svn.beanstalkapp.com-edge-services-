@@ -16,10 +16,10 @@ namespace Edge.Services.Facebook.AdsApi
 	/*
 
 	* step 1:
-	 * (Campaigns)
+	 * (Campaigns) V
 	 * 
 	 * step 2:
-	 * - Ad.Guid = Guid.NewGuid()
+	 * - Ad.Guid = Guid.NewGuid()-----cancelded
 	 * - Ad.OriginalID
 	 * - Ad.Campaign
 	 * 
@@ -49,19 +49,27 @@ namespace Edge.Services.Facebook.AdsApi
 
 			var campaignsReader = new XmlDynamicReader
 			(campaigns.FileInfo.Location.ToString(), Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"]);
-			Dictionary<string, CampaignData> campaignsData = new Dictionary<string, CampaignData>();
+			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			using (campaignsReader)
 			{
 				while (campaignsReader.Read())
 				{
-					CampaignData camp = new CampaignData()
+					Campaign camp = new Campaign()
 					{
-						CampaignName = campaignsReader.Current.name,
-						CampaignID = campaignsReader.Current.campaign_id,
-						AccountID = campaignsReader.Current.account_id,
-						Status = campaignsReader.Current.campaign_status
+						Name = campaignsReader.Current.name,
+						OriginalID = campaignsReader.Current.campaign_id,
+						Status = campaignsReader.Current.campaign_status,
+						Channel = new Channel()
+						{
+							ID = Delivery.Channel.ID
+						},
+						Account = new Account()
+						{
+							ID = Instance.AccountID
+						}
+
 					};
-					campaignsData.Add(camp.CampaignID, camp);
+					campaignsData.Add(camp.OriginalID, camp);
 				}
 				campaigns.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
@@ -73,15 +81,20 @@ namespace Edge.Services.Facebook.AdsApi
 			(adGroups.FileInfo.Location.ToString(),
 			Instance.Configuration.Options["facebook.ads.GetAdGroups.xpath"]);
 
-			Dictionary<string, string> adsToCampaigns = new Dictionary<string, string>();
 
+			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
 			using (adGroupsReader)
 			{
 				while (adGroupsReader.Read())
 				{
-					string campaignID = adGroupsReader.Current.campaign_id;
-					string adID = adGroupsReader.Current.ad_id;
-					adsToCampaigns.Add(adID, campaignID);
+					Ad ad = new Ad()
+					{
+						OriginalID = adGroupsReader.Current.ad_id,
+						Campaign = campaignsData[adGroupsReader.Current.campaign_id]
+
+					};
+					ads.Add(ad.OriginalID, ad);
+					
 				}
 				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
@@ -89,73 +102,78 @@ namespace Edge.Services.Facebook.AdsApi
 
 			//GetAdGroupStats
 			DeliveryFile adGroupStats = this.Delivery.Files["GetAdGroupStats"];
-			Dictionary<string, AdData> ads = new Dictionary<string, AdData>();
+			
 			var adGroupStatsReader = new XmlDynamicReader
 				(adGroupStats.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
-
-			using (adGroupStatsReader)
+			using (var session = new AdDataImportSession(this.Delivery))
 			{
-				while (adGroupStatsReader.Read())
+				using (adGroupStatsReader)
 				{
-					AdData ad = new AdData()
+					while (adGroupStatsReader.Read())
 					{
-						adgroup_id = adGroupStatsReader.Current.id,
-						Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks),
-						Cost = Convert.ToDouble(adGroupStatsReader.Current.spent),
-						Actions = Convert.ToInt32(adGroupStatsReader.Current.actions),
-						Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),
-						Social_clicks = Convert.ToInt64(adGroupStatsReader.Current.social_clicks),
-						Social_Cost = Convert.ToDouble(adGroupStatsReader.Current.social_spent),
-						Social_impressions = Convert.ToInt64(adGroupStatsReader.Current.social_impressions)
-					};
-					ads.Add(ad.adgroup_id, ad);
-
-				}
-				adGroupStats.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
-			}
-
-			//getAdGroupTargeting
-
-			DeliveryFile adGroupTargeting = this.Delivery.Files["getAdGroupTargeting"];
-			var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
-			using (adGroupTargetingReader)
-			{
-				while (adGroupTargetingReader.Read())
-				{
-					AdData ad = ads[adGroupTargetingReader.Current.adgroup_id];
-					string age_min = adGroupTargetingReader.Current.age_min;
-					if (!string.IsNullOrEmpty(age_min))
-					{
-						AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max), OriginalID = adGroupTargetingReader.Current.adgroup_id };
-						ad.Targets.Add(ageTarget);
-					}
-					XmlDynamicObject genders = adGroupTargetingReader.Current.genders as XmlDynamicObject;
-
-					if (genders != null)
-					{
-						foreach (string gender in genders.GetArray("xsd:int"))
+						
+						
+						AdMetricsUnit adMetricsUnit = new AdMetricsUnit()
 						{
-							GenderTarget genderTarget = new GenderTarget();
-							if (gender == "1")
-								genderTarget.Gender = Gender.Male;
-							else if (gender == "2")
-								genderTarget.Gender = Gender.Female;
-							else
-								genderTarget.Gender = Gender.UnSpecified;
+							Ad=ads[adGroupStatsReader.Current.id],
+							Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks),
+							Cost = Convert.ToDouble(adGroupStatsReader.Current.spent),
+							Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),
+							//Actions = Convert.ToInt32(adGroupStatsReader.Current.actions),						
+							//Social_clicks = Convert.ToInt64(adGroupStatsReader.Current.social_clicks),
+							//Social_Cost = Convert.ToDouble(adGroupStatsReader.Current.social_spent),
+							//Social_impressions = Convert.ToInt64(adGroupStatsReader.Current.social_impressions)						
 
-							genderTarget.OriginalID = gender;
-							ad.Targets.Add(genderTarget);
+						};
+						session.ImportMetrics(adMetricsUnit);
+
+					}
+					adGroupStats.History.Add(DeliveryOperation.Processed, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
+				}
+
+
+				//getAdGroupTargeting
+
+				DeliveryFile adGroupTargeting = this.Delivery.Files["getAdGroupTargeting"];
+				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+				using (adGroupTargetingReader)
+				{
+					while (adGroupTargetingReader.Read())
+					{
+						Ad ad = ads[adGroupTargetingReader.Current.adgroup_id];
+						string age_min = adGroupTargetingReader.Current.age_min;
+						if (!string.IsNullOrEmpty(age_min))
+						{
+							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max), OriginalID = adGroupTargetingReader.Current.adgroup_id };
+							ad.Targets.Add(ageTarget);
+						}
+						XmlDynamicObject genders = adGroupTargetingReader.Current.genders as XmlDynamicObject;
+
+						if (genders != null)
+						{
+							foreach (string gender in genders.GetArray("xsd:int"))
+							{
+								GenderTarget genderTarget = new GenderTarget();
+								if (gender == "1")
+									genderTarget.Gender = Gender.Male;
+								else if (gender == "2")
+									genderTarget.Gender = Gender.Female;
+								else
+									genderTarget.Gender = Gender.UnSpecified;
+
+								genderTarget.OriginalID = gender;
+								ad.Targets.Add(genderTarget);
+							}
+
 						}
 
-					}
 
+					}
+				
 
 				}
-				adGroupTargeting.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
-
-			}
 
 
 
@@ -163,14 +181,11 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 
-			//AdGroupCreatives + insert data
-			//DeliveryFile adGroupCreatives = this.Delivery.Files["GetAdGroupCreatives"];
-			//TODO : TALK WITH DORON ABOUT THE FILE NAME-insert as paramter
-			var creativeFiles = from dfc in this.Delivery.Files
-								where dfc.Parameters.ContainsKey("IsCreativeDeliveryFile")
-								select dfc;
-			using (var session = new AdMetricsImportSession(this.Delivery))
-			{
+				
+				var creativeFiles = from dfc in this.Delivery.Files
+									where dfc.Parameters.ContainsKey("IsCreativeDeliveryFile")
+									select dfc;
+
 				foreach (var creativeFile in creativeFiles)
 				{
 					var adGroupCreativesReader = new XmlDynamicReader
@@ -185,12 +200,43 @@ namespace Edge.Services.Facebook.AdsApi
 						while (adGroupCreativesReader.Read())
 						{
 
-							AdData ad = ads[adGroupCreativesReader.Current.adgroup_id];
-							string campaignID = adsToCampaigns[ad.adgroup_id];
-							CampaignData campaign = campaignsData[campaignID];
-							AdMetricsUnit data = CreateUnitFromFacebookData(ad, campaign, adGroupCreativesReader.Current);
+							Ad ad = ads[adGroupCreativesReader.Current.adgroup_id];
+							ad.Creatives = new List<Creative>();//TODO: DISTENGUSHI BETWEEN CREATIVES UNIQUE ID DATABASE?
+							ad.Creatives.Add(new ImageCreative()
+							{
+								ImageUrl = adGroupCreativesReader.Current.image_url,
+								OriginalID = adGroupCreativesReader.Current.creative_id
+							
+							});
+							ad.Creatives.Add(new TextCreative()
+							{
+								OriginalID = adGroupCreativesReader.Current.creative_id,
+								TextType = TextCreativeType.Body,
+								Text = adGroupCreativesReader.Current.body
+														
 
-							session.Import(data);
+							});
+							ad.Creatives.Add(new TextCreative()
+							{
+
+								OriginalID = adGroupCreativesReader.Current.creative_id,
+								TextType = TextCreativeType.DisplayUrl,
+								Text = adGroupCreativesReader.Current.preview_url
+								
+							});
+							ad.Creatives.Add(new TextCreative()
+							{
+
+								OriginalID = adGroupCreativesReader.Current.creative_id,
+								TextType = TextCreativeType.Title,
+								Text = adGroupCreativesReader.Current.title
+								
+							});
+
+
+
+							session.ImportAd(ad);
+
 							//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
 						}
 
@@ -231,21 +277,21 @@ namespace Edge.Services.Facebook.AdsApi
 			// Tracker
 			unit.Tracker = new Tracker(unit.Ad);
 
-		
-			
+
+
 
 
 
 			// Currency ??
-			
-			
+
+
 			// MEASURES
 
 			unit.Impressions = ad.Impressions;
 			unit.Clicks = ad.Clicks;
 			unit.Cost = ad.Cost;
 
-			
+
 
 
 			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
