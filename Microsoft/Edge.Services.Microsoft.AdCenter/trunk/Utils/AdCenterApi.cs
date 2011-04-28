@@ -7,7 +7,6 @@ using System.Text;
 using Edge.Core;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using Edge.Data.Pipeline.Configuration;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
 using Edge.Data.Pipeline.Readers;
 using Edge.Data.Pipeline.Services;

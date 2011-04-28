@@ -7,7 +7,6 @@ using System.Text;
 using Edge.Core;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using Edge.Data.Pipeline.Configuration;
 using Edge.Data.Pipeline.Deliveries;
 using Edge.Data.Pipeline.Readers;
 using Edge.Data.Pipeline.Services;
@@ -34,17 +33,29 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Both keyword and ad performance reports are needed
 			this.Delivery.Files.Add(new DeliveryFile()
 			{
+				Name = Const.Files.AdReport,
+				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewAdPerformanceReportRequest(
+					//WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
+					WS.AdPerformanceReportColumn.CampaignName,
+					//WS.AdPerformanceReportColumn.CampaignId, // why did MS leave this out? stupid fucks
+					WS.AdPerformanceReportColumn.AdGroupName,
+					WS.AdPerformanceReportColumn.AdGroupId,
+					WS.AdPerformanceReportColumn.AdId,
+					WS.AdPerformanceReportColumn.AdTitle,
+					WS.AdPerformanceReportColumn.AdDescription,
+					WS.AdPerformanceReportColumn.DestinationUrl
+				))
+			}); ReportProgress(0.49); // progress: 49%
+
+			this.Delivery.Files.Add(new DeliveryFile()
+			{
 				Name = Const.Files.KeywordReport,
 				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewKeywordPerformanceReportRequest(
 					WS.KeywordPerformanceReportColumn.TimePeriod, // special column
-					WS.KeywordPerformanceReportColumn.AccountNumber,
-					WS.KeywordPerformanceReportColumn.CampaignName,
-					WS.KeywordPerformanceReportColumn.CampaignId,
-					WS.KeywordPerformanceReportColumn.AdGroupName,
-					WS.KeywordPerformanceReportColumn.AdGroupId,
+					//WS.KeywordPerformanceReportColumn.CampaignId, // unfortunate workaround...
+					WS.KeywordPerformanceReportColumn.AdId,
 					WS.KeywordPerformanceReportColumn.Keyword,
 					WS.KeywordPerformanceReportColumn.KeywordId,
-					WS.KeywordPerformanceReportColumn.AdId,
 					WS.KeywordPerformanceReportColumn.DestinationUrl,
 					WS.KeywordPerformanceReportColumn.MatchType,
 					WS.KeywordPerformanceReportColumn.CurrencyCode,
@@ -58,17 +69,6 @@ namespace Edge.Services.Microsoft.AdCenter
 				{
 					{Const.Parameters.TimePeriodColumnName, AdCenterApi.GetTimePeriodColumnName(WS.ReportAggregation.Daily)}
 				}
-			});
-			ReportProgress(0.49); // progress: 49%
-
-			this.Delivery.Files.Add(new DeliveryFile()
-			{
-				Name = Const.Files.AdReport,
-				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewAdPerformanceReportRequest(
-					WS.AdPerformanceReportColumn.AdId,
-					WS.AdPerformanceReportColumn.AdTitle,
-					WS.AdPerformanceReportColumn.AdDescription
-				))
 			});
 			ReportProgress(0.98); // progress: 98%
 
