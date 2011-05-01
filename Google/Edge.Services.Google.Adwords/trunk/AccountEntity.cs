@@ -16,9 +16,7 @@ namespace Edge.Services.Google.Adwords
         }
       
         public int Id { get; set; }
-        public string User {get; set;}
-        public string Password {get; set;}
-        public List<string> Emails { get; set; } // To Do : split emails from configuration . 
+        public List<string> Emails { get; set; } // To Do : split emails from configuration.
 
 
         internal void GetAccountAccessInfo()
