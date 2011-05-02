@@ -48,7 +48,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile campaigns = this.Delivery.Files["GetCampaigns"];
 
 			var campaignsReader = new XmlDynamicReader
-			(campaigns.FileInfo.Location.ToString(), Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"]);
+			(campaigns.GetFileInfo().Location, Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			using (campaignsReader)
 			{
@@ -78,7 +78,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile adGroups = this.Delivery.Files["GetAdGroups"];
 
 			var adGroupsReader = new XmlDynamicReader
-			(adGroups.FileInfo.Location.ToString(),
+			(adGroups.GetFileInfo().Location,
 			Instance.Configuration.Options["facebook.ads.GetAdGroups.xpath"]);
 
 
@@ -104,7 +104,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile adGroupStats = this.Delivery.Files["GetAdGroupStats"];
 			
 			var adGroupStatsReader = new XmlDynamicReader
-				(adGroupStats.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+				(adGroupStats.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 			using (var session = new AdDataImportSession(this.Delivery))
@@ -137,7 +137,7 @@ namespace Edge.Services.Facebook.AdsApi
 				//getAdGroupTargeting
 
 				DeliveryFile adGroupTargeting = this.Delivery.Files["getAdGroupTargeting"];
-				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
 				using (adGroupTargetingReader)
 				{
 					while (adGroupTargetingReader.Read())
@@ -189,7 +189,7 @@ namespace Edge.Services.Facebook.AdsApi
 				foreach (var creativeFile in creativeFiles)
 				{
 					var adGroupCreativesReader = new XmlDynamicReader
-							(creativeFile.FileInfo.Location.ToString(), Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+							(creativeFile.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 
@@ -249,59 +249,59 @@ namespace Edge.Services.Facebook.AdsApi
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		private AdMetricsUnit CreateUnitFromFacebookData(AdData ad, CampaignData campaign, dynamic adGroupCreative)
-		{
-			AdMetricsUnit unit = new AdMetricsUnit();
-			//unit.TimeStamp = this.Delivery.TargetPeriod; TODO: WHAT IS TIME STAMP
-			unit.Account = new Account() { ID = Instance.AccountID };
-			// Campaign
-			unit.Campaign = new Campaign()
-			{
-				Name = campaign.CampaignName,
-				OriginalID = campaign.CampaignID
-			};
+		//private AdMetricsUnit CreateUnitFromFacebookData(AdData ad, CampaignData campaign, dynamic adGroupCreative)
+		//{
+		//    AdMetricsUnit unit = new AdMetricsUnit();
+		//    //unit.TimeStamp = this.Delivery.TargetPeriod; TODO: WHAT IS TIME STAMP
+		//    unit.Account = new Account() { ID = Instance.AccountID };
+		//    // Campaign
+		//    unit.Campaign = new Campaign()
+		//    {
+		//        Name = campaign.CampaignName,
+		//        OriginalID = campaign.CampaignID
+		//    };
 
-			// Ad
-			unit.Ad = new Ad()
-			{
-				OriginalID = ad.adgroup_id,
-				DestinationUrl = ad.link_url
-				//TODO : TARGETS
-			};
-			// Targeting
-			foreach (var target in ad.Targets)
-			{
-				unit.Ad.Targets.Add(target);
-			}
+		//    // Ad
+		//    unit.Ad = new Ad()
+		//    {
+		//        OriginalID = ad.adgroup_id,
+		//        DestinationUrl = ad.link_url
+		//        //TODO : TARGETS
+		//    };
+		//    // Targeting
+		//    foreach (var target in ad.Targets)
+		//    {
+		//        unit.Ad.Targets.Add(target);
+		//    }
 
-			// Tracker
-			unit.Tracker = new Tracker(unit.Ad);
-
-
+		//    // Tracker
+		//    unit.Tracker = new Tracker(unit.Ad);
 
 
 
 
-			// Currency ??
 
 
-			// MEASURES
-
-			unit.Impressions = ad.Impressions;
-			unit.Clicks = ad.Clicks;
-			unit.Cost = ad.Cost;
+		//    // Currency ??
 
 
+		//    // MEASURES
+
+		//    unit.Impressions = ad.Impressions;
+		//    unit.Clicks = ad.Clicks;
+		//    unit.Cost = ad.Cost;
 
 
-			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
-			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Body, Value = adGroupCreative.body });
-			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.DisplayUrl, Value = adGroupCreative.preview_url });
-			unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Image, Value = adGroupCreative.image_url });
-			return unit;
 
 
-		}
+		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
+		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Body, Value = adGroupCreative.body });
+		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.DisplayUrl, Value = adGroupCreative.preview_url });
+		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Image, Value = adGroupCreative.image_url });
+		//    return unit;
+
+
+		//}
 
 
 	}

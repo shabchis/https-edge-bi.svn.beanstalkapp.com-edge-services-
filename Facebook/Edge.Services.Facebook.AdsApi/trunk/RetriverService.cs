@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using MyFacebook=Facebook;
+using MyFacebook = Facebook;
 using System.Net;
 using System.IO;
 using Edge.Data.Pipeline.Readers;
@@ -18,72 +18,110 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	class RetriverService : PipelineService
 	{
+		int _countedFile;
+		string _baseAddress;
+		double _minProgress = 0.05;
+		
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			string baseAddress = this.Instance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
-			double progress = 0;
-			double interval = (this.Delivery.Files.Count / 100) - 0.0001;
+#if (DEBUG)
+			{
+				forDebugOnly onlyForDebug = new forDebugOnly();
+				this.Delivery=onlyForDebug.GetDelivery(this.Instance);
+			}
+#endif
+
+			_countedFile = this.Delivery.Files.Count + 3;			
+			 _baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
+			
 			foreach (DeliveryFile file in this.Delivery.Files)
 			{
-				
+
 				try
 				{
-					DownloadFile(baseAddress, ref progress, interval, file);
-					file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+					if (file.Name != "AdGroups")
+					{
+						DownloadFile(file);
+						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+					}
 				}
 				catch (WebException ex)
 				{
 					Console.WriteLine(ex.Message);
 				}
 			}
-			DeliveryFile deliveryFile= this.Delivery.Files["GetAdGroups.xml"];
+			DownloadFile(Delivery.Files["AdGroups"]);
+			Delivery.Files["AdGroups"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups"];
 
 			var adGroupReader = new XmlDynamicReader
-				(deliveryFile.FileInfo.Location.ToString(),
-				Instance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
-				
-			
-						using (adGroupReader)
-						{
-							List<string> adGroupsIds = new List<string>();
-							int counter=1;
-							List<DeliveryFile> deliveryFiles=new List<DeliveryFile>();
-							while(adGroupReader.Read())
-							{
-								adGroupsIds.Add(adGroupReader.Current.adgroup_id);
-								if (adGroupsIds.Count == 999)								
-									CreateCreativeDeliveryFile(ref adGroupsIds,ref counter,ref deliveryFiles);								
-							}
-							if (adGroupsIds.Count>0)
-								CreateCreativeDeliveryFile(ref adGroupsIds,ref counter,ref deliveryFiles);
-							if (deliveryFiles.Count > 0)
-							{
-								//TODO: PROGRESS TALK WITH DORON
-								foreach (DeliveryFile file in deliveryFiles)
-								{
-									this.Delivery.Files.Add(file);
-									DownloadFile(baseAddress,ref progress, interval, file);
-									file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-								}
-							}
-						}
-					
+				(FileManager.Open( deliveryFile.GetFileInfo()),
+				Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+
+
+			using (adGroupReader)
+			{
+				List<string> adGroupsIds = new List<string>();
+				int counter = 1;
+				List<DeliveryFile> deliveryFiles = new List<DeliveryFile>();
+				while (adGroupReader.Read())
+				{
+					adGroupsIds.Add(adGroupReader.Current.adgroup_id);
+					if (adGroupsIds.Count == 999)
+						CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
+				}
+				if (adGroupsIds.Count > 0)
+					CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
+				if (deliveryFiles.Count > 0)
+				{
+					//TODO: PROGRESS TALK WITH DORON
+					foreach (DeliveryFile file in deliveryFiles)
+					{
+						this.Delivery.Files.Add(file);
+						DownloadFile(file);
+						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+					}
+				}
+			}
+
 
 			return ServiceOutcome.Success;
 		}
 
-		private void DownloadFile(string baseAddress, ref double progress, double interval, DeliveryFile file)
+		
+
+		private void DownloadFile(DeliveryFile file)
 		{
+			bool async=true;
 			HttpWebResponse response = null;
 			string body = file.Parameters["body"].ToString();
-			HttpWebRequest request = CreateRequest(baseAddress, body);
+			HttpWebRequest request = CreateRequest(_baseAddress, body);
 			response = (HttpWebResponse)request.GetResponse();
-			FileManager.Download(response.GetResponseStream(), null);
-			progress += interval;
-			this.ReportProgress(progress);
+			if (file.Name == "AdGroups")
+				async = false;
+			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["FileRelativePath"].ToString(), async, response.ContentLength);
+			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
+			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
+			fileDownloadOperation.Start();
+			
 		}
 
-		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds,ref int counter,ref List<DeliveryFile> deliveryFiles)
+		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
+		{
+			_countedFile -= 1;
+		}
+
+		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
+		{
+			double percent =Math.Round( Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile),3);
+			if (percent >= _minProgress)
+			{
+				_minProgress +=0.05;
+				this.ReportProgress(percent);
+			}
+		}
+
+		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
 		{
 			DeliveryFile current = new DeliveryFile();
 			current.Name = string.Format("GetAdGroupCreatives-{0}.xml", counter);
@@ -100,7 +138,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
-			AdGroupCreativesParameters.Add("include_deleted", "false");			
+			AdGroupCreativesParameters.Add("include_deleted", "false");
 			dynamic d = new ExpandoObject();
 			d.adgroup_ids = adGroupsIds;
 
@@ -109,7 +147,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			return body;
 		}
-		private HttpWebRequest CreateRequest(string baseAddress,string body)
+		private HttpWebRequest CreateRequest(string baseAddress, string body)
 		{
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(baseAddress);
 			request.Method = "POST";
