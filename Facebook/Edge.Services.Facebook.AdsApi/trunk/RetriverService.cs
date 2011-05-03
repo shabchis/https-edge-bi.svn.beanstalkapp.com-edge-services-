@@ -33,23 +33,23 @@ namespace Edge.Services.Facebook.AdsApi
 
 			_countedFile = this.Delivery.Files.Count + 3;			
 			 _baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
-			
-			foreach (DeliveryFile file in this.Delivery.Files)
-			{
 
-				try
-				{
-					if (file.Name != "AdGroups")
-					{
-						DownloadFile(file);
-						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-					}
-				}
-				catch (WebException ex)
-				{
-					Console.WriteLine(ex.Message);
-				}
-			}
+			 foreach (DeliveryFile file in this.Delivery.Files)
+			 {
+
+				 try
+				 {
+					 if (file.Name != "AdGroups")
+					 {
+						 DownloadFile(file);
+						 file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+					 }
+				 }
+				 catch (WebException ex)
+				 {
+					 Edge.Core.Utilities.Log.Write(this.ToString(),string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
+				 }
+			 }
 			DownloadFile(Delivery.Files["AdGroups"]);
 			Delivery.Files["AdGroups"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups"];
@@ -84,7 +84,7 @@ namespace Edge.Services.Facebook.AdsApi
 				}
 			}
 
-
+			ProcessorService.d = this.Delivery;
 			return ServiceOutcome.Success;
 		}
 
@@ -124,9 +124,10 @@ namespace Edge.Services.Facebook.AdsApi
 		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
 		{
 			DeliveryFile current = new DeliveryFile();
-			current.Name = string.Format("GetAdGroupCreatives-{0}.xml", counter);
+			current.Name = string.Format("GetAdGroupCreatives-{0}", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
+			current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\AdGroupCreatives\{0}_{1}.xml", current.Name,  DateTime.Now.ToString("yyyyMMddHHmmss")));
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
 			counter++;
@@ -152,6 +153,7 @@ namespace Edge.Services.Facebook.AdsApi
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(baseAddress);
 			request.Method = "POST";
 			request.ContentType = "application/x-www-form-urlencoded";
+			//request.Accept = "text/xml;charset=utf-8";
 			CreateBody(request.GetRequestStream(), body);
 			return request;
 		}

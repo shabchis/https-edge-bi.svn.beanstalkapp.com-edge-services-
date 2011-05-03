@@ -40,15 +40,16 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
-
+		public static Delivery d;
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
+			this.Delivery = d;
 			//Campaigns
 			DeliveryFile campaigns = this.Delivery.Files["GetCampaigns"];
 
 			var campaignsReader = new XmlDynamicReader
-			(campaigns.GetFileInfo().Location, Instance.Configuration.Options["facebook.ads.getCampaigns.xpath"]);
+			(FileManager.Open(campaigns.GetFileInfo()), Instance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			using (campaignsReader)
 			{
@@ -78,8 +79,8 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile adGroups = this.Delivery.Files["GetAdGroups"];
 
 			var adGroupsReader = new XmlDynamicReader
-			(adGroups.GetFileInfo().Location,
-			Instance.Configuration.Options["facebook.ads.GetAdGroups.xpath"]);
+			(FileManager.Open(adGroups.GetFileInfo()),
+			Instance.Configuration.Options["Facebook.ads.GetAdGroups.xpath"]);
 
 
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
@@ -104,7 +105,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile adGroupStats = this.Delivery.Files["GetAdGroupStats"];
 			
 			var adGroupStatsReader = new XmlDynamicReader
-				(adGroupStats.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+				(FileManager.Open(adGroupStats.GetFileInfo()), Instance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
 
 
 			using (var session = new AdDataImportSession(this.Delivery))
@@ -120,11 +121,7 @@ namespace Edge.Services.Facebook.AdsApi
 							Ad=ads[adGroupStatsReader.Current.id],
 							Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks),
 							Cost = Convert.ToDouble(adGroupStatsReader.Current.spent),
-							Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),
-							//Actions = Convert.ToInt32(adGroupStatsReader.Current.actions),						
-							//Social_clicks = Convert.ToInt64(adGroupStatsReader.Current.social_clicks),
-							//Social_Cost = Convert.ToDouble(adGroupStatsReader.Current.social_spent),
-							//Social_impressions = Convert.ToInt64(adGroupStatsReader.Current.social_impressions)						
+							Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),												
 
 						};
 						session.ImportMetrics(adMetricsUnit);
@@ -137,7 +134,7 @@ namespace Edge.Services.Facebook.AdsApi
 				//getAdGroupTargeting
 
 				DeliveryFile adGroupTargeting = this.Delivery.Files["getAdGroupTargeting"];
-				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+				var adGroupTargetingReader = new XmlDynamicReader(FileManager.Open(adGroupTargeting.GetFileInfo()), Instance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
 				using (adGroupTargetingReader)
 				{
 					while (adGroupTargetingReader.Read())
@@ -189,7 +186,7 @@ namespace Edge.Services.Facebook.AdsApi
 				foreach (var creativeFile in creativeFiles)
 				{
 					var adGroupCreativesReader = new XmlDynamicReader
-							(creativeFile.GetFileInfo().Location, Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+							(FileManager.Open(creativeFile.GetFileInfo()), Instance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 
