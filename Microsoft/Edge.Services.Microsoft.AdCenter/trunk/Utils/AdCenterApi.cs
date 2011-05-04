@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using Edge.Core;
-using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
-using Edge.Data.Pipeline.Readers;
 using Edge.Data.Pipeline.Services;
+using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
@@ -30,7 +23,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				Language = WS.ReportLanguage.English,
 				Format = WS.ReportFormat.Xml,
 				ReturnOnlyCompleteData = false,
-				ReportName = String.Format("KeywordPerformance (delivery: {0})", _service.Delivery.DeliveryID),
+				ReportName = String.Format("KeywordPerformance (delivery: {0})", _service.Delivery.Guid),
 				Aggregation = WS.ReportAggregation.Daily,
 				Time = ConvertToReportTime(_service.TargetPeriod),
 				Columns = columns,
@@ -51,7 +44,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				Language = WS.ReportLanguage.English,
 				Format = WS.ReportFormat.Xml,
 				ReturnOnlyCompleteData = false,
-				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.DeliveryID),
+				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.Guid),
 				Aggregation = WS.NonHourlyReportAggregation.Daily,
 				Time = ConvertToReportTime(_service.TargetPeriod),
 				Columns = columns,
