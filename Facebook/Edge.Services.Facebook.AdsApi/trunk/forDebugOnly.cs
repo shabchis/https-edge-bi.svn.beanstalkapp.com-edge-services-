@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Edge.Data.Pipeline.Deliveries;
 using Edge.Core.Services;
 using System.Globalization;
 using System.Web;
@@ -13,10 +12,11 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	class forDebugOnly
 	{
+		public static Delivery dddd;
 		Delivery Delivery = new Delivery(999);
 		ServiceInstanceInfo Instance;
 		DateTimeRange TargetPeriod;
-		internal Data.Pipeline.Deliveries.Delivery GetDelivery(ServiceInstanceInfo instance)
+		internal Delivery GetDelivery(ServiceInstanceInfo instance)
 		{
 			
 			this.Instance = instance;

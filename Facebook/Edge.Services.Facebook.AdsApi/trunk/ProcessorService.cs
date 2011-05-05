@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
-using Edge.Data.Pipeline.Readers;
-//using Edge.Data.Pipeline.GkManager;
 using Edge.Data.Pipeline.Services;
-using Edge.Data.Pipeline.Objects;
-using Edge.Data.Pipeline.Deliveries;
+using Edge.Data.Objects;
+using Edge.Data.Pipeline.Importing;
 
 namespace Edge.Services.Facebook.AdsApi
 {
@@ -40,11 +38,10 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
-		public static Delivery d;
-
+		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			this.Delivery = d;
+			
 			//Campaigns
 			DeliveryFile campaigns = this.Delivery.Files["GetCampaigns"];
 

@@ -7,12 +7,11 @@ using Edge.Data.Pipeline;
 using MyFacebook = Facebook;
 using System.Net;
 using System.IO;
-using Edge.Data.Pipeline.Readers;
 using System.Globalization;
 using System.Web;
 using System.Dynamic;
 using Edge.Data.Pipeline.Services;
-using Edge.Data.Pipeline.Deliveries;
+
 
 namespace Edge.Services.Facebook.AdsApi
 {
@@ -83,8 +82,8 @@ namespace Edge.Services.Facebook.AdsApi
 					}
 				}
 			}
-
-			ProcessorService.d = this.Delivery;
+			
+			
 			return ServiceOutcome.Success;
 		}
 
