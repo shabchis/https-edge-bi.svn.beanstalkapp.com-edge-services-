@@ -19,11 +19,14 @@ namespace Edge.Services.Facebook.AdsApi
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// Create a new delivery
+
 			this.Delivery = new Delivery(this.Instance.InstanceID)
 			{
+				_guid=Guid.Parse( this.Instance.Configuration.Options["DeliveryGuid"]),
 				TargetPeriod = this.TargetPeriod
 			};
-
+			
+			
 			//set parameters for entire delivery
 			this.Delivery.Parameters["AccountID"] = this.Instance.AccountID;
 
@@ -60,7 +63,12 @@ namespace Edge.Services.Facebook.AdsApi
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
 
 			//this.Delivery.Channel =(Edge.Data.Pipeline.Objects.Channel)this.Instance.Configuration.Options["ChannelID"];
-
+			Delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = 6
+			};
+			Delivery.Parameters["AccountID"] = 1007;
+			
 			
 			this.ReportProgress(0.2);
 
@@ -101,6 +109,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			this.ReportProgress(0.98);
 			this.Delivery.Save();
+
 			this.ReportProgress(0.99);
 			return ServiceOutcome.Success;
 		}

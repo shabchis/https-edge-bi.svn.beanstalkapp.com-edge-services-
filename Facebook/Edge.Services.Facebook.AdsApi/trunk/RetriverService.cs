@@ -23,12 +23,12 @@ namespace Edge.Services.Facebook.AdsApi
 		
 		protected override ServiceOutcome DoPipelineWork()
 		{
-#if (DEBUG)
-			{
-				forDebugOnly onlyForDebug = new forDebugOnly();
-				this.Delivery=onlyForDebug.GetDelivery(this.Instance);
-			}
-#endif
+//#if (DEBUG)
+//            {
+//                forDebugOnly onlyForDebug = new forDebugOnly();
+//                this.Delivery=onlyForDebug.GetDelivery(this.Instance);
+//            }
+//#endif
 
 			_countedFile = this.Delivery.Files.Count + 3;			
 			 _baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
@@ -82,8 +82,8 @@ namespace Edge.Services.Facebook.AdsApi
 					}
 				}
 			}
-			
-			
+
+			this.Delivery.Save();
 			return ServiceOutcome.Success;
 		}
 
