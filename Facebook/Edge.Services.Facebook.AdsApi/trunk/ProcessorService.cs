@@ -141,7 +141,8 @@ namespace Edge.Services.Facebook.AdsApi
 							},
 							Conversions=new Dictionary<int,double>(),
 							TargetMatches=new List<Target>(),
-							TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
+							//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
+							TimeStamp=DateTime.Now
 							
 
 						};
