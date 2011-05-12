@@ -102,7 +102,9 @@ namespace Edge.Services.Facebook.AdsApi
 					Ad ad = new Ad()
 					{
 						OriginalID = adGroupsReader.Current.ad_id,
-						Campaign = campaignsData[adGroupsReader.Current.campaign_id]
+						Campaign = campaignsData[adGroupsReader.Current.campaign_id],
+						Name = adGroupsReader.Current.name
+
 
 					};
 					ads.Add(ad.OriginalID, ad);
@@ -189,6 +191,7 @@ namespace Edge.Services.Facebook.AdsApi
 							}
 
 						}
+						
 
 
 					}
@@ -226,14 +229,16 @@ namespace Edge.Services.Facebook.AdsApi
 							ad.Creatives.Add(new ImageCreative()
 							{
 								ImageUrl = adGroupCreativesReader.Current.image_url,
-								OriginalID = adGroupCreativesReader.Current.creative_id
+								OriginalID = adGroupCreativesReader.Current.creative_id,
+								Name = adGroupCreativesReader.Current.name
 
 							});
 							ad.Creatives.Add(new TextCreative()
 							{
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Body,
-								Text = adGroupCreativesReader.Current.body
+								Text = adGroupCreativesReader.Current.body,
+								Name = adGroupCreativesReader.Current.name
 
 
 							});
@@ -242,7 +247,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.DisplayUrl,
-								Text = adGroupCreativesReader.Current.preview_url
+								Text = adGroupCreativesReader.Current.preview_url,
+								Name = adGroupCreativesReader.Current.name
 
 							});
 							ad.Creatives.Add(new TextCreative()
@@ -250,7 +256,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Title,
-								Text = adGroupCreativesReader.Current.title
+								Text = adGroupCreativesReader.Current.title,
+								Name = adGroupCreativesReader.Current.name
 
 							});
 
