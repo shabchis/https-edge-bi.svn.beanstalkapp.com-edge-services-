@@ -73,7 +73,7 @@ namespace Edge.Services.Facebook.AdsApi
 					CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
 				if (deliveryFiles.Count > 0)
 				{
-					//TODO: PROGRESS TALK WITH DORON
+					
 					foreach (DeliveryFile file in deliveryFiles)
 					{
 						this.Delivery.Files.Add(file);
@@ -96,7 +96,7 @@ namespace Edge.Services.Facebook.AdsApi
 			string body = file.Parameters["body"].ToString();
 			HttpWebRequest request = CreateRequest(_baseAddress, body);
 			response = (HttpWebResponse)request.GetResponse();
-			if (file.Name == "AdGroups")
+			if (file.Name == "AdGroups" || file.Name.StartsWith("AdGroupCreatives"))
 				async = false;
 			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["FileRelativePath"].ToString(), async, response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
@@ -116,6 +116,7 @@ namespace Edge.Services.Facebook.AdsApi
 			if (percent >= _minProgress)
 			{
 				_minProgress +=0.05;
+				if (percent<=1)
 				this.ReportProgress(percent);
 			}
 		}
@@ -123,7 +124,7 @@ namespace Edge.Services.Facebook.AdsApi
 		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
 		{
 			DeliveryFile current = new DeliveryFile();
-			current.Name = string.Format("GetAdGroupCreatives-{0}", counter);
+			current.Name = string.Format("AdGroupCreatives-{0}", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
 			current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\AdGroupCreatives\{0}_{1}.xml", current.Name,  DateTime.Now.ToString("yyyyMMddHHmmss")));

@@ -120,12 +120,15 @@ namespace Edge.Services.Facebook.AdsApi
 			string body;
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
-			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");				
-			AdGroupStatesParameters.Add("include_deleted","false");
+			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");
+			AdGroupStatesParameters.Add("include_deleted", "false");
+			dynamic timeRangeIn = new ExpandoObject();
+			timeRangeIn.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
+			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
 			dynamic timeRange = new ExpandoObject();
-			timeRange.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
-			timeRange.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
-			AdGroupStatesParameters.Add("time_ranges", Newtonsoft.Json.JsonConvert.SerializeObject(timeRange));
+			timeRange.time_range = timeRangeIn;
+			string timeRangeString = Newtonsoft.Json.JsonConvert.SerializeObject(timeRange);
+			AdGroupStatesParameters.Add("time_ranges", timeRangeString);
 			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
 			
 

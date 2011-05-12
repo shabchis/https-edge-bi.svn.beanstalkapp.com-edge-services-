@@ -38,10 +38,10 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
-		
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
+
 			//Campaigns
 			DeliveryFile campaigns = this.Delivery.Files["Campaigns"];
 
@@ -54,10 +54,10 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					Campaign camp = new Campaign()
 					{
-						
+
 						Name = campaignsReader.Current.name,
 						OriginalID = campaignsReader.Current.campaign_id,
-						
+
 						Channel = new Channel()
 						{
 							ID = 6
@@ -68,24 +68,24 @@ namespace Edge.Services.Facebook.AdsApi
 						}
 
 					};
-					int campaignStatus =int.Parse( campaignsReader.Current.campaign_status);
+					int campaignStatus = int.Parse(campaignsReader.Current.campaign_status);
 					switch (campaignStatus)
 					{
 						case 1:
 							camp.Status = CampaignStatus.Active;
-								break;
+							break;
 						case 2:
-							camp.Status=CampaignStatus.Paused;
+							camp.Status = CampaignStatus.Paused;
 							break;
 						case 3:
-							camp.Status=CampaignStatus.Deleted;
+							camp.Status = CampaignStatus.Deleted;
 							break;
 					}
 					campaignsData.Add(camp.OriginalID, camp);
 				}
 				campaigns.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
-
+			this.ReportProgress(0.1);
 			//GetAdGroups
 			DeliveryFile adGroups = this.Delivery.Files["AdGroups"];
 
@@ -106,7 +106,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 					};
 					ads.Add(ad.OriginalID, ad);
-					
+
 				}
 				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
@@ -114,7 +114,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			//GetAdGroupStats
 			DeliveryFile adGroupStats = this.Delivery.Files["AdGroupStats"];
-			
+
 			var adGroupStatsReader = new XmlDynamicReader
 				(FileManager.Open(adGroupStats.GetFileInfo()), Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
 
@@ -128,28 +128,30 @@ namespace Edge.Services.Facebook.AdsApi
 					{
 
 
-						AdMetricsUnit adMetricsUnit = new AdMetricsUnit()
-						{
-							Ad = ads[adGroupStatsReader.Current.id],
-							Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks),
-							Cost = Convert.ToDouble(adGroupStatsReader.Current.spent),
-							Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions),
-							
-							Currency = new Currency()
-							{
-								Code=string.Empty
-							},
-							Conversions=new Dictionary<int,double>(),
-							TargetMatches=new List<Target>(),
-							//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
-							TimeStamp=DateTime.Now
-							
+						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+						//if (ads.ContainsKey(adGroupStatsReader.Current.id)) 
+						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
+						adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+						adMetricsUnit.Cost = Convert.ToDouble(adGroupStatsReader.Current.spent);
+						adMetricsUnit.Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions);
 
+						adMetricsUnit.Currency = new Currency()
+						{
+							Code = string.Empty
 						};
+						adMetricsUnit.Conversions = new Dictionary<int, double>();
+						adMetricsUnit.TargetMatches = new List<Target>();
+						//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
+						adMetricsUnit.TimeStamp = DateTime.Now;
+
+
+
 						session.ImportMetrics(adMetricsUnit);
 
 					}
+
 					adGroupStats.History.Add(DeliveryOperation.Processed, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
+					this.ReportProgress(0.4);
 				}
 
 
@@ -190,7 +192,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 					}
-				
+
 
 				}
 
@@ -199,8 +201,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 
+				this.ReportProgress(0.6);
 
-				
 				var creativeFiles = from dfc in this.Delivery.Files
 									where dfc.Parameters.ContainsKey("IsCreativeDeliveryFile")
 									select dfc;
@@ -225,14 +227,14 @@ namespace Edge.Services.Facebook.AdsApi
 							{
 								ImageUrl = adGroupCreativesReader.Current.image_url,
 								OriginalID = adGroupCreativesReader.Current.creative_id
-							
+
 							});
 							ad.Creatives.Add(new TextCreative()
 							{
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Body,
 								Text = adGroupCreativesReader.Current.body
-														
+
 
 							});
 							ad.Creatives.Add(new TextCreative()
@@ -241,7 +243,7 @@ namespace Edge.Services.Facebook.AdsApi
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.DisplayUrl,
 								Text = adGroupCreativesReader.Current.preview_url
-								
+
 							});
 							ad.Creatives.Add(new TextCreative()
 							{
@@ -249,7 +251,7 @@ namespace Edge.Services.Facebook.AdsApi
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Title,
 								Text = adGroupCreativesReader.Current.title
-								
+
 							});
 
 
@@ -264,6 +266,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 				}
 				session.Commit();
+				this.ReportProgress(0.98);
 			}
 			return Core.Services.ServiceOutcome.Success;
 		}
