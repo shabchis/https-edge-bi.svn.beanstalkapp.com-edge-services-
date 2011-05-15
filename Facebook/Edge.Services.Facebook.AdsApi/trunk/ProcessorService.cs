@@ -144,7 +144,8 @@ namespace Edge.Services.Facebook.AdsApi
 						adMetricsUnit.Conversions = new Dictionary<int, double>();
 						adMetricsUnit.TargetMatches = new List<Target>();
 						//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
-						adMetricsUnit.TimeStamp = DateTime.Now;
+						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ExactDateTime;
+						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ExactDateTime;
 
 
 
@@ -229,16 +230,16 @@ namespace Edge.Services.Facebook.AdsApi
 							ad.Creatives.Add(new ImageCreative()
 							{
 								ImageUrl = adGroupCreativesReader.Current.image_url,
-								OriginalID = adGroupCreativesReader.Current.creative_id,
-								Name = adGroupCreativesReader.Current.name
+								OriginalID = adGroupCreativesReader.Current.creative_id
+								//Name = adGroupCreativesReader.Current.name
 
 							});
 							ad.Creatives.Add(new TextCreative()
 							{
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Body,
-								Text = adGroupCreativesReader.Current.body,
-								Name = adGroupCreativesReader.Current.name
+								Text = adGroupCreativesReader.Current.body
+								//Name = adGroupCreativesReader.Current.name
 
 
 							});
@@ -247,8 +248,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.DisplayUrl,
-								Text = adGroupCreativesReader.Current.preview_url,
-								Name = adGroupCreativesReader.Current.name
+								Text = adGroupCreativesReader.Current.preview_url
+								//Name = adGroupCreativesReader.Current.name
 
 							});
 							ad.Creatives.Add(new TextCreative()
@@ -256,8 +257,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 								OriginalID = adGroupCreativesReader.Current.creative_id,
 								TextType = TextCreativeType.Title,
-								Text = adGroupCreativesReader.Current.title,
-								Name = adGroupCreativesReader.Current.name
+								Text = adGroupCreativesReader.Current.title
+								//Name = adGroupCreativesReader.Current.name
 
 							});
 
