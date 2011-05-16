@@ -30,11 +30,20 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Google.AdWords">
+      <HintPath>..\..\..\(third party)\GoogleAdwords\Google.AdWords.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,57 +55,19 @@
     <Compile Include="AdwordsReport.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service References\AdwordsReportService\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.svcmap</DependentUpon>
+    <Compile Include="Test.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Service References\ReportDefinitionServiceV201101\Reference.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reference.svcmap</DependentUpon>
+    <Compile Include="Test.Designer.cs">
+      <DependentUpon>Test.cs</DependentUpon>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
+    <Compile Include="GoogleUserEntity.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="Service References\AdwordsReportService\Edge.Services.Google.Adwords.AdwordsReportService.ReportJob.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\AdwordsReportService\Edge.Services.Google.Adwords.AdwordsReportService.ReportJobStatus.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\AdwordsReportService\ReportService.wsdl" />
-    <None Include="Service References\ReportDefinitionServiceV201101\Edge.Services.Google.Adwords.ReportDefinitionServiceV201101.ReportDefinition.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\ReportDefinitionServiceV201101\Edge.Services.Google.Adwords.ReportDefinitionServiceV201101.ReportDefinitionField.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\ReportDefinitionServiceV201101\Edge.Services.Google.Adwords.ReportDefinitionServiceV201101.ReportDefinitionPage.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\ReportDefinitionServiceV201101\Edge.Services.Google.Adwords.ReportDefinitionServiceV201101.SoapResponseHeader.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\ReportDefinitionServiceV201101\ReportDefinitionService.wsdl" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadataStorage Include="Service References\AdwordsReportService\" />
-    <WCFMetadataStorage Include="Service References\ReportDefinitionServiceV201101\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\AdwordsReportService\configuration91.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\AdwordsReportService\configuration.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\AdwordsReportService\Reference.svcmap">
-      <Generator>WCF Proxy Generator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
+    <None Include="Edge.Services.config">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -110,16 +81,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Service References\ReportDefinitionServiceV201101\configuration91.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\ReportDefinitionServiceV201101\configuration.svcinfo" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Service References\ReportDefinitionServiceV201101\Reference.svcmap">
-      <Generator>WCF Proxy Generator</Generator>
-      <LastGenOutput>Reference.cs</LastGenOutput>
-    </None>
+    <EmbeddedResource Include="Test.resx">
+      <DependentUpon>Test.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

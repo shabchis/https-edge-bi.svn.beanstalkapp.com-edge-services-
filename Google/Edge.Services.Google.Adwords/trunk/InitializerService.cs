@@ -10,27 +10,30 @@ namespace Edge.Services.Google.Adwords
 {
     public class InitializerService : PipelineService
     {
-        AccountEntity _account;
-        AdwordsReport _googleReport = new AdwordsReport();
+        AccountEntity account;
+		AdwordsReport googleReport;
 
         protected override Core.Services.ServiceOutcome DoPipelineWork()
         {
-            _account = new AccountEntity(Instance.AccountID);
+            account = new AccountEntity(Instance.AccountID);
 
-            this.Delivery.Parameters["AccountID"] = _account.Id;
+			//TO DO : Get Report type from configuration
+			//Instance.Configuration.Options["Adwords.ReportType"];
+			googleReport = new AdwordsReport(account.Emails);
+
+            this.Delivery.Parameters["AccountID"] = account.Id;
 
             //Instance.Configuration.Options["Adwords.Email"]
-
-
-
             //Initializing Delivery
             this.Delivery = new Delivery(Instance.InstanceID);
             this.Delivery.TargetPeriod = this.TargetPeriod;
-            this.Delivery.Files.Add(new DeliveryFile()
-            {
-                Name = "AdwordsCreativeReport",
-                SourceUrl = url // TODO: get from API
-            });
+			this.Delivery.Parameters.Add("AD_PERFORMANCE_REPORT_ID", googleReport.Id);
+		
+			//this.Delivery.Files.Add(new DeliveryFile()
+			//{
+			//    Name = googleReport.Name,
+			//    SourceUrl = url // TODO: get from API
+			//});
 
             this.Delivery.Save();
 
