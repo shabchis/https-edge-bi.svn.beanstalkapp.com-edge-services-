@@ -38,6 +38,10 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
+		public const int Actions_MeasureID = -666;
+		public const int SocialSpent_MeasureID = -667;
+		public const int SocialClicks_MeasureID = -668;
+		public const int SocialImpression_MeasureID = -668;
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -106,7 +110,32 @@ namespace Edge.Services.Facebook.AdsApi
 						Name = adGroupsReader.Current.name
 
 
+
 					};
+					if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
+					{
+						string[] delimiter = new string[1];
+						delimiter[0] = string.Empty;
+						if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
+							Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
+						else
+							delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
+
+						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+						{
+							Value = delimiter[0]==string.Empty? ad.Name : ad.Name.Split(delimiter,StringSplitOptions.None)[0],
+							OriginalID=ad.Name
+						};
+					}
+					else
+					{
+						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+						{
+							Value = ad.Name,
+							OriginalID=ad.Name
+						};
+					}
+
 					ads.Add(ad.OriginalID, ad);
 
 				}
@@ -136,16 +165,60 @@ namespace Edge.Services.Facebook.AdsApi
 						adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
 						adMetricsUnit.Cost = Convert.ToDouble(adGroupStatsReader.Current.spent);
 						adMetricsUnit.Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions);
+						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+						adMetricsUnit.Measures.Add(new Measure()
+						{
+							ID = SocialImpression_MeasureID,
+							Account = new Account()
+							{
+								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+							},
+							Name = "social_impressions"
+						},
+						double.Parse(adGroupStatsReader.Current.social_impressions));
+
+						adMetricsUnit.Measures.Add(new Measure()
+						{
+							ID = SocialClicks_MeasureID,
+							Account = new Account()
+							{
+								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+							},
+							Name = "social_clicks"
+						},
+						double.Parse(adGroupStatsReader.Current.social_clicks));
+
+						adMetricsUnit.Measures.Add(new Measure()
+						{
+							ID = SocialSpent_MeasureID,
+							Account = new Account()
+							{
+								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+							},
+							Name = "social_spent"
+						},
+						double.Parse(adGroupStatsReader.Current.social_spent));
+
+						adMetricsUnit.Measures.Add(new Measure()
+						{
+							ID = Actions_MeasureID,
+							Account = new Account()
+							{
+								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+							},
+							Name = "actions"
+						},
+						double.Parse(adGroupStatsReader.Current.actions));
+						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
 						adMetricsUnit.Currency = new Currency()
 						{
 							Code = string.Empty
 						};
-						adMetricsUnit.Conversions = new Dictionary<int, double>();
+						//adMetricsUnit.Conversions = new Dictionary<int, double>();
 						adMetricsUnit.TargetMatches = new List<Target>();
 						//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
-						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ExactDateTime;
-						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ExactDateTime;
+
 
 
 
@@ -192,7 +265,7 @@ namespace Edge.Services.Facebook.AdsApi
 							}
 
 						}
-						
+
 
 
 					}
