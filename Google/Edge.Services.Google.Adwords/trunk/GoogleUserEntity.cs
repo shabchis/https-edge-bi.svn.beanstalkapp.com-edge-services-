@@ -40,9 +40,9 @@ namespace Edge.Services.Google.Adwords
 		public AdWordsUser adwordsUser { set; get; }
 
 		// TO DO : get the following from configuration 
-		public string authToken { set; get; }
-		public string developerToken { set; get; }
-		public string applicationToken { set; get; }
+		private string authToken { set; get; }
+		private string developerToken { set; get; }
+		private string applicationToken { set; get; }
 		
 	}
 

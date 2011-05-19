@@ -28,8 +28,6 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
-
-
 		private void SetAccountEmails(List<string> accountEmails)
 		{
 			List<ClientSelector> Clients = new List<ClientSelector>();
@@ -63,6 +61,14 @@ namespace Edge.Services.Google.Adwords
 					}
 			}
 
+			// Create a filter.
+			Predicate predicate = new Predicate();
+			predicate.field = "Impressions";
+			predicate.@operator = PredicateOperator.GREATER_THAN;
+			predicate.values = new string[] {"0"};
+			selector.predicates = new Predicate[] { predicate };
+
+			// Create reportDefinition
 			reportDefinition = CreateReportDefinition(selector, AccountEmails);
 
 			// Create operations.
@@ -74,28 +80,34 @@ namespace Edge.Services.Google.Adwords
 			
 			// Create Report Service
 			var reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
+
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
 			this.Id = reportDefintions[0].id;
+
+
+			DownloadReport(reportDefintions[0].id);
 			
-			
+				
+
+		}
+
+		public void DownloadReport(long reportId) 
+		{
 			//========================== Retriever =======================================================
 			try
 			{
 				// Download report.
-				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportDefintions[0].id, "c:\\testingAdwords.zip");
-				Console.WriteLine("Report with definition id '{0}' was downloaded to '{1}'.",reportDefintions[0].id, "c:\\testingAdwords2.zip");
+				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, "c:\\testingAdwords.zip");
+				Console.WriteLine("Report with definition id '{0}' was downloaded to '{1}'.", reportId, "c:\\testingAdwords.zip");
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine("Failed to download report. Exception says \"{0}\"", ex.Message);
 			}
 			//======================== End of Retriever =================================================
-			
-				
-
 		}
-
+		
 
 
 		public ReportDefinition CreateReportDefinition(Selector selector, ClientSelector[] clients, DownloadFormat downloadFormat = DownloadFormat.GZIPPED_CSV)
