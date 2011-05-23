@@ -5,6 +5,7 @@ using System.Text;
 using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util;
+using Edge.Data.Pipeline;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -19,18 +20,21 @@ namespace Edge.Services.Google.Adwords
 			
         }
 
-		public AdwordsReport(List<String> accountEmails, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
+		public AdwordsReport(string Email, ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
 		{
 			this.reportDefinition = new ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
-			SetAccountEmails(accountEmails);
-			this.User = new GoogleUserEntity();
+			this.dateRageType = dateRange;
+			//SetAccountEmails(accountEmails);
+			this.User = new GoogleUserEntity(Email);
+		
 		}
 
 
 		private void SetAccountEmails(List<string> accountEmails)
 		{
 			List<ClientSelector> Clients = new List<ClientSelector>();
+			if ((accountEmails == null) || (accountEmails.Count == 0)) throw new Exception("Account does not contains Email list ");
 			foreach (string email in accountEmails)
 			{
 				ClientSelector client = new ClientSelector();
@@ -41,9 +45,29 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
-
-		public void InitializeGoogleReport(int Account_Id , long Instance_Id)
+		public long intializingGoogleReport(int Account_Id , long Instance_Id)
 		{
+			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			{
+				long reportId = VerifyExistingReport(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType);
+				if (-1 != reportId)
+					return reportId;
+			}
+			return CreateGoogleReport(Account_Id, Instance_Id);
+		}
+
+		private long VerifyExistingReport(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type)
+		{
+			//TO DO : CHECK IF REPORT EXISTS IN DB
+			//if it does return report id 
+			//else return -1
+			throw new NotImplementedException();
+		}
+
+		public long CreateGoogleReport(int Account_Id , long Instance_Id)
+		{
+			
+			//TO DO: Check if report exists in DB
 			Selector selector = new Selector();
 			switch (this.reportDefinition.reportType)
 			{
@@ -61,7 +85,12 @@ namespace Edge.Services.Google.Adwords
 					}
 			}
 
-			// Create a filter.
+			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			{
+				selector.dateRange.min
+			}
+
+			// Create a filter Impressions > 0 
 			Predicate predicate = new Predicate();
 			predicate.field = "Impressions";
 			predicate.@operator = PredicateOperator.GREATER_THAN;
@@ -84,16 +113,18 @@ namespace Edge.Services.Google.Adwords
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
 			this.Id = reportDefintions[0].id;
-
-
-			DownloadReport(reportDefintions[0].id);
 			
-				
+			//  TO DO : save report in DB
+			//SaveReport(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, this.id);
+			return reportDefintions[0].id;
+			//DownloadReport(reportDefintions[0].id);
 
 		}
 
 		public void DownloadReport(long reportId) 
 		{
+			
+
 			//========================== Retriever =======================================================
 			try
 			{
@@ -118,7 +149,7 @@ namespace Edge.Services.Google.Adwords
 			reportDefinition.selector = selector;
 			reportDefinition.downloadFormat = downloadFormat;
 			reportDefinition.downloadFormatSpecified = true;
-			reportDefinition.clientSelectors = clients.ToArray();
+			//reportDefinition.clientSelectors = clients.ToArray();
 			return reportDefinition;
 		}
 
