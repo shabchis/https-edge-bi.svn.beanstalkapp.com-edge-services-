@@ -6,6 +6,8 @@ using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util;
 using Edge.Data.Pipeline;
+using Edge.Core.Data;
+using System.Data.SqlClient;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -47,18 +49,61 @@ namespace Edge.Services.Google.Adwords
 
 		public long intializingGoogleReport(int Account_Id , long Instance_Id)
 		{
+			long ReportId;
 			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
-				long reportId = VerifyExistingReport(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType);
-				if (-1 != reportId)
-					return reportId;
+				ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType);
 			}
-			return CreateGoogleReport(Account_Id, Instance_Id);
+			else ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, Instance_Id);
+
+			return ReportId;
 		}
 
-		private long VerifyExistingReport(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type)
+		private long GetReportIdFromGoogleApi(int Account_Id, string p, ReportDefinitionDateRangeType reportDefinitionDateRangeType, ReportDefinitionReportType reportDefinitionReportType, long Instance_Id)
+		{
+			long ReportId = CreateGoogleReport(Account_Id, Instance_Id);
+			SaveReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType,ReportId);
+			return ReportId;
+		}
+
+		private void SaveReportID(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, long ReportId)
+		{
+			SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar,@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int )", System.Data.CommandType.StoredProcedure);
+			cmd.Parameters["@Account_Id"].Value = Account_Id;
+			cmd.Parameters["@Account_Email"].Value = Account_Email;
+			cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
+			cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
+			cmd.Parameters["@Google_Report_ID"].Value = ReportId;
+			
+		}
+
+		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type)
 		{
 			//TO DO : CHECK IF REPORT EXISTS IN DB
+			long ReportId = -1 ;
+			using (DataManager.Current.OpenConnection())
+			{
+				//SqlCommand sqlCommand = DataManager.CreateCommand("SELECT Gateway_id from UserProcess_GUI_Gateway where account_id = @AccountId:int");
+
+				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar,@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar )", System.Data.CommandType.StoredProcedure);
+				cmd.Parameters["@Account_Id"].Value = Account_Id;
+				cmd.Parameters["@Account_Email"].Value = Account_Email;
+				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
+				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
+
+				using (var _reader = cmd.ExecuteReader())
+				{
+				    if (!_reader.IsClosed)
+				        while (_reader.Read())
+				        {
+				            ReportId = Convert.ToInt64(_reader[0]);
+				        }
+				}
+
+				if (ReportId > 0) return ReportId;
+				return -1;
+			}
+
 			//if it does return report id 
 			//else return -1
 			throw new NotImplementedException();
@@ -87,7 +132,9 @@ namespace Edge.Services.Google.Adwords
 
 			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
-				selector.dateRange.min
+				selector.dateRange.min = this.StartDate;
+				selector.dateRange.max = this.EndDate;
+
 			}
 
 			// Create a filter Impressions > 0 
@@ -163,8 +210,8 @@ namespace Edge.Services.Google.Adwords
 		private ReportDefinition reportDefinition { set; get; }
 		private ReportDefinitionReportType ReportType { set; get; }
         public Dictionary<string, string> FieldsMapping { set; get; }
-        public DateTime StartDate { set; get; } // get from configuration
-        public DateTime EndDate { set; get; }// get from configuration
+        public string StartDate { set; get; } // get from configuration
+		public string EndDate { set; get; }// get from configuration
         public bool includeZeroImpression { get; set; }
         public string[] selectedColumns { set; get; } // Get Selected Columns from configuration 
 

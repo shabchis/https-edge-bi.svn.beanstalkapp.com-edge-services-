@@ -8,7 +8,7 @@ namespace Edge.Services.Google.Adwords
 {
 	public class GoogleUserEntity
 	{
-		public void GoogleUserEntity()
+		public GoogleUserEntity()
 		{
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
@@ -38,7 +38,7 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public void GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
+		public GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
 			string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA", string userAgent = "Edge.BI", bool enableGzipCompression = true)
 		{
 			this.email = _email;

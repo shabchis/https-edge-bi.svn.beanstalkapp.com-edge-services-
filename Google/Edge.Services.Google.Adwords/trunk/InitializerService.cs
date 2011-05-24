@@ -18,18 +18,31 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			IntializingParmeters();
+			
 			this.Delivery = new Delivery(Instance.InstanceID);
 			EdgeAccount = new AccountEntity(Instance.AccountID);
+			IntializingParmeters();
+			
+			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.Parameters["AccountID"] = Instance.AccountID;
+			
+			//=============================== TEMP FOR DEBUG ===================================
+			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
+			//================================TEMP FOR DEBUG ===================================
+
 
 			foreach (string email in EdgeAccount.Emails)
 			{
 				foreach (ReportDefinitionReportType type in ReportsTypes)
 				{
 					googleReport = new AdwordsReport(email, DateRange, type);
-					googleReport.CreateGoogleReport(Instance.AccountID, Instance.InstanceID);
-					this.Delivery.TargetPeriod = this.TargetPeriod;
-					this.Delivery.Parameters.Add(type.ToString(), googleReport.Id);
+					googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+
+					this.Delivery.Files.Add(new DeliveryFile()
+					{
+						Name = googleReport.Name,
+						SourceUrl = url // TODO: get from API
+					});
 				}
 			}
 
@@ -37,17 +50,7 @@ namespace Edge.Services.Google.Adwords
 			//googleReport.DownloadReport(51015891);
 
 
-
-			this.Delivery.Parameters["AccountID"] = Instance.AccountID;
-
-			//this.Delivery.Files.Add(new DeliveryFile()
-			//{
-			//    Name = googleReport.Name,
-			//    SourceUrl = url // TODO: get from API
-			//});
-
-			// TEMP FOR DEBUG
-			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
+			
 
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
@@ -68,13 +71,28 @@ namespace Edge.Services.Google.Adwords
 				}
 			}
 
-			//Getting Date Range
-			if (Enum.IsDefined(typeof(ReportDefinitionReportType), this.Instance.ParentInstance.Configuration.Options["Adwords.DateRange"]))
+			//intialzing Date Range
+			DateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
+			try
+			{
+				this.googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+				this.googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
+			}
+			catch (Exception e) 
+			{
+				throw new Exception("Cannot set start/end time from TargetPeriod", e);
+			}
+			
+
+			//Getting Date Range - ONLY FOR DEBUG.
+			if (Enum.IsDefined(typeof(ReportDefinitionDateRangeType), Instance.ParentInstance.Configuration.Options["Adwords.DateRange"]))
 				DateRange = (ReportDefinitionDateRangeType)Enum.Parse(typeof(ReportDefinitionDateRangeType), this.Instance.ParentInstance.Configuration.Options["Adwords.DateRange"], true);
 			else throw new Exception("Undefined DateRange ");
+			//Getting Date Range - ONLY FOR DEBUG.
 			
 			if (DateRange.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
+				
 				string TargetPeriod = this.Instance.ParentInstance.Configuration.Options["TargetPeriod"];
 				if (!String.IsNullOrEmpty(TargetPeriod))
 				{
@@ -84,7 +102,7 @@ namespace Edge.Services.Google.Adwords
 			}
 
 			//Getting Emails
-			if (!String.IsNullOrEmpty(this.AdwordsEmail = Instance.Configuration.Options["Adwords.Email"]))
+			if (!String.IsNullOrEmpty(this.AdwordsEmail = Instance.ParentInstance.Configuration.Options["Adwords.Email"]))
 				EdgeAccount.Emails.Add(AdwordsEmail);
 			else throw new Exception("Undefined AdwordsEmail ");
 

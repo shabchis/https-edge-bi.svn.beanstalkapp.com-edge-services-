@@ -9,6 +9,7 @@ namespace Edge.Services.Google.Adwords
     {
         public AccountEntity()
         {
+			Emails = new List<string>();
         }
         public AccountEntity(int AccountID)
         {
