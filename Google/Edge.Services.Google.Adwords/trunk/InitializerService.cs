@@ -10,9 +10,9 @@ namespace Edge.Services.Google.Adwords
 {
 	public class InitializerService : PipelineService
 	{
-		AccountEntity EdgeAccount;
+		AccountEntity _edgeAccount;
 		AdwordsReport googleReport;
-		List<ReportDefinitionReportType> ReportsTypes = new List<ReportDefinitionReportType>();
+		List<ReportDefinitionReportType> _reportsTypes = new List<ReportDefinitionReportType>();
 		ReportDefinitionDateRangeType DateRange;
 		string AdwordsEmail;
 		long ReportId;
@@ -21,7 +21,7 @@ namespace Edge.Services.Google.Adwords
 		{
 
 			this.Delivery = new Delivery(Instance.InstanceID);
-			EdgeAccount = new AccountEntity(Instance.AccountID);
+			_edgeAccount = new AccountEntity(Instance.AccountID);
 			IntializingParmeters();
 
 			this.Delivery.TargetPeriod = this.TargetPeriod;
@@ -31,10 +31,10 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
 			//================================TEMP FOR DEBUG ===================================
 
-			foreach (string email in EdgeAccount.Emails)
+			foreach (string email in _edgeAccount.Emails)
 			{
-				DeliveryFileList FilesPerEmail = new DeliveryFileList();
-				foreach (ReportDefinitionReportType type in ReportsTypes)
+				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
+				foreach (ReportDefinitionReportType type in _reportsTypes)
 				{
 					googleReport = new AdwordsReport(email, DateRange, type);
 					ReportId = googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
@@ -44,13 +44,16 @@ namespace Edge.Services.Google.Adwords
 					file.Name = googleReport.Name;
 					file.SourceUrl = request.downloadUrl.ToString();
 					file.Parameters.Add("GoogleRequestEntity", request);
+					
+					// TEMP
+					// TODO: file.Location = "Google/AdWords";
 					file.Parameters.Add("Path", "D:\\");
 
-					FilesPerEmail.Add(file);
+					filesPerEmail.Add(file);
 					this.Delivery.Files.Add(file);
 
 				}
-				Delivery.Parameters.Add(email, FilesPerEmail);
+				Delivery.Parameters.Add(email, filesPerEmail);
 			}
 
 
@@ -64,13 +67,13 @@ namespace Edge.Services.Google.Adwords
 		private void IntializingParmeters()
 		{
 			//Geting Report Types
-			string Reports;
-			if (!String.IsNullOrEmpty(Reports = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"]))
+			string reports;
+			if (!String.IsNullOrEmpty(reports = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"]))
 			{
-				foreach (string type in Reports.Split('|').ToList<string>())
+				foreach (string type in reports.Split('|').ToList<string>())
 				{
 					if (Enum.IsDefined(typeof(ReportDefinitionReportType), type))
-						ReportsTypes.Add((ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), type, true));
+						_reportsTypes.Add((ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), type, true));
 					else throw new Exception("Undefined ReportType");
 				}
 			}
@@ -96,7 +99,7 @@ namespace Edge.Services.Google.Adwords
 
 			//Getting Emails
 			if (!String.IsNullOrEmpty(this.AdwordsEmail = Instance.ParentInstance.Configuration.Options["Adwords.Email"]))
-				EdgeAccount.Emails.Add(AdwordsEmail);
+				_edgeAccount.Emails.Add(AdwordsEmail);
 			else throw new Exception("Undefined AdwordsEmail ");
 
 		}
