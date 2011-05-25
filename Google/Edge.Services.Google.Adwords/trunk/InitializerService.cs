@@ -15,42 +15,46 @@ namespace Edge.Services.Google.Adwords
 		List<ReportDefinitionReportType> ReportsTypes = new List<ReportDefinitionReportType>();
 		ReportDefinitionDateRangeType DateRange;
 		string AdwordsEmail;
+		long ReportId;
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
+
 			this.Delivery = new Delivery(Instance.InstanceID);
 			EdgeAccount = new AccountEntity(Instance.AccountID);
 			IntializingParmeters();
-			
+
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Parameters["AccountID"] = Instance.AccountID;
-			
+
 			//=============================== TEMP FOR DEBUG ===================================
 			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
 			//================================TEMP FOR DEBUG ===================================
 
-
 			foreach (string email in EdgeAccount.Emails)
 			{
+				DeliveryFileList FilesPerEmail = new DeliveryFileList();
 				foreach (ReportDefinitionReportType type in ReportsTypes)
 				{
 					googleReport = new AdwordsReport(email, DateRange, type);
-					googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+					ReportId = googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+					GoogleRequestEntity request = googleReport.GetReportUrlParams(true);
 
-					this.Delivery.Files.Add(new DeliveryFile()
-					{
-						Name = googleReport.Name,
-						SourceUrl = url // TODO: get from API
-					});
+					DeliveryFile file = new DeliveryFile();
+					file.Name = googleReport.Name;
+					file.SourceUrl = request.downloadUrl.ToString();
+					file.Parameters.Add("GoogleRequestEntity", request);
+					file.Parameters.Add("Path", "D:\\");
+
+					FilesPerEmail.Add(file);
+					this.Delivery.Files.Add(file);
+
 				}
+				Delivery.Parameters.Add(email, FilesPerEmail);
 			}
 
 
 			//googleReport.DownloadReport(51015891);
-
-
-			
 
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
@@ -78,28 +82,17 @@ namespace Edge.Services.Google.Adwords
 				this.googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 				this.googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 			}
-			catch (Exception e) 
+			catch (Exception e)
 			{
 				throw new Exception("Cannot set start/end time from TargetPeriod", e);
 			}
-			
+
 
 			//Getting Date Range - ONLY FOR DEBUG.
 			if (Enum.IsDefined(typeof(ReportDefinitionDateRangeType), Instance.ParentInstance.Configuration.Options["Adwords.DateRange"]))
 				DateRange = (ReportDefinitionDateRangeType)Enum.Parse(typeof(ReportDefinitionDateRangeType), this.Instance.ParentInstance.Configuration.Options["Adwords.DateRange"], true);
 			else throw new Exception("Undefined DateRange ");
 			//Getting Date Range - ONLY FOR DEBUG.
-			
-			if (DateRange.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
-			{
-				
-				string TargetPeriod = this.Instance.ParentInstance.Configuration.Options["TargetPeriod"];
-				if (!String.IsNullOrEmpty(TargetPeriod))
-				{
-					//TO DO : Cast from TargetPeriod to Google start & end date
-				}
-				else throw new Exception("Undefined TargetPeriod");
-			}
 
 			//Getting Emails
 			if (!String.IsNullOrEmpty(this.AdwordsEmail = Instance.ParentInstance.Configuration.Options["Adwords.Email"]))
