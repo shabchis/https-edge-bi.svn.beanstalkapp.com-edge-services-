@@ -68,7 +68,7 @@ namespace Edge.Services.Google.Adwords
 			{
 				_minProgress += 0.05;
 				if (percent <= 1)
-					this.ReportProgress(percent);
+					this.ReportProgress(percent); 
 			}
 		}
 
