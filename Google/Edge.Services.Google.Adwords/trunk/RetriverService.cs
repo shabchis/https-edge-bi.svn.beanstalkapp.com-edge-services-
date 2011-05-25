@@ -63,12 +63,15 @@ namespace Edge.Services.Google.Adwords
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
 		{
-			double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile), 3);
-			if (percent >= _minProgress)
+			if (_countedFile>0)
 			{
-				_minProgress += 0.05;
-				if (percent <= 1)
-					this.ReportProgress(percent); 
+				double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile), 3);
+				if (percent >= _minProgress)
+				{
+					_minProgress += 0.05;
+					if (percent <= 1)
+						this.ReportProgress(percent);
+				} 
 			}
 		}
 
