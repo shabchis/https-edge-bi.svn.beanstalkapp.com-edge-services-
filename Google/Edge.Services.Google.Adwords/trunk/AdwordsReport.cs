@@ -8,12 +8,13 @@ using Google.Api.Ads.AdWords.Util;
 using Edge.Data.Pipeline;
 using Edge.Core.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 
 namespace Edge.Services.Google.Adwords
 {
     class AdwordsReport
     {
-
+		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost" };
 
@@ -26,7 +27,7 @@ namespace Edge.Services.Google.Adwords
 		{
 			this.reportDefinition = new ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
-			this.dateRageType = dateRange;
+			this.dateRangeType = dateRange;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
 		
@@ -50,7 +51,7 @@ namespace Edge.Services.Google.Adwords
 		public long intializingGoogleReport(int Account_Id , long Instance_Id)
 		{
 			long ReportId;
-			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			if (!this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
 				ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType);
 			}
@@ -79,7 +80,6 @@ namespace Edge.Services.Google.Adwords
 
 		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type)
 		{
-			//TO DO : CHECK IF REPORT EXISTS IN DB
 			long ReportId = -1 ;
 			using (DataManager.Current.OpenConnection())
 			{
@@ -93,20 +93,16 @@ namespace Edge.Services.Google.Adwords
 
 				using (var _reader = cmd.ExecuteReader())
 				{
-				    if (!_reader.IsClosed)
-				        while (_reader.Read())
-				        {
-				            ReportId = Convert.ToInt64(_reader[0]);
-				        }
+					if (!_reader.IsClosed)
+					{
+						_reader.Read();
+						ReportId = Convert.ToInt64(_reader[0]);
+					}
 				}
 
 				if (ReportId > 0) return ReportId;
 				return -1;
 			}
-
-			//if it does return report id 
-			//else return -1
-			throw new NotImplementedException();
 		}
 
 		public long CreateGoogleReport(int Account_Id , long Instance_Id)
@@ -130,7 +126,7 @@ namespace Edge.Services.Google.Adwords
 					}
 			}
 
-			if (!this.dateRageType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			if (!this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
 				selector.dateRange.min = this.StartDate;
 				selector.dateRange.max = this.EndDate;
@@ -155,7 +151,7 @@ namespace Edge.Services.Google.Adwords
 
 			
 			// Create Report Service
-			var reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
+			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
 
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
@@ -185,13 +181,24 @@ namespace Edge.Services.Google.Adwords
 			}
 			//======================== End of Retriever =================================================
 		}
-		
 
+		public void GetReportUrlParams(long reportDefinitionId, out Uri downloadUrl, out string clientCustomerId,
+			out string clientEmail, out string authToken)
+		{
+			downloadUrl = new Uri(string.Format(CultureInfo.InvariantCulture,"{0}/api/adwords/reportdownload?__rd={1}",
+				DEFAULT_ADWORDSAPI_SERVER, reportDefinitionId));
+
+			clientCustomerId = reportService.RequestHeader.clientCustomerId;
+			clientEmail = reportService.RequestHeader.clientEmail;
+			authToken = reportService.RequestHeader.authToken;
+
+			//request.Headers.Add("returnMoneyInMicros: " + downloadInMicros.ToString().ToLower());
+		}
 
 		public ReportDefinition CreateReportDefinition(Selector selector, ClientSelector[] clients, DownloadFormat downloadFormat = DownloadFormat.GZIPPED_CSV)
 		{
 			reportDefinition.reportName = Name;
-			reportDefinition.dateRangeType = dateRageType;
+			reportDefinition.dateRangeType = dateRangeType;
 			
 			reportDefinition.selector = selector;
 			reportDefinition.downloadFormat = downloadFormat;
@@ -206,14 +213,15 @@ namespace Edge.Services.Google.Adwords
 		public long Id { get; set; }
 		private GoogleUserEntity User { set; get; }
 		private ClientSelector[] AccountEmails;
-		public ReportDefinitionDateRangeType dateRageType { get; set; } // set from configuration 
+		public ReportDefinitionDateRangeType dateRangeType { get; set; }  
 		private ReportDefinition reportDefinition { set; get; }
 		private ReportDefinitionReportType ReportType { set; get; }
-        public Dictionary<string, string> FieldsMapping { set; get; }
-        public string StartDate { set; get; } // get from configuration
-		public string EndDate { set; get; }// get from configuration
+		ReportDefinitionService reportService { set; get; }
+        public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
+        public string StartDate { set; get; } 
+		public string EndDate { set; get; }
         public bool includeZeroImpression { get; set; }
-        public string[] selectedColumns { set; get; } // Get Selected Columns from configuration 
+		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 
     }
     
