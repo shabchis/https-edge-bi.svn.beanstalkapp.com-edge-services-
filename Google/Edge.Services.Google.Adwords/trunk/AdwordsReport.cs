@@ -12,16 +12,16 @@ using System.Globalization;
 
 namespace Edge.Services.Google.Adwords
 {
-    class AdwordsReport
-    {
+	class AdwordsReport
+	{
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost" };
 
-        public AdwordsReport()
-        {
-			
-        }
+		public AdwordsReport()
+		{
+
+		}
 
 		public AdwordsReport(string Email, ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
 		{
@@ -30,7 +30,7 @@ namespace Edge.Services.Google.Adwords
 			this.dateRangeType = dateRange;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
-		
+
 		}
 
 
@@ -48,48 +48,62 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
-		public long intializingGoogleReport(int Account_Id , long Instance_Id)
+		public long intializingGoogleReport(int Account_Id, long Instance_Id)
 		{
 			long ReportId;
-			if (!this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
-			{
-				ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType);
-			}
-			else ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, Instance_Id);
+			ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, this.StartDate, this.EndDate);
+			if (ReportId == -1)
+				ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, Instance_Id);
 
+			this.Id = ReportId;
 			return ReportId;
 		}
 
 		private long GetReportIdFromGoogleApi(int Account_Id, string p, ReportDefinitionDateRangeType reportDefinitionDateRangeType, ReportDefinitionReportType reportDefinitionReportType, long Instance_Id)
 		{
 			long ReportId = CreateGoogleReport(Account_Id, Instance_Id);
-			SaveReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType,ReportId);
+			SaveReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
 			return ReportId;
 		}
 
-		private void SaveReportID(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, long ReportId)
+		private void SaveReportID(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, long ReportId, String StartDate, String EndDate)
 		{
-			SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar,@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int )", System.Data.CommandType.StoredProcedure);
+			SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @Account_Email:Nvarchar" +
+							",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int )", System.Data.CommandType.StoredProcedure);
+
+			cmd.Parameters["@Google_Report_Id"].Value = ReportId;
 			cmd.Parameters["@Account_Id"].Value = Account_Id;
 			cmd.Parameters["@Account_Email"].Value = Account_Email;
 			cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 			cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
-			cmd.Parameters["@Google_Report_ID"].Value = ReportId;
-			
+
+			if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			{
+				cmd.Parameters["@StartDay"].Value = StartDate;
+				cmd.Parameters["@EndDay"].Value = EndDate;
+			}
+
 		}
 
-		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type)
+		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
 		{
-			long ReportId = -1 ;
+			long ReportId = -1;
 			using (DataManager.Current.OpenConnection())
 			{
 				//SqlCommand sqlCommand = DataManager.CreateCommand("SELECT Gateway_id from UserProcess_GUI_Gateway where account_id = @AccountId:int");
 
-				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar,@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar )", System.Data.CommandType.StoredProcedure);
+				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar," +
+						"@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar,@StartDay:Nvarchar, @EndDay:Nvarchar )", System.Data.CommandType.StoredProcedure);
+
 				cmd.Parameters["@Account_Id"].Value = Account_Id;
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
+				if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+				{
+					cmd.Parameters["@StartDay"].Value = StartDate;
+					cmd.Parameters["@EndDay"].Value = EndDate;
+				}
 
 				using (var _reader = cmd.ExecuteReader())
 				{
@@ -105,9 +119,9 @@ namespace Edge.Services.Google.Adwords
 			}
 		}
 
-		public long CreateGoogleReport(int Account_Id , long Instance_Id)
+		public long CreateGoogleReport(int Account_Id, long Instance_Id)
 		{
-			
+
 			//TO DO: Check if report exists in DB
 			Selector selector = new Selector();
 			switch (this.reportDefinition.reportType)
@@ -115,7 +129,7 @@ namespace Edge.Services.Google.Adwords
 				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
 						selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
-						this.Name = "AD_PERFORMANCE_REPORT_"+Account_Id+"_"+Instance_Id;
+						this.Name = "AD_PERFORMANCE_REPORT_" + Account_Id + "_" + Instance_Id;
 						break;
 					}
 				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
@@ -137,7 +151,7 @@ namespace Edge.Services.Google.Adwords
 			Predicate predicate = new Predicate();
 			predicate.field = "Impressions";
 			predicate.@operator = PredicateOperator.GREATER_THAN;
-			predicate.values = new string[] {"0"};
+			predicate.values = new string[] { "0" };
 			selector.predicates = new Predicate[] { predicate };
 
 			// Create reportDefinition
@@ -149,14 +163,14 @@ namespace Edge.Services.Google.Adwords
 			operation.@operator = Operator.ADD;
 			ReportDefinitionOperation[] operations = new ReportDefinitionOperation[] { operation };
 
-			
+
 			// Create Report Service
 			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
 
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
 			this.Id = reportDefintions[0].id;
-			
+
 			//  TO DO : save report in DB
 			//SaveReport(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, this.id);
 			return reportDefintions[0].id;
@@ -164,9 +178,9 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		public void DownloadReport(long reportId) 
+		public void DownloadReport(long reportId)
 		{
-			
+
 
 			//========================== Retriever =======================================================
 			try
@@ -182,24 +196,21 @@ namespace Edge.Services.Google.Adwords
 			//======================== End of Retriever =================================================
 		}
 
-		public void GetReportUrlParams(long reportDefinitionId, out Uri downloadUrl, out string clientCustomerId,
-			out string clientEmail, out string authToken)
+		public GoogleRequestEntity GetReportUrlParams(bool IsReturnMoneyInMicros)
 		{
-			downloadUrl = new Uri(string.Format(CultureInfo.InvariantCulture,"{0}/api/adwords/reportdownload?__rd={1}",
-				DEFAULT_ADWORDSAPI_SERVER, reportDefinitionId));
-
-			clientCustomerId = reportService.RequestHeader.clientCustomerId;
-			clientEmail = reportService.RequestHeader.clientEmail;
-			authToken = reportService.RequestHeader.authToken;
-
-			//request.Headers.Add("returnMoneyInMicros: " + downloadInMicros.ToString().ToLower());
+			return new GoogleRequestEntity(
+				new Uri(string.Format(CultureInfo.InvariantCulture, "{0}/api/adwords/reportdownload?__rd={1}", DEFAULT_ADWORDSAPI_SERVER, this.Id)),
+				reportService.RequestHeader.clientCustomerId,
+				reportService.RequestHeader.clientEmail,
+				reportService.RequestHeader.authToken,
+				IsReturnMoneyInMicros);
 		}
 
 		public ReportDefinition CreateReportDefinition(Selector selector, ClientSelector[] clients, DownloadFormat downloadFormat = DownloadFormat.GZIPPED_CSV)
 		{
 			reportDefinition.reportName = Name;
 			reportDefinition.dateRangeType = dateRangeType;
-			
+
 			reportDefinition.selector = selector;
 			reportDefinition.downloadFormat = downloadFormat;
 			reportDefinition.downloadFormatSpecified = true;
@@ -213,16 +224,16 @@ namespace Edge.Services.Google.Adwords
 		public long Id { get; set; }
 		private GoogleUserEntity User { set; get; }
 		private ClientSelector[] AccountEmails;
-		public ReportDefinitionDateRangeType dateRangeType { get; set; }  
+		public ReportDefinitionDateRangeType dateRangeType { get; set; }
 		private ReportDefinition reportDefinition { set; get; }
 		private ReportDefinitionReportType ReportType { set; get; }
 		ReportDefinitionService reportService { set; get; }
-        public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
-        public string StartDate { set; get; } 
+		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
+		public string StartDate { set; get; }
 		public string EndDate { set; get; }
-        public bool includeZeroImpression { get; set; }
+		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 
-    }
-    
+	}
+
 }
