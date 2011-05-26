@@ -9,6 +9,7 @@ using Edge.Data.Pipeline;
 using Edge.Core.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using Edge.Core.Configuration;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -23,7 +24,7 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		public AdwordsReport(string Email, ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
+		public void SetReportDefinition(string Email, ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
 		{
 			this.reportDefinition = new ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
@@ -68,19 +69,25 @@ namespace Edge.Services.Google.Adwords
 
 		private void SaveReportID(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, long ReportId, String StartDate, String EndDate)
 		{
-			SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @Account_Email:Nvarchar" +
-							",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int )", System.Data.CommandType.StoredProcedure);
-
-			cmd.Parameters["@Google_Report_Id"].Value = ReportId;
-			cmd.Parameters["@Account_Id"].Value = Account_Id;
-			cmd.Parameters["@Account_Email"].Value = Account_Email;
-			cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
-			cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
-
-			if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
 			{
-				cmd.Parameters["@StartDay"].Value = StartDate;
-				cmd.Parameters["@EndDay"].Value = EndDate;
+				SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @Account_Email:Nvarchar" +
+								",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int,@StartDay:Nvarchar,@EndDay:Nvarchar )", System.Data.CommandType.StoredProcedure);
+				sqlCon.Open();
+
+				cmd.Connection = sqlCon;
+				cmd.Parameters["@Google_Report_Id"].Value = ReportId;
+				cmd.Parameters["@Account_Id"].Value = Account_Id;
+				cmd.Parameters["@Account_Email"].Value = Account_Email;
+				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
+				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
+
+				if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+				{
+					cmd.Parameters["@StartDay"].Value = StartDate;
+					cmd.Parameters["@EndDay"].Value = EndDate;
+				}
+				cmd.ExecuteNonQuery();
 			}
 
 		}
@@ -88,12 +95,14 @@ namespace Edge.Services.Google.Adwords
 		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
 		{
 			long ReportId = -1;
-			using (DataManager.Current.OpenConnection())
+			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
 			{
+				sqlCon.Open();
 				//SqlCommand sqlCommand = DataManager.CreateCommand("SELECT Gateway_id from UserProcess_GUI_Gateway where account_id = @AccountId:int");
 
 				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar," +
 						"@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar,@StartDay:Nvarchar, @EndDay:Nvarchar )", System.Data.CommandType.StoredProcedure);
+				cmd.Connection = sqlCon;
 
 				cmd.Parameters["@Account_Id"].Value = Account_Id;
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
@@ -109,8 +118,11 @@ namespace Edge.Services.Google.Adwords
 				{
 					if (!_reader.IsClosed)
 					{
-						_reader.Read();
-						ReportId = Convert.ToInt64(_reader[0]);
+						while (_reader.Read())
+						{
+							ReportId = Convert.ToInt64(_reader[0]);
+						}
+						
 					}
 				}
 
@@ -140,11 +152,14 @@ namespace Edge.Services.Google.Adwords
 					}
 			}
 
-			if (!this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			if (this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
-				selector.dateRange.min = this.StartDate;
-				selector.dateRange.max = this.EndDate;
-
+				selector.dateRange = new DateRange()
+				{
+					min = this.StartDate,
+					max = this.EndDate
+				};
+				
 			}
 
 			// Create a filter Impressions > 0 

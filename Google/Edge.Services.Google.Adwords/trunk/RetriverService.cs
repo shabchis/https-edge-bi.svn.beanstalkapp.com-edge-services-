@@ -5,25 +5,78 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using System.Net;
+using Google.Api.Ads.AdWords.v201101;
 
 namespace Edge.Services.Google.Adwords
 {
 	class RetriverService : PipelineService
 	{
-		#region consts
-		public const string FileRelativePath = "FileRelativePath";
-		public const string returnMonetInMicros_Header = "returnMoneyInMicros";
-		public const string autorization_Header = "Authorization";
-		public const string clientEmail_Header = "clientEmail";
-		public const string clientCustomerId_Header = "clientCustomerId";
-		#endregion
 		#region members
 		private int _countedFile = 0;
 		private double _minProgress = 0.05;
+		AccountEntity _edgeAccount;
+		AdwordsReport _googleReport;
+		List<ReportDefinitionReportType> _reportsTypes = new List<ReportDefinitionReportType>();
+		ReportDefinitionDateRangeType _dateRange;
+		long _reportId;
+
 		#endregion
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
+			_googleReport = new AdwordsReport();
+			_edgeAccount = new AccountEntity(Instance.AccountID, this.Delivery.Parameters["AdwordsEmail"].ToString());
+
+			//reportTypes
+			foreach (string type in this.Delivery.Parameters["ReportsType"].ToString().Split('|').ToList<string>())
+			{
+				if (Enum.IsDefined(typeof(ReportDefinitionReportType), type))
+					_reportsTypes.Add((ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), type, true));
+				else throw new Exception("Undefined ReportType");
+			}
+
+			//Date Range
+			//Temp
+			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
+			
+			try
+			{
+				this._googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+				this._googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
+			}
+			catch (Exception e)
+			{
+				throw new Exception("Cannot set start/end time from TargetPeriod", e);
+			}
+
+
+			foreach (string email in _edgeAccount.Emails)
+			{
+				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
+				foreach (ReportDefinitionReportType type in _reportsTypes)
+				{
+					_googleReport.SetReportDefinition(email, _dateRange, type);
+					_reportId = _googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+
+					DeliveryFile file = new DeliveryFile();
+					file.Name = _googleReport.Name;
+					file.SourceUrl = request.downloadUrl.ToString();
+					file.Parameters.Add("GoogleRequestEntity", request);
+
+					// TEMP
+					// TODO: file.Location = "Google/AdWords";
+					file.Parameters.Add("Path", "Google");
+
+					filesPerEmail.Add(file);
+					this.Delivery.Files.Add(file);
+
+				}
+				Delivery.Parameters.Add(email, filesPerEmail);
+			}
+
+
 			_countedFile = this.Delivery.Files.Count;
+			
 			foreach ( DeliveryFile file in this.Delivery.Files)
 			{
 				DownloadFile(file);
@@ -36,21 +89,22 @@ namespace Edge.Services.Google.Adwords
 		{
 					
 			//string body = file.Parameters["body"].ToString();
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.Parameters["Url"].ToString());
-			if (file.Parameters.ContainsKey(clientCustomerId_Header))
-				request.Headers.Add("clientCustomerId: " + file.Parameters[clientCustomerId_Header].ToString());
-			else if (file.Parameters.ContainsKey(clientEmail_Header))
-				request.Headers.Add("clientEmail: " + file.Parameters[clientEmail_Header].ToString());
+			GoogleRequestEntity googleRequestEntity = (GoogleRequestEntity)file.Parameters["GoogleRequestEntity"];
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(googleRequestEntity.downloadUrl);
+			
+				request.Headers.Add("clientCustomerId: " + googleRequestEntity.clientCustomerId);
 
-			if (file.Parameters.ContainsKey(autorization_Header))
-				request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters[autorization_Header].ToString());
+				request.Headers.Add("clientEmail: " + googleRequestEntity.clientEmail);
 
-			if (file.Parameters.ContainsKey(returnMonetInMicros_Header))
-				request.Headers.Add("returnMoneyInMicros: " + file.Parameters[returnMonetInMicros_Header].ToString());
+			
+				request.Headers.Add("Authorization: GoogleLogin auth=" + googleRequestEntity.authToken);
+
+
+				request.Headers.Add("returnMoneyInMicros: " + googleRequestEntity.returnMoneyInMicros);
 
 			WebResponse response = request.GetResponse();
 
-			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters[FileRelativePath].ToString(), true, response.ContentLength);
+			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["Path"].ToString(), true, response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();

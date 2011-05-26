@@ -11,10 +11,14 @@ namespace Edge.Services.Google.Adwords
         {
 			Emails = new List<string>();
         }
-        public AccountEntity(int AccountID)
+        public AccountEntity(int AccountID, string EmailsString)
         {
             Id = AccountID;
 			Emails = new List<string>();
+			foreach (string mail in EmailsString.Split('|').ToList<string>())
+			{
+				Emails.Add(mail);
+			}
         }
       
         public int Id { get; set; }
