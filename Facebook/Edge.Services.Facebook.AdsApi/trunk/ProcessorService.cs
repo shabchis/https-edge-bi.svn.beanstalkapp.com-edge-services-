@@ -123,16 +123,16 @@ namespace Edge.Services.Facebook.AdsApi
 
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
-							Value = delimiter[0]==string.Empty? ad.Name : ad.Name.Split(delimiter,StringSplitOptions.None)[0],
-							OriginalID=ad.Name
+							Value = delimiter[0]==string.Empty? ad.Name : ad.Name.Split(delimiter,StringSplitOptions.None)[0]
+							
 						};
 					}
 					else
 					{
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
-							Value = ad.Name,
-							OriginalID=ad.Name
+							Value = ad.Name
+							
 						};
 					}
 
@@ -243,7 +243,7 @@ namespace Edge.Services.Facebook.AdsApi
 						string age_min = adGroupTargetingReader.Current.age_min;
 						if (!string.IsNullOrEmpty(age_min))
 						{
-							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max), OriginalID = adGroupTargetingReader.Current.adgroup_id };
+							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupTargetingReader.Current.age_max) };
 							ad.Targets.Add(ageTarget);
 						}
 						XmlDynamicObject genders = adGroupTargetingReader.Current.genders as XmlDynamicObject;

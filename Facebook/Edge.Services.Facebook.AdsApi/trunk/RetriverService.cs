@@ -127,7 +127,9 @@ namespace Edge.Services.Facebook.AdsApi
 			current.Name = string.Format("AdGroupCreatives-{0}", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
-			current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\AdGroupCreatives\{0}_{1}.xml", current.Name,  DateTime.Now.ToString("yyyyMMddHHmmss")));
+			current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", "AdGroupCreatives",
+				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+				DateTime.Now.Day.ToString(), current.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
 			counter++;
