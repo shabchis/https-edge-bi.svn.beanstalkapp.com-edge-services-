@@ -56,6 +56,10 @@ namespace Edge.Services.Google.Adwords
 				{
 					_googleReport.SetReportDefinition(email, _dateRange, type);
 					_reportId = _googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+					
+					//FOR DEBUG
+					//_googleReport.DownloadReport(_reportId);
+
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
 					DeliveryFile file = new DeliveryFile();
@@ -104,7 +108,8 @@ namespace Edge.Services.Google.Adwords
 
 			WebResponse response = request.GetResponse();
 
-			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["Path"].ToString(), true, response.ContentLength);
+			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["Path"].ToString()+@"\" +
+						file.Name+".zip", true, response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();

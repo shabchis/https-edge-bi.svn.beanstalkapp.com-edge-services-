@@ -28,6 +28,8 @@ namespace Edge.Services.Google.Adwords
 		{
 			this.reportDefinition = new ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
+			this.reportDefinition.dateRangeType = dateRange;
+			this.ReportType = ReportType;
 			this.dateRangeType = dateRange;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
@@ -52,9 +54,9 @@ namespace Edge.Services.Google.Adwords
 		public long intializingGoogleReport(int Account_Id, long Instance_Id)
 		{
 			long ReportId;
-			ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, this.StartDate, this.EndDate);
+			ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
 			if (ReportId == -1)
-				ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, Instance_Id);
+				ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.dateRangeType, this.ReportType, Instance_Id);
 
 			this.Id = ReportId;
 			return ReportId;
