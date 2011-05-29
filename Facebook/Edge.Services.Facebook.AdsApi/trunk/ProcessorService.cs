@@ -10,32 +10,6 @@ using Edge.Data.Pipeline.Importing;
 namespace Edge.Services.Facebook.AdsApi
 {
 
-
-	/*
-
-	* step 1:
-	 * (Campaigns) V
-	 * 
-	 * step 2:
-	 * - Ad.Guid = Guid.NewGuid()-----cancelded
-	 * - Ad.OriginalID
-	 * - Ad.Campaign
-	 * 
-	 * step 3:
-	 * >>> AdMetricsUnit.Ad.Guid + Impressions, clicks, etc.
-	 * 
-	 * 
-	 * 
-	 * step 4:
-	 * - Ad.targeting
-	 * 
-	* step 5:
-	 * >>>> Ad.creatives + remove from dictionary
-
-
-
-	*/
-
 	public class ProcessorService : PipelineService
 	{
 		public const int Actions_MeasureID = -666;
