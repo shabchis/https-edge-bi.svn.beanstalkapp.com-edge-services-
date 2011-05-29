@@ -54,7 +54,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups"];
 
 			var adGroupReader = new XmlDynamicReader
-				(FileManager.Open( deliveryFile.GetFileInfo()),
+				(FileManager.Open(deliveryFile.Location),
 				Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
