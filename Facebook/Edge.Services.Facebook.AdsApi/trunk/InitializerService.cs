@@ -23,12 +23,13 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery = new Delivery(this.Instance.InstanceID)
 			{
 				_guid=Guid.Parse( this.Instance.Configuration.Options["DeliveryGuid"]),
-				TargetPeriod = this.TargetPeriod
+				TargetPeriod = this.TargetPeriod,
+				TargetLocationDirectory="Facebook"
 			};
 			
 			
 			//set parameters for entire delivery
-			this.Delivery.Parameters["AccountID"] = this.Instance.AccountID;
+			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
 
 			if (this.Instance.Configuration.Options["APIKey"] == null)
 				this.Delivery.Parameters["APIKey"] = this.Instance.ParentInstance.Configuration.Options["APIKey"].ToString();
@@ -67,18 +68,18 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				ID = 6
 			};
-			Delivery.Parameters["AccountID"] = 1007;
+		//	Delivery.Parameters["AccountID"] = 1007;
 			
 			
 			this.ReportProgress(0.2);
 
 
 			DeliveryFile deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "AdGroupStats";
+			deliveryFile.Name = "AdGroupStats.xml";
 			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
-			deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-				DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
+			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
@@ -89,30 +90,30 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery.Files.Add(deliveryFile);*/
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "AdGroups";
+			deliveryFile.Name = "AdGroups.xml";
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
-			deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-				DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
+			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			this.Delivery.Files.Add(deliveryFile);
 			
 
 			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "Campaigns";
+			deliveryFile.Name = "Campaigns.xml";
 			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
-			deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-				DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
+			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			this.Delivery.Files.Add(deliveryFile);
 
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "AdGroupTargeting";
+			deliveryFile.Name = "AdGroupTargeting.xml";
 			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
-			deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-				DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
+			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.98);

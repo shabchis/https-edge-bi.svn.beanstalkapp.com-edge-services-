@@ -91,6 +91,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 		private void DownloadFile(DeliveryFile file)
 		{
+			
 			bool async=true;
 			HttpWebResponse response = null;
 			string body = file.Parameters["body"].ToString();
@@ -98,7 +99,7 @@ namespace Edge.Services.Facebook.AdsApi
 			response = (HttpWebResponse)request.GetResponse();
 			if (file.Name == "AdGroups" || file.Name.StartsWith("AdGroupCreatives"))
 				async = false;
-			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["FileRelativePath"].ToString(), async, response.ContentLength);
+			FileDownloadOperation fileDownloadOperation =file.Download(response.GetResponseStream(), async,response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();
