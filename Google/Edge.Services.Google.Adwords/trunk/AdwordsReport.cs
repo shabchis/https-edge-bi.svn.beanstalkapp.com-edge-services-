@@ -13,7 +13,7 @@ using Edge.Core.Configuration;
 
 namespace Edge.Services.Google.Adwords
 {
-	class AdwordsReport
+	public class AdwordsReport
 	{
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
@@ -208,7 +208,7 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		public void DownloadReport(long reportId)
+		public void DownloadReport(long reportId, string Path = @"c:\testingAdwords.zip")
 		{
 
 
@@ -216,8 +216,8 @@ namespace Edge.Services.Google.Adwords
 			try
 			{
 				// Download report.
-				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, "c:\\testingAdwords.zip");
-				Console.WriteLine("Report with definition id '{0}' was downloaded to '{1}'.", reportId, "c:\\testingAdwords.zip");
+				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
+				Console.WriteLine("Report with definition id '{0}' was downloaded to '{1}'.", reportId, Path);
 			}
 			catch (Exception ex)
 			{
@@ -252,12 +252,12 @@ namespace Edge.Services.Google.Adwords
 
 		public string Name { get; set; }
 		public long Id { get; set; }
-		private GoogleUserEntity User { set; get; }
+		public GoogleUserEntity User { set; get; }
 		private ClientSelector[] AccountEmails;
 		public ReportDefinitionDateRangeType dateRangeType { get; set; }
 		private ReportDefinition reportDefinition { set; get; }
 		private ReportDefinitionReportType ReportType { set; get; }
-		ReportDefinitionService reportService { set; get; }
+		public ReportDefinitionService reportService { set; get; }
 		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
 		public string StartDate { set; get; }
 		public string EndDate { set; get; }
