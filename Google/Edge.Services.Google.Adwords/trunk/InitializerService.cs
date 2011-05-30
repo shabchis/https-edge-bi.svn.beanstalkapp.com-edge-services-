@@ -27,7 +27,12 @@ namespace Edge.Services.Google.Adwords
 			//_edgeAccount = new AccountEntity(Instance.AccountID, AdwordsEmail);
 
 			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Parameters["AccountID"] = Instance.ParentInstance.AccountID;
+#if (DEBUG)
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = 67};
+#else
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID};
+#endif
+
 
 
 			//=============================== TEMP FOR DEBUG ===================================
