@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Edge.Services.Google.Adwords
 {
-	class GoogleRequestEntity
+	public class GoogleRequestEntity
 	{
 		public GoogleRequestEntity()
 		{
