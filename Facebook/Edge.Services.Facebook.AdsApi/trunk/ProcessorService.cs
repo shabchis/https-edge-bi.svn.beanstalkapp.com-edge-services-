@@ -21,10 +21,10 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 
 			//Campaigns
-			DeliveryFile campaigns = this.Delivery.Files["Campaigns"];
+			DeliveryFile campaigns = this.Delivery.Files["Campaigns.xml"];
 			
 			var campaignsReader = new XmlDynamicReader
-			(FileManager.Open(campaigns.Location), Instance.ParentInstance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
+			(campaigns.Open(), Instance.ParentInstance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			using (campaignsReader)
 			{
@@ -65,7 +65,7 @@ namespace Edge.Services.Facebook.AdsApi
 			}
 			this.ReportProgress(0.1);
 			//GetAdGroups
-			DeliveryFile adGroups = this.Delivery.Files["AdGroups"];
+			DeliveryFile adGroups = this.Delivery.Files["AdGroups.xml"];
 
 			var adGroupsReader = new XmlDynamicReader
 			(FileManager.Open(adGroups.Location),
@@ -118,10 +118,10 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			//GetAdGroupStats
-			DeliveryFile adGroupStats = this.Delivery.Files["AdGroupStats"];
+			DeliveryFile adGroupStats = this.Delivery.Files["AdGroupStats.xml"];
 
 			var adGroupStatsReader = new XmlDynamicReader
-				(FileManager.Open(adGroupStats.Location), Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
+				(adGroupStats.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
 
 
 			using (var session = new AdDataImportSession(this.Delivery))
@@ -207,8 +207,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 				//getAdGroupTargeting
 
-				DeliveryFile adGroupTargeting = this.Delivery.Files["AdGroupTargeting"];
-				var adGroupTargetingReader = new XmlDynamicReader(FileManager.Open(adGroupTargeting.Location), Instance.ParentInstance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+				DeliveryFile adGroupTargeting = this.Delivery.Files["AdGroupTargeting.xml"];
+				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
 				using (adGroupTargetingReader)
 				{
 					while (adGroupTargetingReader.Read())
@@ -261,7 +261,7 @@ namespace Edge.Services.Facebook.AdsApi
 				foreach (var creativeFile in creativeFiles)
 				{
 					var adGroupCreativesReader = new XmlDynamicReader
-							(FileManager.Open(creativeFile.Location), Instance.ParentInstance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+							(creativeFile.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 

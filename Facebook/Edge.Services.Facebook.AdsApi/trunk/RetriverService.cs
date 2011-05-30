@@ -38,7 +38,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 				 try
 				 {
-					 if (file.Name != "AdGroups")
+					 if (file.Name != "AdGroups.xml")
 					 {
 						 DownloadFile(file);
 						 file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
@@ -49,9 +49,9 @@ namespace Edge.Services.Facebook.AdsApi
 					 Edge.Core.Utilities.Log.Write(this.ToString(),string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
 				 }
 			 }
-			DownloadFile(Delivery.Files["AdGroups"]);
-			Delivery.Files["AdGroups"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups"];
+			DownloadFile(Delivery.Files["AdGroups.xml"]);
+			Delivery.Files["AdGroups.xml"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups.xml"];
 
 			var adGroupReader = new XmlDynamicReader
 				(FileManager.Open(deliveryFile.Location),
@@ -73,10 +73,10 @@ namespace Edge.Services.Facebook.AdsApi
 					CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
 				if (deliveryFiles.Count > 0)
 				{
-					
+					this.Delivery.Save();
 					foreach (DeliveryFile file in deliveryFiles)
 					{
-						this.Delivery.Files.Add(file);
+						
 						DownloadFile(file);
 						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 					}
@@ -97,18 +97,24 @@ namespace Edge.Services.Facebook.AdsApi
 			string body = file.Parameters["body"].ToString();
 			HttpWebRequest request = CreateRequest(_baseAddress, body);
 			response = (HttpWebResponse)request.GetResponse();
-			if (file.Name == "AdGroups" || file.Name.StartsWith("AdGroupCreatives"))
+			if (file.Name == "AdGroups.xml" || file.Name.StartsWith("AdGroupCreatives.xml"))
 				async = false;
 			FileDownloadOperation fileDownloadOperation =file.Download(response.GetResponseStream(), async,response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();
 			
+			
+			
+			
 		}
 
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
 		{
+			
+			
 			_countedFile -= 1;
+			
 		}
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
@@ -125,14 +131,15 @@ namespace Edge.Services.Facebook.AdsApi
 		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
 		{
 			DeliveryFile current = new DeliveryFile();
-			current.Name = string.Format("AdGroupCreatives-{0}", counter);
+			current.Name = string.Format("AdGroupCreatives-{0}.xml", counter);
 			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
-			current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", "AdGroupCreatives",
-				DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-				DateTime.Now.Day.ToString(), current.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			//current.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", "AdGroupCreatives",
+			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
+			//    DateTime.Now.Day.ToString(), current.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
+			this.Delivery.Files.Add(current);
 			counter++;
 		}
 
