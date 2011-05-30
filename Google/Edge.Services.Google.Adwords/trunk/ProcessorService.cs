@@ -16,7 +16,7 @@ namespace Edge.Services.Google.Adwords
 
 			// Get Keywords data
 			DeliveryFile _keyWordsFile = this.Delivery.Files["KEYWORDS_PERFORMANCE_REPORT"];
-			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.Location);
+			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.Open());
 			Dictionary<KeywordPrimaryKey, KeywordTarget> _keywordsData = new Dictionary<KeywordPrimaryKey, KeywordTarget>();
 
 			using (_keywordsReader)
