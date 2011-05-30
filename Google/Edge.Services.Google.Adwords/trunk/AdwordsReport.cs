@@ -33,7 +33,21 @@ namespace Edge.Services.Google.Adwords
 			this.dateRangeType = dateRange;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
-
+			// Create Report Service
+			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
+			switch (ReportType)
+			{
+				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
+					{
+						this.Name = "AD_PERFORMANCE_REPORT";
+						break;
+					}
+				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
+					{
+						this.Name = "KEYWORDS_PERFORMANCE_REPORT";
+						break;
+					}
+			}
 		}
 
 
@@ -181,8 +195,7 @@ namespace Edge.Services.Google.Adwords
 			ReportDefinitionOperation[] operations = new ReportDefinitionOperation[] { operation };
 
 
-			// Create Report Service
-			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
+			
 
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
