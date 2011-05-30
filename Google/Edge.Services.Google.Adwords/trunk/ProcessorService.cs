@@ -26,7 +26,8 @@ namespace Edge.Services.Google.Adwords
 					KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
 					{
 						KeywordId = _keywordsReader.Current.Keyword_ID,
-						AdgroupId = _keywordsReader.Current.Ad_group_ID
+						AdgroupId = _keywordsReader.Current.Ad_group_ID,
+						CampaignId = _keywordsReader.Current.Campaign_ID
 					};
 					KeywordTarget keyword = new KeywordTarget()
 					{
@@ -64,10 +65,35 @@ namespace Edge.Services.Google.Adwords
 										},
 									}
 								};
-								//TODO: INSERT ADGROUP AS A SEGMENT
-								//TODO: INSERT KEYWORD INTO METRICS- SERACH KEYWORD IN KEYWORD DICTIONARY
+								//INSERT ADGROUP AS A SEGMENT
+								adMetricsUnit.Ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+											{
+												Value = _adsReader.Current.Ad_group,
+												OriginalID = _adsReader.Current.Ad_group_ID
+											};
+
+								//SERACH KEYWORD IN KEYWORD DICTIONARY
+								KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
+								{
+									AdgroupId = _adsReader.Current.Ad_group_ID,
+									KeywordId = _adsReader.Current.Keyword_ID,
+									CampaignId = _adsReader.Current.Campaign_ID
+								};
+
+								KeywordTarget _kwd = new KeywordTarget();
+								try
+								{
+									_kwd = _keywordsData[kwdKey];
+								}
+								catch (Exception e)
+								{
+									throw new Exception( "KeyWord Key does not exists in keyword report",e);
+								}
+
+								//TODO: INSERT KEYWORD INTO METRICS
 
 
+								//INSERTING METRICS DATA
 								adMetricsUnit.Clicks = Convert.ToInt64(_adsReader.Current.Clicks);
 								adMetricsUnit.Cost = Convert.ToDouble(_adsReader.Current.Cost);
 								adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.impressions);

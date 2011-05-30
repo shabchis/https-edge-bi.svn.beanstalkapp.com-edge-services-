@@ -19,5 +19,6 @@ namespace Edge.Services.Google.Adwords
 
 		public long AdgroupId { set; get; }
 		public long KeywordId { set; get; }
+		public long CampaignId { set; get; }
 	}
 }

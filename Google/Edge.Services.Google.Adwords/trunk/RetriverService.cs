@@ -67,10 +67,6 @@ namespace Edge.Services.Google.Adwords
 					file.SourceUrl = request.downloadUrl.ToString();
 					file.Parameters.Add("GoogleRequestEntity", request);
 
-					// TEMP
-					// TODO: file.Location = "Google/AdWords";
-					file.Parameters.Add("Path", "Google");
-
 					filesPerEmail.Add(file);
 					this.Delivery.Files.Add(file);
 
@@ -108,8 +104,8 @@ namespace Edge.Services.Google.Adwords
 
 			WebResponse response = request.GetResponse();
 
-			FileDownloadOperation fileDownloadOperation = FileManager.Download(response.GetResponseStream(), file.Parameters["Path"].ToString()+@"\" +
-						file.Name+".zip", true, response.ContentLength);
+			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), true, response.ContentLength); 
+						
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();

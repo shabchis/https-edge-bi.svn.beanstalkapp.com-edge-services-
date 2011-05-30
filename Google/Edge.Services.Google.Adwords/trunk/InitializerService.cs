@@ -21,6 +21,7 @@ namespace Edge.Services.Google.Adwords
 		{
 
 			this.Delivery = new Delivery(Instance.InstanceID);
+			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
 			//googleReport = new AdwordsReport();
 			IntializingParmeters();
 			//_edgeAccount = new AccountEntity(Instance.AccountID, AdwordsEmail);
