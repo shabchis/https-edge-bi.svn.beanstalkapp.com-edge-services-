@@ -62,15 +62,9 @@ namespace Edge.Services.Google.Adwords
 					//_googleReport.DownloadReport(_reportId);
 
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+					
+					// DORON-REFACTOR
 					SetDeliveryFile(filesPerEmail,request);
-					DeliveryFile file = new DeliveryFile();
-					file.Name = _googleReport.Name;
-					file.SourceUrl = request.downloadUrl.ToString();
-					file.Parameters.Add("GoogleRequestEntity", request);
-
-					filesPerEmail.Add(file);
-					this.Delivery.Files.Add(file);
-
 				}
 				Delivery.Parameters.Add(email, filesPerEmail);
 			}
@@ -100,7 +94,7 @@ namespace Edge.Services.Google.Adwords
 		private void SetDeliveryFile(List<DeliveryFile> filesPerEmail,GoogleRequestEntity request)
 		{
 			DeliveryFile file = new DeliveryFile();
-			file.Name = _googleReport.Name;
+			file.Name = _googleReport.Name + ".zip";
 			file.SourceUrl = request.downloadUrl.ToString();
 			file.Parameters.Add("GoogleRequestEntity", request);
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using Google.Api.Ads.AdWords.v201101;
+using GA = Google.Api.Ads.AdWords.v201101;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -19,6 +19,8 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
+			if (this.Delivery != null)
+				this.Delivery.Delete();
 
 			this.Delivery = new Delivery(Instance.InstanceID);
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
@@ -33,39 +35,66 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID};
 #endif
 
+			this.Delivery.Files.Add(new DeliveryFile() { Name= "chicken shit" });
 
 
 			//=============================== TEMP FOR DEBUG ===================================
 			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
 			//================================TEMP FOR DEBUG ===================================
 
-			//foreach (string email in _edgeAccount.Emails)
-			//{
-			//    List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
-			//    foreach (ReportDefinitionReportType type in _reportsTypes)
-			//    {
-			//        googleReport.SetReportDefinition(email, DateRange, type);
-			//        ReportId = googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
-			//        GoogleRequestEntity request = googleReport.GetReportUrlParams(true);
+			// TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO 
+			/*
+			// Get all report types from config
+			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
+			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
+			foreach (string reportTypeName in reportTypeNames)
+			{
+				if (Enum.IsDefined(typeof(GA.ReportDefinitionReportType), reportTypeName))
+					reportTypes.Add((GA.ReportDefinitionReportType)Enum.Parse(typeof(GA.ReportDefinitionReportType), reportTypeName, true));
+				else throw new Exception("Undefined ReportType");
+			}
 
-			//        DeliveryFile file = new DeliveryFile();
-			//        file.Name = googleReport.Name;
-			//        file.SourceUrl = request.downloadUrl.ToString();
-			//        file.Parameters.Add("GoogleRequestEntity", request);
+			// Get date ranges in google format
+			GA.ReportDefinitionDateRangeType gaDateRange = GA.ReportDefinitionDateRangeType.CUSTOM_DATE;
+			string gaStartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+			string gaEndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 
-			//        // TEMP
-			//        // TODO: file.Location = "Google/AdWords";
-			//        file.Parameters.Add("Path", "Google");
+			AccountEntity edgeAccount = new AccountEntity(Instance.AccountID, Instance.ParentInstance.Configuration.Options["Adwords.Email"]);
 
-			//        filesPerEmail.Add(file);
-			//        this.Delivery.Files.Add(file);
+			foreach (string email in edgeAccount.Emails)
+			{
+				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
+				foreach (GA.ReportDefinitionReportType type in reportTypes)
+				{
+					_googleReport.SetReportDefinition(email, _dateRange, type);
+					_reportId = _googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
 
-			//    }
-			//    Delivery.Parameters.Add(email, filesPerEmail);
-			//}
+					//FOR DEBUG
+					//_googleReport.DownloadReport(_reportId);
 
+					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+					SetDeliveryFile(filesPerEmail, request);
+					DeliveryFile file = new DeliveryFile();
+					file.Name = _googleReport.Name;
+					file.SourceUrl = request.downloadUrl.ToString();
+					file.Parameters.Add("GoogleRequestEntity", request);
 
-			//googleReport.DownloadReport(51015891);
+					filesPerEmail.Add(file);
+					this.Delivery.Files.Add(file);
+
+				}
+				Delivery.Parameters.Add(email, filesPerEmail);
+			}
+
+			// Create all delivery files
+			foreach (string email in _emails)
+			{
+				foreach (string reportType in _reportTypes)
+				{
+				}
+			}
+			*/
+			// TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO // TODO 
 
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;

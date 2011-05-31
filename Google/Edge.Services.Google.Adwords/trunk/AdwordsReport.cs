@@ -15,6 +15,19 @@ namespace Edge.Services.Google.Adwords
 {
 	public class AdwordsReport
 	{
+		public string Name { get; set; }
+		public long Id { get; set; }
+		public GoogleUserEntity User { set; get; }
+		private ClientSelector[] AccountEmails;
+		public ReportDefinitionDateRangeType dateRangeType { get; set; }
+		private ReportDefinition reportDefinition { set; get; }
+		private ReportDefinitionReportType ReportType { set; get; }
+		public ReportDefinitionService reportService { set; get; }
+		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
+		public string StartDate { set; get; }
+		public string EndDate { set; get; }
+		public bool includeZeroImpression { get; set; }
+		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost" };
@@ -259,19 +272,6 @@ namespace Edge.Services.Google.Adwords
 
 
 
-		public string Name { get; set; }
-		public long Id { get; set; }
-		public GoogleUserEntity User { set; get; }
-		private ClientSelector[] AccountEmails;
-		public ReportDefinitionDateRangeType dateRangeType { get; set; }
-		private ReportDefinition reportDefinition { set; get; }
-		private ReportDefinitionReportType ReportType { set; get; }
-		public ReportDefinitionService reportService { set; get; }
-		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
-		public string StartDate { set; get; }
-		public string EndDate { set; get; }
-		public bool includeZeroImpression { get; set; }
-		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 
 	}
 
