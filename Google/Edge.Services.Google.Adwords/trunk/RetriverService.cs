@@ -6,6 +6,7 @@ using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using System.Net;
 using Google.Api.Ads.AdWords.v201101;
+using Google.Api.Ads.AdWords.Util;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -61,7 +62,7 @@ namespace Edge.Services.Google.Adwords
 					//_googleReport.DownloadReport(_reportId);
 
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
-
+					SetDeliveryFile(filesPerEmail,request);
 					DeliveryFile file = new DeliveryFile();
 					file.Name = _googleReport.Name;
 					file.SourceUrl = request.downloadUrl.ToString();
@@ -79,10 +80,32 @@ namespace Edge.Services.Google.Adwords
 			
 			foreach ( DeliveryFile file in this.Delivery.Files)
 			{
-				DownloadFile(file);
+				try
+				{
+					DownloadFile(file);
+				}
+				catch (ReportsException ex) // if Getting a report ID exception
+				{
+					if (ex.InnerException.Message.Equals("Report contents are invalid."))
+					{
+						_googleReport.intializingGoogleReport(this.Delivery.Account.ID, this.Instance.InstanceID);
+					}
+				}
+				
 				
 			}
 			return Core.Services.ServiceOutcome.Success;
+		}
+
+		private void SetDeliveryFile(List<DeliveryFile> filesPerEmail,GoogleRequestEntity request)
+		{
+			DeliveryFile file = new DeliveryFile();
+			file.Name = _googleReport.Name;
+			file.SourceUrl = request.downloadUrl.ToString();
+			file.Parameters.Add("GoogleRequestEntity", request);
+
+			filesPerEmail.Add(file);
+			this.Delivery.Files.Add(file);
 		}
 
 		private void DownloadFile(DeliveryFile file)
