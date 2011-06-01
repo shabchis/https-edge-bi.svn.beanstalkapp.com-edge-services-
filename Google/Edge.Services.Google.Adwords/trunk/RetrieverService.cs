@@ -12,6 +12,7 @@ namespace Edge.Services.Google.Adwords
 {
 	class RetrieverService : PipelineService
 	{
+
 		#region members
 		private int _countedFile = 0;
 		private double _minProgress = 0.05;
@@ -56,7 +57,13 @@ namespace Edge.Services.Google.Adwords
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 					
 					// DORON-REFACTOR
-					SetDeliveryFile(filesPerEmail,request);
+					DeliveryFile file = new DeliveryFile();
+					file.Name = _googleReport.Name + ".zip";
+					file.SourceUrl = request.downloadUrl.ToString();
+					file.Parameters.Add("GoogleRequestEntity", request);
+
+					filesPerEmail.Add(file);
+					this.Delivery.Files.Add(file);
 				}
 				this.Delivery.Parameters.Add(email, filesPerEmail);
 			}
@@ -84,16 +91,6 @@ namespace Edge.Services.Google.Adwords
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		private void SetDeliveryFile(List<DeliveryFile> filesPerEmail,GoogleRequestEntity request)
-		{
-			DeliveryFile file = new DeliveryFile();
-			file.Name = _googleReport.Name + ".zip";
-			file.SourceUrl = request.downloadUrl.ToString();
-			file.Parameters.Add("GoogleRequestEntity", request);
-
-			filesPerEmail.Add(file);
-			this.Delivery.Files.Add(file);
-		}
 
 		private void DownloadFile(DeliveryFile file)
 		{

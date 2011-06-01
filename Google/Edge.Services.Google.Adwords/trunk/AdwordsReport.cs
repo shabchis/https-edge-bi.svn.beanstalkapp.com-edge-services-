@@ -257,6 +257,21 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
+		public void DownloadReport(long reportId, string Path = @"c:\testingAdwords.zip")
+		{
+
+			//========================== Retriever =======================================================
+			try
+			{
+				// Download report.
+				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("Failed to download report. Exception says" + ex.Message);
+			}
+			//======================== End of Retriever =================================================
+		}
 
 
 	}
