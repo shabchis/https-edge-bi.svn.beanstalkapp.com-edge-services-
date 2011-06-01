@@ -17,7 +17,9 @@ namespace Edge.Services.Google.Adwords
 
 			// Get Keywords data
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
-			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.Open());
+			string[] requiredHeaders = new string[1];
+			requiredHeaders[0] = "Keyword ID";
+			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.Open(), requiredHeaders);
 			Dictionary<KeywordPrimaryKey, KeywordTarget> _keywordsData = new Dictionary<KeywordPrimaryKey, KeywordTarget>();
 
 			using (_keywordsReader)
@@ -41,7 +43,7 @@ namespace Edge.Services.Google.Adwords
 
 					// Get Ads data.
 					DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT.zip"];
-					var _adsReader = new CsvDynamicReader(_adPerformanceFile.Location);
+					var _adsReader = new CsvDynamicReader(_adPerformanceFile.Location,requiredHeaders);
 
 					using (var session = new AdDataImportSession(this.Delivery))
 					{
