@@ -20,35 +20,35 @@ namespace Edge.Services.Facebook.AdsApi
 		int _countedFile;
 		string _baseAddress;
 		double _minProgress = 0.05;
-		
+
 		protected override ServiceOutcome DoPipelineWork()
 		{
-//#if (DEBUG)
-//            {
-//                forDebugOnly onlyForDebug = new forDebugOnly();
-//                this.Delivery=onlyForDebug.GetDelivery(this.Instance);
-//            }
-//#endif
+			//#if (DEBUG)
+			//            {
+			//                forDebugOnly onlyForDebug = new forDebugOnly();
+			//                this.Delivery=onlyForDebug.GetDelivery(this.Instance);
+			//            }
+			//#endif
 
-			_countedFile = this.Delivery.Files.Count + 3;			
-			 _baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
+			_countedFile = this.Delivery.Files.Count + 3;
+			_baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
 
-			 foreach (DeliveryFile file in this.Delivery.Files)
-			 {
+			foreach (DeliveryFile file in this.Delivery.Files)
+			{
 
-				 try
-				 {
-					 if (file.Name != "AdGroups.xml")
-					 {
-						 DownloadFile(file);
-						 file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-					 }
-				 }
-				 catch (WebException ex)
-				 {
-					 Edge.Core.Utilities.Log.Write(this.ToString(),string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
-				 }
-			 }
+				try
+				{
+					if (file.Name != "AdGroups.xml")
+					{
+						DownloadFile(file);
+						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+					}
+				}
+				catch (WebException ex)
+				{
+					Edge.Core.Utilities.Log.Write(this.ToString(), string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
+				}
+			}
 			DownloadFile(Delivery.Files["AdGroups.xml"]);
 			Delivery.Files["AdGroups.xml"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups.xml"];
@@ -76,7 +76,7 @@ namespace Edge.Services.Facebook.AdsApi
 					this.Delivery.Save();
 					foreach (DeliveryFile file in deliveryFiles)
 					{
-						
+
 						DownloadFile(file);
 						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 					}
@@ -87,44 +87,44 @@ namespace Edge.Services.Facebook.AdsApi
 			return ServiceOutcome.Success;
 		}
 
-		
+
 
 		private void DownloadFile(DeliveryFile file)
 		{
-			
-			bool async=true;
+
+			bool async = true;
 			HttpWebResponse response = null;
 			string body = file.Parameters["body"].ToString();
 			HttpWebRequest request = CreateRequest(_baseAddress, body);
 			response = (HttpWebResponse)request.GetResponse();
 			if (file.Name == "AdGroups.xml" || file.Name.StartsWith("AdGroupCreatives.xml"))
 				async = false;
-			FileDownloadOperation fileDownloadOperation =file.Download(response.GetResponseStream(), async,response.ContentLength);
+			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), async, response.ContentLength);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();
-			
-			
-			
-			
+
+
+
+
 		}
 
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
 		{
-			
-			
+
+
 			_countedFile -= 1;
-			
+
 		}
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
 		{
-			double percent =Math.Round( Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile),3);
+			double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile), 3);
 			if (percent >= _minProgress)
 			{
-				_minProgress +=0.05;
-				if (percent<=1)
-				this.ReportProgress(percent);
+				_minProgress += 0.05;
+				if (percent <= 1)
+					this.ReportProgress(percent);
 			}
 		}
 
@@ -139,6 +139,8 @@ namespace Edge.Services.Facebook.AdsApi
 			//    DateTime.Now.Day.ToString(), current.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
+			if (Delivery.Files.Contains(current.Name))
+				Delivery.Files.Remove(current.Name);
 			this.Delivery.Files.Add(current);
 			counter++;
 		}

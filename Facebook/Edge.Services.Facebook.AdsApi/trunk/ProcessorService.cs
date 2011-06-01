@@ -126,7 +126,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
-				session.Begin(true);
+				session.Begin(false);
 				using (adGroupStatsReader)
 				{
 					while (adGroupStatsReader.Read())
@@ -145,7 +145,7 @@ namespace Edge.Services.Facebook.AdsApi
 							ID = SocialImpression_MeasureID,
 							Account = new Account()
 							{
-								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+								ID = this.Delivery.Account.ID
 							},
 							Name = "social_impressions"
 						},
@@ -156,7 +156,7 @@ namespace Edge.Services.Facebook.AdsApi
 							ID = SocialClicks_MeasureID,
 							Account = new Account()
 							{
-								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+								ID = this.Delivery.Account.ID
 							},
 							Name = "social_clicks"
 						},
@@ -167,7 +167,7 @@ namespace Edge.Services.Facebook.AdsApi
 							ID = SocialSpent_MeasureID,
 							Account = new Account()
 							{
-								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+								ID = this.Delivery.Account.ID
 							},
 							Name = "social_spent"
 						},
@@ -178,7 +178,7 @@ namespace Edge.Services.Facebook.AdsApi
 							ID = Actions_MeasureID,
 							Account = new Account()
 							{
-								ID = int.Parse(this.Delivery.Parameters["AccountID"].ToString())
+								ID = this.Delivery.Account.ID
 							},
 							Name = "actions"
 						},

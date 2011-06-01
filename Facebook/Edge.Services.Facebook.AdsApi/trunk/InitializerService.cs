@@ -29,7 +29,15 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			
 			//set parameters for entire delivery
+#if  (DEBUG)
+			{
+				this.Delivery.Account = new Data.Objects.Account() { ID = 1008 };			
+			}
+#else
+			{
 			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
+			}
+#endif
 
 			if (this.Instance.Configuration.Options["APIKey"] == null)
 				this.Delivery.Parameters["APIKey"] = this.Instance.ParentInstance.Configuration.Options["APIKey"].ToString();
@@ -68,7 +76,6 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				ID = 6
 			};
-		//	Delivery.Parameters["AccountID"] = 1007;
 			
 			
 			this.ReportProgress(0.2);
@@ -76,44 +83,31 @@ namespace Edge.Services.Facebook.AdsApi
 
 			DeliveryFile deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "AdGroupStats.xml";
-			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
-			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());			
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
-			/* MOVED TO RETRIVER BECAUSE FACEBOOK BUG (NOT MORE THE 1000 CREATIVES)
-			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = "GetAdGroupCreatives.xml";
-			deliveryFile.Parameters.Add("body", GetAdGroupCreativesHttpRequest());
-			this.Delivery.Files.Add(deliveryFile);*/
+			/* MOVED TO RETRIVER BECAUSE FACEBOOK BUG (NOT MORE THE 1000 CREATIVES)			
+			deliveryFile.Name = "GetAdGroupCreatives.xml";*/
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "AdGroups.xml";
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
-			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			
 			this.Delivery.Files.Add(deliveryFile);
 			
 
 			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "Campaigns.xml";
-			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
-			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());			
 			this.Delivery.Files.Add(deliveryFile);
 
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = "AdGroupTargeting.xml";
 			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
-			//deliveryFile.Parameters.Add("FileRelativePath", string.Format(@"Facebook\{0}\{1}\{2}\{3}\{4}_{5}_{6}.xml", deliveryFile.Name,
-			//    DateTime.Now.Year.ToString(), DateTime.Now.Month.ToString(),
-			//    DateTime.Now.Day.ToString(), deliveryFile.Name, Delivery.Parameters["AccountID"], DateTime.Now.ToString("HHmmss")));
+			
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.98);
