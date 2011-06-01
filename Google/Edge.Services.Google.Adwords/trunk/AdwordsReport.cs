@@ -18,6 +18,7 @@ namespace Edge.Services.Google.Adwords
 		public string Name { get; set; }
 		public long Id { get; set; }
 		public GoogleUserEntity User { set; get; }
+		private int _accountId { get; set; }
 		private ClientSelector[] AccountEmails;
 		public ReportDefinitionDateRangeType dateRangeType { get; set; }
 		private ReportDefinition reportDefinition { set; get; }
@@ -28,17 +29,17 @@ namespace Edge.Services.Google.Adwords
 		public string EndDate { set; get; }
 		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
+		
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost" };
 
-		public AdwordsReport()
+		public AdwordsReport(int AccountId, string Email,string StartDate, string EndDate, bool IncludeZeroImpression = false,
+							ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY,
+							ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
 		{
-
-		}
-
-		public void SetReportDefinition(string Email, ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY, ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
-		{
+			this._accountId = AccountId;
+			this.includeZeroImpression = IncludeZeroImpression;
 			this.reportDefinition = new ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
 			this.reportDefinition.dateRangeType = dateRange;
@@ -46,21 +47,10 @@ namespace Edge.Services.Google.Adwords
 			this.dateRangeType = dateRange;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
+			
 			// Create Report Service
 			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
-			switch (ReportType)
-			{
-				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
-					{
-						this.Name = "AD_PERFORMANCE_REPORT";
-						break;
-					}
-				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
-					{
-						this.Name = "KEYWORDS_PERFORMANCE_REPORT";
-						break;
-					}
-			}
+			this.Name = ReportType.ToString();
 		}
 
 
@@ -78,28 +68,28 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
-		public long intializingGoogleReport(int Account_Id, long Instance_Id,bool Update  = false)
+		public long intializingGoogleReport(bool Update  = false)
 		{
 			long ReportId;
 			if (!Update)
 			{
-				ReportId = GetReportIdFromDB(Account_Id, this.User.email, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
+				ReportId = GetReportIdFromDB(this._accountId, this.User.email, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
 				if (ReportId == -1)
-					ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.dateRangeType, this.ReportType, Instance_Id);
+					ReportId = GetReportIdFromGoogleApi(this._accountId, this.User.email, this.dateRangeType, this.ReportType);
 			}
 			else
 			{
-				ReportId = GetReportIdFromGoogleApi(Account_Id, this.User.email, this.dateRangeType, this.ReportType, Instance_Id);
-				SetReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate,true);
+				ReportId = GetReportIdFromGoogleApi(this._accountId, this.User.email, this.dateRangeType, this.ReportType);
+				SetReportID(this._accountId, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate,true);
 			}
 
 			this.Id = ReportId;
 			return ReportId;
 		}
 
-		private long GetReportIdFromGoogleApi(int Account_Id, string p, ReportDefinitionDateRangeType reportDefinitionDateRangeType, ReportDefinitionReportType reportDefinitionReportType, long Instance_Id)
+		private long GetReportIdFromGoogleApi(int Account_Id, string p, ReportDefinitionDateRangeType reportDefinitionDateRangeType, ReportDefinitionReportType reportDefinitionReportType)
 		{
-			long ReportId = CreateGoogleReport(Account_Id, Instance_Id);
+			long ReportId = CreateGoogleReport(Account_Id);
 			SetReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
 			return ReportId;
 		}
@@ -171,7 +161,7 @@ namespace Edge.Services.Google.Adwords
 			}
 		}
 
-		public long CreateGoogleReport(int Account_Id, long Instance_Id)
+		public long CreateGoogleReport(int Account_Id)
 		{
 
 			//TO DO: Check if report exists in DB
@@ -192,7 +182,7 @@ namespace Edge.Services.Google.Adwords
 					}
 			}
 
-			this.Name = this.reportDefinition.reportType.ToString() + Account_Id + "_" + Instance_Id;
+			this.Name = this.reportDefinition.reportType.ToString() + Account_Id;
 
 			if (this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
@@ -204,13 +194,17 @@ namespace Edge.Services.Google.Adwords
 				
 			}
 
-			// Create a filter Impressions > 0 
-			Predicate predicate = new Predicate();
-			predicate.field = "Impressions";
-			predicate.@operator = PredicateOperator.GREATER_THAN;
-			predicate.values = new string[] { "0" };
-			selector.predicates = new Predicate[] { predicate };
 
+			if (!this.includeZeroImpression)
+			{
+				// Create a filter Impressions > 0 
+				Predicate predicate = new Predicate();
+				predicate.field = "Impressions";
+				predicate.@operator = PredicateOperator.GREATER_THAN;
+				predicate.values = new string[] { "0" };
+				selector.predicates = new Predicate[] { predicate };
+			}
+			
 			// Create reportDefinition
 			reportDefinition = CreateReportDefinition(selector, AccountEmails);
 
@@ -234,7 +228,8 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		public GoogleRequestEntity GetReportUrlParams(bool IsReturnMoneyInMicros)
+		//TODO: check what is IsReturnMoneyInMicros param in google
+		public GoogleRequestEntity GetReportUrlParams(bool IsReturnMoneyInMicros = true)
 		{
 			return new GoogleRequestEntity(
 				new Uri(string.Format(CultureInfo.InvariantCulture, "{0}/api/adwords/reportdownload?__rd={1}", DEFAULT_ADWORDSAPI_SERVER, this.Id)),
