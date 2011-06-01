@@ -25,31 +25,23 @@ namespace Edge.Services.Google.Adwords
 		#endregion
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			_googleReport = new AdwordsReport();
-			_edgeAccount = new AccountEntity(Instance.AccountID, this.Delivery.Parameters["AdwordsEmail"].ToString());
-
-			//reportTypes
-			foreach (string type in this.Delivery.Parameters["ReportsType"].ToString().Split('|').ToList<string>())
-			{
-				if (Enum.IsDefined(typeof(ReportDefinitionReportType), type))
-					_reportsTypes.Add((ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), type, true));
-				else throw new Exception("Undefined ReportType");
-			}
+			
+			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 
 			//Date Range
-			//Temp
+			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
 			
-			this._googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
-			this._googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
+			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 
 			foreach (string email in _edgeAccount.Emails)
 			{
 				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
 				foreach (ReportDefinitionReportType type in _reportsTypes)
 				{
-					_googleReport.SetReportDefinition(email, _dateRange, type);
-					_reportId = _googleReport.intializingGoogleReport(Instance.AccountID, Instance.InstanceID);
+					_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression,_dateRange, type);
+					_reportId = _googleReport.intializingGoogleReport();
 					
 					//FOR DEBUG
 					//_googleReport.DownloadReport(_reportId);
