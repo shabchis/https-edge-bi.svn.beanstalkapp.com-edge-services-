@@ -176,21 +176,23 @@ namespace Edge.Services.Google.Adwords
 
 			//TO DO: Check if report exists in DB
 			Selector selector = new Selector();
+
 			switch (this.reportDefinition.reportType)
 			{
 				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
 						selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
-						this.Name = "AD_PERFORMANCE_REPORT_" + Account_Id + "_" + Instance_Id;
+						
 						break;
 					}
 				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
 					{
 						selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
-						this.Name = "KEYWORDS_PERFORMANCE_REPORT_" + Account_Id + "_" + Instance_Id;
 						break;
 					}
 			}
+
+			this.Name = this.reportDefinition.reportType.ToString() + Account_Id + "_" + Instance_Id;
 
 			if (this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
@@ -230,22 +232,6 @@ namespace Edge.Services.Google.Adwords
 			return reportDefintions[0].id;
 			//DownloadReport(reportDefintions[0].id);
 
-		}
-
-		public void DownloadReport(long reportId, string Path = @"c:\testingAdwords.zip")
-		{
-
-			//========================== Retriever =======================================================
-			try
-			{
-				// Download report.
-				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
-			}
-			catch (Exception ex)
-			{
-				throw new Exception("Failed to download report. Exception says" + ex.Message);
-			}
-			//======================== End of Retriever =================================================
 		}
 
 		public GoogleRequestEntity GetReportUrlParams(bool IsReturnMoneyInMicros)

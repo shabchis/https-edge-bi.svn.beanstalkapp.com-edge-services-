@@ -35,9 +35,6 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID};
 #endif
 
-			this.Delivery.Files.Add(new DeliveryFile() { Name= "chicken shit" });
-
-
 			//=============================== TEMP FOR DEBUG ===================================
 			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
 			//================================TEMP FOR DEBUG ===================================

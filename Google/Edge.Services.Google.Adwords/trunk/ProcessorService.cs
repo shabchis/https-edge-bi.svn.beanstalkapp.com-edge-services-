@@ -6,6 +6,7 @@ using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline.Importing;
+using GA = Google.Api.Ads.AdWords.v201101;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -15,7 +16,7 @@ namespace Edge.Services.Google.Adwords
 		{
 
 			// Get Keywords data
-			DeliveryFile _keyWordsFile = this.Delivery.Files["KEYWORDS_PERFORMANCE_REPORT"];
+			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
 			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.Open());
 			Dictionary<KeywordPrimaryKey, KeywordTarget> _keywordsData = new Dictionary<KeywordPrimaryKey, KeywordTarget>();
 
@@ -39,7 +40,7 @@ namespace Edge.Services.Google.Adwords
 					_keywordsData.Add(keywordPrimaryKey, keyword);
 
 					// Get Ads data.
-					DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
+					DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT.zip"];
 					var _adsReader = new CsvDynamicReader(_adPerformanceFile.Location);
 
 					using (var session = new AdDataImportSession(this.Delivery))

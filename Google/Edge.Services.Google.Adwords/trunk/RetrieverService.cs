@@ -10,7 +10,7 @@ using Google.Api.Ads.AdWords.Util;
 
 namespace Edge.Services.Google.Adwords
 {
-	class RetriverService : PipelineService
+	class RetrieverService : PipelineService
 	{
 		#region members
 		private int _countedFile = 0;
@@ -39,16 +39,8 @@ namespace Edge.Services.Google.Adwords
 			//Temp
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
 			
-			try
-			{
-				this._googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
-				this._googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
-			}
-			catch (Exception e)
-			{
-				throw new Exception("Cannot set start/end time from TargetPeriod", e);
-			}
-
+			this._googleReport.StartDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+			this._googleReport.EndDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 
 			foreach (string email in _edgeAccount.Emails)
 			{
@@ -66,9 +58,10 @@ namespace Edge.Services.Google.Adwords
 					// DORON-REFACTOR
 					SetDeliveryFile(filesPerEmail,request);
 				}
-				Delivery.Parameters.Add(email, filesPerEmail);
+				this.Delivery.Parameters.Add(email, filesPerEmail);
 			}
 
+			this.Delivery.Save();
 
 			_countedFile = this.Delivery.Files.Count;
 			
