@@ -126,7 +126,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
-				session.Begin(false);
+				session.Begin(true);
 				using (adGroupStatsReader)
 				{
 					while (adGroupStatsReader.Read())
