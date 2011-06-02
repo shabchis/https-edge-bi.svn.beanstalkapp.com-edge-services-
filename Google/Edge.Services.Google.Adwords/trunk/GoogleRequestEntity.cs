@@ -22,7 +22,7 @@ namespace Edge.Services.Google.Adwords
 		
 		public Uri downloadUrl { set; get; }
 		public string clientCustomerId { set; get; }
-		public string clientEmail { set; get; }
+		public string clientEmail { set; get; } // TODO : remove
 		public string authToken { set; get; }
 		public string returnMoneyInMicros { set; get; }
 	}
