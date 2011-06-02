@@ -16,95 +16,81 @@ namespace Edge.Services.Google.Adwords
 		#region members
 		private int _countedFile = 0;
 		private double _minProgress = 0.05;
-		AccountEntity _edgeAccount;
 		AdwordsReport _googleReport;
-		List<ReportDefinitionReportType> _reportsTypes = new List<ReportDefinitionReportType>();
 		ReportDefinitionDateRangeType _dateRange;
 		long _reportId;
 
 		#endregion
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
+
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 
 			//Date Range
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
-			
+
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 
-			foreach (string email in _edgeAccount.Emails)
+			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
 			{
-				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
-				foreach (ReportDefinitionReportType type in _reportsTypes)
+				//TO DO : Get the files on a specific email
+				var files = from f in this.Delivery.Files
+							where f.Parameters["email"].ToString() == email
+							select f;//this.Delivery.Files[email];
+				
+				foreach (var file in files)
 				{
-					_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression,_dateRange, type);
-					_reportId = _googleReport.intializingGoogleReport();
-					
-					//FOR DEBUG
-					//_googleReport.DownloadReport(_reportId);
+					_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression, _dateRange,
+								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(), true));
+					_googleReport.intializingGoogleReport();
 
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
-					
-					// DORON-REFACTOR
-					DeliveryFile file = new DeliveryFile();
+
 					file.Name = _googleReport.Name + ".zip";
 					file.SourceUrl = request.downloadUrl.ToString();
-					file.Parameters.Add("GoogleRequestEntity", request);
-
-					filesPerEmail.Add(file);
+					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
+					file.Parameters.Add("authToken", request.authToken);
+					file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
 					this.Delivery.Files.Add(file);
+					try
+					{
+						DownloadFile(file);
+					}
+					catch (ReportsException ex) // if Getting a report ID exception
+					{
+						if (ex.InnerException.Message.Equals("Report contents are invalid."))
+						{
+							_googleReport.intializingGoogleReport(true); // set new report
+						}
+					}
+
+
 				}
-				this.Delivery.Parameters.Add(email, filesPerEmail);
+
 			}
 
 			this.Delivery.Save();
-
-			_countedFile = this.Delivery.Files.Count;
-			
-			foreach ( DeliveryFile file in this.Delivery.Files)
-			{
-				try
-				{
-					DownloadFile(file);
-				}
-				catch (ReportsException ex) // if Getting a report ID exception
-				{
-					if (ex.InnerException.Message.Equals("Report contents are invalid."))
-					{
-						_googleReport.intializingGoogleReport(this.Delivery.Account.ID, this.Instance.InstanceID);
-					}
-				}
-				
-				
-			}
 			return Core.Services.ServiceOutcome.Success;
 		}
 
 
 		private void DownloadFile(DeliveryFile file)
 		{
-					
-			//string body = file.Parameters["body"].ToString();
-			GoogleRequestEntity googleRequestEntity = (GoogleRequestEntity)file.Parameters["GoogleRequestEntity"];
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(googleRequestEntity.downloadUrl);
-			
-				request.Headers.Add("clientCustomerId: " + googleRequestEntity.clientCustomerId);
 
-				request.Headers.Add("clientEmail: " + googleRequestEntity.clientEmail);
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
 
-			
-				request.Headers.Add("Authorization: GoogleLogin auth=" + googleRequestEntity.authToken);
-
-
-				request.Headers.Add("returnMoneyInMicros: " + googleRequestEntity.returnMoneyInMicros);
+			request.Headers.Add("clientCustomerId: " + file.Parameters["clientCustomerId"]);
+			request.Headers.Add("clientEmail: " + file.Parameters["clientCustomerId"]);
+			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
+			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
 
 			WebResponse response = request.GetResponse();
 
-			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), true, response.ContentLength); 
-						
+			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), true, response.ContentLength);
+
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();
@@ -117,7 +103,7 @@ namespace Edge.Services.Google.Adwords
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
 		{
-			if (_countedFile>0)
+			if (_countedFile > 0)
 			{
 				double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile), 3);
 				if (percent >= _minProgress)
@@ -125,10 +111,10 @@ namespace Edge.Services.Google.Adwords
 					_minProgress += 0.05;
 					if (percent <= 1)
 						this.ReportProgress(percent);
-				} 
+				}
 			}
 		}
 
-		
+
 	}
 }
