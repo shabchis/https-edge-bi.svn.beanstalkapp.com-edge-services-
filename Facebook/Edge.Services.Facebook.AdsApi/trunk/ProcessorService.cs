@@ -24,7 +24,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile campaigns = this.Delivery.Files["Campaigns.xml"];
 			
 			var campaignsReader = new XmlDynamicReader
-			(campaigns.Open(), Instance.ParentInstance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
+			(campaigns.OpenContents(), Instance.ParentInstance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			using (campaignsReader)
 			{
@@ -121,7 +121,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile adGroupStats = this.Delivery.Files["AdGroupStats.xml"];
 
 			var adGroupStatsReader = new XmlDynamicReader
-				(adGroupStats.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
+				(adGroupStats.OpenContents(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroupStats.xpath"]);
 
 
 			using (var session = new AdDataImportSession(this.Delivery))
@@ -208,7 +208,7 @@ namespace Edge.Services.Facebook.AdsApi
 				//getAdGroupTargeting
 
 				DeliveryFile adGroupTargeting = this.Delivery.Files["AdGroupTargeting.xml"];
-				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
+				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.OpenContents(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.getAdGroupTargeting.xpath"]);
 				using (adGroupTargetingReader)
 				{
 					while (adGroupTargetingReader.Read())
@@ -261,7 +261,7 @@ namespace Edge.Services.Facebook.AdsApi
 				foreach (var creativeFile in creativeFiles)
 				{
 					var adGroupCreativesReader = new XmlDynamicReader
-							(creativeFile.Open(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+							(creativeFile.OpenContents(), Instance.ParentInstance.Configuration.Options["Facebook.Ads.AdGroupCreatives.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 
