@@ -49,7 +49,7 @@ namespace Edge.Services.Google.Adwords
 			bool includeZeroImpression;
 			try
 			{
-				if (!(includeZeroImpression = Boolean.Parse(Instance.ParentInstance.Configuration.Options["Adwords.ReportType"])))
+				if (!(includeZeroImpression = Boolean.Parse(Instance.ParentInstance.Configuration.Options["includeZeroImpression"])))
 				{
 					this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
 				}
