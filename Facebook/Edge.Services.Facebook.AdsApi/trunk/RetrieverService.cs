@@ -26,7 +26,7 @@ namespace Edge.Services.Facebook.AdsApi
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			
-			_filesInProgress = this.Delivery.Files.Count + 3;
+			_filesInProgress = this.Delivery.Files.Count;
 			_baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
 
 			_waitHandle = new AutoResetEvent(false);
@@ -145,8 +145,10 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
-			if (Delivery.Files.Contains(current.Name))
-				Delivery.Files.Remove(current.Name);
+            if (Delivery.Files.Contains(current.Name))
+                Delivery.Files.Remove(current.Name);
+            else
+                _filesInProgress += 1;
 			this.Delivery.Files.Add(current);
 			counter++;
 		}
