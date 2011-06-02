@@ -17,7 +17,7 @@ namespace Edge.Services.Google.Adwords
 		{
 
 			// Get Keywords data
-			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()+".zip"];
+			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
 			string[] requiredHeaders = new string[1];
 			requiredHeaders[0] = "Keyword ID";
 			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location),FileFormat.GZip), requiredHeaders);
@@ -28,8 +28,11 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_keywordsReader.Read())
 				{
+					if (_keywordsReader.Current.Keyword_ID == "Total")
+						break;
 					KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
 					{
+						
 						KeywordId =Convert.ToInt64( _keywordsReader.Current.Keyword_ID),
 						AdgroupId =Convert.ToInt64( _keywordsReader.Current.Ad_group_ID),
 						CampaignId =Convert.ToInt64( _keywordsReader.Current.Campaign_ID) //TODO: TALK WITH SHAY NO SUCH FIELD
@@ -46,7 +49,7 @@ namespace Edge.Services.Google.Adwords
 				}
 
 					// Get Ads data.
-					DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT.zip"];
+					DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
 					var _adsReader = new CsvDynamicReader( _adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location),FileFormat.GZip),requiredHeaders);
 
 					using (var session = new AdDataImportSession(this.Delivery))
@@ -105,6 +108,8 @@ namespace Edge.Services.Google.Adwords
 								adMetricsUnit.Cost = Convert.ToDouble(_adsReader.Current.Cost);
 								adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.impressions);
 								adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+								session.ImportMetrics(adMetricsUnit);
+								session.ImportAd(
 								//adMetricsUnit.TargetMatches.
 							}
 						}
