@@ -7,6 +7,7 @@ using Edge.Data.Pipeline;
 using System.Net;
 using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Util;
+using System.Threading;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -14,17 +15,18 @@ namespace Edge.Services.Google.Adwords
 	{
 
 		#region members
-		private int _countedFile = 0;
+		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
 		AdwordsReport _googleReport;
 		ReportDefinitionDateRangeType _dateRange;
+		private AutoResetEvent _waitHandle;
 		long _reportId;
 
 		#endregion
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-
+			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 
 			//Date Range
@@ -33,12 +35,12 @@ namespace Edge.Services.Google.Adwords
 
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
-
+			_waitHandle = new AutoResetEvent(false);
 			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
 			{
 				//TO DO : Get the files on a specific email
 				var files = from f in this.Delivery.Files
-							where f.Parameters["email"].ToString() == email
+							where f.Parameters["Email"].ToString() == email
 							select f;//this.Delivery.Files[email];
 				
 				foreach (var file in files)
@@ -54,7 +56,7 @@ namespace Edge.Services.Google.Adwords
 					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 					file.Parameters.Add("authToken", request.authToken);
 					file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
-					this.Delivery.Files.Add(file);
+					
 					try
 					{
 						DownloadFile(file);
@@ -71,7 +73,7 @@ namespace Edge.Services.Google.Adwords
 				}
 
 			}
-
+			_waitHandle.WaitOne();
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}
@@ -83,7 +85,7 @@ namespace Edge.Services.Google.Adwords
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
 
 			request.Headers.Add("clientCustomerId: " + file.Parameters["clientCustomerId"]);
-			request.Headers.Add("clientEmail: " + file.Parameters["clientCustomerId"]);
+			request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
 			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
 			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
 
@@ -98,14 +100,16 @@ namespace Edge.Services.Google.Adwords
 
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
 		{
-			_countedFile -= 1;
+			_filesInProgress -= 1;
+			if (_filesInProgress==0)
+			_waitHandle.Set();
 		}
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
 		{
-			if (_countedFile > 0)
+			if (_filesInProgress > 0)
 			{
-				double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_countedFile), 3);
+				double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
 				if (percent >= _minProgress)
 				{
 					_minProgress += 0.05;
