@@ -68,9 +68,7 @@ namespace Edge.Services.Google.Adwords
 					DeliveryFile file = new DeliveryFile();
 					file.Name = reportType.ToString();
 					file.Parameters.Add("Email", email);
-					file.Parameters.Add("",);
 					this.Delivery.Files.Add(file);
-
 				}
 			
 			}
