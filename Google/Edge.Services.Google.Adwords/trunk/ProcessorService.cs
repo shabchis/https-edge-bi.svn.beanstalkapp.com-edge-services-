@@ -109,7 +109,7 @@ namespace Edge.Services.Google.Adwords
 								adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.impressions);
 								adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 								session.ImportMetrics(adMetricsUnit);
-								session.ImportAd(
+								//session.ImportAd(
 								//adMetricsUnit.TargetMatches.
 							}
 						}
