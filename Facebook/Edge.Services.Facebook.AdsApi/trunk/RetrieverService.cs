@@ -22,6 +22,7 @@ namespace Edge.Services.Facebook.AdsApi
 		private string _baseAddress;
 		private double _minProgress = 0.05;
 		private AutoResetEvent _waitHandle;
+        private bool _creativeDownloaded=false;
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
@@ -78,6 +79,7 @@ namespace Edge.Services.Facebook.AdsApi
 						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 					}
 				}
+                _creativeDownloaded = true;
 			}
 			_waitHandle.WaitOne();
 
@@ -120,7 +122,7 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 
 			_filesInProgress -= 1;
-			if (_filesInProgress == 0)
+			if (_filesInProgress == 0 && _creativeDownloaded)
 				_waitHandle.Set();
 
 		}
