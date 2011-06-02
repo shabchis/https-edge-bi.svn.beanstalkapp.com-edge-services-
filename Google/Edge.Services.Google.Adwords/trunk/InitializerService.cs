@@ -43,6 +43,7 @@ namespace Edge.Services.Google.Adwords
 
 			//Get all Account Emails
 			string[] accountEmails = Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
+			this.Delivery.Parameters["accountEmails"] = accountEmails;
 
 			//Check for includeZeroImpression
 			bool includeZeroImpression;
@@ -56,24 +57,22 @@ namespace Edge.Services.Google.Adwords
 			catch (ArgumentNullException)
 			{
 				//includeZeroImpression does not exists in configuration
+				this.Delivery.Parameters["includeZeroImpression"] = true; // deafult
 			}
-			
-				
 
 			//Creating Delivery files Per Email 
 			foreach (string email in accountEmails)
 			{
-				List<DeliveryFile> filesPerEmail = new List<DeliveryFile>();
-				foreach (GA.ReportDefinitionReportType reportTypeName in reportTypes)
+				foreach (GA.ReportDefinitionReportType reportType in reportTypes)
 				{
 					DeliveryFile file = new DeliveryFile();
-					file.Name = reportTypeName.ToString();
+					file.Name = reportType.ToString();
 					file.Parameters.Add("Email", email);
-					filesPerEmail.Add(file);
+					file.Parameters.Add("",);
 					this.Delivery.Files.Add(file);
 
 				}
-				Delivery.Parameters.Add(email, filesPerEmail);
+			
 			}
 
 			this.Delivery.Save();
