@@ -14,7 +14,7 @@ namespace Edge.Services.Google.Adwords
 
 		public override int GetHashCode()
 		{
-			return this.AdgroupId.GetHashCode() ^ this.KeywordId.GetHashCode();
+			return this.AdgroupId.GetHashCode() ^ this.KeywordId.GetHashCode() ^ this.CampaignId.GetHashCode();
 		}
 
 		public long AdgroupId { set; get; }
