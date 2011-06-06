@@ -45,6 +45,8 @@ namespace Edge.Services.Google.Adwords
 			this.reportDefinition.dateRangeType = dateRange;
 			this.ReportType = ReportType;
 			this.dateRangeType = dateRange;
+			this.StartDate = StartDate;
+			this.EndDate = EndDate;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
 			
