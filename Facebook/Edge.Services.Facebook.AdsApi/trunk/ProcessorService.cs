@@ -326,59 +326,7 @@ namespace Edge.Services.Facebook.AdsApi
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		//private AdMetricsUnit CreateUnitFromFacebookData(AdData ad, CampaignData campaign, dynamic adGroupCreative)
-		//{
-		//    AdMetricsUnit unit = new AdMetricsUnit();
-		//    //unit.TimeStamp = this.Delivery.TargetPeriod; TODO: WHAT IS TIME STAMP
-		//    unit.Account = new Account() { ID = Instance.AccountID };
-		//    // Campaign
-		//    unit.Campaign = new Campaign()
-		//    {
-		//        Name = campaign.CampaignName,
-		//        OriginalID = campaign.CampaignID
-		//    };
-
-		//    // Ad
-		//    unit.Ad = new Ad()
-		//    {
-		//        OriginalID = ad.adgroup_id,
-		//        DestinationUrl = ad.link_url
-		//        //TODO : TARGETS
-		//    };
-		//    // Targeting
-		//    foreach (var target in ad.Targets)
-		//    {
-		//        unit.Ad.Targets.Add(target);
-		//    }
-
-		//    // Tracker
-		//    unit.Tracker = new Tracker(unit.Ad);
-
-
-
-
-
-
-		//    // Currency ??
-
-
-		//    // MEASURES
-
-		//    unit.Impressions = ad.Impressions;
-		//    unit.Clicks = ad.Clicks;
-		//    unit.Cost = ad.Cost;
-
-
-
-
-		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Title, Value = adGroupCreative.title });
-		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Body, Value = adGroupCreative.body });
-		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.DisplayUrl, Value = adGroupCreative.preview_url });
-		//    unit.Ad.Creatives.Add(new Creative() { CreativeType = CreativeType.Image, Value = adGroupCreative.image_url });
-		//    return unit;
-
-
-		//}
+		
 
 
 	}
