@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.Text;
 using Edge.Core;
 using Edge.Core.Services;
+using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
@@ -19,11 +20,9 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Create a new delivery
 			this.Delivery = new Delivery(this.Instance.InstanceID)
 			{
+				Account = new Account() { ID = this.Instance.AccountID },
 				TargetPeriod = this.TargetPeriod
 			};
-
-			// AccountID as parameter for entire delivery
-			this.Delivery.Parameters[Const.Parameters.AccountID] = this.Instance.AccountID;
 
 			// Wrapper for adCenter API
 			AdCenterApi adCenterApi = new AdCenterApi(this);
