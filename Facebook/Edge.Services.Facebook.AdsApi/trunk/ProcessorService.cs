@@ -12,10 +12,13 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
-		public const int Actions_MeasureID = -666;
-		public const int SocialSpent_MeasureID = -667;
-		public const int SocialClicks_MeasureID = -668;
-		public const int SocialImpression_MeasureID = -668;
+		static class Measures
+		{
+			public static Measure Actions			= new Measure() { ID = -620, DeliveryColumnIndex = 20 };
+			public static Measure SocialCost		= new Measure() { ID = -621, DeliveryColumnIndex = 21 };
+			public static Measure SocialClicks		= new Measure() { ID = -622, DeliveryColumnIndex = 22 };
+			public static Measure SocialImpressions	= new Measure() { ID = -623, DeliveryColumnIndex = 23 };
+		}
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -131,8 +134,6 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					while (adGroupStatsReader.Read())
 					{
-
-
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						//if (ads.ContainsKey(adGroupStatsReader.Current.id)) 
 						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
@@ -140,61 +141,13 @@ namespace Edge.Services.Facebook.AdsApi
 						adMetricsUnit.Cost = Convert.ToDouble(adGroupStatsReader.Current.spent);
 						adMetricsUnit.Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions);
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-						adMetricsUnit.Measures.Add(new Measure()
-						{
-							ID = SocialImpression_MeasureID,
-							Account = new Account()
-							{
-								ID = this.Delivery.Account.ID
-							},
-							Name = "social_impressions"
-						},
-						double.Parse(adGroupStatsReader.Current.social_impressions));
-
-						adMetricsUnit.Measures.Add(new Measure()
-						{
-							ID = SocialClicks_MeasureID,
-							Account = new Account()
-							{
-								ID = this.Delivery.Account.ID
-							},
-							Name = "social_clicks"
-						},
-						double.Parse(adGroupStatsReader.Current.social_clicks));
-
-						adMetricsUnit.Measures.Add(new Measure()
-						{
-							ID = SocialSpent_MeasureID,
-							Account = new Account()
-							{
-								ID = this.Delivery.Account.ID
-							},
-							Name = "social_spent"
-						},
-						double.Parse(adGroupStatsReader.Current.social_spent));
-
-						adMetricsUnit.Measures.Add(new Measure()
-						{
-							ID = Actions_MeasureID,
-							Account = new Account()
-							{
-								ID = this.Delivery.Account.ID
-							},
-							Name = "actions"
-						},
-						double.Parse(adGroupStatsReader.Current.actions));
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+						adMetricsUnit.Measures.Add(Measures.SocialImpressions, double.Parse(adGroupStatsReader.Current.social_impressions));
+						adMetricsUnit.Measures.Add(Measures.SocialClicks, double.Parse(adGroupStatsReader.Current.social_clicks));
+						adMetricsUnit.Measures.Add(Measures.SocialCost, double.Parse(adGroupStatsReader.Current.social_spent));
+						adMetricsUnit.Measures.Add(Measures.Actions, double.Parse(adGroupStatsReader.Current.actions));
 
-						adMetricsUnit.Currency = new Currency()
-						{
-							Code = string.Empty
-						};
-						//adMetricsUnit.Conversions = new Dictionary<int, double>();
 						adMetricsUnit.TargetMatches = new List<Target>();
-						//TimeStamp=this.Delivery.TargetPeriod.Start.ExactDateTime
-
-
-
 
 						session.ImportMetrics(adMetricsUnit);
 
