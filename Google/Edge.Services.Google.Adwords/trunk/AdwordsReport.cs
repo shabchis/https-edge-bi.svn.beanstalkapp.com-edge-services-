@@ -29,10 +29,17 @@ namespace Edge.Services.Google.Adwords
 		public string EndDate { set; get; }
 		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
+		private Selector _selector { get; set; }
 		
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost", "CreativeDestinationUrl", "KeywordId", "Url" };
-		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId","CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost" };
+		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status" };
+		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
+													 "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
+		public AdwordsReport()
+		{
+			//TODO : delete this method
+		}
 
 		public AdwordsReport(int AccountId, string Email,string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY,
@@ -49,7 +56,10 @@ namespace Edge.Services.Google.Adwords
 			this.EndDate = EndDate;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
-			
+
+			//Creating Selector
+			_selector = new Selector();
+
 			// Create Report Service
 			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
 			this.Name = ReportType.ToString();
@@ -166,20 +176,24 @@ namespace Edge.Services.Google.Adwords
 		public long CreateGoogleReport(int Account_Id)
 		{
 
-			//TO DO: Check if report exists in DB
-			Selector selector = new Selector();
+			
 
 			switch (this.reportDefinition.reportType)
 			{
 				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
-						selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
+						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
 						
 						break;
 					}
 				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
 					{
-						selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
+						_selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
+						break;
+					}
+				case ReportDefinitionReportType.DESTINATION_URL_REPORT:
+					{
+						_selector.fields = DESTINATION_URL_REPORT;
 						break;
 					}
 			}
@@ -188,7 +202,7 @@ namespace Edge.Services.Google.Adwords
 
 			if (this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
-				selector.dateRange = new DateRange()
+				_selector.dateRange = new DateRange()
 				{
 					min = this.StartDate,
 					max = this.EndDate
@@ -204,11 +218,11 @@ namespace Edge.Services.Google.Adwords
 				predicate.field = "Impressions";
 				predicate.@operator = PredicateOperator.GREATER_THAN;
 				predicate.values = new string[] { "0" };
-				selector.predicates = new Predicate[] { predicate };
+				_selector.predicates = new Predicate[] { predicate };
 			}
 			
 			// Create reportDefinition
-			reportDefinition = CreateReportDefinition(selector, AccountEmails);
+			reportDefinition = CreateReportDefinition(_selector, AccountEmails);
 
 			// Create operations.
 			ReportDefinitionOperation operation = new ReportDefinitionOperation();
@@ -228,6 +242,21 @@ namespace Edge.Services.Google.Adwords
 			return reportDefintions[0].id;
 			//DownloadReport(reportDefintions[0].id);
 
+		}
+		public void AddFilter(string fieldName, PredicateOperator op, string[] values )
+		{
+			Predicate predicate = new Predicate();
+			predicate.field = fieldName;
+			predicate.@operator = op;
+			predicate.values = values;
+			if (_selector.predicates == null)
+				_selector.predicates = new Predicate[] { predicate };
+			else
+			{
+				List<Predicate> predicatesList = _selector.predicates.ToList<Predicate>();
+				predicatesList.Add(predicate);
+				_selector.predicates = predicatesList.ToArray();
+			}
 		}
 
 		//TODO: check what is IsReturnMoneyInMicros param in google
@@ -271,6 +300,8 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
+
+		
 	}
 
 }

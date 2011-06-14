@@ -57,7 +57,7 @@ namespace Edge.Services.Google.Adwords
 			catch (ArgumentNullException)
 			{
 				//includeZeroImpression does not exists in configuration
-				this.Delivery.Parameters["includeZeroImpression"] = true; // deafult
+				this.Delivery.Parameters["includeZeroImpression"] = false; // deafult
 			}
 
 			//Creating Delivery files Per Email 

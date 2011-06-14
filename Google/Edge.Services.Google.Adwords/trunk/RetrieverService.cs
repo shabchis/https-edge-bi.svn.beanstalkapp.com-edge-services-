@@ -31,7 +31,10 @@ namespace Edge.Services.Google.Adwords
 
 			//Date Range
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
-			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
+			//string dateRange;
+			//    if(String.IsNullOrEmpty(dateRange = Instance.ParentInstance.Configuration.Options["Adwords.DateRange"]))
+					_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
+				//else _dateRange
 
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");

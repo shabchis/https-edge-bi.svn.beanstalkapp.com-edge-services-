@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AccountEntity.cs" />
     <Compile Include="AdwordsReport.cs" />
+    <Compile Include="ErrorFile.cs" />
     <Compile Include="GoogleRequestEntity.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
