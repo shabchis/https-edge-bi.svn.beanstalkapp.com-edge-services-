@@ -33,8 +33,11 @@ namespace Edge.Services.Google.Adwords
 		
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost","Headline",
-														   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl" };
-		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status" };
+														   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
+														   "AdType","AccountCurrencyCode","CTR","Status","AveragePosition" };
+		
+		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status","DestinationUrl","QualityScore" };
+	
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 													 "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 		public AdwordsReport()
