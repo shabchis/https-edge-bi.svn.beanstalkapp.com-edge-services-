@@ -43,6 +43,8 @@ namespace Edge.Services.Google.Adwords
 					{
 						OriginalID = _keywordsReader.Current.Keyword_ID,
 						Keyword = _keywordsReader.Current.Keyword
+						//TO DO: insert dest url  = Destination_URL 
+
 
 					};
 					string matchType = _keywordsReader.Current.Match_type;
@@ -51,95 +53,113 @@ namespace Edge.Services.Google.Adwords
 				}
 			}
 
-				// Get Ads data.
-				DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
-				var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
+			// Get Ads data.
+			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
+			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
+			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 
-				using (var session = new AdDataImportSession(this.Delivery))
+
+			using (var session = new AdDataImportSession(this.Delivery))
+			{
+				session.Begin(false);
+				using (_adsReader)
 				{
-					session.Begin(false);
-					using (_adsReader)
+					while (_adsReader.Read())
 					{
-						while (_adsReader.Read())
+
+						if (_adsReader.Current.Ad_ID == "Total")
+							break;
+
+						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+						Ad ad = new Ad();
+						//TO DO : ADD NEW AD TO ADS DIC . THAN CHECK IF ADD ALREADY EXISTS IN DIC , IF NOT IMPORT AD
+						string adId = _adsReader.Current.Ad_ID;
+						if (!importedAds.ContainsKey(adId))
 						{
-							
 
-							Ad ad= new Ad()
+							ad.OriginalID = adId;
+							ad.DestinationUrl = _adsReader.Current.Destination_URL;
+							ad.Campaign = new Campaign()
 							{
-								OriginalID = _adsReader.Current.Ad_ID,
-								DestinationUrl = _adsReader.Current.Destination_URL,
-								Campaign = new Campaign()
+								OriginalID = _adsReader.Current.Campaign_ID,
+								Name = _adsReader.Current.Campaign,
+								Channel = new Channel()
 								{
-									OriginalID = _adsReader.Current.Campaign_ID,
-									Name = _adsReader.Current.Campaign,
-									Channel = new Channel()
-									{
-										ID = 1
-									},
-									Account = new Account { ID = this.Delivery.Account.ID }
-								}
+									ID = 1
+								},
+								Account = new Account { ID = this.Delivery.Account.ID }
 							};
-							//ad.Creatives.Add ( new TextCreative { Name = "desc1" , TextType =TextCreativeType.Body ,
-							//INSERT ADGROUP AS A SEGMENT
+
+							//Inserts ad creative data
+							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.Title, Text = _adsReader.Current.Ad });
+							ad.Creatives.Add(new TextCreative { Name = "desc1", TextType = TextCreativeType.Body, Text = _adsReader.Current.Description_line_1 });
+							ad.Creatives.Add(new TextCreative { Name = "desc2", TextType = TextCreativeType.Body, Text = _adsReader.Current.Description_line_2 });
+							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current.Display_URL });
+
+							//Inserts adgroup
 							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
-										{
-											Value = _adsReader.Current.Ad_group,
-											OriginalID = _adsReader.Current.Ad_group_ID
-										};
-
-							session.ImportAd(ad);
-
-							AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
-							adMetricsUnit.Ad = ad;
-
-							//SERACH KEYWORD IN KEYWORD DICTIONARY
-							KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
 							{
-								AdgroupId = Convert.ToInt64(_adsReader.Current.Ad_group_ID),
-								KeywordId = Convert.ToInt64(_adsReader.Current.Keyword_ID),
-								CampaignId = Convert.ToInt64(_adsReader.Current.Campaign_ID)
+								Value = _adsReader.Current.Ad_group,
+								OriginalID = _adsReader.Current.Ad_group_ID
 							};
 
-							KeywordTarget _kwd = new KeywordTarget();
-							try
-							{
-								_kwd = _keywordsData[kwdKey.ToString()];
-								
-							}
-							catch (Exception e)
-							{
-								//Creating Error file with all Keywords primary keys that doesnt exists in keyword report.
-								_keywordErrorFile.Open();
-								_keywordErrorFile.AppendToFile(kwdKey.ToList());
+							importedAds.Add(adId, ad);
+						
 
-								//Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
-								_kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current.Keyword_ID) };
-							}
-
-							//INSERTING KEYWORD INTO METRICS
-							adMetricsUnit.TargetMatches = new List<Target>();
-							adMetricsUnit.TargetMatches.Add(_kwd);
-
-							//INSERTING METRICS DATA
-							adMetricsUnit.Clicks = Convert.ToInt64(_adsReader.Current.Clicks);
-							adMetricsUnit.Cost = Convert.ToDouble(_adsReader.Current.Cost);
-							adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.Impressions);
-							adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-							adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-
-							//TODO: pull from configuration 
-							adMetricsUnit.Currency = new Currency
-							{
-								Code = "USD"
-							};
-							session.ImportMetrics(adMetricsUnit);
-							
 
 						}
-					}
+						else ad = importedAds[adId];
 
+						adMetricsUnit.Ad = ad;
+						session.ImportAd(ad);
+						//SERACH KEYWORD IN KEYWORD DICTIONARY
+						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
+						{
+							AdgroupId = Convert.ToInt64(_adsReader.Current.Ad_group_ID),
+							KeywordId = Convert.ToInt64(_adsReader.Current.Keyword_ID),
+							CampaignId = Convert.ToInt64(_adsReader.Current.Campaign_ID)
+						};
+
+						KeywordTarget _kwd = new KeywordTarget();
+						try
+						{
+							_kwd = _keywordsData[kwdKey.ToString()];
+
+						}
+						catch (Exception e)
+						{
+							//Creating Error file with all Keywords primary keys that doesnt exists in keyword report.
+							_keywordErrorFile.Open();
+							_keywordErrorFile.AppendToFile(kwdKey.ToList());
+
+							//Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
+							_kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current.Keyword_ID) };
+						}
+
+						//INSERTING KEYWORD INTO METRICS
+						adMetricsUnit.TargetMatches = new List<Target>();
+						adMetricsUnit.TargetMatches.Add(_kwd);
+
+						//INSERTING METRICS DATA
+						adMetricsUnit.Clicks = Convert.ToInt64(_adsReader.Current.Clicks);
+						adMetricsUnit.Cost = Convert.ToDouble(_adsReader.Current.Cost);
+						adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.Impressions);
+						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+
+						//TODO: pull from configuration 
+						adMetricsUnit.Currency = new Currency
+						{
+							Code = "USD"
+						};
+						session.ImportMetrics(adMetricsUnit);
+
+
+					}
 				}
-			
+
+			}
+
 
 			return Core.Services.ServiceOutcome.Success;
 		}
