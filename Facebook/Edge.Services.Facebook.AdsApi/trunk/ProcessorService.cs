@@ -12,12 +12,12 @@ namespace Edge.Services.Facebook.AdsApi
 
 	public class ProcessorService : PipelineService
 	{
-		static class Measures
+		static class MeasureNames
 		{
-			public static Measure Actions			= new Measure() { ID = -620, DeliveryColumnIndex = 20 };
-			public static Measure SocialCost		= new Measure() { ID = -621, DeliveryColumnIndex = 21 };
-			public static Measure SocialClicks		= new Measure() { ID = -622, DeliveryColumnIndex = 22 };
-			public static Measure SocialImpressions	= new Measure() { ID = -623, DeliveryColumnIndex = 23 };
+			public const string Actions = "Actions";
+			public const string SocialCost = "SocialCost";
+			public const string SocialClicks = "SocialClicks";
+			public const string SocialImpressions = "SocialImpressions";
 		}
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
@@ -137,15 +137,17 @@ namespace Edge.Services.Facebook.AdsApi
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						//if (ads.ContainsKey(adGroupStatsReader.Current.id)) 
 						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
-						adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+						//this : adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+						//becomes this :
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
 						adMetricsUnit.Cost = Convert.ToDouble(adGroupStatsReader.Current.spent);
 						adMetricsUnit.Impressions = Convert.ToInt64(adGroupStatsReader.Current.impressions);
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-						adMetricsUnit.Measures.Add(Measures.SocialImpressions, double.Parse(adGroupStatsReader.Current.social_impressions));
-						adMetricsUnit.Measures.Add(Measures.SocialClicks, double.Parse(adGroupStatsReader.Current.social_clicks));
-						adMetricsUnit.Measures.Add(Measures.SocialCost, double.Parse(adGroupStatsReader.Current.social_spent));
-						adMetricsUnit.Measures.Add(Measures.Actions, double.Parse(adGroupStatsReader.Current.actions));
+						adMetricsUnit.MeasureValues.Add(Measures.SocialImpressions, double.Parse(adGroupStatsReader.Current.social_impressions));
+						adMetricsUnit.MeasureValues.Add(Measures.SocialClicks, double.Parse(adGroupStatsReader.Current.social_clicks));
+						adMetricsUnit.MeasureValues.Add(Measures.SocialCost, double.Parse(adGroupStatsReader.Current.social_spent));
+						adMetricsUnit.MeasureValues.Add(Measures.Actions, double.Parse(adGroupStatsReader.Current.actions));
 
 						adMetricsUnit.TargetMatches = new List<Target>();
 
