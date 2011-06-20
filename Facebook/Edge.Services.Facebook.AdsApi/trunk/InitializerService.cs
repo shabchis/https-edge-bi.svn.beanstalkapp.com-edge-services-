@@ -29,15 +29,16 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			
 			//set parameters for entire delivery
-#if  (DEBUG)
-			{
-				this.Delivery.Account = new Data.Objects.Account() { ID = 1008 };			
-			}
-#else
-			{
-			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
-			}
-#endif
+//#if  (DEBUG)
+//            {
+//                this.Delivery.Account = new Data.Objects.Account() { ID = 1008 };			
+//            }
+//#else
+//            {
+//            this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
+//            }
+//#endif
+			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.ParentInstance.Configuration.Options["FBaccountID"].ToString() };
 
 			if (this.Instance.Configuration.Options["APIKey"] == null)
 				this.Delivery.Parameters["APIKey"] = this.Instance.ParentInstance.Configuration.Options["APIKey"].ToString();
@@ -122,7 +123,7 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			string body;
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
-			AdGroupStatesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupStatesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupStatesParameters.Add("method", "facebook.ads.getAdGroupStats");
 			AdGroupStatesParameters.Add("include_deleted", "false");
 			dynamic timeRangeIn = new ExpandoObject();
@@ -142,7 +143,7 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			string body;
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
-			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
 			AdGroupCreativesParameters.Add("include_deleted", "false");			
 			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
@@ -154,7 +155,7 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			string body;
 			Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
-			AdGroupsParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupsParameters.Add("method", "facebook.ads.getAdGroups");
 			AdGroupsParameters.Add("include_deleted", "false");
 			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
@@ -166,7 +167,7 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			string body;
 			Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
-			CampaignsParmaters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			CampaignsParmaters.Add("method", "facebook.ads.getCampaigns");
 			CampaignsParmaters.Add("include_deleted", "false");
 			
@@ -181,7 +182,7 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			string body;
 			Dictionary<string, string> AdGroupTargetingParameters = new Dictionary<string, string>();
-			AdGroupTargetingParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupTargetingParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupTargetingParameters.Add("method", "facebook.ads.getAdGroupTargeting");
 			AdGroupTargetingParameters.Add("include_deleted", "false");
 			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
