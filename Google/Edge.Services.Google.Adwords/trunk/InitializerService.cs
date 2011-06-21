@@ -20,7 +20,7 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 
 #if (DEBUG)
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = 95};
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = 95 };
 #else
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID};
 #endif
@@ -29,7 +29,7 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
 			//================================TEMP FOR DEBUG ===================================
 
-			
+
 			// Get all report types from config
 			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
 			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
@@ -46,19 +46,22 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.Parameters["accountEmails"] = accountEmails;
 
 			//Check for includeZeroImpression
-			try
+
+			string includeZeroImpression;
+			if (!String.IsNullOrEmpty(includeZeroImpression = Instance.ParentInstance.Configuration.Options["includeZeroImpression"]))
 			{
-				string includeZeroImpression;
-				if (!String.IsNullOrEmpty(includeZeroImpression = Instance.ParentInstance.Configuration.Options["includeZeroImpression"]))
-				{
-					this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
-				}
+				this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
 			}
-			catch (ArgumentNullException)
+			this.Delivery.Parameters["includeZeroImpression"] = false;
+
+			//Check for includeConversionTypes
+			string includeConversionTypes;
+			if (!String.IsNullOrEmpty(includeConversionTypes = Instance.ParentInstance.Configuration.Options["includeConversionTypes"]))
 			{
-				//includeZeroImpression does not exists in configuration
-				this.Delivery.Parameters["includeZeroImpression"] = false; // deafult
+				this.Delivery.Parameters["includeConversionTypes"] = includeConversionTypes;
 			}
+			this.Delivery.Parameters["includeConversionTypes"] = false; // deafult
+
 
 			//Creating Delivery files Per Email 
 			foreach (string email in accountEmails)
@@ -70,7 +73,7 @@ namespace Edge.Services.Google.Adwords
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
-			
+
 			}
 
 			this.Delivery.Save();

@@ -62,6 +62,7 @@ namespace Edge.Services.Google.Adwords
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
 				session.Begin(false);
+				session.Measures
 				using (_adsReader)
 				{
 					while (_adsReader.Read())
@@ -168,6 +169,7 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.Impressions);
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+						//adMetricsUnit.Measures[Meas] = 2123123;
 
 						//TODO: pull from configuration 
 						adMetricsUnit.Currency = new Currency
