@@ -72,7 +72,8 @@ namespace Edge.Services.Google.Adwords
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						Ad ad = new Ad();
-						//TO DO : ADD NEW AD TO ADS DIC . THAN CHECK IF ADD ALREADY EXISTS IN DIC , IF NOT IMPORT AD
+
+						// ADD NEW AD TO ADS DIC . THAN CHECK IF ADD ALREADY EXISTS IN DIC , IF NOT IMPORT AD
 						string adId = _adsReader.Current.Ad_ID;
 						if (!importedAds.ContainsKey(adId))
 						{
@@ -90,12 +91,35 @@ namespace Edge.Services.Google.Adwords
 								Account = new Account { ID = this.Delivery.Account.ID }
 							};
 
-							//Inserts ad creative data
-							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.Title, Text = _adsReader.Current.Ad });
-							ad.Creatives.Add(new TextCreative { Name = "desc1", TextType = TextCreativeType.Body, Text = _adsReader.Current.Description_line_1 });
-							ad.Creatives.Add(new TextCreative { Name = "desc2", TextType = TextCreativeType.Body, Text = _adsReader.Current.Description_line_2 });
-							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current.Display_URL });
+							//if Image 
+							if (String.Equals(_adsReader.Current.Ad_Type, "Image ad"))
+							{
+								string adNameField = _adsReader.Current.Ad;
+								string[] imageParams = adNameField.Trim().Split(new Char[] { ':', ';' }); // Ad name: 468_60_Test7options_Romanian.swf; 468 x 60
+								ad.Creatives.Add(new ImageCreative()
+								{
+									Name = imageParams[1],
+									ImageUrl = imageParams[1],
+									ImageSize = imageParams[2]
+								});
 
+							}
+							else //if text ad or display ad
+							{
+								ad.Creatives.Add(new TextCreative
+								{
+									TextType = TextCreativeType.Title,
+									Text = _adsReader.Current.Ad
+								});
+								ad.Creatives.Add(new TextCreative
+								{
+									TextType = TextCreativeType.Body,
+									Text = _adsReader.Current.Description_line_1,
+									Text2 = _adsReader.Current.Description_line_2
+								});
+								ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current.Display_URL });
+							}
+							
 							//Inserts adgroup
 							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 							{
@@ -104,8 +128,6 @@ namespace Edge.Services.Google.Adwords
 							};
 
 							importedAds.Add(adId, ad);
-						
-
 
 						}
 						else ad = importedAds[adId];
@@ -150,7 +172,7 @@ namespace Edge.Services.Google.Adwords
 						//TODO: pull from configuration 
 						adMetricsUnit.Currency = new Currency
 						{
-							Code = "USD"
+							Code = Convert.ToString(_adsReader.Current.Currency)
 						};
 						session.ImportMetrics(adMetricsUnit);
 

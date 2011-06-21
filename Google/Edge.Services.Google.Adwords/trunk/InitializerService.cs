@@ -46,10 +46,10 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.Parameters["accountEmails"] = accountEmails;
 
 			//Check for includeZeroImpression
-			bool includeZeroImpression;
 			try
 			{
-				if (!(includeZeroImpression = Boolean.Parse(Instance.ParentInstance.Configuration.Options["includeZeroImpression"])))
+				string includeZeroImpression;
+				if (!String.IsNullOrEmpty(includeZeroImpression = Instance.ParentInstance.Configuration.Options["includeZeroImpression"]))
 				{
 					this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
 				}

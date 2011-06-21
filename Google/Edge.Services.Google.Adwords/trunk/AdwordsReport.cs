@@ -30,14 +30,21 @@ namespace Edge.Services.Google.Adwords
 		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 		private Selector _selector { get; set; }
-		
+		private bool _withConversions { set; get; }
+
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
-		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions", "Clicks", "Cost","Headline",
-														   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
-														   "AdType","AccountCurrencyCode","CTR","Status","AveragePosition" };
-		
-		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status","DestinationUrl","QualityScore" };
-	
+		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
+		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
+		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition",
+		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
+		                                                   "ConversionsManyPerClick",
+		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
+		                                                   "AdNetworkType1","AdNetworkType2"
+		                                               };
+		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "AdGroupId", "CampaignId", "KeywordId", "ConversionsManyPerClick", "ConversionTypeName", "ConversionCategoryName" };
+
+		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
+
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 													 "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 		public AdwordsReport()
@@ -45,9 +52,10 @@ namespace Edge.Services.Google.Adwords
 			//TODO : delete this method
 		}
 
-		public AdwordsReport(int AccountId, string Email,string StartDate, string EndDate, bool IncludeZeroImpression = false,
+		public AdwordsReport(int AccountId, string Email, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY,
-							ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT)
+							ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
+							bool withConversions = false)
 		{
 			this._accountId = AccountId;
 			this.includeZeroImpression = IncludeZeroImpression;
@@ -60,7 +68,7 @@ namespace Edge.Services.Google.Adwords
 			this.EndDate = EndDate;
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
-
+			this._withConversions = withConversions;
 			//Creating Selector
 			_selector = new Selector();
 
@@ -84,7 +92,7 @@ namespace Edge.Services.Google.Adwords
 		}
 
 
-		public long intializingGoogleReport(bool Update  = false)
+		public long intializingGoogleReport(bool Update = false)
 		{
 			long ReportId;
 			if (!Update)
@@ -96,7 +104,7 @@ namespace Edge.Services.Google.Adwords
 			else
 			{
 				ReportId = GetReportIdFromGoogleApi(this._accountId, this.User.email, this.dateRangeType, this.ReportType);
-				SetReportID(this._accountId, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate,true);
+				SetReportID(this._accountId, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate, true);
 			}
 
 			this.Id = ReportId;
@@ -137,7 +145,7 @@ namespace Edge.Services.Google.Adwords
 			}
 
 		}
-		
+
 		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
 		{
 			long ReportId = -1;
@@ -168,7 +176,7 @@ namespace Edge.Services.Google.Adwords
 						{
 							ReportId = Convert.ToInt64(_reader[0]);
 						}
-						
+
 					}
 				}
 
@@ -180,14 +188,15 @@ namespace Edge.Services.Google.Adwords
 		public long CreateGoogleReport(int Account_Id)
 		{
 
-			
+
 
 			switch (this.reportDefinition.reportType)
 			{
 				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
+						if (_withConversions)
+							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION;
 						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
-						
 						break;
 					}
 				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
@@ -211,7 +220,7 @@ namespace Edge.Services.Google.Adwords
 					min = this.StartDate,
 					max = this.EndDate
 				};
-				
+
 			}
 
 
@@ -224,7 +233,7 @@ namespace Edge.Services.Google.Adwords
 				predicate.values = new string[] { "0" };
 				_selector.predicates = new Predicate[] { predicate };
 			}
-			
+
 			// Create reportDefinition
 			reportDefinition = CreateReportDefinition(_selector, AccountEmails);
 
@@ -235,7 +244,7 @@ namespace Edge.Services.Google.Adwords
 			ReportDefinitionOperation[] operations = new ReportDefinitionOperation[] { operation };
 
 
-			
+
 
 			//Create reportDefintions 
 			ReportDefinition[] reportDefintions = reportService.mutate(operations);
@@ -247,7 +256,7 @@ namespace Edge.Services.Google.Adwords
 			//DownloadReport(reportDefintions[0].id);
 
 		}
-		public void AddFilter(string fieldName, PredicateOperator op, string[] values )
+		public void AddFilter(string fieldName, PredicateOperator op, string[] values)
 		{
 			Predicate predicate = new Predicate();
 			predicate.field = fieldName;
@@ -305,7 +314,7 @@ namespace Edge.Services.Google.Adwords
 
 
 
-		
+
 	}
 
 }

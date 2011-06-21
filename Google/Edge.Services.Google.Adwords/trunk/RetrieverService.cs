@@ -31,10 +31,7 @@ namespace Edge.Services.Google.Adwords
 
 			//Date Range
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
-			//string dateRange;
-			//    if(String.IsNullOrEmpty(dateRange = Instance.ParentInstance.Configuration.Options["Adwords.DateRange"]))
-					_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
-				//else _dateRange
+			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
 
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
@@ -45,7 +42,7 @@ namespace Edge.Services.Google.Adwords
 				var files = from f in this.Delivery.Files
 							where f.Parameters["Email"].ToString() == email
 							select f;//this.Delivery.Files[email];
-				
+
 				foreach (var file in files)
 				{
 					_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression, _dateRange,
@@ -59,7 +56,7 @@ namespace Edge.Services.Google.Adwords
 					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 					file.Parameters.Add("authToken", request.authToken);
 					file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
-					
+
 					try
 					{
 						DownloadFile(file);
@@ -104,8 +101,8 @@ namespace Edge.Services.Google.Adwords
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
 		{
 			_filesInProgress -= 1;
-			if (_filesInProgress==0)
-			_waitHandle.Set();
+			if (_filesInProgress == 0)
+				_waitHandle.Set();
 		}
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
