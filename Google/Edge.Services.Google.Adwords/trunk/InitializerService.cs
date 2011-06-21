@@ -73,7 +73,13 @@ namespace Edge.Services.Google.Adwords
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
-
+				if (Boolean.Parse(includeConversionTypes)) // if AD Performance With conversion type is required 
+				{
+					DeliveryFile file = new DeliveryFile();
+					file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
+					file.Parameters.Add("Email", email);
+					this.Delivery.Files.Add(file);
+				}
 			}
 
 			this.Delivery.Save();
