@@ -104,7 +104,7 @@ namespace Edge.Services.Facebook.AdsApi
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
 							Value = delimiter[0]==string.Empty? ad.Name : ad.Name.Split(delimiter,StringSplitOptions.None)[0],
-							OriginalID=ad.Name+ad.Campaign.OriginalID+ad.Campaign.Account.ID
+							OriginalID=(ad.Name+ad.Campaign.OriginalID+ad.Campaign.Account.ID).Replace(" ",string.Empty)
 						};
 					}
 					else
@@ -112,7 +112,7 @@ namespace Edge.Services.Facebook.AdsApi
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
 							Value = ad.Name,
-							OriginalID=ad.Name+ad.Campaign.OriginalID+ad.Campaign.Account.ID
+							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
 							
 						};
 					}
