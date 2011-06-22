@@ -31,8 +31,10 @@ namespace Edge.Services.Google.Adwords
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 		private Selector _selector { get; set; }
 		private bool _includeConversionTypes { set; get; }
+		public string _reportName { set; get; }
 
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
+
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition",
@@ -52,10 +54,18 @@ namespace Edge.Services.Google.Adwords
 			//TODO : delete this method
 		}
 
+		/// <summary>
+		/// Defines report utility params for the report definition.
+		/// </summary>
+		/// <param name="Email">The Account Email</param>
+		/// <param name="IncludeZeroImpression">In order to include zero impressions in report , set this value to be true.</param>
+		/// <param name="dateRange">Report Definition Date Range Type. Default value is YESTERDAY.</param>
+		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
+		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
 		public AdwordsReport(int AccountId, string Email, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY,
 							ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
-							bool includeConversionTypes = false)
+							bool includeConversionTypes = false , string Name = "")
 		{
 			this._accountId = AccountId;
 			this.includeZeroImpression = IncludeZeroImpression;
@@ -69,8 +79,33 @@ namespace Edge.Services.Google.Adwords
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
 			this._includeConversionTypes = includeConversionTypes;
+			this._reportName = Name;
+
 			//Creating Selector
 			_selector = new Selector();
+			switch (this.reportDefinition.reportType)
+			{
+				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
+					{
+						if (_includeConversionTypes)
+						{
+							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION;
+							_reportName = "AD PERFORMANCE REPORT WITH CONVERSION TYPES";
+						}
+						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
+						break;
+					}
+				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
+					{
+						_selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
+						break;
+					}
+				case ReportDefinitionReportType.DESTINATION_URL_REPORT:
+					{
+						_selector.fields = DESTINATION_URL_REPORT;
+						break;
+					}
+			}
 
 			// Create Report Service
 			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
@@ -91,7 +126,10 @@ namespace Edge.Services.Google.Adwords
 			this.AccountEmails = Clients.ToArray();
 		}
 
-
+		/// <summary>
+		/// Intializing report id from Google API / Report Definition Table in DB .
+		/// </summary>
+		/// <param name="Update">true in order to create new report definition, ignore exsiting report id in Report Definition Table</param>
 		public long intializingGoogleReport(bool Update = false)
 		{
 			long ReportId;
@@ -124,7 +162,8 @@ namespace Edge.Services.Google.Adwords
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
 			{
 				SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @Account_Email:Nvarchar" +
-								",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int,@StartDay:Nvarchar,@EndDay:Nvarchar,@Update:bit )", System.Data.CommandType.StoredProcedure);
+								",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int,@StartDay:Nvarchar,@EndDay:Nvarchar,@Update:bit,@reportName:Nvarchar,@reportfields:Nvarchar)"
+								, System.Data.CommandType.StoredProcedure);
 				sqlCon.Open();
 
 				cmd.Connection = sqlCon;
@@ -133,6 +172,8 @@ namespace Edge.Services.Google.Adwords
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
+				cmd.Parameters["@reportName"].Value = _reportName;
+				cmd.Parameters["@reportfields"].Value = this._selector.fields.ToString();
 
 				if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
 				{
@@ -155,7 +196,7 @@ namespace Edge.Services.Google.Adwords
 				//SqlCommand sqlCommand = DataManager.CreateCommand("SELECT Gateway_id from UserProcess_GUI_Gateway where account_id = @AccountId:int");
 
 				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar," +
-						"@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar,@StartDay:Nvarchar, @EndDay:Nvarchar )", System.Data.CommandType.StoredProcedure);
+						"@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar,@StartDay:Nvarchar, @EndDay:Nvarchar,@reportName:Nvarchar,@reportfields:Nvarchar )", System.Data.CommandType.StoredProcedure);
 				cmd.Connection = sqlCon;
 
 				cmd.Parameters["@Account_Id"].Value = Account_Id;
@@ -167,6 +208,8 @@ namespace Edge.Services.Google.Adwords
 					cmd.Parameters["@StartDay"].Value = StartDate;
 					cmd.Parameters["@EndDay"].Value = EndDate;
 				}
+				cmd.Parameters["@reportName"].Value = _reportName;
+			//	cmd.Parameters["@reportfields"].Value = this._selector.fields.
 
 				using (var _reader = cmd.ExecuteReader())
 				{
@@ -187,26 +230,7 @@ namespace Edge.Services.Google.Adwords
 
 		public long CreateGoogleReport(int Account_Id)
 		{
-			switch (this.reportDefinition.reportType)
-			{
-				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
-					{
-						if (_includeConversionTypes)
-							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION;
-						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
-						break;
-					}
-				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
-					{
-						_selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
-						break;
-					}
-				case ReportDefinitionReportType.DESTINATION_URL_REPORT:
-					{
-						_selector.fields = DESTINATION_URL_REPORT;
-						break;
-					}
-			}
+			
 
 			this.Name = this.reportDefinition.reportType.ToString() + Account_Id;
 

@@ -62,7 +62,6 @@ namespace Edge.Services.Google.Adwords
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
 				session.Begin(false);
-				session.Measures
 				using (_adsReader)
 				{
 					while (_adsReader.Read())

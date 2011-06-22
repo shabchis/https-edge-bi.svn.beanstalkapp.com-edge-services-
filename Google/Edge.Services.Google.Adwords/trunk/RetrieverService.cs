@@ -28,7 +28,8 @@ namespace Edge.Services.Google.Adwords
 		{
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
-
+			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
+		
 			//Date Range
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
@@ -45,10 +46,18 @@ namespace Edge.Services.Google.Adwords
 
 				foreach (var file in files)
 				{
-					_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression, _dateRange,
-								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(), true));
+					if (file.Name.ToString().Equals("AD_PERFORMANCE_REPORT_(Conversion)"))
+					{
+						_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, false, _dateRange,
+														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
+					}
+					else
+					{
+						_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression, _dateRange,
+								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(),true));
+					}
+					
 					_googleReport.intializingGoogleReport();
-
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
 					file.Name = _googleReport.Name + ".zip";
