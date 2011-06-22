@@ -150,11 +150,22 @@ namespace Edge.Services.Facebook.AdsApi
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 						
 						//TODO : OTHER MEASURES
-						//adMetricsUnit.MeasureValues.Add(Measures.SocialImpressions, double.Parse(adGroupStatsReader.Current.social_impressions));
-						//adMetricsUnit.MeasureValues.Add(Measures.SocialClicks, double.Parse(adGroupStatsReader.Current.social_clicks));
-						//adMetricsUnit.MeasureValues.Add(Measures.SocialCost, double.Parse(adGroupStatsReader.Current.social_spent));
-						//adMetricsUnit.MeasureValues.Add(Measures.Actions, double.Parse(adGroupStatsReader.Current.actions));
+						adMetricsUnit.MeasureValues.Add(session.Measures["SocialImpressions"], double.Parse(adGroupStatsReader.Current.social_impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures["SocialClicks"], double.Parse(adGroupStatsReader.Current.social_clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures["SocialCost"], double.Parse(adGroupStatsReader.Current.social_spent));
+						adMetricsUnit.MeasureValues.Add(session.Measures["Actions"], double.Parse(adGroupStatsReader.Current.actions));
+						adMetricsUnit.MeasureValues.Add(session.Measures["unique_impressions"], double.Parse(adGroupStatsReader.Current.unique_impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures["social_unique_impressions"], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures["unique_clicks"], double.Parse(adGroupStatsReader.Current.unique_clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures["social_unique_clicks"], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures["connections"], double.Parse(adGroupStatsReader.Current.connections));
+						
 
+						
+							
+							
+								
+								
 						adMetricsUnit.TargetMatches = new List<Target>();
 
 						session.ImportMetrics(adMetricsUnit);
