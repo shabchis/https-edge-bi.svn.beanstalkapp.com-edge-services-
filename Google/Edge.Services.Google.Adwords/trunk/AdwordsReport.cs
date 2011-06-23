@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Google.Api.Ads.AdWords.v201101;
-using Google.Api.Ads.AdWords.Lib;
-using Google.Api.Ads.AdWords.Util;
+using GA = Google.Api.Ads.AdWords;
+//using GA2 = Google.Api.Ads.AdWords.v201101;
+//using GA = Google.Api.Ads.AdWords.Lib;
+//using GA = Google.Api.Ads.AdWords.Util;
 using Edge.Data.Pipeline;
 using Edge.Core.Data;
 using System.Data.SqlClient;
@@ -15,23 +16,22 @@ namespace Edge.Services.Google.Adwords
 {
 	public class AdwordsReport
 	{
-		public string Name { get; set; }
 		public long Id { get; set; }
 		public GoogleUserEntity User { set; get; }
 		private int _accountId { get; set; }
-		private ClientSelector[] AccountEmails;
-		public ReportDefinitionDateRangeType dateRangeType { get; set; }
-		private ReportDefinition reportDefinition { set; get; }
-		private ReportDefinitionReportType ReportType { set; get; }
-		public ReportDefinitionService reportService { set; get; }
+		private GA.v201101.ClientSelector[] AccountEmails;
+		public GA.v201101.ReportDefinitionDateRangeType dateRangeType { get; set; }
+		private GA.v201101.ReportDefinition reportDefinition { set; get; }
+		private GA.v201101.ReportDefinitionReportType ReportType { set; get; }
+		public GA.v201101.ReportDefinitionService reportService { set; get; }
 		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
 		public string StartDate { set; get; }
 		public string EndDate { set; get; }
 		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
-		private Selector _selector { get; set; }
+		private GA.v201101.Selector _selector { get; set; }
 		private bool _includeConversionTypes { set; get; }
-		public string _reportName { set; get; }
+		public string _customizedReportName { set; get; }
 
 		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 
@@ -63,13 +63,13 @@ namespace Edge.Services.Google.Adwords
 		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
 		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
 		public AdwordsReport(int AccountId, string Email, string StartDate, string EndDate, bool IncludeZeroImpression = false,
-							ReportDefinitionDateRangeType dateRange = ReportDefinitionDateRangeType.YESTERDAY,
-							ReportDefinitionReportType ReportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
-							bool includeConversionTypes = false , string Name = "")
+							GA.v201101.ReportDefinitionDateRangeType dateRange = GA.v201101.ReportDefinitionDateRangeType.YESTERDAY,
+							GA.v201101.ReportDefinitionReportType ReportType = GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
+							bool includeConversionTypes = false, string Name = "")
 		{
 			this._accountId = AccountId;
 			this.includeZeroImpression = IncludeZeroImpression;
-			this.reportDefinition = new ReportDefinition();
+			this.reportDefinition = new GA.v201101.ReportDefinition();
 			this.reportDefinition.reportType = ReportType;
 			this.reportDefinition.dateRangeType = dateRange;
 			this.ReportType = ReportType;
@@ -79,28 +79,29 @@ namespace Edge.Services.Google.Adwords
 			//SetAccountEmails(accountEmails);
 			this.User = new GoogleUserEntity(Email);
 			this._includeConversionTypes = includeConversionTypes;
-			this._reportName = Name;
+
+			//Setting customized Report Name
+			if (String.IsNullOrEmpty(Name))
+				this._customizedReportName = this.ReportType.ToString();
+			if (_includeConversionTypes) _customizedReportName = "AD PERFORMANCE REPORT WITH CONVERSION TYPES";
 
 			//Creating Selector
-			_selector = new Selector();
+			_selector = new GA.v201101.Selector();
 			switch (this.reportDefinition.reportType)
 			{
-				case ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
+				case GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
 						if (_includeConversionTypes)
-						{
 							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION;
-							_reportName = "AD PERFORMANCE REPORT WITH CONVERSION TYPES";
-						}
 						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
 						break;
 					}
-				case ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
+				case GA.v201101.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
 					{
 						_selector.fields = KEYWORDS_PERFORMANCE_REPORT_FIELDS;
 						break;
 					}
-				case ReportDefinitionReportType.DESTINATION_URL_REPORT:
+				case GA.v201101.ReportDefinitionReportType.DESTINATION_URL_REPORT:
 					{
 						_selector.fields = DESTINATION_URL_REPORT;
 						break;
@@ -108,18 +109,19 @@ namespace Edge.Services.Google.Adwords
 			}
 
 			// Create Report Service
-			reportService = (ReportDefinitionService)User.adwordsUser.GetService(AdWordsService.v201101.ReportDefinitionService);
-			this.Name = ReportType.ToString();
+			reportService = (GA.v201101.ReportDefinitionService)User.adwordsUser.GetService(GA.Lib.AdWordsService.v201101.ReportDefinitionService);
 		}
 
 
 		private void SetAccountEmails(List<string> accountEmails)
 		{
-			List<ClientSelector> Clients = new List<ClientSelector>();
-			if ((accountEmails == null) || (accountEmails.Count == 0)) throw new Exception("Account does not contains Email list ");
+			List<GA.v201101.ClientSelector> Clients = new List<GA.v201101.ClientSelector>();
+			if ((accountEmails == null) || (accountEmails.Count == 0))
+				throw new Exception("Account does not contains Email list ");
+
 			foreach (string email in accountEmails)
 			{
-				ClientSelector client = new ClientSelector();
+				GA.v201101.ClientSelector client = new GA.v201101.ClientSelector();
 				client.login = email;
 				Clients.Add(client);
 			}
@@ -149,14 +151,14 @@ namespace Edge.Services.Google.Adwords
 			return ReportId;
 		}
 
-		private long GetReportIdFromGoogleApi(int Account_Id, string p, ReportDefinitionDateRangeType reportDefinitionDateRangeType, ReportDefinitionReportType reportDefinitionReportType)
+		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType)
 		{
 			long ReportId = CreateGoogleReport(Account_Id);
 			SetReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
 			return ReportId;
 		}
 
-		private void SetReportID(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type,
+		private void SetReportID(int Account_Id, string Account_Email, GA.v201101.ReportDefinitionDateRangeType Date_Range, GA.v201101.ReportDefinitionReportType Google_Report_Type,
 								long ReportId, String StartDate, String EndDate, bool Update = false)
 		{
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
@@ -172,10 +174,12 @@ namespace Edge.Services.Google.Adwords
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
-				cmd.Parameters["@reportName"].Value = _reportName;
+				cmd.Parameters["@reportName"].Value = _customizedReportName;
+
+				//TO DO: create string from fields list
 				cmd.Parameters["@reportfields"].Value = this._selector.fields.ToString();
 
-				if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+				if (Date_Range.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 				{
 					cmd.Parameters["@StartDay"].Value = StartDate;
 					cmd.Parameters["@EndDay"].Value = EndDate;
@@ -187,7 +191,8 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		private long GetReportIdFromDB(int Account_Id, string Account_Email, ReportDefinitionDateRangeType Date_Range, ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
+		private long GetReportIdFromDB(int Account_Id, string Account_Email, GA.v201101.ReportDefinitionDateRangeType Date_Range,
+							GA.v201101.ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
 		{
 			long ReportId = -1;
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
@@ -203,13 +208,15 @@ namespace Edge.Services.Google.Adwords
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
-				if (Date_Range.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+				if (Date_Range.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 				{
 					cmd.Parameters["@StartDay"].Value = StartDate;
 					cmd.Parameters["@EndDay"].Value = EndDate;
 				}
-				cmd.Parameters["@reportName"].Value = _reportName;
-			//	cmd.Parameters["@reportfields"].Value = this._selector.fields.
+				cmd.Parameters["@reportName"].Value = _customizedReportName;
+
+				//TO DO: create JSON obect from fields array
+				//	cmd.Parameters["@reportfields"].Value = this._selector.fields.
 
 				using (var _reader = cmd.ExecuteReader())
 				{
@@ -230,13 +237,9 @@ namespace Edge.Services.Google.Adwords
 
 		public long CreateGoogleReport(int Account_Id)
 		{
-			
-
-			this.Name = this.reportDefinition.reportType.ToString() + Account_Id;
-
-			if (this.dateRangeType.Equals(ReportDefinitionDateRangeType.CUSTOM_DATE))
+			if (this.dateRangeType.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
-				_selector.dateRange = new DateRange()
+				_selector.dateRange = new GA.v201101.DateRange()
 				{
 					min = this.StartDate,
 					max = this.EndDate
@@ -247,24 +250,34 @@ namespace Edge.Services.Google.Adwords
 			if (!this.includeZeroImpression && !_includeConversionTypes)
 			{
 				// Create a filter Impressions > 0 
-				Predicate predicate = new Predicate();
-				predicate.field = "Impressions";
-				predicate.@operator = PredicateOperator.GREATER_THAN;
-				predicate.values = new string[] { "0" };
-				_selector.predicates = new Predicate[] { predicate };
+				GA.v201101.Predicate impPredicate = new GA.v201101.Predicate();
+				impPredicate.field = "Impressions";
+				impPredicate.@operator = GA.v201101.PredicateOperator.GREATER_THAN;
+				impPredicate.values = new string[] { "0" };
+				_selector.predicates = new GA.v201101.Predicate[] { impPredicate };
+				
+				//Sorting 
+				//if (this.ReportType.Equals(GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT))
+				//{
+				//    _selector.ordering = new GA.v201101.OrderBy[]
+				//    {
+				//        new GA.v201101.OrderBy() { field = "Id", sortOrder = GA.v201101.SortOrder.DESCENDING },
+				//        new GA.v201101.OrderBy() { field = "KeywordId", sortOrder = GA.v201101.SortOrder.DESCENDING }
+				//    };
+				//}
 			}
 
 			// Create reportDefinition
 			reportDefinition = CreateReportDefinition(_selector, AccountEmails);
 
 			// Create operations.
-			ReportDefinitionOperation operation = new ReportDefinitionOperation();
+			GA.v201101.ReportDefinitionOperation operation = new GA.v201101.ReportDefinitionOperation();
 			operation.operand = reportDefinition;
-			operation.@operator = Operator.ADD;
-			ReportDefinitionOperation[] operations = new ReportDefinitionOperation[] { operation };
+			operation.@operator = GA.v201101.Operator.ADD;
+			GA.v201101.ReportDefinitionOperation[] operations = new GA.v201101.ReportDefinitionOperation[] { operation };
 
 			//Create reportDefintions 
-			ReportDefinition[] reportDefintions = reportService.mutate(operations);
+			GA.v201101.ReportDefinition[] reportDefintions = reportService.mutate(operations);
 			this.Id = reportDefintions[0].id;
 
 			//  TO DO : save report in DB
@@ -274,17 +287,17 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		public void AddFilter(string fieldName, PredicateOperator op, string[] values)
+		public void AddFilter(string fieldName, GA.v201101.PredicateOperator op, string[] values)
 		{
-			Predicate predicate = new Predicate();
+			GA.v201101.Predicate predicate = new GA.v201101.Predicate();
 			predicate.field = fieldName;
 			predicate.@operator = op;
 			predicate.values = values;
 			if (_selector.predicates == null)
-				_selector.predicates = new Predicate[] { predicate };
+				_selector.predicates = new GA.v201101.Predicate[] { predicate };
 			else
 			{
-				List<Predicate> predicatesList = _selector.predicates.ToList<Predicate>();
+				List<GA.v201101.Predicate> predicatesList = _selector.predicates.ToList<GA.v201101.Predicate>();
 				predicatesList.Add(predicate);
 				_selector.predicates = predicatesList.ToArray();
 			}
@@ -301,9 +314,10 @@ namespace Edge.Services.Google.Adwords
 				IsReturnMoneyInMicros);
 		}
 
-		public ReportDefinition CreateReportDefinition(Selector selector, ClientSelector[] clients, DownloadFormat downloadFormat = DownloadFormat.GZIPPED_CSV)
+		public GA.v201101.ReportDefinition CreateReportDefinition(GA.v201101.Selector selector, GA.v201101.ClientSelector[] clients,
+							GA.v201101.DownloadFormat downloadFormat = GA.v201101.DownloadFormat.GZIPPED_CSV)
 		{
-			reportDefinition.reportName = Name;
+			reportDefinition.reportName = _customizedReportName;
 			reportDefinition.dateRangeType = dateRangeType;
 
 			reportDefinition.selector = selector;
@@ -320,7 +334,7 @@ namespace Edge.Services.Google.Adwords
 			try
 			{
 				// Download report.
-				new ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
+				new GA.Util.ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
 			}
 			catch (Exception ex)
 			{

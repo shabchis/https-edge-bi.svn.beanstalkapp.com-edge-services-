@@ -60,7 +60,7 @@ namespace Edge.Services.Google.Adwords
 					_googleReport.intializingGoogleReport();
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
-					file.Name = _googleReport.Name + ".zip";
+					file.Name = _googleReport._customizedReportName + ".zip";
 					file.SourceUrl = request.downloadUrl.ToString();
 					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 					file.Parameters.Add("authToken", request.authToken);
