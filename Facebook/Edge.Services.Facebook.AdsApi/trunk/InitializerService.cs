@@ -20,10 +20,9 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			// Create a new delivery
 
-			this.Delivery = new Delivery(this.Instance.InstanceID)
+			this.Delivery = new Delivery(this.Instance.InstanceID, this.TargetDeliveryID)
 			{
-				_guid=Guid.Parse( this.Instance.Configuration.Options["DeliveryGuid"]),
-				TargetPeriod = this.TargetPeriod,
+				TargetPeriod=this.TargetPeriod,
 				TargetLocationDirectory="Facebook"
 			};
 			
@@ -38,37 +37,37 @@ namespace Edge.Services.Facebook.AdsApi
 //            this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
 //            }
 //#endif
-			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.ParentInstance.Configuration.Options["FBaccountID"].ToString() };
+			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["FBaccountID"].ToString() };
 
 			if (this.Instance.Configuration.Options["APIKey"] == null)
-				this.Delivery.Parameters["APIKey"] = this.Instance.ParentInstance.Configuration.Options["APIKey"].ToString();
+				this.Delivery.Parameters["APIKey"] = this.Instance.Configuration.Options["APIKey"].ToString();
 			else
 				this.Delivery.Parameters["APIKey"] = this.Instance.Configuration.Options["APIKey"].ToString();
 
 
 			if (this.Instance.Configuration.Options["sessionKey"] == null)
-				this.Delivery.Parameters["sessionKey"] = this.Instance.ParentInstance.Configuration.Options["sessionKey"].ToString();
+				this.Delivery.Parameters["sessionKey"] = this.Instance.Configuration.Options["sessionKey"].ToString();
 			else
 				this.Delivery.Parameters["sessionKey"] = Instance.Configuration.Options["sessionKey"].ToString();
 
 			if (this.Instance.Configuration.Options["applicationSecret"] == null)
-				this.Delivery.Parameters["applicationSecret"] = this.Instance.ParentInstance.Configuration.Options["applicationSecret"].ToString();
+				this.Delivery.Parameters["applicationSecret"] = this.Instance.Configuration.Options["applicationSecret"].ToString();
 			else
 				this.Delivery.Parameters["applicationSecret"] = this.Instance.Configuration.Options["applicationSecret"].ToString();
 
 			if (Instance.Configuration.Options["FBaccountID"] == null)
-				this.Delivery.Parameters["FBaccountID"] = this.Instance.ParentInstance.Configuration.Options["FBaccountID"].ToString();
+				this.Delivery.Parameters["FBaccountID"] = this.Instance.Configuration.Options["FBaccountID"].ToString();
 			else
 				this.Delivery.Parameters["FBaccountID"] = this.Instance.Configuration.Options["FBaccountID"].ToString();
 
 
 			if (Instance.Configuration.Options["accountName"] == null)
-				this.Delivery.Parameters["accountName"] = this.Instance.ParentInstance.Configuration.Options["accountName"].ToString();
+				this.Delivery.Parameters["accountName"] = this.Instance.Configuration.Options["accountName"].ToString();
 			else
 				this.Delivery.Parameters["accountName"] = this.Instance.Configuration.Options["accountName"].ToString();
 
 			if (Instance.Configuration.Options["sessionSecret"] == null)
-				this.Delivery.Parameters["sessionSecret"] = this.Instance.ParentInstance.Configuration.Options["sessionSecret"].ToString();
+				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
 			else
 				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
 

@@ -28,7 +28,7 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			
 			_filesInProgress = this.Delivery.Files.Count;
-			_baseAddress = this.Instance.ParentInstance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
+			_baseAddress = this.Instance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
 
 			_waitHandle = new AutoResetEvent(false);
 			foreach (DeliveryFile file in this.Delivery.Files)
@@ -53,7 +53,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			var adGroupReader = new XmlDynamicReader
 				(FileManager.Open(deliveryFile.Location),
-				Instance.ParentInstance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+				Instance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 			using (adGroupReader)

@@ -51,7 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="forDebugOnly.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="MD5Core.cs" />
     <Compile Include="ProcessorService.cs" />
