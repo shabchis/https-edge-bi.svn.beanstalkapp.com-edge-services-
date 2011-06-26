@@ -63,6 +63,7 @@
     </None>
     <None Include="Edge.Services.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </None>
     <None Include="Service References\ServiceReferences.V7.ReportingService\Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService.PollGenerateReportResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>

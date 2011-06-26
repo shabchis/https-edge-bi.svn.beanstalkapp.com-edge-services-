@@ -7,12 +7,15 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Importing;
 using Edge.Data.Pipeline.Services;
 using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using System.Text.RegularExpressions;
 
 
 namespace Edge.Services.Microsoft.AdCenter
 {
 	public class ProcessorService : PipelineService
 	{
+		Dictionary<string, Campaign> _campaignsCache;
+
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// TODO: add checks for delivery state
@@ -54,7 +57,8 @@ namespace Edge.Services.Microsoft.AdCenter
 					{
 						// create the ad
 						Ad ad = CreateAd(adReportReader.Current);
-						importSession.ImportAd(ad);
+						//importSession.ImportAd(ad);
+						_adCache.
 
 						// Guess the progress
 						progress += adSize / totalSize;
@@ -107,7 +111,6 @@ namespace Edge.Services.Microsoft.AdCenter
 		}
 
 
-
 		private Ad CreateAd(dynamic values)
 		{
 			Ad ad = new Ad()
@@ -115,7 +118,11 @@ namespace Edge.Services.Microsoft.AdCenter
 				OriginalID = values[WS.AdPerformanceReportColumn.AdId.ToString()],
 				Campaign = new Campaign()
 				{
-					Account = new Account() { ID = Instance.AccountID },
+					Account = new Account()
+					{
+						ID = Instance.AccountID,
+						OriginalID = values[WS.AdPerformanceReportColumn.AccountNumber.ToString()]
+					},
 					Channel = this.Delivery.Channel
 				},
 				Creatives = new List<Creative>()
@@ -140,24 +147,17 @@ namespace Edge.Services.Microsoft.AdCenter
 			// TODO: figure out in what format this is returned; doesn't look promising...
 			// (http://social.msdn.microsoft.com/Forums/en-US/adcenterdev/thread/155dba04-f541-489b-878c-d259f4a2814b)
 			string rawTime = values[timePeriodColumn];
-			unit.TimeStamp = DateTime.ParseExact(rawTime, "d/M/yyyy", null); // wild guess
+			unit.PeriodStart = unit.PeriodEnd = DateTime.ParseExact(rawTime, "d/M/yyyy", null); // wild guess
 
 
 			//..................
 			// IDENTITIES
 
-			unit.Ad = new Ad() { OriginalID = values[WS.KeywordPerformanceReportColumn.AdId.ToString()] };
+			//TODO: get ad from _adCache
+			//unit.Ad = new Ad() { OriginalID = values[WS.KeywordPerformanceReportColumn.AdId.ToString()] };
 
-			// ugly workaround for the fact that MS don't have a AdPerformanceReportColumn.CampaignId field
-			// NOTE: canceled because of the performance cost of keeping the ad data around for this purpose
-			/*
-			if (ad.Campaign.OriginalID == null)
-				ad.Campaign.OriginalID = values[WS.KeywordPerformanceReportColumn.CampaignId.ToString()];
-			*/
-
-			// Tracker
-			unit.Tracker = new Tracker(unit.Ad);
-
+			// TODO: Tracker
+			
 			// Targeting
 			string rawMatchType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
 			KeywordMatchType matchType = KeywordMatchType.Unidentified;

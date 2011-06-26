@@ -27,12 +27,27 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Wrapper for adCenter API
 			AdCenterApi adCenterApi = new AdCenterApi(this);
 
-			// Both keyword and ad performance reports are needed
+			// ................................
+			// Campaign report
+			this.Delivery.Files.Add(new DeliveryFile()
+			{
+				Name = Const.Files.CampaignReport,
+				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewCampaignPerformanceReportRequest(
+					WS.CampaignPerformanceReportColumn.CampaignId,
+					WS.CampaignPerformanceReportColumn.CampaignName,
+					WS.CampaignPerformanceReportColumn.Status
+				))
+			});
+
+			ReportProgress(0.33);
+
+			// ................................
+			// Ad report
 			this.Delivery.Files.Add(new DeliveryFile()
 			{
 				Name = Const.Files.AdReport,
 				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewAdPerformanceReportRequest(
-					//WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
+					WS.AdPerformanceReportColumn.AccountNumber,
 					WS.AdPerformanceReportColumn.CampaignName,
 					//WS.AdPerformanceReportColumn.CampaignId, // why did MS leave this out? stupid fucks
 					WS.AdPerformanceReportColumn.AdGroupName,
@@ -42,14 +57,17 @@ namespace Edge.Services.Microsoft.AdCenter
 					WS.AdPerformanceReportColumn.AdDescription,
 					WS.AdPerformanceReportColumn.DestinationUrl
 				))
-			}); ReportProgress(0.49); // progress: 49%
+			});
 
+			ReportProgress(0.33);
+
+			// ................................
+			// Keyword report
 			this.Delivery.Files.Add(new DeliveryFile()
 			{
 				Name = Const.Files.KeywordReport,
 				SourceUrl = adCenterApi.SubmitReportRequest(adCenterApi.NewKeywordPerformanceReportRequest(
 					WS.KeywordPerformanceReportColumn.TimePeriod, // special column
-					//WS.KeywordPerformanceReportColumn.CampaignId, // unfortunate workaround...
 					WS.KeywordPerformanceReportColumn.AdId,
 					WS.KeywordPerformanceReportColumn.Keyword,
 					WS.KeywordPerformanceReportColumn.KeywordId,
@@ -67,7 +85,8 @@ namespace Edge.Services.Microsoft.AdCenter
 					{Const.Parameters.TimePeriodColumnName, AdCenterApi.GetTimePeriodColumnName(WS.ReportAggregation.Daily)}
 				}
 			});
-			ReportProgress(0.98); // progress: 98%
+			
+			ReportProgress(0.33);
 
 			// Save with success
 			this.Delivery.Save();

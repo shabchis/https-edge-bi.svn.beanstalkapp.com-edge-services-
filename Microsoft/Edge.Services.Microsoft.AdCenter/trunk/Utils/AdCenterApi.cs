@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.ServiceModel;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
@@ -9,11 +10,38 @@ namespace Edge.Services.Microsoft.AdCenter
 	public class AdCenterApi
 	{
 		PipelineService _service;
+		long[] _accountOriginalIDs;
 
 		public AdCenterApi(PipelineService service)
 		{
 			_service = service;
+
+			// Get customer account IDs
+			string originalIDs = _service.Instance.Configuration.Options["AdCenter.CustomerAccountIDs"];
+			string[] split = originalIDs.Split(',');
+			_accountOriginalIDs = new long[split.Length];
+			for (int i = 0; i < _accountOriginalIDs.Length; i++)
+				_accountOriginalIDs[i] = long.Parse(split[i]);
 		}
+
+		public WS.CampaignPerformanceReportRequest NewCampaignPerformanceReportRequest(params WS.CampaignPerformanceReportColumn[] columns)
+		{
+			// Create the nested report request
+			var request = new WS.CampaignPerformanceReportRequest()
+			{
+				Language = WS.ReportLanguage.English,
+				Format = WS.ReportFormat.Csv,
+				ReturnOnlyCompleteData = false,
+				ReportName = String.Format("CampainPerformance (delivery: {0})", _service.Delivery.DeliveryID),
+				Aggregation = WS.ReportAggregation.Daily,
+				Time = ConvertToReportTime(_service.TargetPeriod),
+				Columns = columns,
+				Scope = new WS.AccountThroughCampaignReportScope() { AccountIds = _accountOriginalIDs }
+			};
+
+			return request;
+		}
+
 
 		public WS.KeywordPerformanceReportRequest NewKeywordPerformanceReportRequest(params WS.KeywordPerformanceReportColumn[] columns)
 		{
@@ -21,16 +49,13 @@ namespace Edge.Services.Microsoft.AdCenter
 			var request = new WS.KeywordPerformanceReportRequest()
 			{
 				Language = WS.ReportLanguage.English,
-				Format = WS.ReportFormat.Xml,
+				Format = WS.ReportFormat.Csv,
 				ReturnOnlyCompleteData = false,
-				ReportName = String.Format("KeywordPerformance (delivery: {0})", _service.Delivery.Guid),
+				ReportName = String.Format("KeywordPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.ReportAggregation.Daily,
 				Time = ConvertToReportTime(_service.TargetPeriod),
 				Columns = columns,
-				Scope = new WS.AccountThroughAdGroupReportScope()
-				{
-					AccountIds = new long[] { long.Parse(_service.Instance.Configuration.Options["AdCenter.CustomerAccountID"]) }
-				}
+				Scope = new WS.AccountThroughAdGroupReportScope() { AccountIds = _accountOriginalIDs }
 			};
 
 			return request;
@@ -42,16 +67,13 @@ namespace Edge.Services.Microsoft.AdCenter
 			var request = new WS.AdPerformanceReportRequest()
 			{
 				Language = WS.ReportLanguage.English,
-				Format = WS.ReportFormat.Xml,
+				Format = WS.ReportFormat.Csv,
 				ReturnOnlyCompleteData = false,
-				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.Guid),
+				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.NonHourlyReportAggregation.Daily,
 				Time = ConvertToReportTime(_service.TargetPeriod),
 				Columns = columns,
-				Scope = new WS.AccountThroughAdGroupReportScope()
-				{
-					AccountIds = new long[] { long.Parse(_service.Instance.Configuration.Options["AdCenter.CustomerAccountID"]) }
-				}
+				Scope = new WS.AccountThroughAdGroupReportScope() { AccountIds = _accountOriginalIDs }
 			};
 
 			return request;
