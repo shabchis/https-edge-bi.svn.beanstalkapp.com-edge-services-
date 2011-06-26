@@ -53,16 +53,57 @@ namespace Edge.Services.Google.Adwords
 				}
 			}
 
+
+			//Get Ads Conversion ( for ex. signup , purchase )
+
+			DeliveryFile _conversionFile = this.Delivery.Files["AD_PERFORMANCE_REPORT_(Conversion)"];
+			var _conversionsReader = new CsvDynamicReader(_conversionFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
+			Dictionary<string, Dictionary<string, long>> importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
+
+			using (var session = new AdDataImportSession(this.Delivery))
+			{
+				while (_conversionsReader.Read())
+				{
+					if (_conversionsReader.Current.Ad_ID == "Total") // if end of report
+						break;
+					string conversionKey = String.Format("{1}#{2}", _conversionsReader.Current.Ad_ID, _conversionsReader.Current.Keyword_ID);
+					Dictionary<string, long> conversionDic = new Dictionary<string,long>();
+
+					if(!importedAdsWithConv.TryGetValue("conversionKey",out conversionDic))
+					{
+						//ADD conversionKey to importedAdsWithConv
+						//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
+						Dictionary<string, long> conversion = new Dictionary<string, long>();
+						conversion.Add(Convert.ToString(_conversionsReader.Current.Conversion_tracking_purpose), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
+						importedAdsWithConv.Add(conversionKey, conversion);
+					}
+					else
+					{
+						// if current add already has current conversion type than add value to the current type
+						if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current.Conversion_tracking_purpose)))
+						{
+							conversionDic[Convert.ToString(_conversionsReader.Current.Conversion_tracking_purpose)] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]);
+						}
+						// else create new conversion type and add the value
+						else
+						{
+							conversionDic.Add(Convert.ToString(_conversionsReader.Current.Conversion_tracking_purpose),
+											Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
+						}
+					}
+				}
+
+			}
+
 			// Get Ads data.
 			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
 			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 
-
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
 				session.Begin(false);
-				
+
 				using (_adsReader)
 				{
 					while (_adsReader.Read())
@@ -74,7 +115,10 @@ namespace Edge.Services.Google.Adwords
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						Ad ad = new Ad();
 
-						// ADD NEW AD TO ADS DIC . THAN CHECK IF ADD ALREADY EXISTS IN DIC , IF NOT IMPORT AD
+						// (1)ADD NEW AD TO ADS DIC 
+						// (2)THAN CHECK IF AD ALREADY EXISTS IN DIC 
+						// (3)IF NOT IMPORT AD
+
 						string adId = _adsReader.Current.Ad_ID;
 						if (!importedAds.ContainsKey(adId))
 						{
@@ -120,7 +164,7 @@ namespace Edge.Services.Google.Adwords
 								});
 								ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current.Display_URL });
 							}
-							
+
 							//Inserts adgroup
 							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 							{
@@ -149,7 +193,7 @@ namespace Edge.Services.Google.Adwords
 							_kwd = _keywordsData[kwdKey.ToString()];
 
 						}
-						catch (Exception e)
+						catch (Exception)
 						{
 							//Creating Error file with all Keywords primary keys that doesnt exists in keyword report.
 							_keywordErrorFile.Open();
@@ -164,14 +208,24 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.TargetMatches.Add(_kwd);
 
 						//INSERTING METRICS DATA
-						adMetricsUnit.Clicks = Convert.ToInt64(_adsReader.Current.Clicks);
-						adMetricsUnit.Cost = Convert.ToDouble(_adsReader.Current.Cost);
-						adMetricsUnit.Impressions = Convert.ToInt64(_adsReader.Current.Impressions);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(_adsReader.Current.Clicks);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToDouble(_adsReader.Current.Cost);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
+
+						//inserting conversion values
+						string conversionKey = String.Format("{1}#{2}", ad.OriginalID, _kwd.OriginalID);
+						Dictionary<string, long> conversionDic = new Dictionary<string,long>();
+						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
+						{
+							foreach (var pair in conversionDic)
+							{
+								adMetricsUnit.MeasureValues[session.Measures[pair.Key]] = pair.Value;
+							}
+						}
+
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-						//adMetricsUnit.Measures[Meas] = 2123123;
 
-						//TODO: pull from configuration 
 						adMetricsUnit.Currency = new Currency
 						{
 							Code = Convert.ToString(_adsReader.Current.Currency)
@@ -186,6 +240,11 @@ namespace Edge.Services.Google.Adwords
 
 
 			return Core.Services.ServiceOutcome.Success;
+		}
+
+		private static class Const
+		{
+			public const string ConversionValueFieldName = "Conv. (many-per-click)";
 		}
 	}
 }

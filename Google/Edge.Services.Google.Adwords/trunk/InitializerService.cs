@@ -12,23 +12,12 @@ namespace Edge.Services.Google.Adwords
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			if (this.Delivery != null)
-				this.Delivery.Delete();
+			
 
-			this.Delivery = new Delivery(Instance.InstanceID);
+			this.Delivery = new Delivery(Instance.InstanceID,this.TargetDeliveryID);
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
 			this.Delivery.TargetPeriod = this.TargetPeriod;
-
-#if (DEBUG)
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = 95 };
-#else
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID};
-#endif
-
-			//=============================== TEMP FOR DEBUG ===================================
-			this.Delivery._guid = Guid.Parse(this.Instance.Configuration.Options["DeliveryGuid"]);
-			//================================TEMP FOR DEBUG ===================================
-
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID };
 
 			// Get all report types from config
 			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
