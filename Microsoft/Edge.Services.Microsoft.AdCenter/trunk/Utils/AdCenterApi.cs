@@ -17,7 +17,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			_service = service;
 
 			// Get customer account IDs
-			string originalIDs = _service.Instance.Configuration.Options["AdCenter.CustomerAccountIDs"];
+			string originalIDs = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"];
 			string[] split = originalIDs.Split(',');
 			_accountOriginalIDs = new long[split.Length];
 			for (int i = 0; i < _accountOriginalIDs.Length; i++)

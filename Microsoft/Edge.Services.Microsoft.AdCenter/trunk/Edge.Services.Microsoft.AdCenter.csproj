@@ -43,14 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\RetrieverService.cs" />
     <Compile Include="Service References\ServiceReferences.V7.ReportingService\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
     <Compile Include="Services\InitializerService.cs" />
-    <Compile Include="Services\ProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\ProcessorService.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Utils\AdCenterApi.cs" />
     <Compile Include="Utils\Const.cs" />
   </ItemGroup>
