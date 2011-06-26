@@ -6,7 +6,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline.Importing;
-
+using Edge.Core.Utilities;
 namespace Edge.Services.Facebook.AdsApi
 {
 
@@ -33,9 +33,10 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				while (campaignsReader.Read())
 				{
+					
 					Campaign camp = new Campaign()
 					{
-
+						
 						Name = campaignsReader.Current.name,
 						OriginalID = campaignsReader.Current.campaign_id,						
 
@@ -81,43 +82,46 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				while (adGroupsReader.Read())
 				{
-					Ad ad = new Ad()
-					{
-						OriginalID = adGroupsReader.Current.ad_id,
-						Campaign = campaignsData[adGroupsReader.Current.campaign_id],
-						Name = adGroupsReader.Current.name,
+					
 						
-						
+						Ad ad = new Ad()
+						{
+							OriginalID = adGroupsReader.Current.ad_id,
+							Campaign = campaignsData[adGroupsReader.Current.campaign_id],
+							Name = adGroupsReader.Current.name,
 
 
 
-					};
-					if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
-					{
-						string[] delimiter = new string[1];
-						delimiter[0] = string.Empty;
-						if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
-							Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
+
+
+						};
+						if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
+						{
+							string[] delimiter = new string[1];
+							delimiter[0] = string.Empty;
+							if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
+								Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
+							else
+								delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
+
+							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+							{
+								Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
+								OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
+							};
+						}
 						else
-							delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
-
-						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
-							Value = delimiter[0]==string.Empty? ad.Name : ad.Name.Split(delimiter,StringSplitOptions.None)[0],
-							OriginalID=(ad.Name+ad.Campaign.OriginalID+ad.Campaign.Account.ID).Replace(" ",string.Empty)
-						};
-					}
-					else
-					{
-						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
-						{
-							Value = ad.Name,
-							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
-							
-						};
-					}
+							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+							{
+								Value = ad.Name,
+								OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
 
-					ads.Add(ad.OriginalID, ad);
+							};
+						}
+
+						ads.Add(ad.OriginalID, ad);
+					
 
 				}
 				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
@@ -133,11 +137,14 @@ namespace Edge.Services.Facebook.AdsApi
 
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
-				session.Begin(false);
+				
+				session.Begin();
+				
 				using (adGroupStatsReader)
 				{
 					while (adGroupStatsReader.Read())
 					{
+						
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						//if (ads.ContainsKey(adGroupStatsReader.Current.id)) 
 						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
@@ -185,6 +192,7 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					while (adGroupTargetingReader.Read())
 					{
+						
 						Ad ad = ads[adGroupTargetingReader.Current.adgroup_id];
 						
 						string age_min = adGroupTargetingReader.Current.age_min;
@@ -305,39 +313,6 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 	}
-	internal class CampaignData
-	{
-		public string CampaignID;
-		public string CampaignName;
-		public string AccountID;
-		public string Status;
-
-	}
-	internal class AdData
-	{
-		public string adgroup_id;
-		public string creative_id;
-		public string body;
-		public string title;
-		public string image_hash;
-		public string link_url;
-		public string name;
-		public string preview_url;
-		public string typename;
-		public string link_type;
-		public string type;
-		public string image_url;
-		public long Impressions;
-		public long Clicks;
-		public double Cost;
-		public long Social_impressions;
-		public long Social_clicks;
-		public double Social_Cost;
-		public int Actions;
-		public List<Target> Targets = new List<Target>();
-
-
-	}
-
+	
 
 }
