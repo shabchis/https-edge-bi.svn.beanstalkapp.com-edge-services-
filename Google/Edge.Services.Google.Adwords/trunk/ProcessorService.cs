@@ -21,7 +21,7 @@ namespace Edge.Services.Google.Adwords
 			// Get Keywords data
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
 			string[] requiredHeaders = new string[1];
-			requiredHeaders[0] = "Keyword ID";
+			requiredHeaders[0] = Const.RequiredHeader;
 			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
 			_keywordsReader.MatchExactColumns = false;
 			Dictionary<string, KeywordTarget> _keywordsData = new Dictionary<string, KeywordTarget>();
@@ -30,7 +30,7 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_keywordsReader.Read())
 				{
-					if (_keywordsReader.Current.Keyword_ID == "Total")
+					if (_keywordsReader.Current.Keyword_ID == Const.EOF)
 						break;
 					KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
 					{
@@ -64,7 +64,7 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_conversionsReader.Read())
 				{
-					if (_conversionsReader.Current.Ad_ID == "Total") // if end of report
+					if (_conversionsReader.Current.Ad_ID == Const.EOF) // if end of report
 						break;
 					string conversionKey = String.Format("{1}#{2}", _conversionsReader.Current.Ad_ID, _conversionsReader.Current.Keyword_ID);
 					Dictionary<string, long> conversionDic = new Dictionary<string,long>();
@@ -109,7 +109,7 @@ namespace Edge.Services.Google.Adwords
 					while (_adsReader.Read())
 					{
 
-						if (_adsReader.Current.Ad_ID == "Total")
+						if (_adsReader.Current.Ad_ID == Const.EOF)
 							break;
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
@@ -245,6 +245,8 @@ namespace Edge.Services.Google.Adwords
 		private static class Const
 		{
 			public const string ConversionValueFieldName = "Conv. (many-per-click)";
+			public const string RequiredHeader = "Keyword ID";
+			public const string EOF = "Total";
 		}
 	}
 }
