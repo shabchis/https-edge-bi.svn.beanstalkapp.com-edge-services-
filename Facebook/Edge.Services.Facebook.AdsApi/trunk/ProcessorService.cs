@@ -15,17 +15,19 @@ namespace Edge.Services.Facebook.AdsApi
 		static class MeasureNames
 		{
 			public const string Actions = "Actions";
+			public const string Connections = "Connections";
 			public const string SocialCost = "SocialCost";
 			public const string SocialClicks = "SocialClicks";
+			public const string SocialUniqueClicks = "SocialUniqueClicks";
 			public const string SocialImpressions = "SocialImpressions";
+			public const string SocialUniqueImpressions = "SocialUniqueImpressions";
 		}
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-
 			//Campaigns
 			DeliveryFile campaigns = this.Delivery.Files["Campaigns.xml"];
-			
+
 			var campaignsReader = new XmlDynamicReader
 			(campaigns.OpenContents(), Instance.Configuration.Options["Facebook.ads.getCampaigns.xpath"]);
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
@@ -33,12 +35,12 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				while (campaignsReader.Read())
 				{
-					
+
 					Campaign camp = new Campaign()
 					{
-						
+
 						Name = campaignsReader.Current.name,
-						OriginalID = campaignsReader.Current.campaign_id,						
+						OriginalID = campaignsReader.Current.campaign_id,
 
 						Channel = new Channel()
 						{
@@ -47,7 +49,7 @@ namespace Edge.Services.Facebook.AdsApi
 						Account = new Account()
 						{
 							ID = this.Delivery.Account.ID,
-							OriginalID=this.Delivery.Account.OriginalID.ToString()
+							OriginalID = this.Delivery.Account.OriginalID.ToString()
 						}
 
 					};
@@ -82,47 +84,39 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				while (adGroupsReader.Read())
 				{
-					
-						
-						Ad ad = new Ad()
+					Ad ad = new Ad()
+					{
+						OriginalID = adGroupsReader.Current.ad_id,
+						Campaign = campaignsData[adGroupsReader.Current.campaign_id],
+						Name = adGroupsReader.Current.name,
+					};
+
+					if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
+					{
+						string[] delimiter = new string[1];
+						delimiter[0] = string.Empty;
+						if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
+							Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
+						else
+							delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
+
+						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
-							OriginalID = adGroupsReader.Current.ad_id,
-							Campaign = campaignsData[adGroupsReader.Current.campaign_id],
-							Name = adGroupsReader.Current.name,
-
-
-
-
+							Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
+							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
+						};
+					}
+					else
+					{
+						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+						{
+							Value = ad.Name,
+							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
 
 						};
-						if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
-						{
-							string[] delimiter = new string[1];
-							delimiter[0] = string.Empty;
-							if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
-								Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
-							else
-								delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
+					}
 
-							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
-							{
-								Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
-								OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
-							};
-						}
-						else
-						{
-							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
-							{
-								Value = ad.Name,
-								OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
-
-							};
-						}
-
-						ads.Add(ad.OriginalID, ad);
-					
-
+					ads.Add(ad.OriginalID, ad);
 				}
 				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 			}
@@ -137,42 +131,33 @@ namespace Edge.Services.Facebook.AdsApi
 
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
-				
+
 				session.Begin();
-				
+
 				using (adGroupStatsReader)
 				{
 					while (adGroupStatsReader.Read())
 					{
-						
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
-						//if (ads.ContainsKey(adGroupStatsReader.Current.id)) 
 						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
-						//this : adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-						//becomes this :
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent)/100d;
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);						
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-						
-						//TODO : OTHER MEASURES
-						adMetricsUnit.MeasureValues.Add(session.Measures["SocialImpressions"], double.Parse(adGroupStatsReader.Current.social_impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures["SocialClicks"], double.Parse(adGroupStatsReader.Current.social_clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures["SocialCost"], double.Parse(adGroupStatsReader.Current.social_spent));
-						adMetricsUnit.MeasureValues.Add(session.Measures["Actions"], double.Parse(adGroupStatsReader.Current.actions));
-						adMetricsUnit.MeasureValues.Add(session.Measures["unique_impressions"], double.Parse(adGroupStatsReader.Current.unique_impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures["social_unique_impressions"], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures["unique_clicks"], double.Parse(adGroupStatsReader.Current.unique_clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures["social_unique_clicks"], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures["connections"], double.Parse(adGroupStatsReader.Current.connections));
-						
 
-						
-							
-							
-								
-								
+						// Common and Facebook specific meausures
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent);
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
+						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
+
+
 						adMetricsUnit.TargetMatches = new List<Target>();
 
 						session.ImportMetrics(adMetricsUnit);
@@ -192,9 +177,9 @@ namespace Edge.Services.Facebook.AdsApi
 				{
 					while (adGroupTargetingReader.Read())
 					{
-						
+
 						Ad ad = ads[adGroupTargetingReader.Current.adgroup_id];
-						
+
 						string age_min = adGroupTargetingReader.Current.age_min;
 						if (!string.IsNullOrEmpty(age_min))
 						{
@@ -213,7 +198,7 @@ namespace Edge.Services.Facebook.AdsApi
 								else if (gender == "2")
 									genderTarget.Gender = Gender.Female;
 								else
-									genderTarget.Gender = Gender.UnSpecified;
+									genderTarget.Gender = Gender.Unspecified;
 
 								genderTarget.OriginalID = gender;
 								ad.Targets.Add(genderTarget);
@@ -248,25 +233,22 @@ namespace Edge.Services.Facebook.AdsApi
 
 					using (adGroupCreativesReader)
 					{
-
-					//	AutoSegmentationUtility trackerSegmenter = this.CreateAutoSegmenter("Trackers");
-
 						while (adGroupCreativesReader.Read())
 						{
 
 							Ad ad = ads[adGroupCreativesReader.Current.adgroup_id];
-							ad.DestinationUrl = adGroupCreativesReader.Current.link_url; //TODO: TALK WITH AMIT NOT SURE IT'S THE RIGHT FIELD
-
-							//Dictionary<Segment, SegmentValue> autoSegments = trackerSegmenter.ExtractSegmentsFromString(ad.DestinationUrl);
-							//foreach (var pair in autoSegments)
-							//    ad.Segments[pair.Key] = pair.Value;
+							ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
 							
-							ad.Creatives = new List<Creative>();//TODO: DISTENGUSHI BETWEEN CREATIVES UNIQUE ID DATABASE?
+							SegmentValue tracker = this.AutoSegmets.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+							if (tracker != null)
+								ad.Segments[Segment.TrackerSegment] = tracker;
+							
+							ad.Creatives = new List<Creative>();
 							ad.Creatives.Add(new ImageCreative()
 							{
 								ImageUrl = adGroupCreativesReader.Current.image_url,
 								OriginalID = adGroupCreativesReader.Current.creative_id
-								
+
 								//Name = adGroupCreativesReader.Current.name
 
 							});
@@ -315,10 +297,10 @@ namespace Edge.Services.Facebook.AdsApi
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		
+
 
 
 	}
-	
+
 
 }
