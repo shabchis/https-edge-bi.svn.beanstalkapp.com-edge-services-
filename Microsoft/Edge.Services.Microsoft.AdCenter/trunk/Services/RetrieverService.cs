@@ -78,7 +78,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				{
 					string innerFileName;
 					adReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(adReportRequest, out innerFileName);
-					adReportFile.Parameters["InnerFileName"] += string.Format(@"\{0}.Csv", innerFileName);
+					adReportFile.Parameters["InnerFileName"] = string.Format(@"\{0}.Csv", innerFileName);
 				};
 
 				getAdReportUrl.BeginInvoke(result =>
@@ -110,7 +110,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				{
 					string innerFileName;
 					campaignReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(campaignReportRequest,out innerFileName);
-					campaignReportFile.Parameters["InnerFileName"] += string.Format(@"\{0}.Csv", innerFileName);
+					campaignReportFile.Parameters["InnerFileName"]= string.Format(@"\{0}.Csv", innerFileName);
 
 				};
 
@@ -147,7 +147,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				{
 					string innerFileName;
 					keywordReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(keywordReportRequest,out innerFileName);
-					keywordReportFile.Parameters["InnerFileName"]+= string.Format(@"\{0}.Csv", innerFileName);
+					keywordReportFile.Parameters["InnerFileName"]= string.Format(@"\{0}.Csv", innerFileName);
 				};
 
 				getKeywordReportUrl.BeginInvoke(result =>

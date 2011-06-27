@@ -15,12 +15,15 @@ namespace Edge.Services.Microsoft.AdCenter
 	public class ProcessorService : PipelineService
 	{
 		Dictionary<string, Campaign> _campaignsCache;
+		Dictionary<long, Ad> _adCache;
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// TODO: add checks for delivery state
-
+			_adCache = new Dictionary<long, Ad>();
+			_campaignsCache = new Dictionary<string, Campaign>();
 			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
+
 			//DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
 			//FileInfo adReportFileInfo = adReport.GetFileInfo();
 			//FileInfo keywordReportFileInfo = keywordReport.GetFileInfo();
@@ -31,81 +34,78 @@ namespace Edge.Services.Microsoft.AdCenter
 			//const long adSize = 512; // roughly 1/2 KB per row
 			//const long kwSize = 1024; // rougly 1 KB per row
 
-			//using (var importSession = new AdDataImportSession(this.Delivery))
-			//{
-			//    importSession.Begin();
+			using (var importSession = new AdDataImportSession(this.Delivery))
+			{
+				importSession.Begin();
 
-			//    // ...............................................................
-			//    // Read the ad report, and build a lookup table for later
+				//    // ...............................................................
+				//    // Read the ad report, and build a lookup table for later
 
-			//    // create the ad report reader
-			//    string[] requiredHeaders = new string[1];
-			//    requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
-			//    var adReportReader = new CsvDynamicReader(adReport.OpenContents(), requiredHeaders);
-					
+				// create the ad report reader
+				string[] requiredHeaders = new string[1];
+				requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
 				
+				var adReportReader = new CsvDynamicReader( adReport.OpenContents(), requiredHeaders);
+				//    // read
+				using (adReportReader)
+				{
+					
 
-			//    // How often (every how many items) to report progress
-			//    const int reportEvery = 30;
+					while (adReportReader.Read())
+					{
+						//            // create the ad
+						Ad ad = CreateAd(adReportReader.Current);
+						importSession.ImportAd(ad);
+						_adCache.Add(long.Parse(ad.OriginalID), ad);
+					}
 
-			//    // read
-			//    using (adReportReader)
-			//    {
-			//        int adcount = 0;
+					//            // Guess the progress
+					//            progress += adSize / totalSize;
+					//            adcount++;
+					//            if (adcount % reportEvery == 0)
+					//                ReportProgress(progress);
+					//        }
+					//        ReportProgress(progress);
+					//    }
 
-			//        while (adReportReader.Read())
-			//        {
-			//            // create the ad
-			//            Ad ad = CreateAd(adReportReader.Current);
-			//            //importSession.ImportAd(ad);
-			//            _adCache.
+					//    // mark the delivery file as processed
+					//    adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
 
-			//            // Guess the progress
-			//            progress += adSize / totalSize;
-			//            adcount++;
-			//            if (adcount % reportEvery == 0)
-			//                ReportProgress(progress);
-			//        }
-			//        ReportProgress(progress);
-			//    }
+					//    // ...............................................................
+					//    // Read the keyword report, cross reference it with the ad data, and commit
 
-			//    // mark the delivery file as processed
-			//    adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+					//    // The name of the time period column is specified by the initializer, depending on the report
+					//    string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
 
-			//    // ...............................................................
-			//    // Read the keyword report, cross reference it with the ad data, and commit
+					//    // create the keyword report reader
+					//    var keywordReportReader = new XmlDynamicReader
+					//    (
+					//        FileManager.Open(keywordReportFileInfo),
+					//        Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"] // Report/Table/Row
+					//    );
 
-			//    // The name of the time period column is specified by the initializer, depending on the report
-			//    string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
+					//    // read and save in transaction
+					//    using (keywordReportReader)
+					//    {
 
-			//    // create the keyword report reader
-			//    var keywordReportReader = new XmlDynamicReader
-			//    (
-			//        FileManager.Open(keywordReportFileInfo),
-			//        Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"] // Report/Table/Row
-			//    );
+					//        int kwcount = 0;
+					//        while (keywordReportReader.Read())
+					//        {
+					//            // get the unit from the keyword report, and add the missing ad data
+					//            AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn);
+					//            importSession.ImportMetrics(unit);
 
-			//    // read and save in transaction
-			//    using (keywordReportReader)
-			//    {
+					//            // Guess the progress
+					//            progress += kwSize / totalSize;
+					//            kwcount++;
+					//            if (kwcount % reportEvery == 0)
+					//                ReportProgress(progress);
+					//        }
 
-			//        int kwcount = 0;
-			//        while (keywordReportReader.Read())
-			//        {
-			//            // get the unit from the keyword report, and add the missing ad data
-			//            AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn);
-			//            importSession.ImportMetrics(unit);
-
-			//            // Guess the progress
-			//            progress += kwSize / totalSize;
-			//            kwcount++;
-			//            if (kwcount % reportEvery == 0)
-			//                ReportProgress(progress);
-			//        }
-
-			//        ReportProgress(progress);
-			//    }
-			//}
+					//        ReportProgress(progress);
+					//    }
+				}
+			}
 
 			return ServiceOutcome.Success;
 		}
@@ -157,7 +157,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			////unit.Ad = new Ad() { OriginalID = values[WS.KeywordPerformanceReportColumn.AdId.ToString()] };
 
 			//// TODO: Tracker
-			
+
 			//// Targeting
 			//string rawMatchType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
 			//KeywordMatchType matchType = KeywordMatchType.Unidentified;

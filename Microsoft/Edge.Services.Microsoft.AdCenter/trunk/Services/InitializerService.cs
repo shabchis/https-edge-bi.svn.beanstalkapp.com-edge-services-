@@ -19,7 +19,7 @@ namespace Edge.Services.Microsoft.AdCenter
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// Create a new delivery
-			this.Delivery = new Delivery(this.Instance.InstanceID, this.TargetDeliveryID)
+			this.Delivery = new Delivery(this.Instance.InstanceID, this.DeliveryID)
 			{
 				TargetPeriod = this.TargetPeriod,
 				TargetLocationDirectory = "Microsoft"
