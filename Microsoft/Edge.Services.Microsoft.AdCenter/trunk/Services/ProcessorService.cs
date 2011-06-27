@@ -20,7 +20,7 @@ namespace Edge.Services.Microsoft.AdCenter
 		{
 			// TODO: add checks for delivery state
 
-			//DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
+			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
 			//DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
 			//FileInfo adReportFileInfo = adReport.GetFileInfo();
 			//FileInfo keywordReportFileInfo = keywordReport.GetFileInfo();

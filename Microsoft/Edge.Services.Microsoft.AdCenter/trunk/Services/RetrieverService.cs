@@ -17,24 +17,20 @@ namespace Edge.Services.Microsoft.AdCenter
 		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
 		AdCenterApi _adCenterApi;
-		DeliveryFile _adReportFile;
-			DeliveryFile _campaignReportFile;
-			DeliveryFile _keyWordReportFile;
+		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			 _adCenterApi=new AdCenterApi(this);
-			 _filesInProgress = this.Delivery.Files.Count;
-			 DeliveryFile adReportFile;
-			 DeliveryFile campaignReportFile;
+			_adCenterApi = new AdCenterApi(this);
+			_filesInProgress = this.Delivery.Files.Count;
 
 
-			 CreateRequests();
-			
 
-			
-			//Download(adReportFile,adReportRequest);
-			//Download(keywordReportFile,keywordReportRequest);
-			//Download(campaignReportFile,campaignReportRequest);
+			CreateRequests();
+			if (!Download())
+			{
+				CreateRequests();
+				Download();
+			}
 
 
 			_waitHandle.WaitOne();
@@ -80,7 +76,9 @@ namespace Edge.Services.Microsoft.AdCenter
 				manualEvents.Add(asyncWait);
 				Action getAdReportUrl = () =>
 				{
-					adReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(adReportRequest);
+					string innerFileName;
+					adReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(adReportRequest, out innerFileName);
+					adReportFile.Parameters["InnerFileName"] += string.Format(@"\{0}.Csv", innerFileName);
 				};
 
 				getAdReportUrl.BeginInvoke(result =>
@@ -110,7 +108,10 @@ namespace Edge.Services.Microsoft.AdCenter
 				manualEvents.Add(asyncWait);
 				Action getCampaignReportUrl = () =>
 				{
-					campaignReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(campaignReportRequest);
+					string innerFileName;
+					campaignReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(campaignReportRequest,out innerFileName);
+					campaignReportFile.Parameters["InnerFileName"] += string.Format(@"\{0}.Csv", innerFileName);
+
 				};
 
 				getCampaignReportUrl.BeginInvoke(result =>
@@ -144,7 +145,9 @@ namespace Edge.Services.Microsoft.AdCenter
 				manualEvents.Add(asyncWait);
 				Action getKeywordReportUrl = () =>
 				{
-					keywordReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(keywordReportRequest);
+					string innerFileName;
+					keywordReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(keywordReportRequest,out innerFileName);
+					keywordReportFile.Parameters["InnerFileName"]+= string.Format(@"\{0}.Csv", innerFileName);
 				};
 
 				getKeywordReportUrl.BeginInvoke(result =>
@@ -159,33 +162,36 @@ namespace Edge.Services.Microsoft.AdCenter
 				WaitHandle.WaitAll(manualEvents.ToArray());
 		}
 
-		private void Download(DeliveryFile file,WS.ReportRequest reportRequest)
+		private bool Download()
 		{
 			DeliveryFileDownloadOperation operation;
-			try
+			bool result = true;
+			foreach (DeliveryFile file in this.Delivery.Files)
 			{
-				operation = file.Download();
-			}
-			catch (WebException webEx)
-			{
-				Log.Write("web alert", webEx.InnerException, LogMessageType.Warning);
-				file.SourceUrl = _adCenterApi.SubmitReportRequest(reportRequest);
 				try
 				{
 					operation = file.Download();
-
 				}
-				catch (WebException Exception)
+				catch (WebException webEx)
 				{
+					Log.Write("web alert", webEx.InnerException, LogMessageType.Warning);
+					result = false;
+					foreach (DeliveryFile deliveryFile in this.Delivery.Files)
+					{
+						deliveryFile.SourceUrl = string.Empty;
+						
+					}
+					break;
 
-					throw new WebException("Web exception", Exception, Exception.Status, Exception.Response);
 				}
 
+				operation.Progressed += new EventHandler<ProgressEventArgs>(operation_Progressed);
+				operation.Ended += new EventHandler<EndedEventArgs>(operation_Ended);
+				operation.Start();
+				
 			}
-
-			operation.Progressed += new EventHandler<ProgressEventArgs>(operation_Progressed);
-			operation.Ended += new EventHandler<EndedEventArgs>(operation_Ended);
-			operation.Start();
+			return result;
+			
 		}
 
 		void operation_Ended(object sender, EndedEventArgs e)

@@ -72,14 +72,14 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.NonHourlyReportAggregation.Daily,
 				Time = ConvertToReportTime(_service.TargetPeriod),
-				Columns = columns,
+				Columns = columns,				
 				Scope = new WS.AccountThroughAdGroupReportScope() { AccountIds = _accountOriginalIDs }
 			};
 
 			return request;
 		}
 
-		public string SubmitReportRequest(WS.ReportRequest request)
+		public string SubmitReportRequest(WS.ReportRequest request, out string innerFileName)
 		{
 			// Create the API request
 			var submitRequest = new WS.SubmitGenerateReportRequest()
@@ -89,10 +89,12 @@ namespace Edge.Services.Microsoft.AdCenter
 				UserName = _service.Instance.Configuration.Options["AdCenter.Username"],
 				Password = _service.Instance.Configuration.Options["AdCenter.Password"],
 				CustomerId = _service.Instance.Configuration.Options["AdCenter.CustomerID"],
-				CustomerAccountId = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"],
+				CustomerAccountId = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"],				
 				ReportRequest = request
+				
 			};
 
+	
 			// Open a connection
 			using (var service = new WS.ReportingServiceClient())
 			{
@@ -100,7 +102,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				{
 					// Submit the report request
 					WS.SubmitGenerateReportResponse queueResponse = service.SubmitGenerateReport(submitRequest);
-
+					innerFileName = queueResponse.ReportRequestId;
 					// Poll to get the status of the report until it is complete.
 					TimeSpan interval = _service.Instance.Configuration.Options["AdCenter.PollInterval"] != null ?
 						TimeSpan.Parse(_service.Instance.Configuration.Options["AdCenter.PollInterval"]) :
