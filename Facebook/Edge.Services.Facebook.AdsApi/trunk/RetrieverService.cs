@@ -18,17 +18,16 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	class RetrieverService : PipelineService
 	{
-		private int _filesInProgress;
+		private List<FileDownloadOperation> _operations = new List<FileDownloadOperation>();
+		private int _operationsInProgress;
 		private string _baseAddress;
-		private double _minProgress = 0.05;
 		private AutoResetEvent _waitHandle;
         private bool _creativeDownloaded=false;
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			
-			_filesInProgress = this.Delivery.Files.Count;
-			_baseAddress = this.Instance.Configuration.Options["BaseServiceAdress"];// @"http://api.facebook.com/restserver.php";
+			_operationsInProgress = this.Delivery.Files.Count;
+			_baseAddress = this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress];// @"http://api.facebook.com/restserver.php";
 
 			_waitHandle = new AutoResetEvent(false);
 			foreach (DeliveryFile file in this.Delivery.Files)
@@ -53,7 +52,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			var adGroupReader = new XmlDynamicReader
 				(FileManager.Open(deliveryFile.Location),
-				Instance.Configuration.Options["Facebook.Ads.GetAdGroups.xpath"]);// ./Ads_getAdGroupCreatives_response/ads_creative
+				Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroups]);// ./Ads_getAdGroupCreatives_response/ads_creative
 
 
 			using (adGroupReader)
@@ -109,33 +108,35 @@ namespace Edge.Services.Facebook.AdsApi
 			if (file.Name == "AdGroups.xml" )
 				async = false;
 			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), async, response.ContentLength);
+			_operations.Add(fileDownloadOperation);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
 			fileDownloadOperation.Start();
-
-
-
-
+			
 		}
 
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
 		{
-
-			_filesInProgress -= 1;
-			if (_filesInProgress == 0 && _creativeDownloaded)
+			_operationsInProgress -= 1;
+			if (_operationsInProgress == 0 && _creativeDownloaded)
 				_waitHandle.Set();
 
 		}
 
 		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
 		{
-			double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
-			if (percent >= _minProgress)
+			long downloaded = 0;
+			long total = 0;
+
+			_operations.All(operation =>
 			{
-				_minProgress += 0.05;
-				if (percent <= 1)
-					this.ReportProgress(percent);
-			}
+				downloaded += operation.DownloadedBytes;
+				total += operation.FileInfo.TotalBytes;
+				return false;
+			});
+
+			double percent = downloaded / total;
+			this.ReportProgress(percent);
 		}
 
 		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
@@ -150,7 +151,7 @@ namespace Edge.Services.Facebook.AdsApi
             if (Delivery.Files.Contains(current.Name))
                 Delivery.Files.Remove(current.Name);
             else
-                _filesInProgress += 1;
+                _operationsInProgress += 1;
 			this.Delivery.Files.Add(current);
 			counter++;
 		}
@@ -159,14 +160,14 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			string body;
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
-			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters["FBaccountID"].ToString());
+			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters[FacebookConfigurationOptions.Account_ID].ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
 			AdGroupCreativesParameters.Add("include_deleted", "false");
 			dynamic d = new ExpandoObject();
 			d.adgroup_ids = adGroupsIds;
 
 			AdGroupCreativesParameters.Add("adgroup_ids", Newtonsoft.Json.JsonConvert.SerializeObject(d.adgroup_ids));
-			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
 			return body;
 		}

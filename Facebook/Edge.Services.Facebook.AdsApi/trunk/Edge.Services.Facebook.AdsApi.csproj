@@ -51,8 +51,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Misc\Const.cs" />
     <Compile Include="InitializerService.cs" />
-    <Compile Include="MD5Core.cs" />
+    <Compile Include="Misc\MD5Core.cs" />
     <Compile Include="ProcessorService.cs">
       <SubType>Code</SubType>
     </Compile>

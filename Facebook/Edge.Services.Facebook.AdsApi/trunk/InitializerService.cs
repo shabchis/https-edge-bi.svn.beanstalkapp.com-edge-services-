@@ -25,53 +25,27 @@ namespace Edge.Services.Facebook.AdsApi
 				TargetPeriod=this.TargetPeriod,
 				TargetLocationDirectory="Facebook"
 			};
-			
-			
-			//set parameters for entire delivery
-//#if  (DEBUG)
-//            {
-//                this.Delivery.Account = new Data.Objects.Account() { ID = 1008 };			
-//            }
-//#else
-//            {
-//            this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID };
-//            }
-//#endif
-			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["FBaccountID"].ToString() };
 
-			if (this.Instance.Configuration.Options["APIKey"] == null)
-				this.Delivery.Parameters["APIKey"] = this.Instance.Configuration.Options["APIKey"].ToString();
-			else
-				this.Delivery.Parameters["APIKey"] = this.Instance.Configuration.Options["APIKey"].ToString();
+			this.Delivery.Account = new Data.Objects.Account()
+			{
+				ID = this.Instance.AccountID,
+				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
+			};
 
-
-			if (this.Instance.Configuration.Options["sessionKey"] == null)
-				this.Delivery.Parameters["sessionKey"] = this.Instance.Configuration.Options["sessionKey"].ToString();
-			else
-				this.Delivery.Parameters["sessionKey"] = Instance.Configuration.Options["sessionKey"].ToString();
-
-			if (this.Instance.Configuration.Options["applicationSecret"] == null)
-				this.Delivery.Parameters["applicationSecret"] = this.Instance.Configuration.Options["applicationSecret"].ToString();
-			else
-				this.Delivery.Parameters["applicationSecret"] = this.Instance.Configuration.Options["applicationSecret"].ToString();
-
-			if (Instance.Configuration.Options["FBaccountID"] == null)
-				this.Delivery.Parameters["FBaccountID"] = this.Instance.Configuration.Options["FBaccountID"].ToString();
-			else
-				this.Delivery.Parameters["FBaccountID"] = this.Instance.Configuration.Options["FBaccountID"].ToString();
+			// Copy some options as delivery parameters
+			var configOptionsToCopyToDelivery = new string[] {
+				FacebookConfigurationOptions.Account_ID,
+				FacebookConfigurationOptions.Account_Name,
+				FacebookConfigurationOptions.Auth_ApiKey,
+				FacebookConfigurationOptions.Auth_AppSecret,
+				FacebookConfigurationOptions.Auth_SessionKey,
+				FacebookConfigurationOptions.Auth_SessionSecret,
+			};
+			foreach (string option in configOptionsToCopyToDelivery)
+				this.Delivery.Parameters[option] = this.Instance.Configuration.Options[option];
 
 
-			if (Instance.Configuration.Options["accountName"] == null)
-				this.Delivery.Parameters["accountName"] = this.Instance.Configuration.Options["accountName"].ToString();
-			else
-				this.Delivery.Parameters["accountName"] = this.Instance.Configuration.Options["accountName"].ToString();
-
-			if (Instance.Configuration.Options["sessionSecret"] == null)
-				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
-			else
-				this.Delivery.Parameters["sessionSecret"] = this.Instance.Configuration.Options["sessionSecret"].ToString();
-
-			//this.Delivery.Channel =(Edge.Data.Pipeline.Objects.Channel)this.Instance.Configuration.Options["ChannelID"];
+			//this.Delivery.Channel =(Edge.Data.Pipeline.Objects.Channel)this.Instance.Configuration.Options[FacebookConfigurationOptions."ChannelID"];
 			Delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = 6
@@ -132,7 +106,7 @@ namespace Edge.Services.Facebook.AdsApi
 			timeRange.time_range = timeRangeIn;
 			string timeRangeString = Newtonsoft.Json.JsonConvert.SerializeObject(timeRange);
 			AdGroupStatesParameters.Add("time_ranges", timeRangeString);
-			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 
 			return body;
@@ -145,7 +119,7 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
 			AdGroupCreativesParameters.Add("include_deleted", "false");			
-			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 			return body;
 		}
@@ -157,7 +131,7 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupsParameters.Add("method", "facebook.ads.getAdGroups");
 			AdGroupsParameters.Add("include_deleted", "false");
-			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 			return body;
 		}
@@ -169,9 +143,9 @@ namespace Edge.Services.Facebook.AdsApi
 			CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			CampaignsParmaters.Add("method", "facebook.ads.getCampaigns");
 			CampaignsParmaters.Add("include_deleted", "false");
-			
 
-			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+
+			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 			return body;
 
@@ -184,7 +158,7 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupTargetingParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupTargetingParameters.Add("method", "facebook.ads.getAdGroupTargeting");
 			AdGroupTargetingParameters.Add("include_deleted", "false");
-			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters["APIKey"].ToString(), this.Delivery.Parameters["sessionKey"].ToString(), this.Delivery.Parameters["sessionSecret"].ToString());
+			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
 			return body;
 		}
