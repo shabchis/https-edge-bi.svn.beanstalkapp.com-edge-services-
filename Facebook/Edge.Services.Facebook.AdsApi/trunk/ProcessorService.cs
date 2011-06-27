@@ -151,7 +151,7 @@ namespace Edge.Services.Facebook.AdsApi
 						//this : adMetricsUnit.Clicks = Convert.ToInt64(adGroupStatsReader.Current.clicks);
 						//becomes this :
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent)/100d;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);						
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
@@ -249,12 +249,18 @@ namespace Edge.Services.Facebook.AdsApi
 					using (adGroupCreativesReader)
 					{
 
+					//	AutoSegmentationUtility trackerSegmenter = this.CreateAutoSegmenter("Trackers");
 
 						while (adGroupCreativesReader.Read())
 						{
 
 							Ad ad = ads[adGroupCreativesReader.Current.adgroup_id];
 							ad.DestinationUrl = adGroupCreativesReader.Current.link_url; //TODO: TALK WITH AMIT NOT SURE IT'S THE RIGHT FIELD
+
+							//Dictionary<Segment, SegmentValue> autoSegments = trackerSegmenter.ExtractSegmentsFromString(ad.DestinationUrl);
+							//foreach (var pair in autoSegments)
+							//    ad.Segments[pair.Key] = pair.Value;
+							
 							ad.Creatives = new List<Creative>();//TODO: DISTENGUSHI BETWEEN CREATIVES UNIQUE ID DATABASE?
 							ad.Creatives.Add(new ImageCreative()
 							{
