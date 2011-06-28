@@ -14,100 +14,145 @@ namespace Edge.Services.Microsoft.AdCenter
 {
 	public class ProcessorService : PipelineService
 	{
+		static class MeasureNames
+		{
+			public const string AdCenterConversions = "AdCenterConversions";
+		}
 		Dictionary<string, Campaign> _campaignsCache;
 		Dictionary<long, Ad> _adCache;
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// TODO: add checks for delivery state
-			_adCache = new Dictionary<long, Ad>();
+			string[] requiredHeaders;
+			requiredHeaders = new string[1];
+			requiredHeaders[0] = WS.CampaignPerformanceReportColumn.CampaignName.ToString();
+
 			_campaignsCache = new Dictionary<string, Campaign>();
+			_adCache = new Dictionary<long, Ad>();
 			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
-
-			//DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
-			//FileInfo adReportFileInfo = adReport.GetFileInfo();
-			//FileInfo keywordReportFileInfo = keywordReport.GetFileInfo();
-
-			//// Some values for progress (guessing)
-			//double progress = 0;
-			//long totalSize = (long)((adReportFileInfo.TotalBytes + keywordReportFileInfo.TotalBytes) * 1.1); // add 10% to the total size, just in case
-			//const long adSize = 512; // roughly 1/2 KB per row
-			//const long kwSize = 1024; // rougly 1 KB per row
-
-			using (var importSession = new AdDataImportSession(this.Delivery))
+			DeliveryFile campaignReport = this.Delivery.Files[Const.Files.CampaignReport];
+			var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(), requiredHeaders);
+			while (campaignReportReader.Read())
 			{
-				importSession.Begin();
+				string accountNameColVal = campaignReportReader.Current[WS.CampaignPerformanceReportColumn.AccountName.ToString()];
+
+				if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())//end of file
+					break;
+				Campaign campaign = CreateCampaign(campaignReportReader.Current);
+				_campaignsCache.Add(campaign.Name, campaign);
+			}
+			this.ReportProgress(0.2);
+
+
+
+			using (var session = new AdDataImportSession(this.Delivery))
+			{
+				session.Begin();
 
 				//    // ...............................................................
 				//    // Read the ad report, and build a lookup table for later
 
 				// create the ad report reader
-				string[] requiredHeaders = new string[1];
+				requiredHeaders = new string[1];
 				requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
-				
-				var adReportReader = new CsvDynamicReader( adReport.OpenContents(), requiredHeaders);
+
+				var adReportReader = new CsvDynamicReader(adReport.OpenContents(), requiredHeaders);
 				//    // read
 				using (adReportReader)
 				{
-					
+
 
 					while (adReportReader.Read())
 					{
 						//            // create the ad
+						string accountNameColVal = adReportReader.Current[WS.AdPerformanceReportColumn.AccountName.ToString()];//end of file
+						if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())
+							break;
 						Ad ad = CreateAd(adReportReader.Current);
-						importSession.ImportAd(ad);
+
+						ad.Campaign = _campaignsCache[ad.Campaign.Name];
+						session.ImportAd(ad);
+
 						_adCache.Add(long.Parse(ad.OriginalID), ad);
+
 					}
 
-					//            // Guess the progress
-					//            progress += adSize / totalSize;
-					//            adcount++;
-					//            if (adcount % reportEvery == 0)
-					//                ReportProgress(progress);
-					//        }
-					//        ReportProgress(progress);
-					//    }
 
-					//    // mark the delivery file as processed
-					//    adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
-
-					//    // ...............................................................
-					//    // Read the keyword report, cross reference it with the ad data, and commit
-
-					//    // The name of the time period column is specified by the initializer, depending on the report
-					//    string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
-
-					//    // create the keyword report reader
-					//    var keywordReportReader = new XmlDynamicReader
-					//    (
-					//        FileManager.Open(keywordReportFileInfo),
-					//        Instance.Configuration.Options["AdCenter.KeywordPerformance.XPath"] // Report/Table/Row
-					//    );
-
-					//    // read and save in transaction
-					//    using (keywordReportReader)
-					//    {
-
-					//        int kwcount = 0;
-					//        while (keywordReportReader.Read())
-					//        {
-					//            // get the unit from the keyword report, and add the missing ad data
-					//            AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn);
-					//            importSession.ImportMetrics(unit);
-
-					//            // Guess the progress
-					//            progress += kwSize / totalSize;
-					//            kwcount++;
-					//            if (kwcount % reportEvery == 0)
-					//                ReportProgress(progress);
-					//        }
-
-					//        ReportProgress(progress);
-					//    }
 				}
+				this.ReportProgress(0.7);
+				adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+
+				//    // ...............................................................
+				//    // Read the keyword report, cross reference it with the ad data, and commit
+
+				//    // The name of the time period column is specified by the initializer, depending on the report
+				DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
+				string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
+
+				//    // create the keyword report reader
+				requiredHeaders = new string[1];
+				requiredHeaders[0] = "Keyword";
+				var keywordReportReader = new CsvDynamicReader(keywordReport.OpenContents(), requiredHeaders);
+
+
+				// read and save in transaction
+				using (keywordReportReader)
+				{
+
+
+					while (keywordReportReader.Read())
+					{
+						string GregorianDateColVal = keywordReportReader.Current.GregorianDate;
+
+						if (GregorianDateColVal.Trim() == string.Empty || GregorianDateColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())//end of file
+							break;
+						// get the unit from the keyword report, and add the missing ad data
+						AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn, session);
+						session.ImportMetrics(unit);
+
+
+					}
+
+					ReportProgress(1);
+				}
+
 			}
 
 			return ServiceOutcome.Success;
+		}
+
+
+
+		private Campaign CreateCampaign(dynamic values)
+		{
+			Campaign campaign = new Campaign()
+			{
+				Account = new Account() { ID = this.Delivery.Account.ID, OriginalID = this.Delivery.Account.OriginalID },
+				OriginalID = values[WS.CampaignPerformanceReportColumn.CampaignId.ToString()],
+				Name = values[WS.CampaignPerformanceReportColumn.CampaignName.ToString()],
+				Channel = new Channel() { ID = this.Delivery.Channel.ID }
+			};
+			string status = values[WS.CampaignPerformanceReportColumn.Status.ToString()];
+			switch (status)
+			{
+				case "Active":
+				case "Submitted":
+					campaign.Status = CampaignStatus.Active;
+					break;
+				case "BudgetPaused":
+					campaign.Status = CampaignStatus.Suspended;
+					break;
+				case "Paused":
+					campaign.Status = CampaignStatus.Paused;
+					break;
+				case "Cancelled":
+				case "Deleted":
+					campaign.Status = CampaignStatus.Deleted;
+					break;
+
+			}
+			return campaign;
 		}
 
 
@@ -118,28 +163,67 @@ namespace Edge.Services.Microsoft.AdCenter
 				OriginalID = values[WS.AdPerformanceReportColumn.AdId.ToString()],
 				Campaign = new Campaign()
 				{
-					Account = new Account()
-					{
-						ID = Instance.AccountID,
-						OriginalID = values[WS.AdPerformanceReportColumn.AccountNumber.ToString()]
-					},
-					Channel = this.Delivery.Channel
+					
+					Name = values[WS.AdPerformanceReportColumn.CampaignName.ToString()]
 				},
 				Creatives = new List<Creative>()
 				{
 					new TextCreative(){ TextType = TextCreativeType.Title, Text = values[WS.AdPerformanceReportColumn.AdTitle.ToString()] },
 					new TextCreative(){ TextType = TextCreativeType.Body, Text = values[WS.AdPerformanceReportColumn.AdDescription.ToString()] }
-				}
+					
+				},
+				DestinationUrl=values[WS.AdPerformanceReportColumn.DestinationUrl.ToString()],
+				
 			};
+			SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+			if (tracker != null)
+				ad.Segments[Segment.TrackerSegment] = tracker;
 			return ad;
 		}
 
-		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn)
+		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdDataImportSession session)
 		{
 			//if (String.IsNullOrWhiteSpace(timePeriodColumn))
 			//    throw new ArgumentNullException("timePeriodColumn");
 
 			var unit = new AdMetricsUnit();
+
+			unit.Ad = _adCache[Convert.ToInt64(values[WS.KeywordPerformanceReportColumn.AdId.ToString()])];
+			unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
+			unit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+			unit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+			unit.MeasureValues[session.Measures[Measure.Common.Clicks]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
+			unit.MeasureValues[session.Measures[Measure.Common.Cost]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
+			
+			unit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] =double.Parse( values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
+			unit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
+			
+			unit.TargetMatches = new List<Target>();
+			KeywordTarget target = new KeywordTarget();
+			target.DestinationUrl = values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()];
+			target.Keyword = values[WS.KeywordPerformanceReportColumn.Keyword.ToString()];
+			string macthType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
+			switch (macthType)
+			{
+				case "Exact":
+					target.MatchType = KeywordMatchType.Exact;
+					break;
+				case "Broad":
+					target.MatchType = KeywordMatchType.Broad;
+					break;
+				case "Phrase":
+					target.MatchType = KeywordMatchType.Phrase;
+					break;
+				default:
+					target.MatchType = KeywordMatchType.Unidentified;
+					break;
+
+			}
+			target.OriginalID = values[WS.KeywordPerformanceReportColumn.KeywordId.ToString()];
+
+			unit.TargetMatches.Add(target);
+			
+
 
 			////..................
 			//// TIME

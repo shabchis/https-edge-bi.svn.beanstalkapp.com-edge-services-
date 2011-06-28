@@ -57,7 +57,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			adReportRequest = _adCenterApi.NewAdPerformanceReportRequest
 			 (
 				WS.AdPerformanceReportColumn.AccountName, //required field
-				//WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
+				WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
 				WS.AdPerformanceReportColumn.CampaignName,//required field
 				WS.AdPerformanceReportColumn.TimePeriod,//required field if aggregation time!=Summary
 				//WS.AdPerformanceReportColumn.CampaignId, // why did MS leave this out? stupid fucks

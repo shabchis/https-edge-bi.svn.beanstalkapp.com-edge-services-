@@ -26,7 +26,8 @@ namespace Edge.Services.Microsoft.AdCenter
 			};
 
 			// AccountID as parameter for entire delivery
-			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID }; //TODO: ASK DORON ORIGINAL ID? 
+			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID=Instance.Configuration.Options["AdCenter.CustomerAccountID"] }; //TODO: ASK DORON ORIGINAL ID? 
+			this.Delivery.Channel = new Channel() { ID = 14 };
 
 			// Wrapper for adCenter API
 			AdCenterApi adCenterApi = new AdCenterApi(this);
