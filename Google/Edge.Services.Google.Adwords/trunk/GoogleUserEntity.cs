@@ -27,7 +27,7 @@ namespace Edge.Services.Google.Adwords
 			this.email = email;
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
-				AuthToken = "DQAAAKUAAAAbbwoeDfyc_BfQiCWYJjNfcwLyL2P1SF14CpyzCSTZpSCDI25dTY3zh0gNicrqxiTwhG7bxbKnTI8XAaeicvSAIBBykf_PlvPNnk3Exoy0YlCCx0k3tGErGcG8kwr9XHIV9fIZYSBPcikEehpHtjS20onYhMwKQPKP6c1g9tpFS13fgIDh140VTV0_fxyseG5YRq5m70pWyTawRSULDQAPQ5sG1SwGrUAHR9K3qnziGA",
+				AuthToken = "DQAAALMAAAB4w8voGi_1MaVqilGYks6b1pXSHv0g6t5V50KcZ9zd8HxynmrUWWllziI7lBkuz1G-Ydco4nZBUA4Vz5HHGvleONoeJHVdVGylm_HnBLbxsPBasXWsP8JrES5EPzelPfDBgwsFSwE8Y8C2WbqD9Cx_VDoMVMYULDkS3UVmlAnCKovPkGIITc-57F_D4LBuUOzjBRcE7n6Gt_phWh14uHAf5QZGvW0x83nUXIsVmQHVs5o_EwgJLqyQJ13MlyuVLjM",
 				DeveloperToken = "5eCsvAOU06Fs4j5qHWKTCA",
 				ApplicationToken = "5eCsvAOU06Fs4j5qHWKTCA",
 

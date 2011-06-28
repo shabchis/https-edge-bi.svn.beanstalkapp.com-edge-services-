@@ -12,9 +12,7 @@ namespace Edge.Services.Google.Adwords
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
-
-			this.Delivery = new Delivery(Instance.InstanceID,this.TargetDeliveryID);
+			this.Delivery = new Delivery(Instance.InstanceID,this.DeliveryID);
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID };
@@ -51,6 +49,14 @@ namespace Edge.Services.Google.Adwords
 			}
 			this.Delivery.Parameters["includeConversionTypes"] = false; // deafult
 
+			//Check for includeDisplaytData
+			string includeDisplaytData;
+			if (!String.IsNullOrEmpty(includeDisplaytData = Instance.ParentInstance.Configuration.Options["includeDisplaytData"]))
+			{
+				this.Delivery.Parameters["includeDisplaytData"] = includeDisplaytData;
+			}
+			this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
+
 
 			//Creating Delivery files Per Email 
 			foreach (string email in accountEmails)
@@ -66,6 +72,13 @@ namespace Edge.Services.Google.Adwords
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
+					file.Parameters.Add("Email", email);
+					this.Delivery.Files.Add(file);
+				}
+				if (Boolean.Parse(includeDisplaytData)) // if AD Performance With conversion type is required 
+				{
+					DeliveryFile file = new DeliveryFile();
+					file.Name = "MANAGED_PLACEMENTS_PERFORMANCE_REPORT";
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}

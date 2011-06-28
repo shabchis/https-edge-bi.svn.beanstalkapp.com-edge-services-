@@ -29,6 +29,7 @@ namespace Edge.Services.Google.Adwords
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
+			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 		
 			//Date Range
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
@@ -51,8 +52,13 @@ namespace Edge.Services.Google.Adwords
 						_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
 					}
-					else
+					else if (file.Name.ToString().Equals("MANAGED_PLACEMENTS_PERFORMANCE_REPORT"))
 					{
+						_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, false, _dateRange,
+														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
+					}
+					else
+					{//AD_PERFORMANCE_REPORT
 						_googleReport = new AdwordsReport(Instance.AccountID, email, startDate, endDate, includeZeroImpression, _dateRange,
 								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(),true));
 					}
@@ -77,8 +83,6 @@ namespace Edge.Services.Google.Adwords
 							_googleReport.intializingGoogleReport(true); // set new report
 						}
 					}
-
-
 				}
 
 			}

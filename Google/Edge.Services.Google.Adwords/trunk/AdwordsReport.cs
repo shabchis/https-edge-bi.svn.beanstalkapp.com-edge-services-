@@ -11,6 +11,7 @@ using Edge.Core.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using Edge.Core.Configuration;
+using Newtonsoft.Json;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -41,14 +42,17 @@ namespace Edge.Services.Google.Adwords
 		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
 		                                                   "ConversionsManyPerClick",
 		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
-		                                                   "AdNetworkType1","AdNetworkType2"
+		                                                   "AdNetworkType1"
 		                                               };
-		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "AdGroupId", "CampaignId", "KeywordId", "ConversionsManyPerClick", "ConversionTypeName", "ConversionCategoryName" };
+		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id","KeywordId", "ConversionsManyPerClick","ConversionCategoryName" };
 
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
 
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
+
+		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId","DestinationUrl" ,"PlacementUrl","Status"};
+
 		public AdwordsReport()
 		{
 			//TODO : delete this method
@@ -93,7 +97,8 @@ namespace Edge.Services.Google.Adwords
 					{
 						if (_includeConversionTypes)
 							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION;
-						_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
+						else
+							_selector.fields = AD_PERFORMANCE_REPORT_FIELDS;
 						break;
 					}
 				case GA.v201101.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT:
@@ -104,6 +109,11 @@ namespace Edge.Services.Google.Adwords
 				case GA.v201101.ReportDefinitionReportType.DESTINATION_URL_REPORT:
 					{
 						_selector.fields = DESTINATION_URL_REPORT;
+						break;
+					}
+				case GA.v201101.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT:
+					{
+						_selector.fields = MANAGED_PLACEMENTS_PERFORMANCE_REPORT;
 						break;
 					}
 			}
@@ -177,7 +187,8 @@ namespace Edge.Services.Google.Adwords
 				cmd.Parameters["@reportName"].Value = _customizedReportName;
 
 				//TO DO: create string from fields list
-				cmd.Parameters["@reportfields"].Value = this._selector.fields.ToString();
+				cmd.Parameters["@reportfields"].Size = 1000;
+				cmd.Parameters["@reportfields"].Value = JsonConvert.SerializeObject(this._selector.fields, Formatting.None);
 
 				if (Date_Range.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 				{
@@ -214,9 +225,8 @@ namespace Edge.Services.Google.Adwords
 					cmd.Parameters["@EndDay"].Value = EndDate;
 				}
 				cmd.Parameters["@reportName"].Value = _customizedReportName;
-
-				//TO DO: create JSON obect from fields array
-				//	cmd.Parameters["@reportfields"].Value = this._selector.fields.
+				cmd.Parameters["@reportfields"].Size = 1000;
+				cmd.Parameters["@reportfields"].Value = JsonConvert.SerializeObject(this._selector.fields, Formatting.None);
 
 				using (var _reader = cmd.ExecuteReader())
 				{
@@ -255,7 +265,7 @@ namespace Edge.Services.Google.Adwords
 				impPredicate.@operator = GA.v201101.PredicateOperator.GREATER_THAN;
 				impPredicate.values = new string[] { "0" };
 				_selector.predicates = new GA.v201101.Predicate[] { impPredicate };
-				
+
 				//Sorting 
 				//if (this.ReportType.Equals(GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT))
 				//{
