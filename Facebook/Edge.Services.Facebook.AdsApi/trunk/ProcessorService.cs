@@ -26,7 +26,7 @@ namespace Edge.Services.Facebook.AdsApi
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			//Campaigns
-			DeliveryFile campaigns = this.Delivery.Files["Campaigns.xml"];
+			DeliveryFile campaigns = this.Delivery.Files[Consts.DeliveryFilesNames.Campaigns];
 
 			var campaignsReader = new XmlDynamicReader
 			(campaigns.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetCampaigns]);
@@ -72,7 +72,7 @@ namespace Edge.Services.Facebook.AdsApi
 			}
 			this.ReportProgress(0.1);
 			//GetAdGroups
-			DeliveryFile adGroups = this.Delivery.Files["AdGroups.xml"];
+			DeliveryFile adGroups = this.Delivery.Files[Consts.DeliveryFilesNames.adGroup];
 
 			var adGroupsReader = new XmlDynamicReader
 			(FileManager.Open(adGroups.Location),
@@ -123,7 +123,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			//GetAdGroupStats
-			DeliveryFile adGroupStats = this.Delivery.Files["AdGroupStats.xml"];
+			DeliveryFile adGroupStats = this.Delivery.Files[Consts.DeliveryFilesNames.adGroupStats];
 
 			var adGroupStatsReader = new XmlDynamicReader
 				(adGroupStats.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroupStats]);
@@ -171,7 +171,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 				//getAdGroupTargeting
 
-				DeliveryFile adGroupTargeting = this.Delivery.Files["AdGroupTargeting.xml"];
+				DeliveryFile adGroupTargeting = this.Delivery.Files[Consts.DeliveryFilesNames.adGroupTargeting];
 				var adGroupTargetingReader = new XmlDynamicReader(adGroupTargeting.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroupTargeting]);
 				using (adGroupTargetingReader)
 				{

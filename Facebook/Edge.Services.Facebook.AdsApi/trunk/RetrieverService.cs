@@ -35,7 +35,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 				try
 				{
-					if (file.Name != "AdGroups.xml")
+					if (file.Name != Consts.DeliveryFilesNames.adGroup)
 					{
 						DownloadFile(file);
 						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
@@ -46,9 +46,9 @@ namespace Edge.Services.Facebook.AdsApi
 					Edge.Core.Utilities.Log.Write(this.ToString(), string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
 				}
 			}
-			DownloadFile(Delivery.Files["AdGroups.xml"]);
-			Delivery.Files["AdGroups.xml"].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-			DeliveryFile deliveryFile = this.Delivery.Files["AdGroups.xml"];
+			DownloadFile(Delivery.Files[Consts.DeliveryFilesNames.adGroup]);
+			Delivery.Files[Consts.DeliveryFilesNames.adGroup].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+			DeliveryFile deliveryFile = this.Delivery.Files[Consts.DeliveryFilesNames.adGroup];
 
 			var adGroupReader = new XmlDynamicReader
 				(FileManager.Open(deliveryFile.Location),
@@ -104,8 +104,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 				response = (HttpWebResponse)request.GetResponse();
 			}
-			
-			if (file.Name == "AdGroups.xml" )
+
+			if (file.Name == Consts.DeliveryFilesNames.adGroup)
 				async = false;
 			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), async, response.ContentLength);
 			_operations.Add(fileDownloadOperation);
@@ -161,7 +161,7 @@ namespace Edge.Services.Facebook.AdsApi
 			string body;
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters[FacebookConfigurationOptions.Account_ID].ToString());
-			AdGroupCreativesParameters.Add("method", "facebook.ads.getAdGroupCreatives");
+			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
 			AdGroupCreativesParameters.Add("include_deleted", "false");
 			dynamic d = new ExpandoObject();
 			d.adgroup_ids = adGroupsIds;
