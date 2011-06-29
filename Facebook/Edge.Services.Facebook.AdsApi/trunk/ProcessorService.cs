@@ -103,7 +103,8 @@ namespace Edge.Services.Facebook.AdsApi
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
 							Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
-							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
+							OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty):
+							(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
 						};
 					}
 					else
@@ -148,7 +149,7 @@ namespace Edge.Services.Facebook.AdsApi
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent)/100;
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent)/100d;
 						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
 						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
 						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
