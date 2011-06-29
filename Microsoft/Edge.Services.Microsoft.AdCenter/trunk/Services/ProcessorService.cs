@@ -14,6 +14,7 @@ namespace Edge.Services.Microsoft.AdCenter
 {
 	public class ProcessorService : PipelineService
 	{
+		public const string endOfFileMicrosoftCorporation = "©2011 Microsoft Corporation. All rights reserved. ";
 		static class MeasureNames
 		{
 			public const string AdCenterConversions = "AdCenterConversions";
@@ -37,7 +38,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			{
 				string accountNameColVal = campaignReportReader.Current[WS.CampaignPerformanceReportColumn.AccountName.ToString()];
 
-				if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())//end of file
+				if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())//end of file
 					break;
 				Campaign campaign = CreateCampaign(campaignReportReader.Current);
 				_campaignsCache.Add(campaign.Name, campaign);
@@ -67,7 +68,7 @@ namespace Edge.Services.Microsoft.AdCenter
 					{
 						//            // create the ad
 						string accountNameColVal = adReportReader.Current[WS.AdPerformanceReportColumn.AccountName.ToString()];//end of file
-						if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())
+						if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())
 							break;
 						Ad ad = CreateAd(adReportReader.Current);
 
@@ -105,7 +106,7 @@ namespace Edge.Services.Microsoft.AdCenter
 					{
 						string GregorianDateColVal = keywordReportReader.Current.GregorianDate;
 
-						if (GregorianDateColVal.Trim() == string.Empty || GregorianDateColVal.Trim() == "©2011 Microsoft Corporation. All rights reserved. ".Trim())//end of file
+						if (GregorianDateColVal.Trim() == string.Empty || GregorianDateColVal.Trim() == endOfFileMicrosoftCorporation.Trim())//end of file
 							break;
 						// get the unit from the keyword report, and add the missing ad data
 						AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn, session);
@@ -136,6 +137,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			string status = values[WS.CampaignPerformanceReportColumn.Status.ToString()];
 			switch (status)
 			{
+					
 				case "Active":
 				case "Submitted":
 					campaign.Status = CampaignStatus.Active;
@@ -225,48 +227,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			
 
 
-			////..................
-			//// TIME
-
-			//// TODO: figure out in what format this is returned; doesn't look promising...
-			//// (http://social.msdn.microsoft.com/Forums/en-US/adcenterdev/thread/155dba04-f541-489b-878c-d259f4a2814b)
-			//string rawTime = values[timePeriodColumn];
-			//unit.PeriodStart = unit.PeriodEnd = DateTime.ParseExact(rawTime, "d/M/yyyy", null); // wild guess
-
-
-			////..................
-			//// IDENTITIES
-
-			////TODO: get ad from _adCache
-			////unit.Ad = new Ad() { OriginalID = values[WS.KeywordPerformanceReportColumn.AdId.ToString()] };
-
-			//// TODO: Tracker
-
-			//// Targeting
-			//string rawMatchType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
-			//KeywordMatchType matchType = KeywordMatchType.Unidentified;
-			//if (rawMatchType != null)
-			//    Enum.TryParse<KeywordMatchType>(rawMatchType, out matchType);
-
-			//unit.TargetMatches.Add(new KeywordTarget()
-			//{
-			//    MatchType		= matchType,
-			//    OriginalID		= values[WS.KeywordPerformanceReportColumn.KeywordId.ToString()],
-			//    Keyword			= values[WS.KeywordPerformanceReportColumn.Keyword.ToString()],
-			//    DestinationUrl	= values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()]
-			//});
-
-			//// Currency
-			//unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
-
-			////..................
-			//// MEASURES
-
-			//unit.Impressions		= Int32.Parse(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
-			//unit.Clicks				= Int32.Parse(values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
-			//unit.Cost				= Double.Parse(values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
-			//unit.AveragePosition	= Double.Parse(values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
-			////input.Conversions		= Int32.Parse(values[WS.KeywordPerformanceReportColumn.Conversions		.ToString()]);
+			
 
 			return unit;
 		}
