@@ -16,7 +16,7 @@ namespace Edge.Services.Google.Adwords
 		ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
 
 		static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
-		static ExtraField KeywordScore = new ExtraField() { ColumnIndex = 1, Name = "KeywordScore" };
+		//static ExtraField KeywordScore = new ExtraField() { ColumnIndex = 1, Name = "KeywordScore" };
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -52,7 +52,7 @@ namespace Edge.Services.Google.Adwords
 						Keyword = _keywordsReader.Current["Keyword"]
 
 					};
-					//keyword.ExtraFields[KeywordScore] = _keywordsReader.Current["Quality score"];
+					keyword.QualityScore = Convert.ToString(_keywordsReader.Current["Quality score"]);
 					string matchType = _keywordsReader.Current["Match type"];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
 					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.KeyWordDestUrlField])))
@@ -157,6 +157,7 @@ namespace Edge.Services.Google.Adwords
 							ad = new Ad();
 							ad.OriginalID = adId;
 							ad.DestinationUrl = _adsReader.Current["Destination URL"];
+							//ad.displayUrl
 							
 							// ad tracker
 							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
@@ -191,7 +192,7 @@ namespace Edge.Services.Google.Adwords
 								ad.Creatives.Add(new TextCreative
 								{
 									TextType = TextCreativeType.Title,
-									Text = _adsReader.Current.Ad
+									Text = _adsReader.Current.Ad,
 								});
 								ad.Creatives.Add(new TextCreative
 								{
@@ -220,6 +221,7 @@ namespace Edge.Services.Google.Adwords
 						}
 						else ad = importedAds[adId];
 						adMetricsUnit.Ad = ad;
+						
 
 						//SERACH KEYWORD IN KEYWORD/ Placements  DICTIONARY
 						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
@@ -232,7 +234,7 @@ namespace Edge.Services.Google.Adwords
 						//Search Network
 						Target _target;
 						//string targrtOriginalId = "-1";
-						if (ad.ExtraFields[NetworkType].Equals("Search Network"))
+						if (ad.ExtraFields[NetworkType].Equals("Search Only"))
 						{
 							_target = new KeywordTarget();
 							try

@@ -15,8 +15,8 @@ namespace Edge.Services.Google.Adwords
 	{
 
 		public AdWordsUser adwordsUser { set; get; }
-		
-		
+
+
 		private string _authToken { set; get; }
 		private string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA";
 		private string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA";
@@ -38,7 +38,7 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string mccEmail,string accountEmail)
+		public GoogleUserEntity(string mccEmail, string accountEmail)
 		{
 			this._mccEmail = mccEmail;
 			this._accountEmail = accountEmail;
@@ -79,12 +79,12 @@ namespace Edge.Services.Google.Adwords
 		{
 			string auth = GetAuthFromDB(mccEmail);
 			if (string.IsNullOrEmpty(auth))
-				auth = GetAuthFromApi(mccEmail,this._mccPass);
+				auth = GetAuthFromApi(mccEmail, this._mccPass);
 
 			return auth;
 		}
 
-		private string GetAuthFromApi(string mccEmail,string pass)
+		private string GetAuthFromApi(string mccEmail, string pass)
 		{
 			string auth;
 			AdWordsAppConfig config = new AdWordsAppConfig()
@@ -102,7 +102,7 @@ namespace Edge.Services.Google.Adwords
 			SetAuthToken(mccEmail, auth);
 
 			return auth;
-			
+
 		}
 
 		private void SetAuthToken(string mccEmail, string auth)
@@ -122,7 +122,15 @@ namespace Edge.Services.Google.Adwords
 		{
 			string auth = "";
 
-			using (SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth")))
+//#if (DEBUG)
+//            SqlConnection connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+
+//#else 
+			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
+
+//#endif
+
+			using (connection)
 			{
 				SqlCommand cmd = DataManager.CreateCommand(@"GetGoogleMccAuth(@MccEmail:Nvarchar)", System.Data.CommandType.StoredProcedure);
 				cmd.Connection = connection;
