@@ -51,7 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Consts.cs" />
+    <Compile Include="Misc\Consts.cs" />
     <Compile Include="Misc\Const.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="Misc\MD5Core.cs" />
