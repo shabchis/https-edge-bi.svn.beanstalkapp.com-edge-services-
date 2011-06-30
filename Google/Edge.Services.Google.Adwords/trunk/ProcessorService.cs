@@ -16,11 +16,13 @@ namespace Edge.Services.Google.Adwords
 		ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
 
 		static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
+		static ExtraField KeywordScore = new ExtraField() { ColumnIndex = 1, Name = "KeywordScore" };
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
 
-			
+
 
 
 			// Get Keywords data
@@ -47,8 +49,10 @@ namespace Edge.Services.Google.Adwords
 					KeywordTarget keyword = new KeywordTarget()
 					{
 						OriginalID = _keywordsReader.Current["Keyword ID"],
-						Keyword = _keywordsReader.Current["Keyword"],
+						Keyword = _keywordsReader.Current["Keyword"]
+
 					};
+					//keyword.ExtraFields[KeywordScore] = _keywordsReader.Current["Quality score"];
 					string matchType = _keywordsReader.Current["Match type"];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
 					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.KeyWordDestUrlField])))
@@ -153,9 +157,9 @@ namespace Edge.Services.Google.Adwords
 							ad = new Ad();
 							ad.OriginalID = adId;
 							ad.DestinationUrl = _adsReader.Current["Destination URL"];
-
+							
 							// ad tracker
-							SegmentValue tracker = this.AutoSegmets.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
 							if (tracker != null)
 								ad.Segments[Segment.TrackerSegment] = tracker;
 
@@ -182,6 +186,7 @@ namespace Edge.Services.Google.Adwords
 							}
 							else //if text ad or display ad
 							{
+								ad.Name = _adsReader.Current["Ad"];
 								ad.Creatives.Add(new TextCreative
 								{
 									TextType = TextCreativeType.Title,
@@ -204,7 +209,10 @@ namespace Edge.Services.Google.Adwords
 							};
 
 							//Insert Network Type Display Network \ Search Network
-							ad.ExtraFields[NetworkType] = _adsReader.Current["Network"];
+							string networkType = Convert.ToString(_adsReader.Current["Network"]);
+							if (networkType.Equals("Search Network"))
+								networkType = "Search Only";
+							ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
 							session.ImportAd(ad);
