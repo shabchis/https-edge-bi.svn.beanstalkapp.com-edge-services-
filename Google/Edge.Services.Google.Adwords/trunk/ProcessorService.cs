@@ -176,11 +176,12 @@ namespace Edge.Services.Google.Adwords
 							{
 								string adNameField = _adsReader.Current["Ad"];
 								string[] imageParams = adNameField.Trim().Split(new Char[] { ':', ';' }); // Ad name: 468_60_Test7options_Romanian.swf; 468 x 60
+								ad.Name = imageParams[1].Trim();
 								ad.Creatives.Add(new ImageCreative()
 								{
-									Name = imageParams[1],
-									ImageUrl = imageParams[1],
-									ImageSize = imageParams[2]
+									Name = imageParams[1].Trim(),
+									ImageUrl = imageParams[1].Trim(),
+									ImageSize = imageParams[2].Trim()
 								});
 
 							}

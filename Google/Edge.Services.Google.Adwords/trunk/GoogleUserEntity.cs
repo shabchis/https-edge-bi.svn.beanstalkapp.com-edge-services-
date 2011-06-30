@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using Edge.Core.Data;
 using Edge.Core.Configuration;
 using Google.Api.Ads.AdWords.v201101;
+using Edge.Core.Utilities;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -14,13 +15,14 @@ namespace Edge.Services.Google.Adwords
 	{
 
 		public AdWordsUser adwordsUser { set; get; }
-		public string email { set; get; }
-
-
+		
+		
 		private string _authToken { set; get; }
 		private string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA";
 		private string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA";
 		private string _mccPass { set; get; }
+		private string _mccEmail { set; get; }
+		public string _accountEmail { set; get; }
 
 		public GoogleUserEntity()
 		{
@@ -36,9 +38,10 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string mccEmail)
+		public GoogleUserEntity(string mccEmail,string accountEmail)
 		{
-			this.email = mccEmail;
+			this._mccEmail = mccEmail;
+			this._accountEmail = accountEmail;
 			this._authToken = GetAuthToken(mccEmail);
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
@@ -46,7 +49,7 @@ namespace Edge.Services.Google.Adwords
 				DeveloperToken = _developerToken,
 				ApplicationToken = _applicationToken,
 
-				ClientEmail = email,
+				ClientEmail = accountEmail,
 				UserAgent = "Edge.BI",
 				EnableGzipCompression = true
 			};
@@ -56,7 +59,7 @@ namespace Edge.Services.Google.Adwords
 		public GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
 			string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA", string userAgent = "Edge.BI", bool enableGzipCompression = true)
 		{
-			this.email = _email;
+			this._accountEmail = _email;
 			this._authToken = _authToken;
 			this._developerToken = _developerToken;
 
@@ -65,7 +68,7 @@ namespace Edge.Services.Google.Adwords
 				AuthToken = _authToken,
 				DeveloperToken = _developerToken,
 				ApplicationToken = _applicationToken,
-				ClientEmail = email,
+				ClientEmail = _accountEmail,
 				UserAgent = userAgent,
 				EnableGzipCompression = enableGzipCompression
 			};
@@ -108,6 +111,7 @@ namespace Edge.Services.Google.Adwords
 			{
 				SqlCommand cmd = DataManager.CreateCommand(@"SetGoogleMccAuth(@MccEmail:Nvarchar,@AuthToken:Nvarchar)", System.Data.CommandType.StoredProcedure);
 				cmd.Connection = connection;
+				connection.Open();
 				cmd.Parameters["@MccEmail"].Value = mccEmail;
 				cmd.Parameters["@AuthToken"].Value = auth;
 				cmd.ExecuteNonQuery();
@@ -122,13 +126,14 @@ namespace Edge.Services.Google.Adwords
 			{
 				SqlCommand cmd = DataManager.CreateCommand(@"GetGoogleMccAuth(@MccEmail:Nvarchar)", System.Data.CommandType.StoredProcedure);
 				cmd.Connection = connection;
+				connection.Open();
 				cmd.Parameters["@MccEmail"].Value = mccEmail;
 
 				using (SqlDataReader reader = cmd.ExecuteReader())
 				{
 					while (reader.Read())
 					{
-						this._mccPass = reader[0].ToString();
+						this._mccPass = Encryptor.Dec(reader[0].ToString());
 						auth = reader[1].ToString();
 					}
 				}

@@ -49,17 +49,17 @@ namespace Edge.Services.Google.Adwords
 				{
 					if (file.Name.ToString().Equals("AD_PERFORMANCE_REPORT_(Conversion)"))
 					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), startDate, endDate, false, _dateRange,
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
 					}
 					else if (file.Name.ToString().Equals("MANAGED_PLACEMENTS_PERFORMANCE_REPORT"))
 					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), startDate, endDate, false, _dateRange,
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
 					}
 					else
 					{//AD_PERFORMANCE_REPORT
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), startDate, endDate, includeZeroImpression, _dateRange,
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, includeZeroImpression, _dateRange,
 								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(),true));
 					}
 					

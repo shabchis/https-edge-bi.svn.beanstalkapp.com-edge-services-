@@ -66,7 +66,7 @@ namespace Edge.Services.Google.Adwords
 		/// <param name="dateRange">Report Definition Date Range Type. Default value is YESTERDAY.</param>
 		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
 		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
-		public AdwordsReport(int AccountId, string MccEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
+		public AdwordsReport(int AccountId, string mccEmail,string accountEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							GA.v201101.ReportDefinitionDateRangeType dateRange = GA.v201101.ReportDefinitionDateRangeType.YESTERDAY,
 							GA.v201101.ReportDefinitionReportType ReportType = GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
 							bool includeConversionTypes = false, string Name = "")
@@ -81,7 +81,7 @@ namespace Edge.Services.Google.Adwords
 			this.StartDate = StartDate;
 			this.EndDate = EndDate;
 			//SetAccountEmails(accountEmails);
-			this.User = new GoogleUserEntity(MccEmail);
+			this.User = new GoogleUserEntity(mccEmail, accountEmail);
 			this._includeConversionTypes = includeConversionTypes;
 
 			//Setting customized Report Name
@@ -147,14 +147,14 @@ namespace Edge.Services.Google.Adwords
 			long ReportId;
 			if (!Update)
 			{
-				ReportId = GetReportIdFromDB(this._accountId, this.User.email, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
+				ReportId = GetReportIdFromDB(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
 				if (ReportId == -1)
-					ReportId = GetReportIdFromGoogleApi(this._accountId, this.User.email, this.dateRangeType, this.ReportType);
+					ReportId = GetReportIdFromGoogleApi(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType);
 			}
 			else
 			{
-				ReportId = GetReportIdFromGoogleApi(this._accountId, this.User.email, this.dateRangeType, this.ReportType);
-				SetReportID(this._accountId, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate, true);
+				ReportId = GetReportIdFromGoogleApi(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType);
+				SetReportID(this._accountId, this.User._accountEmail, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate, true);
 			}
 
 			this.Id = ReportId;
@@ -164,7 +164,7 @@ namespace Edge.Services.Google.Adwords
 		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType)
 		{
 			long ReportId = CreateGoogleReport(Account_Id);
-			SetReportID(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
+			SetReportID(Account_Id, this.User._accountEmail, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
 			return ReportId;
 		}
 

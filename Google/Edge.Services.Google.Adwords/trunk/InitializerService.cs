@@ -19,7 +19,7 @@ namespace Edge.Services.Google.Adwords
 
 			//Get MCC Email
 			if (String.IsNullOrEmpty(Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
-				throw new Exception("Undefined ReportType");
+				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
 			else this.Delivery.Parameters["MccEmail"] = Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get all report types from config
