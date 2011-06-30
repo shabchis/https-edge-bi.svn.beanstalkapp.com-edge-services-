@@ -269,7 +269,7 @@ namespace Edge.Services.Google.Adwords
 
 						//INSERTING METRICS DATA
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(_adsReader.Current.Clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToDouble(_adsReader.Current.Cost);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 
 						//adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToString(_adsReader.Current[Const.AvgPosition]);

@@ -61,12 +61,12 @@ namespace Edge.Services.Google.Adwords
 		/// <summary>
 		/// Defines report utility params for the report definition.
 		/// </summary>
-		/// <param name="Email">The Account Email</param>
+		/// <param name="MccEmail">The Account Email</param>
 		/// <param name="IncludeZeroImpression">In order to include zero impressions in report , set this value to be true.</param>
 		/// <param name="dateRange">Report Definition Date Range Type. Default value is YESTERDAY.</param>
 		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
 		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
-		public AdwordsReport(int AccountId, string Email, string StartDate, string EndDate, bool IncludeZeroImpression = false,
+		public AdwordsReport(int AccountId, string MccEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							GA.v201101.ReportDefinitionDateRangeType dateRange = GA.v201101.ReportDefinitionDateRangeType.YESTERDAY,
 							GA.v201101.ReportDefinitionReportType ReportType = GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
 							bool includeConversionTypes = false, string Name = "")
@@ -81,7 +81,7 @@ namespace Edge.Services.Google.Adwords
 			this.StartDate = StartDate;
 			this.EndDate = EndDate;
 			//SetAccountEmails(accountEmails);
-			this.User = new GoogleUserEntity(Email);
+			this.User = new GoogleUserEntity(MccEmail);
 			this._includeConversionTypes = includeConversionTypes;
 
 			//Setting customized Report Name

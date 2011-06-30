@@ -12,10 +12,15 @@ namespace Edge.Services.Google.Adwords
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			this.Delivery = new Delivery(Instance.InstanceID,this.DeliveryID);
+			this.Delivery = new Delivery(Instance.InstanceID, this.DeliveryID);
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID };
+
+			//Get MCC Email
+			if (String.IsNullOrEmpty(Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
+				throw new Exception("Undefined ReportType");
+			else this.Delivery.Parameters["MccEmail"] = Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get all report types from config
 			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
