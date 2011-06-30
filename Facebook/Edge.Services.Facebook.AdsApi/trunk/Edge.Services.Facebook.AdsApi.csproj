@@ -61,9 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="%28samples%29\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\..\Framework\Edge.Core\Edge.Core.csproj">
       <Project>{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}</Project>
