@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
@@ -37,26 +35,26 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_keywordsReader.Read())
 				{
-					if (_keywordsReader.Current["Keyword ID"] == Const.EOF)
+					if (_keywordsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
 						break;
 					KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
 					{
-						KeywordId = Convert.ToInt64(_keywordsReader.Current["Keyword ID"]),
-						AdgroupId = Convert.ToInt64(_keywordsReader.Current["Ad group ID"]),
-						CampaignId = Convert.ToInt64(_keywordsReader.Current["Campaign ID"])
+						KeywordId = Convert.ToInt64(_keywordsReader.Current[Const.KeywordIdFieldName]),
+						AdgroupId = Convert.ToInt64(_keywordsReader.Current[Const.AdGroupIdFieldName]),
+						CampaignId = Convert.ToInt64(_keywordsReader.Current[Const.CampaignIdFieldName])
 
 					};
 					KeywordTarget keyword = new KeywordTarget()
 					{
-						OriginalID = _keywordsReader.Current["Keyword ID"],
-						Keyword = _keywordsReader.Current["Keyword"]
+						OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
+						Keyword = _keywordsReader.Current[Const.KeywordFieldName]
 
 					};
-					keyword.QualityScore = Convert.ToString(_keywordsReader.Current["Quality score"]);
-					string matchType = _keywordsReader.Current["Match type"];
+					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
+					string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
-					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.KeyWordDestUrlField])))
-						keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.KeyWordDestUrlField]);
+					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
+						keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
 					_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
 				}
 			}
@@ -70,20 +68,20 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_PlacementsReader.Read())
 				{
-					if (_PlacementsReader.Current["Keyword ID"] == Const.EOF)
+					if (_PlacementsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
 						break;
 					KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
 					{
-						KeywordId = Convert.ToInt64(_PlacementsReader.Current["Keyword ID"]),
-						AdgroupId = Convert.ToInt64(_PlacementsReader.Current["Ad group ID"]),
-						CampaignId = Convert.ToInt64(_PlacementsReader.Current["Campaign ID"])
+						KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.KeywordIdFieldName]),
+						AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
+						CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
 
 					};
 					PlacementTarget placement = new PlacementTarget()
 					{
-						OriginalID = _PlacementsReader.Current["Keyword ID"],
-						DestinationUrl = _PlacementsReader.Current["Destination URL"],
-						Placement = _PlacementsReader.Current["Placement"]
+						OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
+						DestinationUrl = _PlacementsReader.Current[Const.DestUrlFieldName],
+						Placement = _PlacementsReader.Current[Const.PlacementFieldName]
 					};
 					_placementsData.Add(placementPrimaryKey.ToString(), placement);
 				}
@@ -100,9 +98,9 @@ namespace Edge.Services.Google.Adwords
 			{
 				while (_conversionsReader.Read())
 				{
-					if (_conversionsReader.Current["Ad ID"] == Const.EOF) // if end of report
+					if (_conversionsReader.Current[Const.AdIDFieldName] == Const.EOF) // if end of report
 						break;
-					string conversionKey = String.Format("{0}#{1}", _conversionsReader.Current["Ad ID"], _conversionsReader.Current["Keyword ID"]);
+					string conversionKey = String.Format("{0}#{1}", _conversionsReader.Current[Const.AdIDFieldName], _conversionsReader.Current[Const.KeywordIdFieldName]);
 					Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 
 					if (!importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
@@ -110,17 +108,17 @@ namespace Edge.Services.Google.Adwords
 						//ADD conversionKey to importedAdsWithConv
 						//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
 						Dictionary<string, long> conversion = new Dictionary<string, long>();
-						conversion.Add(Convert.ToString(_conversionsReader.Current["Conversion tracking purpose"]), Convert.ToInt64(_conversionsReader.Current["Conv. (many-per-click)"]));
+						conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
 						importedAdsWithConv.Add(conversionKey, conversion);
 					}
 					else // if Key exists
 					{
 						// if current add already has current conversion type than add value to the current type
-						if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current["Conversion tracking purpose"])))
-							conversionDic.Add(Convert.ToString(_conversionsReader.Current["Conversion tracking purpose"]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
+						if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])))
+							conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
 						// else create new conversion type and add the value
 						else
-							conversionDic[Convert.ToString(_conversionsReader.Current["Conversion tracking purpose"])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]);
+							conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]);
 					}
 				}
 
@@ -139,7 +137,7 @@ namespace Edge.Services.Google.Adwords
 					while (_adsReader.Read())
 					{
 
-						if (_adsReader.Current["Ad ID"] == Const.EOF)
+						if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
 							break;
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
@@ -150,13 +148,14 @@ namespace Edge.Services.Google.Adwords
 						// (2)CHECK IF AD ALREADY EXISTS IN DIC 
 						// (3)IF NOT IMPORT AD
 
-						string adId = _adsReader.Current["Ad ID"];
+						string adId = _adsReader.Current[Const.AdIDFieldName];
 						if (!importedAds.ContainsKey(adId))
 						{
 							ad = new Ad();
 							ad.OriginalID = adId;
-							ad.DestinationUrl = _adsReader.Current["Destination URL"];
-							ad.ExtraFields[AdType] = _adsReader.Current["Ad type"];
+							ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
+							ad.ExtraFields[AdType] = _adsReader.Current[Const.AdTypeFieldName];
+							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
 							// ad tracker
 							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
@@ -165,30 +164,30 @@ namespace Edge.Services.Google.Adwords
 
 							ad.Campaign = new Campaign()
 							{
-								OriginalID = _adsReader.Current["Campaign ID"],
-								Name = _adsReader.Current["Campaign"],
+								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
+								Name = _adsReader.Current[Const.CampaignFieldName],
 								Channel = new Channel() { ID = 1 },
 								Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["Email"] }
 							};
 
 							//if Image 
-							if (String.Equals(Convert.ToString(_adsReader.Current["Ad type"]), "Image ad"))
+							if (String.Equals(Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]), "Image ad"))
 							{
-								string adNameField = _adsReader.Current["Ad"];
+								string adNameField = _adsReader.Current[Const.AdFieldName];
 								string[] imageParams = adNameField.Trim().Split(new Char[] { ':', ';' }); // Ad name: 468_60_Test7options_Romanian.swf; 468 x 60
 								ad.Name = imageParams[1].Trim();
 								ad.Creatives.Add(new ImageCreative()
 								{
-									
+
 									ImageUrl = imageParams[1].Trim(),
 									ImageSize = imageParams[2].Trim()
 								});
-								ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current["Display URL"] });
+
 							}
 
 							else //if text ad or display ad
 							{
-								ad.Name = _adsReader.Current["Ad"];
+								ad.Name = _adsReader.Current[Const.AdFieldName];
 								ad.Creatives.Add(new TextCreative
 								{
 									TextType = TextCreativeType.Title,
@@ -200,22 +199,24 @@ namespace Edge.Services.Google.Adwords
 									Text = _adsReader.Current["Description line 1"],
 									Text2 = _adsReader.Current["Description line 2"]
 								});
-								ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current["Display URL"] });
+
 							}
 
 							//Insert adgroup 
 							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 							{
-								Value = _adsReader.Current["Ad group"],
-								OriginalID = _adsReader.Current["Ad group ID"]
+								Value = _adsReader.Current[Const.AdGroupFieldName],
+								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName]
 							};
 
 							//Insert Network Type Display Network \ Search Network
-							string networkType = Convert.ToString(_adsReader.Current["Network"]);
-							if (networkType.Equals("Search Network"))
-								networkType = "Search Only";
-							else if (networkType.Equals("Display Network"))
-								networkType = "Content Only";
+							string networkType = Convert.ToString(_adsReader.Current[Const.NetworkFieldName]);
+							
+							if (networkType.Equals(Const.GoogleSearchNetwork))
+								networkType = Const.SystemSearchNetwork;
+							else if (networkType.Equals(Const.GoogleDisplayNetwork))
+								networkType = Const.SystemDisplayNetwork;
+							
 							ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
@@ -228,15 +229,15 @@ namespace Edge.Services.Google.Adwords
 						//SERACH KEYWORD IN KEYWORD/ Placements  DICTIONARY
 						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
 						{
-							AdgroupId = Convert.ToInt64(_adsReader.Current["Ad group ID"]),
-							KeywordId = Convert.ToInt64(_adsReader.Current["Keyword ID"]),
-							CampaignId = Convert.ToInt64(_adsReader.Current["Campaign ID"])
+							AdgroupId = Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName]),
+							KeywordId = Convert.ToInt64(_adsReader.Current[Const.KeywordIdFieldName]),
+							CampaignId = Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])
 						};
 
 						//Search Network
 						Target _target;
 						//string targrtOriginalId = "-1";
-						if (ad.ExtraFields[NetworkType].Equals("Search Only"))
+						if (ad.ExtraFields[NetworkType].Equals(Const.SystemSearchNetwork))
 						{
 							_target = new KeywordTarget();
 							try
@@ -250,7 +251,7 @@ namespace Edge.Services.Google.Adwords
 								_keywordErrorFile.AppendToFile(kwdKey.ToList());
 
 								//Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
-								_target = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current["Keyword ID"]) };
+								_target = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
 							}
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
@@ -265,7 +266,7 @@ namespace Edge.Services.Google.Adwords
 							}
 							catch (Exception)
 							{
-								_target.OriginalID = Convert.ToString(_adsReader.Current["Keyword ID"]);
+								_target.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
 							}
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
@@ -317,14 +318,44 @@ namespace Edge.Services.Google.Adwords
 
 		private static class Const
 		{
+			
+			
+			public const string RequiredHeader = "Keyword ID";
+			public const string EOF = "Total";
+
+			public const string KeywordIdFieldName = "Keyword ID";
+			public const string KeywordFieldName = "Keyword";
+			public const string AvgPosition = "Avg. position";
+
 			public const string ConversionValueFieldName = "Conv. (many-per-click)";
 			public const string ConversionOnePerClick = "Conv. rate (1-per-click)";
 			public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
-			public const string AvgPosition = "Avg. position";
-			public const string RequiredHeader = "Keyword ID";
-			public const string EOF = "Total";
 			public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
-			public const string KeyWordDestUrlField = "Destination URL";
+			public const string ConversionTrackingPurpose = "Conversion tracking purpose";
+			
+			public const string AdGroupIdFieldName = "Ad group ID";
+			public const string AdGroupFieldName = "Ad group";
+
+			public const string CampaignIdFieldName = "Campaign ID";
+			public const string CampaignFieldName = "Campaign";
+
+			public const string QualityScoreFieldName = "Quality score";
+			public const string MatchTypeFieldName = "Match type";
+			public const string PlacementFieldName = "Placement";
+			
+			public const string AdIDFieldName = "Ad ID";
+			public const string AdTypeFieldName = "Ad type";
+			public const string AdFieldName = "Ad";
+			public const string DisplayURLFieldName = "Display URL";
+			public const string DestUrlFieldName = "Destination URL";
+
+			public const string NetworkFieldName = "Network";
+			public const string GoogleSearchNetwork = "Search Network";
+			public const string SystemSearchNetwork = "Search Only";
+			public const string GoogleDisplayNetwork = "Display Network";
+			public const string SystemDisplayNetwork = "Content Only";
+
+
 		}
 	}
 }
