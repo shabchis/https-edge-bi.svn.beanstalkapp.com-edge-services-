@@ -16,7 +16,7 @@ namespace Edge.Services.Google.Adwords
 		ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
 
 		static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
-		//static ExtraField KeywordScore = new ExtraField() { ColumnIndex = 1, Name = "KeywordScore" };
+		static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -146,7 +146,6 @@ namespace Edge.Services.Google.Adwords
 
 						Ad ad;
 
-
 						// (1)ADD NEW AD TO ADS DIC 
 						// (2)CHECK IF AD ALREADY EXISTS IN DIC 
 						// (3)IF NOT IMPORT AD
@@ -157,8 +156,8 @@ namespace Edge.Services.Google.Adwords
 							ad = new Ad();
 							ad.OriginalID = adId;
 							ad.DestinationUrl = _adsReader.Current["Destination URL"];
-							//ad.displayUrl
-							
+							ad.ExtraFields[AdType] = _adsReader.Current["Ad type"];
+
 							// ad tracker
 							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
 							if (tracker != null)
@@ -180,12 +179,13 @@ namespace Edge.Services.Google.Adwords
 								ad.Name = imageParams[1].Trim();
 								ad.Creatives.Add(new ImageCreative()
 								{
-									Name = imageParams[1].Trim(),
+									
 									ImageUrl = imageParams[1].Trim(),
 									ImageSize = imageParams[2].Trim()
 								});
-
+								ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current["Display URL"] });
 							}
+
 							else //if text ad or display ad
 							{
 								ad.Name = _adsReader.Current["Ad"];
@@ -214,6 +214,8 @@ namespace Edge.Services.Google.Adwords
 							string networkType = Convert.ToString(_adsReader.Current["Network"]);
 							if (networkType.Equals("Search Network"))
 								networkType = "Search Only";
+							else if (networkType.Equals("Display Network"))
+								networkType = "Content Only";
 							ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
@@ -221,7 +223,7 @@ namespace Edge.Services.Google.Adwords
 						}
 						else ad = importedAds[adId];
 						adMetricsUnit.Ad = ad;
-						
+
 
 						//SERACH KEYWORD IN KEYWORD/ Placements  DICTIONARY
 						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
