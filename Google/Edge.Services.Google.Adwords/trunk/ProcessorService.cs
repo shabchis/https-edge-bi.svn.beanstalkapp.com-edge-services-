@@ -18,11 +18,6 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-
-
-
-
-
 			// Get Keywords data
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
 			string[] requiredHeaders = new string[1];
@@ -75,7 +70,6 @@ namespace Edge.Services.Google.Adwords
 						KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.KeywordIdFieldName]),
 						AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
 						CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
-
 					};
 					PlacementTarget placement = new PlacementTarget()
 					{
@@ -121,7 +115,6 @@ namespace Edge.Services.Google.Adwords
 							conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]);
 					}
 				}
-
 			}
 
 			// Get Ads data.
@@ -182,7 +175,6 @@ namespace Edge.Services.Google.Adwords
 									ImageUrl = imageParams[1].Trim(),
 									ImageSize = imageParams[2].Trim()
 								});
-
 							}
 
 							else //if text ad or display ad
@@ -199,7 +191,6 @@ namespace Edge.Services.Google.Adwords
 									Text = _adsReader.Current["Description line 1"],
 									Text2 = _adsReader.Current["Description line 2"]
 								});
-
 							}
 
 							//Insert adgroup 
@@ -211,12 +202,12 @@ namespace Edge.Services.Google.Adwords
 
 							//Insert Network Type Display Network \ Search Network
 							string networkType = Convert.ToString(_adsReader.Current[Const.NetworkFieldName]);
-							
+
 							if (networkType.Equals(Const.GoogleSearchNetwork))
 								networkType = Const.SystemSearchNetwork;
 							else if (networkType.Equals(Const.GoogleDisplayNetwork))
 								networkType = Const.SystemDisplayNetwork;
-							
+
 							ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
@@ -224,7 +215,6 @@ namespace Edge.Services.Google.Adwords
 						}
 						else ad = importedAds[adId];
 						adMetricsUnit.Ad = ad;
-
 
 						//SERACH KEYWORD IN KEYWORD/ Placements  DICTIONARY
 						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
@@ -257,7 +247,7 @@ namespace Edge.Services.Google.Adwords
 							adMetricsUnit.TargetMatches = new List<Target>();
 							adMetricsUnit.TargetMatches.Add(_target);
 						}
-						else // (ad.ExtraFields[NetworkType].Equals("Display Network"))
+						else
 						{
 							_target = new PlacementTarget();
 							try
@@ -278,25 +268,13 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 
-						//adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToString(_adsReader.Current[Const.AvgPosition]);
-						//adMetricsUnit.MeasureValues[session.Measures[Const.TotalConversionsOnePerClick]] = Convert.ToString(_adsReader.Current[Const.ConversionOnePerClick]);
-
 						//inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _target.OriginalID);
 						Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
 						{
 							foreach (var pair in conversionDic)
-							{
-								try
-								{
-									adMetricsUnit.MeasureValues[session.Measures[pair.Key]] = pair.Value;
-								}
-								catch (KeyNotFoundException)
-								{
-									Console.WriteLine(string.Format("{0} measure doesn't exists in measures table", pair.Key));
-								}
-							}
+								adMetricsUnit.MeasureValues[session.Measures[pair.Key]] = pair.Value;
 						}
 
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
@@ -312,14 +290,13 @@ namespace Edge.Services.Google.Adwords
 
 			}
 
-
 			return Core.Services.ServiceOutcome.Success;
 		}
 
 		private static class Const
 		{
-			
-			
+
+
 			public const string RequiredHeader = "Keyword ID";
 			public const string EOF = "Total";
 
@@ -332,7 +309,7 @@ namespace Edge.Services.Google.Adwords
 			public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
 			public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
 			public const string ConversionTrackingPurpose = "Conversion tracking purpose";
-			
+
 			public const string AdGroupIdFieldName = "Ad group ID";
 			public const string AdGroupFieldName = "Ad group";
 
@@ -342,7 +319,7 @@ namespace Edge.Services.Google.Adwords
 			public const string QualityScoreFieldName = "Quality score";
 			public const string MatchTypeFieldName = "Match type";
 			public const string PlacementFieldName = "Placement";
-			
+
 			public const string AdIDFieldName = "Ad ID";
 			public const string AdTypeFieldName = "Ad type";
 			public const string AdFieldName = "Ad";

@@ -122,13 +122,13 @@ namespace Edge.Services.Google.Adwords
 		{
 			string auth = "";
 
-//#if (DEBUG)
-//            SqlConnection connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+#if (DEBUG)
+			SqlConnection connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
 
-//#else 
+#else 
 			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
 
-//#endif
+#endif
 
 			using (connection)
 			{
