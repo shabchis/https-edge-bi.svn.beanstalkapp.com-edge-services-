@@ -19,173 +19,114 @@ namespace Edge.Services.Facebook.AdsApi
 	class RetrieverService : PipelineService
 	{
 		private string _baseAddress;
-
+		const double firstBatchRatio = 0.5;
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// http://api.facebook.com/restserver.php
 			_baseAddress = this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress];
 
-			_waitForAllFiles = new ManualResetEvent();
 
-			var adgroupDownload = new FileDownloadOperation(CreateRequest("adgroups blah blah"));
+			
+			FileDownloadOperation adgroupDownload=null; //= new FileDownloadOperation(CreateRequest("adgroups blah blah"));
+			BatchDownloadOperation batch = new BatchDownloadOperation();
 			//adgroupDownload.Ended += new EventHandler<EndedEventArgs>(adgroupDownload_Ended);
 
-			const double firstBatchRatio = 0.5;
-			var batch = new BatchDownloadOperation();
-			batch.Add(adgroupDownload);
-			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd")); // Creatives
-			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd")); // Campaigns
-			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd"));
-			
-			batch.Progressed += new EventHandler<ProgressEventArgs>(delegate(object sender, ProgressEventArgs e )
+			foreach (DeliveryFile file in Delivery.Files)
 			{
-				this.ReportProgress(e.Progress * firstBatchRatio);
-			});
-
-			adgroupDownload.Wait();
-
-			var creativeBatch = new BatchDownloadOperation();
-			creativeBatch.Add(...); // add creative 1
-			creativeBatch.Add(...); // add creative 2
-			creativeBatch.Add(...); // add creative 3
-
-			creativeBatch.Start();
-			creativeBatch.Wait();
-
-
-
-			// TODO: check batch.Success
-
-			_waitHandle = new AutoResetEvent(false);
-			foreach (DeliveryFile file in this.Delivery.Files)
-			{
-
-				try
+				if (file.Name == Consts.DeliveryFilesNames.AdGroup)
 				{
-					if (file.Name != Consts.DeliveryFilesNames.adGroup)
-					{
-						DownloadFile(file);
-						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-					}
+					adgroupDownload = file.Download(CreateRequest());
+					adgroupDownload.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					batch.Insert(0, adgroupDownload);
 				}
-				catch (WebException ex)
+				else
 				{
-					Edge.Core.Utilities.Log.Write(this.ToString(), string.Format("Error downloading file {0}", file.Name), ex, Core.Utilities.LogMessageType.Error);
+					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest());
+					fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					batch.Add(fileDownloadOperation);
 				}
 			}
-			DownloadFile(Delivery.Files[Consts.DeliveryFilesNames.adGroup]);
-			Delivery.Files[Consts.DeliveryFilesNames.adGroup].History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
-			DeliveryFile deliveryFile = this.Delivery.Files[Consts.DeliveryFilesNames.adGroup];
-
+			batch.Progressed += new EventHandler(batch_Progressed);
+			
+			batch.Start();
+			adgroupDownload.Wait();
+			adgroupDownload.EnsureSuccess();
+			
+			BatchDownloadOperation creativeBatch = new BatchDownloadOperation();
+			creativeBatch.Progressed += new EventHandler(creativeBatch_Progressed);
+			DeliveryFile adGroupFile = Delivery.Files[Consts.DeliveryFilesNames.AdGroup];
+			
 			var adGroupReader = new XmlDynamicReader
-				(FileManager.Open(deliveryFile.Location),
+				(FileManager.Open(adGroupFile.Location),
 				Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroups]);// ./Ads_getAdGroupCreatives_response/ads_creative
-
 
 			using (adGroupReader)
 			{
 				List<string> adGroupsIds = new List<string>();
 				int counter = 1;
 				List<DeliveryFile> deliveryFiles = new List<DeliveryFile>();
+
 				while (adGroupReader.Read())
 				{
 					adGroupsIds.Add(adGroupReader.Current.adgroup_id);
 					if (adGroupsIds.Count == 999)
-						CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
+						// CreateCreativeDeliveryFile also adds the new delivery file to this.Delivery.Files
+						deliveryFiles.Add(CreateCreativeDeliveryFile(ref adGroupsIds, ref counter));
 				}
+
 				if (adGroupsIds.Count > 0)
-					CreateCreativeDeliveryFile(ref adGroupsIds, ref counter, ref deliveryFiles);
+					deliveryFiles.Add(CreateCreativeDeliveryFile(ref adGroupsIds, ref counter));
+
 				if (deliveryFiles.Count > 0)
 				{
 					this.Delivery.Save();
 					foreach (DeliveryFile file in deliveryFiles)
 					{
-
-						DownloadFile(file);
-						file.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+						FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest());
+						fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+						creativeBatch.Add(fileDownloadOperation);
 					}
-				}
-                _creativeDownloaded = true;
+				}		
 			}
-			_waitHandle.WaitOne();
+
+			creativeBatch.Start();
+
+			batch.Wait();
+			creativeBatch.Wait();
+
+			batch.EnsureSuccess();
+			creativeBatch.EnsureSuccess();
 
 			this.Delivery.Save();
 			return ServiceOutcome.Success;
 		}
 
-		void adgroupDownload_Ended(object sender, EndedEventArgs e)
+		void creativeBatch_Progressed(object sender, EventArgs e)
 		{
-			
+			FileDownloadOperation fileDownloadOperation = (FileDownloadOperation)sender;
+			this.ReportProgress(fileDownloadOperation.Progress * (1 - firstBatchRatio) + firstBatchRatio);
 		}
 
-
-
-		private void DownloadFile(DeliveryFile file)
+		void batch_Progressed(object sender, EventArgs e)
 		{
+			FileDownloadOperation fileDownloadOperation = (FileDownloadOperation)sender;
+			this.ReportProgress(fileDownloadOperation.Progress * firstBatchRatio);
+		}		
 
-			bool async = true;
-			HttpWebResponse response = null;
-			string body = file.Parameters["body"].ToString();
-			HttpWebRequest request = CreateRequest(_baseAddress, body);
-			try
-			{
-				response = (HttpWebResponse)request.GetResponse();
-			}
-			catch (WebException ex)
-			{
+		
 
-				response = (HttpWebResponse)request.GetResponse();
-			}
-
-			if (file.Name == Consts.DeliveryFilesNames.adGroup)
-				async = false;
-			FileDownloadOperation fileDownloadOperation = file.NewDownload(response.GetResponseStream(), async, response.ContentLength);
-			_operations.Add(fileDownloadOperation);
-			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
-			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
-			fileDownloadOperation.Start();
-			
-		}
-
-		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
-		{
-			_operationsInProgress -= 1;
-			if (_operationsInProgress == 0 && _creativeDownloaded)
-				_waitHandle.Set();
-
-		}
-
-		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
-		{
-			long downloaded = 0;
-			long total = 0;
-
-			_operations.All(operation =>
-			{
-				downloaded += operation.DownloadedBytes;
-				total += operation.FileInfo.TotalBytes;
-				return false;
-			});
-
-			double percent = downloaded / total;
-			this.ReportProgress(percent);
-		}
-
-		private void CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter, ref List<DeliveryFile> deliveryFiles)
+		private DeliveryFile CreateCreativeDeliveryFile(ref List<string> adGroupsIds, ref int counter)
 		{
 			DeliveryFile current = new DeliveryFile();
-			current.Name = string.Format("AdGroupCreatives-{0}.xml", counter);
-			current.Parameters.Add("body", GetAdGroupCreativesBody(adGroupsIds));
+			current.Name = string.Format(Consts.DeliveryFilesNames.Creatives, counter++);
+			current.Parameters.Add(Consts.DeliveryFileParameters.Body, GetAdGroupCreativesBody(adGroupsIds));
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
-			
-			deliveryFiles.Add(current);
 			adGroupsIds.Clear();
-            if (Delivery.Files.Contains(current.Name))
-                Delivery.Files.Remove(current.Name);
-            else
-                _operationsInProgress += 1;
+			if (Delivery.Files.Contains(current.Name))
+				Delivery.Files.Remove(current.Name);
+			
 			this.Delivery.Files.Add(current);
-			counter++;
+			return current;
 		}
 
 		private object GetAdGroupCreativesBody(List<string> adGroupsIds)
@@ -203,23 +144,16 @@ namespace Edge.Services.Facebook.AdsApi
 
 			return body;
 		}
-		private HttpWebRequest CreateRequest(string baseAddress, string body)
+		private HttpWebRequest CreateRequest()
 		{
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(baseAddress);
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(_baseAddress);
 			request.Method = "POST";
 			request.ContentType = "application/x-www-form-urlencoded";
 			//request.Accept = "text/xml;charset=utf-8";
-			CreateBody(request.GetRequestStream(), body);
+			
 			return request;
 		}
-		private void CreateBody(System.IO.Stream stream, string body)
-		{
-			using (StreamWriter writer = new StreamWriter(stream))
-			{
-				writer.Write(body);
-			}
-
-		}
+		
 		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
 		{
 			StringBuilder builder = new StringBuilder();

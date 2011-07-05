@@ -59,7 +59,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			DeliveryFile deliveryFile = new DeliveryFile();
-			deliveryFile.Name =Consts.DeliveryFilesNames.adGroupStats;
+			deliveryFile.Name =Consts.DeliveryFilesNames.AdGroupStats;
 			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());			
 			this.Delivery.Files.Add(deliveryFile);
 
@@ -68,7 +68,7 @@ namespace Edge.Services.Facebook.AdsApi
 			deliveryFile.Name = "GetAdGroupCreatives.xml";*/
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.adGroup;
+			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
 			
 			this.Delivery.Files.Add(deliveryFile);
@@ -82,15 +82,15 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.adGroupTargeting;
+			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
 			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
 			
 			this.Delivery.Files.Add(deliveryFile);
 
-			this.ReportProgress(0.98);
+			this.ReportProgress(0.9);
 			this.Delivery.Save();
 
-			this.ReportProgress(0.99);
+			this.ReportProgress(1);
 			return ServiceOutcome.Success;
 		}
 
