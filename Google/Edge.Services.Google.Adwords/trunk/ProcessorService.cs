@@ -15,6 +15,33 @@ namespace Edge.Services.Google.Adwords
 
 		static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
 		static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
+		static Dictionary<string, int> GoogleAdTypeDic;
+		static Dictionary<string, string> GoogleMeasuresDic;
+
+		public ProcessorService()
+		{
+
+			GoogleAdTypeDic = new Dictionary<string, int>()
+			{
+				{"Text ad",1},
+				{"Flash",2},
+				{"Image ad",3},
+				{"Display ad",4},
+				{"Product listing ad",5},
+				{"Mobile ad",6},
+				{"Local business ad",7},
+				{"Third party ad",8},
+				{"Other",9}
+			};
+			GoogleMeasuresDic = new Dictionary<string, string>()
+			{
+				{"Lead","Leads"},
+				{"Signup","Signups"},
+				{"Purchase","Purchases"},
+				{"Pageview","PageViews"},
+				{"Default","Default"},
+			};
+		}
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -75,8 +102,11 @@ namespace Edge.Services.Google.Adwords
 					{
 						OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
 						DestinationUrl = _PlacementsReader.Current[Const.DestUrlFieldName],
-						Placement = _PlacementsReader.Current[Const.PlacementFieldName]
+						Placement = _PlacementsReader.Current[Const.PlacementFieldName],
+						PlacementType = PlacementType.Managed
 					};
+					string matchType = _PlacementsReader.Current[Const.MatchTypeFieldName];
+					
 					_placementsData.Add(placementPrimaryKey.ToString(), placement);
 				}
 			}
@@ -147,7 +177,9 @@ namespace Edge.Services.Google.Adwords
 							ad = new Ad();
 							ad.OriginalID = adId;
 							ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
-							ad.ExtraFields[AdType] = _adsReader.Current[Const.AdTypeFieldName];
+
+							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
+							ad.ExtraFields[AdType] = GoogleAdTypeDic[adTypeKey];
 							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
 							// ad tracker
@@ -171,7 +203,6 @@ namespace Edge.Services.Google.Adwords
 								ad.Name = imageParams[1].Trim();
 								ad.Creatives.Add(new ImageCreative()
 								{
-
 									ImageUrl = imageParams[1].Trim(),
 									ImageSize = imageParams[2].Trim()
 								});
@@ -224,15 +255,12 @@ namespace Edge.Services.Google.Adwords
 							CampaignId = Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])
 						};
 
-						//Search Network
-						Target _target;
-						//string targrtOriginalId = "-1";
 						if (ad.ExtraFields[NetworkType].Equals(Const.SystemSearchNetwork))
 						{
-							_target = new KeywordTarget();
+							KeywordTarget kwd = new KeywordTarget();
 							try
 							{
-								_target = _keywordsData[kwdKey.ToString()];
+								kwd = _keywordsData[kwdKey.ToString()];
 							}
 							catch (Exception)
 							{
@@ -241,26 +269,28 @@ namespace Edge.Services.Google.Adwords
 								_keywordErrorFile.AppendToFile(kwdKey.ToList());
 
 								//Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
-								_target = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
+								kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
 							}
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
-							adMetricsUnit.TargetMatches.Add(_target);
+							adMetricsUnit.TargetMatches.Add(kwd);
 						}
 						else
 						{
-							_target = new PlacementTarget();
+							PlacementTarget placement = new PlacementTarget();
 							try
 							{
-								_target = _placementsData[kwdKey.ToString()];
+								placement = _placementsData[kwdKey.ToString()];
 							}
 							catch (Exception)
 							{
-								_target.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
+								placement.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
+								placement.PlacementType = PlacementType.Automatic;
+								placement.Placement = "Total - content targeting";
 							}
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
-							adMetricsUnit.TargetMatches.Add(_target);
+							adMetricsUnit.TargetMatches.Add(placement);
 						}
 
 						//INSERTING METRICS DATA
@@ -269,12 +299,12 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 
 						//inserting conversion values
-						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _target.OriginalID);
+						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
 						Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
 						{
 							foreach (var pair in conversionDic)
-								adMetricsUnit.MeasureValues[session.Measures[pair.Key]] = pair.Value;
+								adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
 						}
 
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
@@ -334,5 +364,9 @@ namespace Edge.Services.Google.Adwords
 
 
 		}
+
+		
 	}
 }
+
+

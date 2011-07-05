@@ -13,8 +13,9 @@ namespace Edge.Services.Google.Adwords
 {
 	class RetrieverService : PipelineService
 	{
-
+		
 		#region members
+		private BatchDownloadOperation _batchDownloadOperation;
 		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
 		AdwordsReport _googleReport;
@@ -26,6 +27,8 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
+			_batchDownloadOperation = new BatchDownloadOperation();
+			_batchDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(_batchDownloadOperation_Progressed);
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
@@ -86,9 +89,16 @@ namespace Edge.Services.Google.Adwords
 				}
 
 			}
-			_waitHandle.WaitOne();
+			_batchDownloadOperation.Start();
+			_batchDownloadOperation.Wait();
+			_batchDownloadOperation.EnsureSuccess();
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
+		}
+
+		void _batchDownloadOperation_Progressed(object sender, ProgressEventArgs e)
+		{
+			this.ReportProgress(e.Progress);
 		}
 
 
@@ -101,14 +111,13 @@ namespace Edge.Services.Google.Adwords
 			request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
 			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
 			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
+			request.Method = "POST";
+			_batchDownloadOperation.Add(file.Download(request));
 
-			WebResponse response = request.GetResponse();
+			
 
-			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), true, response.ContentLength);
-
-			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
-			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
-			fileDownloadOperation.Start();
+			
+			
 		}
 
 		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)

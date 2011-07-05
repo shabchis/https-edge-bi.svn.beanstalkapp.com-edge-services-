@@ -51,7 +51,7 @@ namespace Edge.Services.Google.Adwords
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 
-		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId","DestinationUrl" ,"PlacementUrl","Status"};
+		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status", "KeywordText", "KeywordMatchType" };
 
 		public AdwordsReport()
 		{
