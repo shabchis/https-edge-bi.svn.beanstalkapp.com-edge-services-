@@ -18,16 +18,43 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	class RetrieverService : PipelineService
 	{
-		private List<FileDownloadOperation> _operations = new List<FileDownloadOperation>();
-		private int _operationsInProgress;
 		private string _baseAddress;
-		private AutoResetEvent _waitHandle;
-        private bool _creativeDownloaded=false;
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			_operationsInProgress = this.Delivery.Files.Count;
-			_baseAddress = this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress];// @"http://api.facebook.com/restserver.php";
+			// http://api.facebook.com/restserver.php
+			_baseAddress = this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress];
+
+			_waitForAllFiles = new ManualResetEvent();
+
+			var adgroupDownload = new FileDownloadOperation(CreateRequest("adgroups blah blah"));
+			//adgroupDownload.Ended += new EventHandler<EndedEventArgs>(adgroupDownload_Ended);
+
+			const double firstBatchRatio = 0.5;
+			var batch = new BatchDownloadOperation();
+			batch.Add(adgroupDownload);
+			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd")); // Creatives
+			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd")); // Campaigns
+			batch.Add(new FileDownloadOperation("http://werwerwerwer", "asdasd"));
+			
+			batch.Progressed += new EventHandler<ProgressEventArgs>(delegate(object sender, ProgressEventArgs e )
+			{
+				this.ReportProgress(e.Progress * firstBatchRatio);
+			});
+
+			adgroupDownload.Wait();
+
+			var creativeBatch = new BatchDownloadOperation();
+			creativeBatch.Add(...); // add creative 1
+			creativeBatch.Add(...); // add creative 2
+			creativeBatch.Add(...); // add creative 3
+
+			creativeBatch.Start();
+			creativeBatch.Wait();
+
+
+
+			// TODO: check batch.Success
 
 			_waitHandle = new AutoResetEvent(false);
 			foreach (DeliveryFile file in this.Delivery.Files)
@@ -86,6 +113,11 @@ namespace Edge.Services.Facebook.AdsApi
 			return ServiceOutcome.Success;
 		}
 
+		void adgroupDownload_Ended(object sender, EndedEventArgs e)
+		{
+			
+		}
+
 
 
 		private void DownloadFile(DeliveryFile file)
@@ -107,7 +139,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 			if (file.Name == Consts.DeliveryFilesNames.adGroup)
 				async = false;
-			FileDownloadOperation fileDownloadOperation = file.Download(response.GetResponseStream(), async, response.ContentLength);
+			FileDownloadOperation fileDownloadOperation = file.NewDownload(response.GetResponseStream(), async, response.ContentLength);
 			_operations.Add(fileDownloadOperation);
 			fileDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(fileDownloadOperation_Progressed);
 			fileDownloadOperation.Ended += new EventHandler<EndedEventArgs>(fileDownloadOperation_Ended);
