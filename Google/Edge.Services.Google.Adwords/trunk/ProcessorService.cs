@@ -323,14 +323,11 @@ namespace Edge.Services.Google.Adwords
 			}
 			#endregion
 			
-
 			return Core.Services.ServiceOutcome.Success;
 		}
 
 		private static class Const
 		{
-
-
 			public const string RequiredHeader = "Keyword ID";
 			public const string EOF = "Total";
 
