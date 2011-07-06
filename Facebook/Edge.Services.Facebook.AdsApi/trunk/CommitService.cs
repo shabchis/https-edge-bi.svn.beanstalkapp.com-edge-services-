@@ -6,7 +6,7 @@ using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.Facebook.AdsApi
 {
-	class CommitService : BaseCommitService
+	class CommitService : CommitBase
 	{
 
 		public override DeliveryManager GetDeliveryManager()
