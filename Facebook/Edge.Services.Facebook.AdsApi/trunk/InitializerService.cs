@@ -32,7 +32,7 @@ namespace Edge.Services.Facebook.AdsApi
 			
 		}
 	}
-	public class InitializerService: BaseInitializerService	
+	public class InitializerService: InitializerBase	
 	{
 		
 		public override DeliveryManager GetDeliveryManager()
