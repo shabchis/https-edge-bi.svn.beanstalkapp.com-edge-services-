@@ -28,7 +28,7 @@ namespace Edge.Services.Google.Adwords
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			_batchDownloadOperation = new BatchDownloadOperation();
-			_batchDownloadOperation.Progressed += new EventHandler<ProgressEventArgs>(_batchDownloadOperation_Progressed);
+			_batchDownloadOperation.Progressed +=new EventHandler(_batchDownloadOperation_Progressed);
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
@@ -96,9 +96,10 @@ namespace Edge.Services.Google.Adwords
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		void _batchDownloadOperation_Progressed(object sender, ProgressEventArgs e)
+		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
 		{
-			this.ReportProgress(e.Progress);
+			BatchDownloadOperation DownloadOperation = (BatchDownloadOperation)sender;
+			this.ReportProgress(DownloadOperation.Progress);
 		}
 
 
@@ -111,7 +112,7 @@ namespace Edge.Services.Google.Adwords
 			request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
 			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
 			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
-			request.Method = "POST";
+			//request.Method = "POST";
 			_batchDownloadOperation.Add(file.Download(request));
 
 			
@@ -120,26 +121,26 @@ namespace Edge.Services.Google.Adwords
 			
 		}
 
-		void fileDownloadOperation_Ended(object sender, EndedEventArgs e)
-		{
-			_filesInProgress -= 1;
-			if (_filesInProgress == 0)
-				_waitHandle.Set();
-		}
+		//void fileDownloadOperation_Ended(object sender, EventArgs e)
+		//{
+		//    _filesInProgress -= 1;
+		//    if (_filesInProgress == 0)
+		//        _waitHandle.Set();
+		//}
 
-		void fileDownloadOperation_Progressed(object sender, ProgressEventArgs e)
-		{
-			if (_filesInProgress > 0)
-			{
-				double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
-				if (percent >= _minProgress)
-				{
-					_minProgress += 0.05;
-					if (percent <= 1)
-						this.ReportProgress(percent);
-				}
-			}
-		}
+		//void fileDownloadOperation_Progressed(object sender, EventArgs e)
+		//{
+		//    if (_filesInProgress > 0)
+		//    {
+		//        double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
+		//        if (percent >= _minProgress)
+		//        {
+		//            _minProgress += 0.05;
+		//            if (percent <= 1)
+		//                this.ReportProgress(percent);
+		//        }
+		//    }
+		//}
 
 
 	}
