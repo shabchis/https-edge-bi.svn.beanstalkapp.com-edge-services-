@@ -36,19 +36,19 @@ namespace Edge.Services.Google.Adwords
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
-			//Date Range
+			//Setting Date Range and time period
 			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
-
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 			_waitHandle = new AutoResetEvent(false);
+
 			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
 			{
-				//TO DO : Get the files on a specific email
+				//Get all files on specific email
 				var files = from f in this.Delivery.Files
 							where f.Parameters["Email"].ToString() == email
-							select f;//this.Delivery.Files[email];
+							select f;
 
 				foreach (var file in files)
 				{
@@ -71,7 +71,7 @@ namespace Edge.Services.Google.Adwords
 					_googleReport.intializingGoogleReport();
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
-					file.Name = _googleReport._customizedReportName + ".zip";
+					file.Name = _googleReport.customizedReportName + ".zip";
 					file.SourceUrl = request.downloadUrl.ToString();
 					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 					file.Parameters.Add("authToken", request.authToken);

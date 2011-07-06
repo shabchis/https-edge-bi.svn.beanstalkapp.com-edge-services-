@@ -45,7 +45,8 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			// Get Keywords data
+			#region Getting Keywords Data
+
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
 			string[] requiredHeaders = new string[1];
 			requiredHeaders[0] = Const.RequiredHeader;
@@ -80,8 +81,10 @@ namespace Edge.Services.Google.Adwords
 					_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
 				}
 			}
+			#endregion
+			
+			#region Getting Placements Data
 
-			// Get Placements data
 			DeliveryFile _PlacementsFile = this.Delivery.Files[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString()];
 			var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(Path.GetFileNameWithoutExtension(_PlacementsFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
@@ -106,12 +109,13 @@ namespace Edge.Services.Google.Adwords
 						PlacementType = PlacementType.Managed
 					};
 					string matchType = _PlacementsReader.Current[Const.MatchTypeFieldName];
-					
+
 					_placementsData.Add(placementPrimaryKey.ToString(), placement);
 				}
 			}
+			#endregion
 
-
+			#region Getting Conversions Data
 			//Get Ads Conversion ( for ex. signup , purchase )
 
 			DeliveryFile _conversionFile = this.Delivery.Files["AD_PERFORMANCE_REPORT_(Conversion)"];
@@ -146,8 +150,10 @@ namespace Edge.Services.Google.Adwords
 					}
 				}
 			}
+			#endregion
 
-			// Get Ads data.
+			#region Getting Ads Data
+			
 			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
 			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
@@ -164,12 +170,7 @@ namespace Edge.Services.Google.Adwords
 							break;
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
-
 						Ad ad;
-
-						// (1)ADD NEW AD TO ADS DIC 
-						// (2)CHECK IF AD ALREADY EXISTS IN DIC 
-						// (3)IF NOT IMPORT AD
 
 						string adId = _adsReader.Current[Const.AdIDFieldName];
 						if (!importedAds.ContainsKey(adId))
@@ -178,11 +179,12 @@ namespace Edge.Services.Google.Adwords
 							ad.OriginalID = adId;
 							ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
 
+							//Ad Type
 							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
 							ad.ExtraFields[AdType] = GoogleAdTypeDic[adTypeKey];
 							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
-							// ad tracker
+							//Ad Tracker
 							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
 							if (tracker != null)
 								ad.Segments[Segment.TrackerSegment] = tracker;
@@ -195,7 +197,7 @@ namespace Edge.Services.Google.Adwords
 								Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["Email"] }
 							};
 
-							//if Image 
+							//Image Type > Create Image
 							if (String.Equals(Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]), "Image ad"))
 							{
 								string adNameField = _adsReader.Current[Const.AdFieldName];
@@ -208,7 +210,7 @@ namespace Edge.Services.Google.Adwords
 								});
 							}
 
-							else //if text ad or display ad
+							else //Text ad or Display ad
 							{
 								ad.Name = _adsReader.Current[Const.AdFieldName];
 								ad.Creatives.Add(new TextCreative
@@ -224,14 +226,14 @@ namespace Edge.Services.Google.Adwords
 								});
 							}
 
-							//Insert adgroup 
+							//Insert Adgroup 
 							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 							{
 								Value = _adsReader.Current[Const.AdGroupFieldName],
 								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName]
 							};
 
-							//Insert Network Type Display Network \ Search Network
+							//Insert Network Type Display Network / Search Network
 							string networkType = Convert.ToString(_adsReader.Current[Const.NetworkFieldName]);
 
 							if (networkType.Equals(Const.GoogleSearchNetwork))
@@ -247,7 +249,7 @@ namespace Edge.Services.Google.Adwords
 						else ad = importedAds[adId];
 						adMetricsUnit.Ad = ad;
 
-						//SERACH KEYWORD IN KEYWORD/ Placements  DICTIONARY
+						//SERACH KEYWORD IN KEYWORD/ Placements  Dictionary
 						KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
 						{
 							AdgroupId = Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName]),
@@ -286,7 +288,7 @@ namespace Edge.Services.Google.Adwords
 							{
 								placement.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
 								placement.PlacementType = PlacementType.Automatic;
-								placement.Placement = "Total - content targeting";
+								placement.Placement = Const.AutoDisplayNetworkName;
 							}
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
@@ -298,7 +300,7 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 
-						//inserting conversion values
+						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
 						Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
@@ -319,6 +321,8 @@ namespace Edge.Services.Google.Adwords
 				}
 
 			}
+			#endregion
+			
 
 			return Core.Services.ServiceOutcome.Success;
 		}
@@ -362,7 +366,7 @@ namespace Edge.Services.Google.Adwords
 			public const string GoogleDisplayNetwork = "Display Network";
 			public const string SystemDisplayNetwork = "Content Only";
 
-
+			public const string AutoDisplayNetworkName = "Total - content targeting";
 		}
 
 		

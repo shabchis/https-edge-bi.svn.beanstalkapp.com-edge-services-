@@ -18,24 +18,25 @@ namespace Edge.Services.Google.Adwords
 	public class AdwordsReport
 	{
 		public long Id { get; set; }
-		public GoogleUserEntity User { set; get; }
+		public GoogleUserEntity user { set; get; }
 		private int _accountId { get; set; }
-		private GA.v201101.ClientSelector[] AccountEmails;
+		private GA.v201101.ClientSelector[] _accountEmails;
 		public GA.v201101.ReportDefinitionDateRangeType dateRangeType { get; set; }
-		private GA.v201101.ReportDefinition reportDefinition { set; get; }
-		private GA.v201101.ReportDefinitionReportType ReportType { set; get; }
+		private GA.v201101.ReportDefinition _reportDefinition { set; get; }
+		private GA.v201101.ReportDefinitionReportType _reportType { set; get; }
 		public GA.v201101.ReportDefinitionService reportService { set; get; }
-		public Dictionary<string, string> FieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
-		public string StartDate { set; get; }
-		public string EndDate { set; get; }
+		public Dictionary<string, string> fieldsMapping { set; get; } //TO DO : GET FROM CONFIGURATION
+		public string startDate { set; get; }
+		public string endDate { set; get; }
 		public bool includeZeroImpression { get; set; }
 		public string[] selectedColumns { set; get; } //TO DO : GET FROM CONFIGURATION 
 		private GA.v201101.Selector _selector { get; set; }
 		private bool _includeConversionTypes { set; get; }
-		public string _customizedReportName { set; get; }
+		public string customizedReportName { set; get; }
 
-		private const string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
+		static string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 
+		#region Reports fields
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition",
@@ -44,19 +45,16 @@ namespace Edge.Services.Google.Adwords
 		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
 		                                                   "AdNetworkType1"
 		                                               };
-		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id","KeywordId", "ConversionsManyPerClick","ConversionCategoryName" };
+		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
 
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
 
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 
-		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status", "KeywordText", "KeywordMatchType" };
+		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
+		#endregion Reports fields
 
-		public AdwordsReport()
-		{
-			//TODO : delete this method
-		}
 
 		/// <summary>
 		/// Defines report utility params for the report definition.
@@ -66,32 +64,32 @@ namespace Edge.Services.Google.Adwords
 		/// <param name="dateRange">Report Definition Date Range Type. Default value is YESTERDAY.</param>
 		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
 		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
-		public AdwordsReport(int AccountId, string mccEmail,string accountEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
+		public AdwordsReport(int AccountId, string mccEmail, string accountEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							GA.v201101.ReportDefinitionDateRangeType dateRange = GA.v201101.ReportDefinitionDateRangeType.YESTERDAY,
 							GA.v201101.ReportDefinitionReportType ReportType = GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
 							bool includeConversionTypes = false, string Name = "")
 		{
 			this._accountId = AccountId;
 			this.includeZeroImpression = IncludeZeroImpression;
-			this.reportDefinition = new GA.v201101.ReportDefinition();
-			this.reportDefinition.reportType = ReportType;
-			this.reportDefinition.dateRangeType = dateRange;
-			this.ReportType = ReportType;
+			this._reportDefinition = new GA.v201101.ReportDefinition();
+			this._reportDefinition.reportType = ReportType;
+			this._reportDefinition.dateRangeType = dateRange;
+			this._reportType = ReportType;
 			this.dateRangeType = dateRange;
-			this.StartDate = StartDate;
-			this.EndDate = EndDate;
+			this.startDate = StartDate;
+			this.endDate = EndDate;
 			//SetAccountEmails(accountEmails);
-			this.User = new GoogleUserEntity(mccEmail, accountEmail);
+			this.user = new GoogleUserEntity(mccEmail, accountEmail);
 			this._includeConversionTypes = includeConversionTypes;
 
 			//Setting customized Report Name
 			if (String.IsNullOrEmpty(Name))
-				this._customizedReportName = this.ReportType.ToString();
-			if (_includeConversionTypes) _customizedReportName = "AD PERFORMANCE REPORT WITH CONVERSION TYPES";
+				this.customizedReportName = this._reportType.ToString();
+			if (_includeConversionTypes) customizedReportName = "AD PERFORMANCE REPORT WITH CONVERSION TYPES";
 
 			//Creating Selector
 			_selector = new GA.v201101.Selector();
-			switch (this.reportDefinition.reportType)
+			switch (this._reportDefinition.reportType)
 			{
 				case GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
 					{
@@ -119,7 +117,7 @@ namespace Edge.Services.Google.Adwords
 			}
 
 			// Create Report Service
-			reportService = (GA.v201101.ReportDefinitionService)User.adwordsUser.GetService(GA.Lib.AdWordsService.v201101.ReportDefinitionService);
+			reportService = (GA.v201101.ReportDefinitionService)user.adwordsUser.GetService(GA.Lib.AdWordsService.v201101.ReportDefinitionService);
 		}
 
 
@@ -135,7 +133,7 @@ namespace Edge.Services.Google.Adwords
 				client.login = email;
 				Clients.Add(client);
 			}
-			this.AccountEmails = Clients.ToArray();
+			this._accountEmails = Clients.ToArray();
 		}
 
 		/// <summary>
@@ -147,14 +145,14 @@ namespace Edge.Services.Google.Adwords
 			long ReportId;
 			if (!Update)
 			{
-				ReportId = GetReportIdFromDB(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType, this.StartDate, this.EndDate);
+				ReportId = GetReportIdFromDB(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, this.startDate, this.endDate);
 				if (ReportId == -1)
-					ReportId = GetReportIdFromGoogleApi(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType);
+					ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
 			}
 			else
 			{
-				ReportId = GetReportIdFromGoogleApi(this._accountId, this.User._accountEmail, this.dateRangeType, this.ReportType);
-				SetReportID(this._accountId, this.User._accountEmail, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate, true);
+				ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
+				SetReportID(this._accountId, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate, true);
 			}
 
 			this.Id = ReportId;
@@ -164,7 +162,7 @@ namespace Edge.Services.Google.Adwords
 		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType)
 		{
 			long ReportId = CreateGoogleReport(Account_Id);
-			SetReportID(Account_Id, this.User._accountEmail, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, ReportId, this.StartDate, this.EndDate);
+			SetReportID(Account_Id, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate);
 			return ReportId;
 		}
 
@@ -184,7 +182,7 @@ namespace Edge.Services.Google.Adwords
 				cmd.Parameters["@Account_Email"].Value = Account_Email;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
-				cmd.Parameters["@reportName"].Value = _customizedReportName;
+				cmd.Parameters["@reportName"].Value = customizedReportName;
 
 				//TO DO: create string from fields list
 				cmd.Parameters["@reportfields"].Size = 1000;
@@ -224,7 +222,7 @@ namespace Edge.Services.Google.Adwords
 					cmd.Parameters["@StartDay"].Value = StartDate;
 					cmd.Parameters["@EndDay"].Value = EndDate;
 				}
-				cmd.Parameters["@reportName"].Value = _customizedReportName;
+				cmd.Parameters["@reportName"].Value = customizedReportName;
 				cmd.Parameters["@reportfields"].Size = 1000;
 				cmd.Parameters["@reportfields"].Value = JsonConvert.SerializeObject(this._selector.fields, Formatting.None);
 
@@ -251,8 +249,8 @@ namespace Edge.Services.Google.Adwords
 			{
 				_selector.dateRange = new GA.v201101.DateRange()
 				{
-					min = this.StartDate,
-					max = this.EndDate
+					min = this.startDate,
+					max = this.endDate
 				};
 
 			}
@@ -278,11 +276,11 @@ namespace Edge.Services.Google.Adwords
 			}
 
 			// Create reportDefinition
-			reportDefinition = CreateReportDefinition(_selector, AccountEmails);
+			_reportDefinition = CreateReportDefinition(_selector, _accountEmails);
 
 			// Create operations.
 			GA.v201101.ReportDefinitionOperation operation = new GA.v201101.ReportDefinitionOperation();
-			operation.operand = reportDefinition;
+			operation.operand = _reportDefinition;
 			operation.@operator = GA.v201101.Operator.ADD;
 			GA.v201101.ReportDefinitionOperation[] operations = new GA.v201101.ReportDefinitionOperation[] { operation };
 
@@ -327,14 +325,14 @@ namespace Edge.Services.Google.Adwords
 		public GA.v201101.ReportDefinition CreateReportDefinition(GA.v201101.Selector selector, GA.v201101.ClientSelector[] clients,
 							GA.v201101.DownloadFormat downloadFormat = GA.v201101.DownloadFormat.GZIPPED_CSV)
 		{
-			reportDefinition.reportName = _customizedReportName;
-			reportDefinition.dateRangeType = dateRangeType;
+			_reportDefinition.reportName = customizedReportName;
+			_reportDefinition.dateRangeType = dateRangeType;
 
-			reportDefinition.selector = selector;
-			reportDefinition.downloadFormat = downloadFormat;
-			reportDefinition.downloadFormatSpecified = true;
+			_reportDefinition.selector = selector;
+			_reportDefinition.downloadFormat = downloadFormat;
+			_reportDefinition.downloadFormatSpecified = true;
 			//reportDefinition.clientSelectors = clients.ToArray();
-			return reportDefinition;
+			return _reportDefinition;
 		}
 
 		public void DownloadReport(long reportId, string Path = @"c:\testingAdwords.zip")
@@ -344,7 +342,7 @@ namespace Edge.Services.Google.Adwords
 			try
 			{
 				// Download report.
-				new GA.Util.ReportUtilities(User.adwordsUser).DownloadReportDefinition(reportId, Path);
+				new GA.Util.ReportUtilities(user.adwordsUser).DownloadReportDefinition(reportId, Path);
 			}
 			catch (Exception ex)
 			{

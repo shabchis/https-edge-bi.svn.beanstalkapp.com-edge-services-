@@ -16,13 +16,16 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID };
+			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
+
+			#region Must Have Params
 
 			//Get MCC Email
 			if (String.IsNullOrEmpty(Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
 			else this.Delivery.Parameters["MccEmail"] = Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
 
-			// Get all report types from config
+			// Get Report types
 			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
 			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
 			foreach (string reportTypeName in reportTypeNames)
@@ -33,12 +36,18 @@ namespace Edge.Services.Google.Adwords
 			}
 			this.Delivery.Parameters["reportTypes"] = reportTypes;
 
-			//Get all Account Emails
+			//Get Account Emails
 			string[] accountEmails = Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
 			this.Delivery.Parameters["accountEmails"] = accountEmails;
 
-			//Check for includeZeroImpression
 
+
+
+			#endregion
+
+			#region Nice to have params
+
+			//Check for includeZeroImpression
 			string includeZeroImpression;
 			if (!String.IsNullOrEmpty(includeZeroImpression = Instance.ParentInstance.Configuration.Options["includeZeroImpression"]))
 			{
@@ -62,7 +71,8 @@ namespace Edge.Services.Google.Adwords
 			}
 			this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
 
-
+			#endregion
+			
 			//Creating Delivery files Per Email 
 			foreach (string email in accountEmails)
 			{
