@@ -11,7 +11,7 @@ namespace Edge.Services.Google.Adwords
 {
 	class ProcessorService : PipelineService
 	{
-		ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
+		//ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
 
 		static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
 		static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
@@ -40,6 +40,8 @@ namespace Edge.Services.Google.Adwords
 				{"Purchase","Purchases"},
 				{"Pageview","PageViews"},
 				{"Default","Default"},
+				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
+				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
 			};
 		}
 
@@ -136,17 +138,17 @@ namespace Edge.Services.Google.Adwords
 						//ADD conversionKey to importedAdsWithConv
 						//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
 						Dictionary<string, long> conversion = new Dictionary<string, long>();
-						conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
+						conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
 						importedAdsWithConv.Add(conversionKey, conversion);
 					}
 					else // if Key exists
 					{
 						// if current add already has current conversion type than add value to the current type
 						if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])))
-							conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]));
+							conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
 						// else create new conversion type and add the value
 						else
-							conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionValueFieldName]);
+							conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]);
 					}
 				}
 			}
@@ -267,8 +269,8 @@ namespace Edge.Services.Google.Adwords
 							catch (Exception)
 							{
 								//Creating Error file with all Keywords primary keys that doesnt exists in keyword report.
-								_keywordErrorFile.Open();
-								_keywordErrorFile.AppendToFile(kwdKey.ToList());
+								//_keywordErrorFile.Open();
+								//_keywordErrorFile.AppendToFile(kwdKey.ToList());
 
 								//Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
 								kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
@@ -299,6 +301,10 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(_adsReader.Current.Clicks);
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
+						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToDouble(_adsReader.Current[Const.AvgPosition]);
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = _adsReader.Current[Const.ConversionOnePerClick];
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = _adsReader.Current[Const.ConversionManyPerClick];
+
 
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
@@ -335,9 +341,9 @@ namespace Edge.Services.Google.Adwords
 			public const string KeywordFieldName = "Keyword";
 			public const string AvgPosition = "Avg. position";
 
-			public const string ConversionValueFieldName = "Conv. (many-per-click)";
-			public const string ConversionOnePerClick = "Conv. rate (1-per-click)";
-			public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
+			public const string ConversionManyPerClick = "Conv. (many-per-click)";
+			public const string ConversionOnePerClick = "Conv. (1-per-click)";
+			//public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
 			public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
 			public const string ConversionTrackingPurpose = "Conversion tracking purpose";
 
@@ -364,6 +370,7 @@ namespace Edge.Services.Google.Adwords
 			public const string SystemDisplayNetwork = "Content Only";
 
 			public const string AutoDisplayNetworkName = "Total - content targeting";
+
 		}
 
 		

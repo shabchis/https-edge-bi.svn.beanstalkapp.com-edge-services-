@@ -8,25 +8,25 @@ using GA = Google.Api.Ads.AdWords.v201101;
 
 namespace Edge.Services.Google.Adwords
 {
-	public class InitializerService : PipelineService
+	public class GoogleSearchDeliveryManager : DeliveryManager
 	{
-		protected override Core.Services.ServiceOutcome DoPipelineWork()
+
+		public override void ApplyUniqueness(Delivery delivery)
 		{
-			this.Delivery = new Delivery(Instance.InstanceID, this.DeliveryID);
-			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
-			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = Instance.AccountID };
-			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
+			delivery.TargetLocationDirectory = "AdwordsSearch";
+			delivery.TargetPeriod = CurrentService.TargetPeriod;
+			delivery.Account = new Edge.Data.Objects.Account() { ID = CurrentService.Instance.AccountID };
+			delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
 
 			//Get MCC Email
-			if (String.IsNullOrEmpty(Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
+			if (String.IsNullOrEmpty(CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
-			else this.Delivery.Parameters["MccEmail"] = Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
+			else delivery.Parameters["MccEmail"] = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get Report types
-			string[] reportTypeNames = Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
+			string[] reportTypeNames = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
 			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
 			foreach (string reportTypeName in reportTypeNames)
 			{
@@ -34,17 +34,24 @@ namespace Edge.Services.Google.Adwords
 					reportTypes.Add((GA.ReportDefinitionReportType)Enum.Parse(typeof(GA.ReportDefinitionReportType), reportTypeName, true));
 				else throw new Exception("Undefined ReportType");
 			}
-			this.Delivery.Parameters["reportTypes"] = reportTypes;
+			delivery.Parameters["reportTypes"] = reportTypes;
 
 			//Get Account Emails
-			string[] accountEmails = Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
-			this.Delivery.Parameters["accountEmails"] = accountEmails;
-
-
-
-
+			string[] accountEmails = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
+			delivery.Parameters["accountEmails"] = accountEmails;
 			#endregion
+		}
+	}
+	public class InitializerService : BaseInitializerService
+	{
 
+		public override DeliveryManager GetDeliveryManager()
+		{
+			return new GoogleSearchDeliveryManager();
+		}
+
+		public override void ApplyDeliveryDetails()
+		{
 			#region Nice to have params
 
 			//Check for includeZeroImpression
@@ -74,9 +81,9 @@ namespace Edge.Services.Google.Adwords
 			#endregion
 			
 			//Creating Delivery files Per Email 
-			foreach (string email in accountEmails)
+			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
 			{
-				foreach (GA.ReportDefinitionReportType reportType in reportTypes)
+				foreach (GA.ReportDefinitionReportType reportType in (List<GA.ReportDefinitionReportType>)this.Delivery.Parameters["reportTypes"])
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = reportType.ToString();
@@ -98,11 +105,8 @@ namespace Edge.Services.Google.Adwords
 					this.Delivery.Files.Add(file);
 				}
 			}
-
 			this.Delivery.Save();
-			return Core.Services.ServiceOutcome.Success;
-
+			//return Core.Services.ServiceOutcome.Success;
 		}
-
 	}
 }
