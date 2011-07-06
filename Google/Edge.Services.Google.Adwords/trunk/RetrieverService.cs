@@ -8,6 +8,7 @@ using System.Net;
 using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Util;
 using System.Threading;
+using Edge.Core.Utilities;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -27,73 +28,84 @@ namespace Edge.Services.Google.Adwords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			_batchDownloadOperation = new BatchDownloadOperation();
-			_batchDownloadOperation.Progressed +=new EventHandler(_batchDownloadOperation_Progressed);
-			_filesInProgress = this.Delivery.Files.Count;
-			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
-			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
-			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-		
-			//Date Range
-			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
-			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
-
-			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
-			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
-			_waitHandle = new AutoResetEvent(false);
-			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
+			try
 			{
-				//TO DO : Get the files on a specific email
-				var files = from f in this.Delivery.Files
-							where f.Parameters["Email"].ToString() == email
-							select f;//this.Delivery.Files[email];
+				_batchDownloadOperation = new BatchDownloadOperation();
+				_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
+				_filesInProgress = this.Delivery.Files.Count;
+				bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
+				bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
+				bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
-				foreach (var file in files)
+				//Date Range
+				//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
+				_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
+
+				string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
+				string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
+				_waitHandle = new AutoResetEvent(false);
+				foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
 				{
-					if (file.Name.ToString().Equals("AD_PERFORMANCE_REPORT_(Conversion)"))
-					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, false, _dateRange,
-														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
-					}
-					else if (file.Name.ToString().Equals("MANAGED_PLACEMENTS_PERFORMANCE_REPORT"))
-					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, false, _dateRange,
-														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
-					}
-					else
-					{//AD_PERFORMANCE_REPORT
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(),email, startDate, endDate, includeZeroImpression, _dateRange,
-								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(),true));
-					}
-					
-					_googleReport.intializingGoogleReport();
-					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+					//TO DO : Get the files on a specific email
+					var files = from f in this.Delivery.Files
+								where f.Parameters["Email"].ToString() == email
+								select f;//this.Delivery.Files[email];
 
-					file.Name = _googleReport._customizedReportName + ".zip";
-					file.SourceUrl = request.downloadUrl.ToString();
-					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
-					file.Parameters.Add("authToken", request.authToken);
-					file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
-
-					try
+					foreach (var file in files)
 					{
-						DownloadFile(file);
-					}
-					catch (ReportsException ex) // if Getting a report ID exception
-					{
-						if (ex.InnerException.Message.Equals("Report contents are invalid."))
+						if (file.Name.ToString().Equals("AD_PERFORMANCE_REPORT_(Conversion)"))
 						{
-							_googleReport.intializingGoogleReport(true); // set new report
+							_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+															ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
+						}
+						else if (file.Name.ToString().Equals("MANAGED_PLACEMENTS_PERFORMANCE_REPORT"))
+						{
+							_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+															ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
+						}
+						else
+						{//AD_PERFORMANCE_REPORT
+							_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange,
+									(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(), true));
+						}
+
+						_googleReport.intializingGoogleReport();
+						GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+
+						file.Name = _googleReport._customizedReportName + ".zip";
+						file.SourceUrl = request.downloadUrl.ToString();
+						file.Parameters.Add("clientCustomerId", request.clientCustomerId);
+						file.Parameters.Add("authToken", request.authToken);
+						file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
+
+						try
+						{
+							DownloadFile(file);
+						}
+						catch (ReportsException ex) // if Getting a report ID exception
+						{
+							if (ex.InnerException.Message.Equals("Report contents are invalid."))
+							{
+								_googleReport.intializingGoogleReport(true); // set new report
+								Log.Write("Retriever : renewing Google Auth key",ex);
+							}
 						}
 					}
-				}
 
+				}
+				_batchDownloadOperation.Start();
+				_batchDownloadOperation.Wait();
+				_batchDownloadOperation.EnsureSuccess();
+				this.Delivery.Save();
+				
 			}
-			_batchDownloadOperation.Start();
-			_batchDownloadOperation.Wait();
-			_batchDownloadOperation.EnsureSuccess();
-			this.Delivery.Save();
+			catch (Exception e)
+			{
+				Log.Write("Retriever Error", e);
+			}
+
 			return Core.Services.ServiceOutcome.Success;
+			
 		}
 
 		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
