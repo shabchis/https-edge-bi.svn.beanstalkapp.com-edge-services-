@@ -21,10 +21,10 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			delivery.Account = new Data.Objects.Account()
 			{
-				ID = this.Instance.AccountID,
-				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
+				ID = CurrentService.Instance.AccountID,
+				OriginalID = CurrentService.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
 			};
-			delivery.TargetPeriod = this.TargetPeriod;
+			delivery.TargetPeriod = CurrentService.TargetPeriod;
 			delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = 6
