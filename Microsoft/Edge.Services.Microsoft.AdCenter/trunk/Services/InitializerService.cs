@@ -13,24 +13,29 @@ using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingServic
 
 namespace Edge.Services.Microsoft.AdCenter
 {
-	public class InitializerService : PipelineService
+	public class AdCenterManager : DeliveryManager
 	{
 
-		protected override ServiceOutcome DoPipelineWork()
+		public override void ApplyUniqueness(Delivery delivery)
 		{
-			// Create a new delivery
-			this.Delivery = new Delivery(this.Instance.InstanceID, this.DeliveryID)
-			{
-				TargetPeriod = this.TargetPeriod,
-				TargetLocationDirectory = "Microsoft"
-			};
+			delivery.TargetPeriod = CurrentService.TargetPeriod;
+			delivery.Account = new Data.Objects.Account() { ID = CurrentService.Instance.AccountID, OriginalID = CurrentService.Instance.Configuration.Options["AdCenter.CustomerAccountID"] }; //TODO: ASK DORON ORIGINAL ID? 
+			delivery.Channel = new Channel() { ID = 14 };
+		}
+	}
 
-			// AccountID as parameter for entire delivery
-			this.Delivery.Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID=Instance.Configuration.Options["AdCenter.CustomerAccountID"] }; //TODO: ASK DORON ORIGINAL ID? 
-			this.Delivery.Channel = new Channel() { ID = 14 };
+	public class InitializerService : BaseInitializerService
+	{
+		public override DeliveryManager GetDeliveryManager()
+		{
+			throw new NotImplementedException();
+		}
 
+		public override void ApplyDeliveryDetails()
+		{
 			// Wrapper for adCenter API
 			AdCenterApi adCenterApi = new AdCenterApi(this);
+			this.Delivery.TargetLocationDirectory = "Microsoft";
 
 			// ................................
 			// Campaign report
@@ -42,7 +47,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Ad report
 
 
-			ReportProgress(0.33);
+			ReportProgress(0.66);
 
 			// ................................
 			// Keyword report
@@ -54,13 +59,14 @@ namespace Edge.Services.Microsoft.AdCenter
 
 
 			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.AdReport });
-			ReportProgress(0.33);
-
-			// Save with success
+			ReportProgress(0.99);
 			this.Delivery.Save();
-
-			return ServiceOutcome.Success;
+			ReportProgress(1);
 		}
 
+		
+
+
+		
 	}
 }
