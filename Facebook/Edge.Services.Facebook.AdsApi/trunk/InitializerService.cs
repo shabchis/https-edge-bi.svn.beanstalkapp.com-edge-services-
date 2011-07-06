@@ -14,27 +14,35 @@ using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.Facebook.AdsApi
 {
-	public class InitializerService: PipelineService
+	public class FacebookDeliveryManager : DeliveryManager
 	{
-		
 
-		
-		protected override ServiceOutcome DoPipelineWork()
+		public override void ApplyUniqueness(Delivery delivery)
 		{
-			// Create a new delivery
-
-			this.Delivery = new Delivery(this.Instance.InstanceID, this.DeliveryID)
-			{
-				TargetPeriod=this.TargetPeriod,
-				TargetLocationDirectory="Facebook"
-			};
-
-			this.Delivery.Account = new Data.Objects.Account()
+			delivery.Account = new Data.Objects.Account()
 			{
 				ID = this.Instance.AccountID,
 				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
 			};
+			delivery.TargetPeriod = this.TargetPeriod;
+			delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = 6
+			};
+			
+		}
+	}
+	public class InitializerService: BaseInitializerService	
+	{
+		
+		public override DeliveryManager GetDeliveryManager()
+		{
+			return new FacebookDeliveryManager();
+		}
 
+		public override void ApplyDeliveryDetails()
+		{
+			this.Delivery.TargetLocationDirectory="Facebook";
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
 				FacebookConfigurationOptions.Account_ID,
@@ -47,20 +55,10 @@ namespace Edge.Services.Facebook.AdsApi
 			foreach (string option in configOptionsToCopyToDelivery)
 				this.Delivery.Parameters[option] = this.Instance.Configuration.Options[option];
 
-
-			//this.Delivery.Channel =(Edge.Data.Pipeline.Objects.Channel)this.Instance.Configuration.Options[FacebookConfigurationOptions."ChannelID"];
-			Delivery.Channel = new Data.Objects.Channel()
-			{
-				ID = 6
-			};
-			
-			
 			this.ReportProgress(0.2);
-
-
 			DeliveryFile deliveryFile = new DeliveryFile();
-			deliveryFile.Name =Consts.DeliveryFilesNames.AdGroupStats;
-			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());			
+			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
+			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
@@ -70,29 +68,32 @@ namespace Edge.Services.Facebook.AdsApi
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
 			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
-			
+
 			this.Delivery.Files.Add(deliveryFile);
-			
+
 
 			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
-			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());			
+			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
 			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
-			
+
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.9);
 			this.Delivery.Save();
 
 			this.ReportProgress(1);
-			return ServiceOutcome.Success;
+			
 		}
+		
+
+		
 
 		private string GetAdGroupStatsHttpRequest()
 		{
@@ -219,6 +220,8 @@ namespace Edge.Services.Facebook.AdsApi
 			}
 			return list;
 		}
+
+
 
 
 

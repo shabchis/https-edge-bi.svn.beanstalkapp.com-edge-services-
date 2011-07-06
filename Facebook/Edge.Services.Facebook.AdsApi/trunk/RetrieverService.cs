@@ -103,14 +103,14 @@ namespace Edge.Services.Facebook.AdsApi
 
 		void creativeBatch_Progressed(object sender, EventArgs e)
 		{
-			FileDownloadOperation fileDownloadOperation = (FileDownloadOperation)sender;
-			this.ReportProgress(fileDownloadOperation.Progress * (1 - firstBatchRatio) + firstBatchRatio);
+			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
+			this.ReportProgress(batchDownloadOperation.Progress * (1 - firstBatchRatio) + firstBatchRatio);
 		}
 
 		void batch_Progressed(object sender, EventArgs e)
 		{
-			FileDownloadOperation fileDownloadOperation = (FileDownloadOperation)sender;
-			this.ReportProgress(fileDownloadOperation.Progress * firstBatchRatio);
+			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
+			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
 		}		
 
 		
