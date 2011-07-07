@@ -68,7 +68,7 @@ namespace Edge.Services.Facebook.AdsApi
 					}
 					campaignsData.Add(camp.OriginalID, camp);
 				}
-				campaigns.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+				campaigns.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 			}
 			this.ReportProgress(0.1);
 			//GetAdGroups
@@ -119,7 +119,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 					ads.Add(ad.OriginalID, ad);
 				}
-				adGroups.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+				adGroups.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 			}
 
 
@@ -130,10 +130,9 @@ namespace Edge.Services.Facebook.AdsApi
 				(adGroupStats.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroupStats]);
 
 
-			using (var session = new AdDataImportSession(this.Delivery))
+			using (var session = new AdMetricsImportManager())
 			{
-
-				session.Begin();
+				session.BeginImport(this.Delivery);
 
 				using (adGroupStatsReader)
 				{
@@ -165,7 +164,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 					}
 
-					adGroupStats.History.Add(DeliveryOperation.Processed, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
+					adGroupStats.History.Add(DeliveryOperation.Imported, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
 					this.ReportProgress(0.4);
 				}
 
@@ -288,11 +287,12 @@ namespace Edge.Services.Facebook.AdsApi
 							//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
 						}
 
-						creativeFile.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+						creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 					}
 
+					session.EndImport(this.Delivery);
 				}
-				//session.Commit(); TODO: TALK TO DORN WHAT CHANGE WHY CANT WE DO COMMIT?
+				
 				this.ReportProgress(0.98);
 			}
 			return Core.Services.ServiceOutcome.Success;

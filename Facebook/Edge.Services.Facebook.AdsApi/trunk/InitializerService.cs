@@ -10,39 +10,46 @@ using System.Net;
 using System.IO;
 using System.Dynamic;
 using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Importing;
 
 
 namespace Edge.Services.Facebook.AdsApi
 {
-	public class FacebookDeliveryManager : DeliveryManager
+	public class InitializerService: PipelineService	
 	{
-
-		public override void ApplyUniqueness(Delivery delivery)
+		protected override ServiceOutcome  DoPipelineWork()
 		{
-			delivery.Account = new Data.Objects.Account()
+			// ...............................
+			// SETUP
+			Delivery delivery = this.NewDelivery();
+			
+			// This is for finding conflicting services
+			delivery.Signature = String.Format("facebook-[{1}]-[{2}]-[{3}]",
+				this.Instance.AccountID,
+				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
+				this.TargetPeriod.ToAbsolute());
+
+			this.HandleConflicts()
+
+			// Apply the delivery (will use ConflictBehavior configuration setting to abort or rollback if any conflicts occur)
+			this.ApplyDelivery(delivery, new AdMetricsImportManager(delivery));
+
+			// ...............................
+
+			// Now that we have a new delivery, start adding values
+			this.Delivery.Account = new Data.Objects.Account()
 			{
-				ID = CurrentService.Instance.AccountID,
-				OriginalID = CurrentService.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
+				ID = this.Instance.AccountID,
+				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
 			};
-			delivery.TargetPeriod = CurrentService.TargetPeriod;
-			delivery.Channel = new Data.Objects.Channel()
+			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = 6
 			};
-			
-		}
-	}
-	public class InitializerService: InitializerBase	
-	{
-		
-		public override DeliveryManager GetDeliveryManager()
-		{
-			return new FacebookDeliveryManager();
-		}
 
-		public override void ApplyDeliveryDetails()
-		{
 			this.Delivery.TargetLocationDirectory="Facebook";
+
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
 				FacebookConfigurationOptions.Account_ID,
@@ -62,8 +69,6 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
-			/* MOVED TO RETRIVER BECAUSE FACEBOOK BUG (NOT MORE THE 1000 CREATIVES)			
-			deliveryFile.Name = "GetAdGroupCreatives.xml";*/
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
@@ -89,7 +94,8 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery.Save();
 
 			this.ReportProgress(1);
-			
+
+			return ServiceOutcome.Success;
 		}
 		
 
