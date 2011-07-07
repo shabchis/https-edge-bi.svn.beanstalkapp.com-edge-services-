@@ -6,7 +6,7 @@ using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.Google.Adwords
 {
-	class CommitService : BaseCommitService
+	class CommitService : AdDataCommitBase
 	{
 		public override DeliveryManager GetDeliveryManager()
 		{

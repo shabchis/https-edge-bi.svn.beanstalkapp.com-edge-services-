@@ -42,7 +42,7 @@ namespace Edge.Services.Google.Adwords
 			#endregion
 		}
 	}
-	public class InitializerService : BaseInitializerService
+	public class InitializerService : InitializerBase
 	{
 
 		public override DeliveryManager GetDeliveryManager()

@@ -110,7 +110,7 @@ namespace Edge.Services.Google.Adwords
 						Placement = _PlacementsReader.Current[Const.PlacementFieldName],
 						PlacementType = PlacementType.Managed
 					};
-					string matchType = _PlacementsReader.Current[Const.MatchTypeFieldName];
+					//string matchType = _PlacementsReader.Current[Const.MatchTypeFieldName];
 
 					_placementsData.Add(placementPrimaryKey.ToString(), placement);
 				}
@@ -157,7 +157,7 @@ namespace Edge.Services.Google.Adwords
 			#region Getting Ads Data
 			
 			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
-			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
+			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_adPerformanceFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 			using (var session = new AdDataImportSession(this.Delivery))
 			{
@@ -302,8 +302,8 @@ namespace Edge.Services.Google.Adwords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToDouble(_adsReader.Current[Const.AvgPosition]);
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = _adsReader.Current[Const.ConversionOnePerClick];
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = _adsReader.Current[Const.ConversionManyPerClick];
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble( _adsReader.Current[Const.ConversionOnePerClick]);
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble( _adsReader.Current[Const.ConversionManyPerClick]);
 
 
 						//Inserting conversion values
