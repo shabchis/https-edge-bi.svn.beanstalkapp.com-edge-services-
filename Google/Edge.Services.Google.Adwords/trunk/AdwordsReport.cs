@@ -39,7 +39,7 @@ namespace Edge.Services.Google.Adwords
 		#region Reports fields
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
-		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition",
+		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
 		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
 		                                                   "ConversionsManyPerClick",
 		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
