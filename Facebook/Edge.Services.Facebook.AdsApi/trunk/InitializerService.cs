@@ -10,7 +10,7 @@ using System.Net;
 using System.IO;
 using System.Dynamic;
 using Edge.Data.Pipeline.Services;
-using Edge.Data.Pipeline.Importing;
+using Edge.Data.Pipeline.AdMetrics;
 
 
 namespace Edge.Services.Facebook.AdsApi
@@ -21,18 +21,16 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			// ...............................
 			// SETUP
-			Delivery delivery = this.NewDelivery();
+			this.Delivery = this.NewDelivery();
 			
 			// This is for finding conflicting services
-			delivery.Signature = String.Format("facebook-[{1}]-[{2}]-[{3}]",
+			this.Delivery.Signature = String.Format("facebook-[{1}]-[{2}]-[{3}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
 				this.TargetPeriod.ToAbsolute());
 
-			this.HandleConflicts()
-
-			// Apply the delivery (will use ConflictBehavior configuration setting to abort or rollback if any conflicts occur)
-			this.ApplyDelivery(delivery, new AdMetricsImportManager(delivery));
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(new AdMetricsImportManager(this.Instance.InstanceID), DeliveryConflictBehavior.Abort);
 
 			// ...............................
 

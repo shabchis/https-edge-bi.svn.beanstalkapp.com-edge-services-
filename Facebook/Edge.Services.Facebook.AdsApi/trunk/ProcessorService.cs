@@ -5,8 +5,8 @@ using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
-using Edge.Data.Pipeline.Importing;
 using Edge.Core.Utilities;
+using Edge.Data.Pipeline.AdMetrics;
 namespace Edge.Services.Facebook.AdsApi
 {
 
@@ -57,13 +57,13 @@ namespace Edge.Services.Facebook.AdsApi
 					switch (campaignStatus)
 					{
 						case 1:
-							camp.Status = CampaignStatus.Active;
+							camp.Status = ObjectStatus.Active;
 							break;
 						case 2:
-							camp.Status = CampaignStatus.Paused;
+							camp.Status = ObjectStatus.Paused;
 							break;
 						case 3:
-							camp.Status = CampaignStatus.Deleted;
+							camp.Status = ObjectStatus.Deleted;
 							break;
 					}
 					campaignsData.Add(camp.OriginalID, camp);
@@ -130,7 +130,7 @@ namespace Edge.Services.Facebook.AdsApi
 				(adGroupStats.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroupStats]);
 
 
-			using (var session = new AdMetricsImportManager())
+			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
 				session.BeginImport(this.Delivery);
 
@@ -290,7 +290,7 @@ namespace Edge.Services.Facebook.AdsApi
 						creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 					}
 
-					session.EndImport(this.Delivery);
+					session.EndImport();
 				}
 				
 				this.ReportProgress(0.98);
