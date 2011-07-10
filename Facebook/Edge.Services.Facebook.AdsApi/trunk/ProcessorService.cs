@@ -290,10 +290,10 @@ namespace Edge.Services.Facebook.AdsApi
 						creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 					}
 
-					session.EndImport();
+					
 				}
-				
-				this.ReportProgress(0.98);
+
+				session.EndImport();
 			}
 			return Core.Services.ServiceOutcome.Success;
 		}

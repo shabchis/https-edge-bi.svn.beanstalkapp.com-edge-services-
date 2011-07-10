@@ -24,13 +24,19 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery = this.NewDelivery();
 			
 			// This is for finding conflicting services
-			this.Delivery.Signature = String.Format("facebook-[{1}]-[{2}]-[{3}]",
+			this.Delivery.Signature = String.Format("facebook-[{0}]-[{1}]-[{2}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
 				this.TargetPeriod.ToAbsolute());
 
+			// Create an import manager that will handle rollback, if necessary
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
+			});
+
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-			this.HandleConflicts(new AdMetricsImportManager(this.Instance.InstanceID), DeliveryConflictBehavior.Abort);
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			// ...............................
 
