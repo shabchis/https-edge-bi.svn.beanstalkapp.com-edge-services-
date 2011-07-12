@@ -14,6 +14,7 @@ namespace Edge.Services.Google.Adwords
 	{
 		protected override ServiceOutcome DoPipelineWork()
 		{
+			//TO DO : get information from configuration by using Instance instead of ParentInstane
 			this.Delivery = this.NewDelivery(); // setup delivery
 
 			//checking for conflicts 
@@ -31,6 +32,8 @@ namespace Edge.Services.Google.Adwords
 			});
 
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			
+			//TO DO: get ConflictBehavior from configuration 
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";

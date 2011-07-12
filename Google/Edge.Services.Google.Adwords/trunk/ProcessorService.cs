@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using Edge.Data.Pipeline.Importing;
 using GA = Google.Api.Ads.AdWords.v201101;
 using System.IO;
+using Edge.Data.Pipeline.AdMetrics;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -159,9 +159,10 @@ namespace Edge.Services.Google.Adwords
 			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
 			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_adPerformanceFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
-			using (var session = new AdDataImportSession(this.Delivery))
+			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
-				session.Begin(false);
+				//session.Begin(false);
+				session.BeginImport(this.Delivery);
 
 				using (_adsReader)
 				{
@@ -324,6 +325,7 @@ namespace Edge.Services.Google.Adwords
 						};
 						session.ImportMetrics(adMetricsUnit);
 					}
+					session.EndImport();
 				}
 
 			}
