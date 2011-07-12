@@ -5,28 +5,48 @@ using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using GA = Google.Api.Ads.AdWords.v201101;
+using Edge.Core.Services;
+using Edge.Data.Pipeline.AdMetrics;
 
 namespace Edge.Services.Google.Adwords
 {
-	public class GoogleSearchDeliveryManager : DeliveryManager
+	public class GoogleSearchDeliveryManager : PipelineService
 	{
-
-		public override void ApplyUniqueness(Delivery delivery)
+		protected override ServiceOutcome DoPipelineWork()
 		{
-			delivery.TargetLocationDirectory = "AdwordsSearch";
-			delivery.TargetPeriod = CurrentService.TargetPeriod;
-			delivery.Account = new Edge.Data.Objects.Account() { ID = CurrentService.Instance.AccountID };
-			delivery.Channel = new Data.Objects.Channel() { ID = 1 };
+			this.Delivery = this.NewDelivery(); // setup delivery
+
+			//checking for conflicts 
+			this.Delivery.Signature = String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,GoogleAccountEmail , TargetPeriod
+				this.Instance.AccountID,
+				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
+				this.Instance.Configuration.Options["Adwords.Email"].ToString(),
+				this.TargetPeriod.ToAbsolute());
+
+
+			// Create an import manager that will handle rollback, if necessary
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+
+			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
+			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID };
+			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
 
 			//Get MCC Email
-			if (String.IsNullOrEmpty(CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
+			if (String.IsNullOrEmpty(this.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
-			else delivery.Parameters["MccEmail"] = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
+			else this.Delivery.Parameters["MccEmail"] = this.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get Report types
-			string[] reportTypeNames = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
+			string[] reportTypeNames = this.Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
 			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
 			foreach (string reportTypeName in reportTypeNames)
 			{
@@ -34,24 +54,13 @@ namespace Edge.Services.Google.Adwords
 					reportTypes.Add((GA.ReportDefinitionReportType)Enum.Parse(typeof(GA.ReportDefinitionReportType), reportTypeName, true));
 				else throw new Exception("Undefined ReportType");
 			}
-			delivery.Parameters["reportTypes"] = reportTypes;
+			this.Delivery.Parameters["reportTypes"] = reportTypes;
 
 			//Get Account Emails
-			string[] accountEmails = CurrentService.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
-			delivery.Parameters["accountEmails"] = accountEmails;
+			string[] accountEmails = this.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
+			//this.Delivery.Parameters["accountEmails"] = accountEmails;
 			#endregion
-		}
-	}
-	public class InitializerService : InitializerBase
-	{
 
-		public override DeliveryManager GetDeliveryManager()
-		{
-			return new GoogleSearchDeliveryManager();
-		}
-
-		public override void ApplyDeliveryDetails()
-		{
 			#region Nice to have params
 
 			//Check for includeZeroImpression
@@ -79,9 +88,9 @@ namespace Edge.Services.Google.Adwords
 			this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
 
 			#endregion
-			
+
 			//Creating Delivery files Per Email 
-			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
+			foreach (string email in accountEmails)
 			{
 				foreach (GA.ReportDefinitionReportType reportType in (List<GA.ReportDefinitionReportType>)this.Delivery.Parameters["reportTypes"])
 				{
@@ -106,7 +115,8 @@ namespace Edge.Services.Google.Adwords
 				}
 			}
 			this.Delivery.Save();
-			//return Core.Services.ServiceOutcome.Success;
+			return Core.Services.ServiceOutcome.Success;
 		}
+
 	}
 }
