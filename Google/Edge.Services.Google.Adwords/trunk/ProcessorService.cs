@@ -79,6 +79,8 @@ namespace Edge.Services.Google.Adwords
 					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
 					string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
+					
+					//Setting Tracker for Keyword
 					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
 					{
 						keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
@@ -116,8 +118,14 @@ namespace Edge.Services.Google.Adwords
 						Placement = _PlacementsReader.Current[Const.PlacementFieldName],
 						PlacementType = PlacementType.Managed
 					};
-					//string matchType = _PlacementsReader.Current[Const.MatchTypeFieldName];
-
+					//Setting Tracker for placment
+					if (!String.IsNullOrEmpty(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
+					{
+						placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
+						SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, placement.DestinationUrl);
+						if (tracker != null)
+							placement.Segments[Segment.TrackerSegment] = tracker;
+					}
 					_placementsData.Add(placementPrimaryKey.ToString(), placement);
 				}
 			}
@@ -193,7 +201,10 @@ namespace Edge.Services.Google.Adwords
 							ad.ExtraFields[AdType] = GoogleAdTypeDic[adTypeKey];
 							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
-							
+							////Setting Tracker for Ad
+							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+							if (tracker != null)
+								ad.Segments[Segment.TrackerSegment] = tracker;
 
 							ad.Campaign = new Campaign()
 							{
@@ -282,14 +293,6 @@ namespace Edge.Services.Google.Adwords
 							//INSERTING KEYWORD INTO METRICS
 							adMetricsUnit.TargetMatches = new List<Target>();
 							adMetricsUnit.TargetMatches.Add(kwd);
-							
-							//Ad Tracker
-							if (String.IsNullOrEmpty(kwd.DestinationUrl))
-							{
-								SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-								if (tracker != null)
-									ad.Segments[Segment.TrackerSegment] = tracker;
-							}
 						}
 						else
 						{
