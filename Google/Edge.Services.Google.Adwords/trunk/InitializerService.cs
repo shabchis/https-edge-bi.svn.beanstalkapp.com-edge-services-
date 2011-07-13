@@ -10,7 +10,7 @@ using Edge.Data.Pipeline.AdMetrics;
 
 namespace Edge.Services.Google.Adwords
 {
-	public class GoogleSearchDeliveryManager : PipelineService
+	public class InitializerService : PipelineService
 	{
 		protected override ServiceOutcome DoPipelineWork()
 		{
@@ -61,7 +61,7 @@ namespace Edge.Services.Google.Adwords
 
 			//Get Account Emails
 			string[] accountEmails = this.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
-			//this.Delivery.Parameters["accountEmails"] = accountEmails;
+			this.Delivery.Parameters["accountEmails"] = accountEmails;
 			#endregion
 
 			#region Nice to have params

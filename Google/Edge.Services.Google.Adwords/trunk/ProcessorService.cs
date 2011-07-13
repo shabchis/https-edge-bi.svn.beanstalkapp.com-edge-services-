@@ -75,6 +75,7 @@ namespace Edge.Services.Google.Adwords
 						Keyword = _keywordsReader.Current[Const.KeywordFieldName]
 
 					};
+					
 					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
 					string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
