@@ -63,9 +63,12 @@ namespace Edge.Services.Google.Adwords
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
 					}
 					else
-					{//AD_PERFORMANCE_REPORT
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange,
-								(ReportDefinitionReportType)Enum.Parse(typeof(ReportDefinitionReportType), file.Name.ToString(), true));
+					{//Other
+						var report=from r in GoogleStaticReportsNamesUtill._reportNames
+							  where r.Value==file.Name
+							  select r.Key;
+
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange,(ReportDefinitionReportType)report.First());
 					}
 
 					_googleReport.intializingGoogleReport();

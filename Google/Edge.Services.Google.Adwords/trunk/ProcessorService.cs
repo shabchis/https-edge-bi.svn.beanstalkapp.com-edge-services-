@@ -81,7 +81,7 @@ namespace Edge.Services.Google.Adwords
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
 					
 					//Setting Tracker for Keyword
-					if (!String.IsNullOrEmpty(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
+					if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
 					{
 						keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
 						SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, keyword.DestinationUrl);
@@ -119,7 +119,7 @@ namespace Edge.Services.Google.Adwords
 						PlacementType = PlacementType.Managed
 					};
 					//Setting Tracker for placment
-					if (!String.IsNullOrEmpty(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
+					if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
 					{
 						placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
 						SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, placement.DestinationUrl);
@@ -194,7 +194,7 @@ namespace Edge.Services.Google.Adwords
 						{
 							ad = new Ad();
 							ad.OriginalID = adId;
-							ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
+							
 
 							//Ad Type
 							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
@@ -202,10 +202,14 @@ namespace Edge.Services.Google.Adwords
 							ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
 							////Setting Tracker for Ad
-							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-							if (tracker != null)
-								ad.Segments[Segment.TrackerSegment] = tracker;
-
+							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
+							{
+								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
+								SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, _adsReader.Current[Const.DestUrlFieldName]);
+								if (tracker != null)
+									ad.Segments[Segment.TrackerSegment] = tracker;
+							}
+							
 							ad.Campaign = new Campaign()
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
