@@ -49,7 +49,7 @@ namespace Edge.Services.Google.Adwords
 		{
 			#region Getting Keywords Data
 
-			DeliveryFile _keyWordsFile = this.Delivery.Files[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString()];
+			DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
 			string[] requiredHeaders = new string[1];
 			requiredHeaders[0] = Const.RequiredHeader;
 			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(Path.GetFileNameWithoutExtension(_keyWordsFile.Location), FileFormat.GZip), requiredHeaders);
@@ -73,7 +73,7 @@ namespace Edge.Services.Google.Adwords
 					{
 						OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
 						Keyword = _keywordsReader.Current[Const.KeywordFieldName]
-
+						
 					};
 					
 					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
@@ -95,7 +95,7 @@ namespace Edge.Services.Google.Adwords
 			
 			#region Getting Placements Data
 
-			DeliveryFile _PlacementsFile = this.Delivery.Files[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString()];
+			DeliveryFile _PlacementsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]];
 			var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(Path.GetFileNameWithoutExtension(_PlacementsFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
 
@@ -134,7 +134,7 @@ namespace Edge.Services.Google.Adwords
 			#region Getting Conversions Data
 			//Get Ads Conversion ( for ex. signup , purchase )
 
-			DeliveryFile _conversionFile = this.Delivery.Files["AD_PERFORMANCE_REPORT_(Conversion)"];
+			DeliveryFile _conversionFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"];
 			var _conversionsReader = new CsvDynamicReader(_conversionFile.OpenContents(Path.GetFileNameWithoutExtension(_conversionFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Dictionary<string, long>> importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
 
@@ -169,8 +169,8 @@ namespace Edge.Services.Google.Adwords
 			#endregion
 
 			#region Getting Ads Data
-			
-			DeliveryFile _adPerformanceFile = this.Delivery.Files["AD_PERFORMANCE_REPORT"];
+
+			DeliveryFile _adPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
 			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(Path.GetFileNameWithoutExtension(_adPerformanceFile.Location), FileFormat.GZip), requiredHeaders);
 			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))

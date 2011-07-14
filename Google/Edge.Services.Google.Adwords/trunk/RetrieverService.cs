@@ -52,12 +52,12 @@ namespace Edge.Services.Google.Adwords
 
 				foreach (var file in files)
 				{
-					if (file.Name.ToString().Equals("AD_PERFORMANCE_REPORT_(Conversion)"))
+					if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"))
 					{
 						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
 					}
-					else if (file.Name.ToString().Equals("MANAGED_PLACEMENTS_PERFORMANCE_REPORT"))
+					else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]))
 					{
 						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);

@@ -98,21 +98,24 @@ namespace Edge.Services.Google.Adwords
 				foreach (GA.ReportDefinitionReportType reportType in (List<GA.ReportDefinitionReportType>)this.Delivery.Parameters["reportTypes"])
 				{
 					DeliveryFile file = new DeliveryFile();
-					file.Name = reportType.ToString();
+					file.Name = GoogleStaticReportsNamesUtill._reportNames[reportType];
+					//file.Name = reportType.ToString();
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
 				if (Boolean.Parse(includeConversionTypes)) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();
-					file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
+					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv";
+					//file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
 				if (Boolean.Parse(includeDisplaytData)) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();
-					file.Name = "MANAGED_PLACEMENTS_PERFORMANCE_REPORT";
+					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT];
+					//file.Name = "MANAGED_PLACEMENTS_PERFORMANCE_REPORT";
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
