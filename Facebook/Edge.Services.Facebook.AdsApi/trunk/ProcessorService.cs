@@ -26,6 +26,7 @@ namespace Edge.Services.Facebook.AdsApi
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			//Campaigns
+			StringBuilder warningsStr = new StringBuilder();
 			DeliveryFile campaigns = this.Delivery.Files[Consts.DeliveryFilesNames.Campaigns];
 
 			var campaignsReader = new XmlDynamicReader
@@ -103,8 +104,8 @@ namespace Edge.Services.Facebook.AdsApi
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
 							Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
-							OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty):
-							(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
+							OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID):
+							(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID)
 						};
 					}
 					else
@@ -139,28 +140,46 @@ namespace Edge.Services.Facebook.AdsApi
 					while (adGroupStatsReader.Read())
 					{
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
-						adMetricsUnit.Ad = ads[adGroupStatsReader.Current.id];
-						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+						Ad tempAd;
+						if (adGroupStatsReader.Current.id != null)
+						{
+							if (ads.TryGetValue(adGroupStatsReader.Current.id, out tempAd))
+							{
+								adMetricsUnit.Ad = tempAd;
+							
+								adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+								adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
-						// Common and Facebook specific meausures
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent)/100d;
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
-						adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
+								// Common and Facebook specific meausures
+								adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+								adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
+								adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
+								adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
+								adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToInt64(adGroupStatsReader.Current.spent) / 100d;
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
+								adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
 
 
-						adMetricsUnit.TargetMatches = new List<Target>();
+								adMetricsUnit.TargetMatches = new List<Target>();
 
-						session.ImportMetrics(adMetricsUnit);
+								session.ImportMetrics(adMetricsUnit);
+							}
+							else
+							{
+								warningsStr.AppendLine(string.Format("Ad {0} does not exist in the stats report delivery id: {1}", adGroupStatsReader.Current.id, this.Delivery.DeliveryID));
+
+
+							}
+						}
+						else
+						{
+							warningsStr.AppendLine("adGroupStatsReader.Current.id=null");
+						}
 
 					}
 
@@ -294,6 +313,8 @@ namespace Edge.Services.Facebook.AdsApi
 				}
 
 				session.EndImport();
+				if (!string.IsNullOrEmpty( warningsStr.ToString()))
+					Log.Write(warningsStr.ToString(),LogMessageType.Warning);
 			}
 			return Core.Services.ServiceOutcome.Success;
 		}
