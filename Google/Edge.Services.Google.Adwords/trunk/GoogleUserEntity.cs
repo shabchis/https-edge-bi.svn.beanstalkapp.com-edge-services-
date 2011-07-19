@@ -38,11 +38,11 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string mccEmail, string accountEmail)
+		public GoogleUserEntity(string mccEmail, string accountEmail,bool newAuth = false)
 		{
 			this._mccEmail = mccEmail;
 			this._accountEmail = accountEmail;
-			this._authToken = GetAuthToken(mccEmail);
+			this._authToken = GetAuthToken(mccEmail, newAuth);
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
 				AuthToken = _authToken,
@@ -56,27 +56,30 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
-			string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA", string userAgent = "Edge.BI", bool enableGzipCompression = true)
-		{
-			this._accountEmail = _email;
-			this._authToken = _authToken;
-			this._developerToken = _developerToken;
+		//public GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
+		//    string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA", string userAgent = "Edge.BI", bool enableGzipCompression = true)
+		//{
+		//    this._accountEmail = _email;
+		//    this._authToken = _authToken;
+		//    this._developerToken = _developerToken;
 
-			AdWordsAppConfig config = new AdWordsAppConfig()
-			{
-				AuthToken = _authToken,
-				DeveloperToken = _developerToken,
-				ApplicationToken = _applicationToken,
-				ClientEmail = _accountEmail,
-				UserAgent = userAgent,
-				EnableGzipCompression = enableGzipCompression
-			};
-			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
-		}
+		//    AdWordsAppConfig config = new AdWordsAppConfig()
+		//    {
+		//        AuthToken = _authToken,
+		//        DeveloperToken = _developerToken,
+		//        ApplicationToken = _applicationToken,
+		//        ClientEmail = _accountEmail,
+		//        UserAgent = userAgent,
+		//        EnableGzipCompression = enableGzipCompression
+		//    };
+		//    adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
+		//}
 
-		public string GetAuthToken(string mccEmail)
+		public string GetAuthToken(string mccEmail, bool newAuth)
 		{
+			if (newAuth)
+				return GetAuthFromApi(mccEmail, this._mccPass);
+
 			string auth = GetAuthFromDB(mccEmail);
 			if (string.IsNullOrEmpty(auth))
 				auth = GetAuthFromApi(mccEmail, this._mccPass);

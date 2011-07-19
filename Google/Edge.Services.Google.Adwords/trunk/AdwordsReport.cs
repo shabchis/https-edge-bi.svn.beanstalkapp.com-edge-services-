@@ -12,6 +12,9 @@ using System.Data.SqlClient;
 using System.Globalization;
 using Edge.Core.Configuration;
 using Newtonsoft.Json;
+using Google.Api.Ads.AdWords.v201101;
+using Google.Api.Ads.AdWords.Lib;
+using Edge.Core.Utilities;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -33,6 +36,8 @@ namespace Edge.Services.Google.Adwords
 		private GA.v201101.Selector _selector { get; set; }
 		private bool _includeConversionTypes { set; get; }
 		public string customizedReportName { set; get; }
+		private string _reportEmail { set; get; }
+		private string _reportMcc { set; get; }
 
 		static string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 
@@ -78,8 +83,10 @@ namespace Edge.Services.Google.Adwords
 			this.dateRangeType = dateRange;
 			this.startDate = StartDate;
 			this.endDate = EndDate;
+			this._reportEmail = accountEmail;
+			this._reportMcc = mccEmail;
 			//SetAccountEmails(accountEmails);
-			this.user = new GoogleUserEntity(mccEmail, accountEmail);
+			this.user = new GoogleUserEntity(_reportMcc, _reportEmail);
 			this._includeConversionTypes = includeConversionTypes;
 
 			//Setting customized Report Name
@@ -140,16 +147,16 @@ namespace Edge.Services.Google.Adwords
 		/// Intializing report id from Google API / Report Definition Table in DB .
 		/// </summary>
 		/// <param name="Update">true in order to create new report definition, ignore exsiting report id in Report Definition Table</param>
-		public long intializingGoogleReport(bool Update = false)
+		public long intializingGoogleReport(bool CreateNewAuth = false)
 		{
 			long ReportId;
-			if (!Update)
+			if (!CreateNewAuth)
 			{
 				ReportId = GetReportIdFromDB(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, this.startDate, this.endDate);
 				if (ReportId == -1)
 					ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
 			}
-			else
+			else // Auth key is invalid or doesn't exists in DB
 			{
 				ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
 				SetReportID(this._accountId, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate, true);
@@ -243,7 +250,7 @@ namespace Edge.Services.Google.Adwords
 			}
 		}
 
-		public long CreateGoogleReport(int Account_Id)
+		public long CreateGoogleReport(int Account_Id, bool AuthRetry = true)
 		{
 			if (this.dateRangeType.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
@@ -284,15 +291,32 @@ namespace Edge.Services.Google.Adwords
 			operation.@operator = GA.v201101.Operator.ADD;
 			GA.v201101.ReportDefinitionOperation[] operations = new GA.v201101.ReportDefinitionOperation[] { operation };
 
-			//Create reportDefintions 
-			GA.v201101.ReportDefinition[] reportDefintions = reportService.mutate(operations);
-			this.Id = reportDefintions[0].id;
-
-			//  TO DO : save report in DB
-			//SaveReport(Account_Id, this.User.email, this.reportDefinition.dateRangeType, this.reportDefinition.reportType, this.id);
-			return reportDefintions[0].id;
-			//DownloadReport(reportDefintions[0].id);
-
+			//Create reportDefintions
+			try
+			{
+				GA.v201101.ReportDefinition[] reportDefintions = reportService.mutate(operations);
+				this.Id = reportDefintions[0].id;
+			}
+			catch (AdWordsApiException ex) // try to catch AuthenticationError and create new auth
+			{
+				if (AuthRetry)
+				{
+					this.user = new GoogleUserEntity(this._reportMcc, this._reportEmail, true);
+					Log.Write("AuthenticationError.GOOGLE_ACCOUNT_COOKIE_INVALID, Authentication has been renewed : ", ex);
+					CreateGoogleReport(Account_Id, false);
+				}
+				else
+				{
+					Log.Write("Google Authentication Error:  Cannot Renew Authentication", ex);
+					throw new Exception("Google Authentication Error:  Cannot Renew Authentication", ex);
+				}
+			}
+			catch (Exception e)
+			{
+				Log.Write("Exception has occured while trying to create new reportDefintions", e);
+				throw e;
+			}
+			return this.Id;
 		}
 
 		public void AddFilter(string fieldName, GA.v201101.PredicateOperator op, string[] values)
