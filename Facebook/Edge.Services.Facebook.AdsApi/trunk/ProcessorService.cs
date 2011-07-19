@@ -113,7 +113,7 @@ namespace Edge.Services.Facebook.AdsApi
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
 							Value = ad.Name,
-							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID).Replace(" ", string.Empty)
+							OriginalID = (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID)
 
 						};
 					}
