@@ -114,7 +114,6 @@ namespace Edge.Services.Google.Adwords
 					PlacementTarget placement = new PlacementTarget()
 					{
 						OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
-						DestinationUrl = _PlacementsReader.Current[Const.DestUrlFieldName],
 						Placement = _PlacementsReader.Current[Const.PlacementFieldName],
 						PlacementType = PlacementType.Managed
 					};
