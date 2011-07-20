@@ -134,33 +134,6 @@ namespace Edge.Services.Google.Adwords
 			//request.Method = "POST";
 			_batchDownloadOperation.Add(file.Download(request));
 
-
-
-
-
 		}
-
-		//void fileDownloadOperation_Ended(object sender, EventArgs e)
-		//{
-		//    _filesInProgress -= 1;
-		//    if (_filesInProgress == 0)
-		//        _waitHandle.Set();
-		//}
-
-		//void fileDownloadOperation_Progressed(object sender, EventArgs e)
-		//{
-		//    if (_filesInProgress > 0)
-		//    {
-		//        double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
-		//        if (percent >= _minProgress)
-		//        {
-		//            _minProgress += 0.05;
-		//            if (percent <= 1)
-		//                this.ReportProgress(percent);
-		//        }
-		//    }
-		//}
-
-
 	}
 }
