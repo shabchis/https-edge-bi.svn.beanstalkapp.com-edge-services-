@@ -14,7 +14,6 @@ namespace Edge.Services.Google.Adwords
 	{
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			//TO DO : get information from configuration by using Instance instead of ParentInstane
 			this.Delivery = this.NewDelivery(); // setup delivery
 
 			//checking for conflicts 
@@ -31,9 +30,7 @@ namespace Edge.Services.Google.Adwords
 				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
 			});
 
-			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-			
-			//TO DO: get ConflictBehavior from configuration 
+			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			this.Delivery.TargetLocationDirectory = "AdwordsSearch";
@@ -119,6 +116,16 @@ namespace Edge.Services.Google.Adwords
 					file.Parameters.Add("Email", email);
 					this.Delivery.Files.Add(file);
 				}
+
+				//...............................
+				//AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT
+				{
+					DeliveryFile file = new DeliveryFile();
+					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT];
+					file.Parameters.Add("Email", email);
+					this.Delivery.Files.Add(file);
+				}
+				//...............................
 			}
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;

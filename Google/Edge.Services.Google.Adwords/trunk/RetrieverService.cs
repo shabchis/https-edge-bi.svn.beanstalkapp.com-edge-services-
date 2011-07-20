@@ -63,6 +63,11 @@ namespace Edge.Services.Google.Adwords
 						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
 					}
+					else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]))
+					{
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+														ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT);
+					}
 					else
 					{//Other
 						var report=from r in GoogleStaticReportsNamesUtill._reportNames
@@ -84,7 +89,7 @@ namespace Edge.Services.Google.Adwords
 					
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
-					file.Name = _googleReport.customizedReportName + ".zip";
+					file.Name = _googleReport.customizedReportName + ".gz";
 					file.SourceUrl = request.downloadUrl.ToString();
 					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 					file.Parameters.Add("authToken", request.authToken);

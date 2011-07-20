@@ -58,6 +58,8 @@ namespace Edge.Services.Google.Adwords
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
+
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT = { "Id", "CampaignId", "AdGroupId", "CriteriaParameters", "Domain"};
 		#endregion Reports fields
 
 
@@ -119,6 +121,12 @@ namespace Edge.Services.Google.Adwords
 				case GA.v201101.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT:
 					{
 						_selector.fields = MANAGED_PLACEMENTS_PERFORMANCE_REPORT;
+						break;
+					}
+
+				case GA.v201101.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT:
+					{
+						_selector.fields = AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT;
 						break;
 					}
 			}
