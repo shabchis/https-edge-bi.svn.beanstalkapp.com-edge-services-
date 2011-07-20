@@ -17,7 +17,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			_service = service;
 
 			// Get customer account IDs
-			string originalIDs = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"];
+			string originalIDs = _service.Instance.Configuration.Options["AdCenter.AccountIDs"];
 			string[] split = originalIDs.Split(',');
 			_accountOriginalIDs = new long[split.Length];
 			for (int i = 0; i < _accountOriginalIDs.Length; i++)
@@ -93,7 +93,6 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReportRequest = request
 				
 			};
-
 	
 			// Open a connection
 			using (var service = new WS.ReportingServiceClient())
