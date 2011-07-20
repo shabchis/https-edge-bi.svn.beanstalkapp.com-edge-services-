@@ -124,9 +124,13 @@ namespace Edge.Services.Google.Adwords
 			}
 
 			// Create Report Service
-			reportService = (GA.v201101.ReportDefinitionService)user.adwordsUser.GetService(GA.Lib.AdWordsService.v201101.ReportDefinitionService);
+			reportService = CreateReportService(user);
 		}
 
+		private GA.v201101.ReportDefinitionService CreateReportService(GoogleUserEntity googleUserEntity)
+		{
+			return (GA.v201101.ReportDefinitionService)googleUserEntity.adwordsUser.GetService(GA.Lib.AdWordsService.v201101.ReportDefinitionService);
+		}
 
 		private void SetAccountEmails(List<string> accountEmails)
 		{
@@ -147,18 +151,18 @@ namespace Edge.Services.Google.Adwords
 		/// Intializing report id from Google API / Report Definition Table in DB .
 		/// </summary>
 		/// <param name="Update">true in order to create new report definition, ignore exsiting report id in Report Definition Table</param>
-		public long intializingGoogleReport(bool CreateNewAuth = false)
+		public long intializingGoogleReport(bool InvalidReportId = false , bool Retry = false)
 		{
 			long ReportId;
-			if (!CreateNewAuth)
+			if (!InvalidReportId)
 			{
 				ReportId = GetReportIdFromDB(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, this.startDate, this.endDate);
 				if (ReportId == -1)
-					ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
+					ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, Retry);
 			}
-			else // Auth key is invalid or doesn't exists in DB
+			else // Invalid Report Id - get from API
 			{
-				ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType);
+				ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, Retry);
 				SetReportID(this._accountId, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate, true);
 			}
 
@@ -166,9 +170,9 @@ namespace Edge.Services.Google.Adwords
 			return ReportId;
 		}
 
-		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType)
+		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType, bool CreateNewAuth)
 		{
-			long ReportId = CreateGoogleReport(Account_Id);
+			long ReportId = CreateGoogleReport(Account_Id, CreateNewAuth);
 			SetReportID(Account_Id, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate);
 			return ReportId;
 		}
@@ -252,6 +256,8 @@ namespace Edge.Services.Google.Adwords
 
 		public long CreateGoogleReport(int Account_Id, bool AuthRetry = true)
 		{
+			
+			#region TimePeriod
 			if (this.dateRangeType.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
 			{
 				_selector.dateRange = new GA.v201101.DateRange()
@@ -261,7 +267,9 @@ namespace Edge.Services.Google.Adwords
 				};
 
 			}
+			#endregion
 
+			#region Filltering Report
 			if (!this.includeZeroImpression && !_includeConversionTypes)
 			{
 				// Create a filter Impressions > 0 
@@ -270,18 +278,9 @@ namespace Edge.Services.Google.Adwords
 				impPredicate.@operator = GA.v201101.PredicateOperator.GREATER_THAN;
 				impPredicate.values = new string[] { "0" };
 				_selector.predicates = new GA.v201101.Predicate[] { impPredicate };
-
-				//Sorting 
-				//if (this.ReportType.Equals(GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT))
-				//{
-				//    _selector.ordering = new GA.v201101.OrderBy[]
-				//    {
-				//        new GA.v201101.OrderBy() { field = "Id", sortOrder = GA.v201101.SortOrder.DESCENDING },
-				//        new GA.v201101.OrderBy() { field = "KeywordId", sortOrder = GA.v201101.SortOrder.DESCENDING }
-				//    };
-				//}
 			}
-
+			#endregion
+			
 			// Create reportDefinition
 			_reportDefinition = CreateReportDefinition(_selector, _accountEmails);
 
@@ -291,24 +290,27 @@ namespace Edge.Services.Google.Adwords
 			operation.@operator = GA.v201101.Operator.ADD;
 			GA.v201101.ReportDefinitionOperation[] operations = new GA.v201101.ReportDefinitionOperation[] { operation };
 
-			//Create reportDefintions
+			//Create Report 
 			try
 			{
 				GA.v201101.ReportDefinition[] reportDefintions = reportService.mutate(operations);
 				this.Id = reportDefintions[0].id;
 			}
-			catch (AdWordsApiException ex) // try to catch AuthenticationError and create new auth
+			//AuthenticationError Handle 
+			catch (AdWordsApiException ex) 
 			{
 				if (AuthRetry)
 				{
-					this.user = new GoogleUserEntity(this._reportMcc, this._reportEmail, true);
-					Log.Write("AuthenticationError.GOOGLE_ACCOUNT_COOKIE_INVALID, Authentication has been renewed : ", ex);
-					CreateGoogleReport(Account_Id, false);
+					Log.Write("Google Authentication Error:  Cannot Renew Authentication", ex);
+					throw new Exception("Google Authentication Error:  Cannot Renew Authentication", ex);
 				}
 				else
 				{
-					Log.Write("Google Authentication Error:  Cannot Renew Authentication", ex);
-					throw new Exception("Google Authentication Error:  Cannot Renew Authentication", ex);
+					//Creating new Authentication
+					this.user = new GoogleUserEntity(this._reportMcc, this._reportEmail, true);
+					this.reportService = CreateReportService(this.user);
+					Log.Write("AuthenticationError.GOOGLE_ACCOUNT_COOKIE_INVALID, Authentication has been renewed : ", ex);
+					throw ex;
 				}
 			}
 			catch (Exception e)

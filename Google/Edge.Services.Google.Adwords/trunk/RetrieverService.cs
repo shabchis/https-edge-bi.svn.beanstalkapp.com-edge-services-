@@ -9,6 +9,7 @@ using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Util;
 using System.Threading;
 using Edge.Core.Utilities;
+using Google.Api.Ads.AdWords.Lib;
 
 namespace Edge.Services.Google.Adwords
 {
@@ -70,8 +71,17 @@ namespace Edge.Services.Google.Adwords
 
 						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange,(ReportDefinitionReportType)report.First());
 					}
-
-					_googleReport.intializingGoogleReport();
+					try
+					{
+						_googleReport.intializingGoogleReport();
+					}
+					catch (AdWordsApiException e)
+					{
+						bool InvalidreportID = false;
+						bool retry = true;
+						_googleReport.intializingGoogleReport(InvalidreportID, retry);
+					}
+					
 					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
 					file.Name = _googleReport.customizedReportName + ".zip";
@@ -88,7 +98,8 @@ namespace Edge.Services.Google.Adwords
 					{
 						if (ex.InnerException.Message.Equals("Report contents are invalid."))
 						{
-							_googleReport.intializingGoogleReport(true); // set new report
+							bool invalidReportID = true;
+							_googleReport.intializingGoogleReport(invalidReportID); // Report ID is invalid - create new report ID
 							Log.Write("Retriever : renewing Google Auth key", ex);
 						}
 					}

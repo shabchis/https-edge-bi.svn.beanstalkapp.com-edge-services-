@@ -77,13 +77,11 @@ namespace Edge.Services.Google.Adwords
 
 		public string GetAuthToken(string mccEmail, bool newAuth)
 		{
-			if (newAuth)
-				return GetAuthFromApi(mccEmail, this._mccPass);
-
-			string auth = GetAuthFromDB(mccEmail);
-			if (string.IsNullOrEmpty(auth))
-				auth = GetAuthFromApi(mccEmail, this._mccPass);
-
+			string pass;
+			string auth = GetAuthFromDB(mccEmail,out pass);
+			this._mccPass = pass;
+			if (newAuth || string.IsNullOrEmpty(auth))
+				auth = GetAuthFromApi(mccEmail, pass);
 			return auth;
 		}
 
@@ -137,9 +135,10 @@ namespace Edge.Services.Google.Adwords
 			
 		}
 
-		public string GetAuthFromDB(string mccEmail)
+		public string GetAuthFromDB(string mccEmail,out string mccPassword)
 		{
 			string auth = "";
+			mccPassword = "";
 
 #if (DEBUG)
 			SqlConnection connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
@@ -161,7 +160,7 @@ namespace Edge.Services.Google.Adwords
 					{
 						while (reader.Read())
 						{
-							this._mccPass = Encryptor.Dec(reader[0].ToString());
+							mccPassword = Encryptor.Dec(reader[0].ToString());
 							auth = reader[1].ToString();
 						}
 					}
@@ -174,7 +173,6 @@ namespace Edge.Services.Google.Adwords
 			
 			return auth;
 		}
-
 
 
 	}
