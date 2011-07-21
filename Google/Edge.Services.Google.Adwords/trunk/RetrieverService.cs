@@ -37,8 +37,7 @@ namespace Edge.Services.Google.Adwords
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
-			//Setting Date Range and time period
-			//TODO : GET DATE RANGE FROM TARGET PERIOD PARAM
+			//Sets Date Range and time period
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
 			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
@@ -63,11 +62,11 @@ namespace Edge.Services.Google.Adwords
 						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
 					}
-					else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]))
-					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
-														ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT);
-					}
+					//else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]))
+					//{
+					//    _googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+					//                                    ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT);
+					//}
 					else
 					{//Other
 						var report = from r in GoogleStaticReportsNamesUtill._reportNames

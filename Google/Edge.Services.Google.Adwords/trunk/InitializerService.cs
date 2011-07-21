@@ -119,12 +119,12 @@ namespace Edge.Services.Google.Adwords
 
 				//...............................
 				//AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT
-				{
-					DeliveryFile file = new DeliveryFile();
-					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT];
-					file.Parameters.Add("Email", email);
-					this.Delivery.Files.Add(file);
-				}
+				//{
+				//    DeliveryFile file = new DeliveryFile();
+				//    file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT];
+				//    file.Parameters.Add("Email", email);
+				//    this.Delivery.Files.Add(file);
+				//}
 				//...............................
 			}
 			this.Delivery.Save();
