@@ -70,11 +70,11 @@ namespace Edge.Services.Google.Adwords
 					}
 					else
 					{//Other
-						var report=from r in GoogleStaticReportsNamesUtill._reportNames
-							  where r.Value==file.Name
-							  select r.Key;
+						var report = from r in GoogleStaticReportsNamesUtill._reportNames
+									 where r.Value == file.Name
+									 select r.Key;
 
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange,(ReportDefinitionReportType)report.First());
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange, (ReportDefinitionReportType)report.First());
 					}
 					try
 					{
@@ -86,27 +86,24 @@ namespace Edge.Services.Google.Adwords
 						bool retry = true;
 						_googleReport.intializingGoogleReport(InvalidreportID, retry);
 					}
-					
-					GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
-					file.Name = _googleReport.customizedReportName + ".gz";
-					file.SourceUrl = request.downloadUrl.ToString();
-					file.Parameters.Add("clientCustomerId", request.clientCustomerId);
-					file.Parameters.Add("authToken", request.authToken);
-					file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
+					InitalizeReportParams(file);
 
 					try
 					{
 						DownloadFile(file);
 					}
-					catch (ReportsException ex) // if Getting a report ID exception
+					catch (FileDownloadException ex) // if Getting a report ID exception
 					{
-						if (ex.InnerException.Message.Equals("Report contents are invalid."))
-						{
-							bool invalidReportID = true;
-							_googleReport.intializingGoogleReport(invalidReportID); // Report ID is invalid - create new report ID
-							Log.Write("Retriever : renewing Google Auth key", ex);
-						}
+
+						Log.Write(ex.Message, LogMessageType.Warning);
+						bool invalidReportID = true;
+						_googleReport.intializingGoogleReport(invalidReportID); // Report ID is invalid - create new report ID
+						Log.Write("Retriever : renewing Google Auth key", ex);
+						InitalizeReportParams(file);
+						DownloadFile(file);
+
+
 					}
 				}
 
@@ -118,6 +115,17 @@ namespace Edge.Services.Google.Adwords
 
 			return Core.Services.ServiceOutcome.Success;
 
+		}
+
+		private void InitalizeReportParams(DeliveryFile file)
+		{
+			GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+
+			file.Name = _googleReport.customizedReportName + ".gz";
+			file.SourceUrl = request.downloadUrl.ToString();
+			file.Parameters.Add("clientCustomerId", request.clientCustomerId);
+			file.Parameters.Add("authToken", request.authToken);
+			file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
 		}
 
 		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
