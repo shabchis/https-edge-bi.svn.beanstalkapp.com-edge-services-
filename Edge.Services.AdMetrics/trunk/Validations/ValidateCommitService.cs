@@ -30,6 +30,8 @@ namespace Edge.Services.AdMetrics
 			//Dictionary<string,Measure> measures = Measure.GetMeasures(this.Delivery.Account, this.Delivery.Channel, null, MeasureOptions.IsCalculated | MeasureOptions.IsTarget, MeasureOptionsOperator.Not);
 			//foreach(Measure measure in m
 
+			var totals = (Dictionary<string, double>)importEntry.Parameters["Totals"];
+
 			return new ValidationResult()
 			{
 				Success = true
