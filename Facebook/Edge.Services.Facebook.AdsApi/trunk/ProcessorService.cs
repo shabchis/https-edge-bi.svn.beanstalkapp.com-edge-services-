@@ -6,7 +6,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
 using Edge.Core.Utilities;
-using Edge.Data.Pipeline.AdMetrics;
+using Edge.Services.AdMetrics;
 namespace Edge.Services.Facebook.AdsApi
 {
 

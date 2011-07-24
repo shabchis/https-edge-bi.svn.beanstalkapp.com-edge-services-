@@ -70,6 +70,10 @@
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Edge.Services.ValidationServices\Edge.Services.AdMetrics.csproj">
+      <Project>{36B6740D-938E-4994-9A0D-2DCB94D032B6}</Project>
+      <Name>Edge.Services.AdMetrics</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Edge.Services.config">
