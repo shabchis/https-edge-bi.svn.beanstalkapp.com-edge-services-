@@ -11,7 +11,7 @@ using System.Threading;
 using Edge.Core.Utilities;
 using Google.Api.Ads.AdWords.Lib;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	class RetrieverService : PipelineService
 	{

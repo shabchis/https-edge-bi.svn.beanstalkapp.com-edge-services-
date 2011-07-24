@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
     class AccountEntity
     {

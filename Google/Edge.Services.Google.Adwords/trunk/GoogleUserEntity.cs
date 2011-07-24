@@ -9,7 +9,7 @@ using Edge.Core.Configuration;
 using Google.Api.Ads.AdWords.v201101;
 using Edge.Core.Utilities;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	public class GoogleUserEntity
 	{

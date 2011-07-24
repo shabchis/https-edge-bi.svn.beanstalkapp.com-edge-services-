@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	class KeywordPrimaryKey
 	{

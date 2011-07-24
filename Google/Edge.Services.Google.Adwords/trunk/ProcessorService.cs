@@ -5,9 +5,9 @@ using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201101;
 using System.IO;
-using Edge.Data.Pipeline.AdMetrics;
+using Edge.Services.AdMetrics;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	class ProcessorService : PipelineService
 	{

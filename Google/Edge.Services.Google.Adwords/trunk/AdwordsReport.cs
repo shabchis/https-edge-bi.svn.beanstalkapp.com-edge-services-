@@ -16,7 +16,7 @@ using Google.Api.Ads.AdWords.v201101;
 using Google.Api.Ads.AdWords.Lib;
 using Edge.Core.Utilities;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	public class AdwordsReport
 	{

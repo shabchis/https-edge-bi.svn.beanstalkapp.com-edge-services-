@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using GA =Google.Api.Ads.AdWords.v201101;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	public static class GoogleStaticReportsNamesUtill
 	{

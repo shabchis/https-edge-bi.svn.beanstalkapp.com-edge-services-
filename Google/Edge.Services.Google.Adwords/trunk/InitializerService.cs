@@ -6,9 +6,9 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using GA = Google.Api.Ads.AdWords.v201101;
 using Edge.Core.Services;
-using Edge.Data.Pipeline.AdMetrics;
+using Edge.Services.AdMetrics;
 
-namespace Edge.Services.Google.Adwords
+namespace Edge.Services.Google.AdWords
 {
 	public class InitializerService : PipelineService
 	{
