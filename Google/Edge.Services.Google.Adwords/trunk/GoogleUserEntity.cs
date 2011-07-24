@@ -38,11 +38,11 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string mccEmail, string accountEmail,bool newAuth = false)
+		public GoogleUserEntity(string mccEmail, string accountEmail,bool newAuth = false,string authConnectionString="")
 		{
 			this._mccEmail = mccEmail;
 			this._accountEmail = accountEmail;
-			this._authToken = GetAuthToken(mccEmail, newAuth);
+			this._authToken = GetAuthToken(mccEmail, newAuth, authConnectionString);
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
 				AuthToken = _authToken,
@@ -56,36 +56,17 @@ namespace Edge.Services.Google.Adwords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		//public GoogleUserEntity(string _email, string _authToken, string _developerToken = "5eCsvAOU06Fs4j5qHWKTCA",
-		//    string _applicationToken = "5eCsvAOU06Fs4j5qHWKTCA", string userAgent = "Edge.BI", bool enableGzipCompression = true)
-		//{
-		//    this._accountEmail = _email;
-		//    this._authToken = _authToken;
-		//    this._developerToken = _developerToken;
-
-		//    AdWordsAppConfig config = new AdWordsAppConfig()
-		//    {
-		//        AuthToken = _authToken,
-		//        DeveloperToken = _developerToken,
-		//        ApplicationToken = _applicationToken,
-		//        ClientEmail = _accountEmail,
-		//        UserAgent = userAgent,
-		//        EnableGzipCompression = enableGzipCompression
-		//    };
-		//    adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
-		//}
-
-		public string GetAuthToken(string mccEmail, bool newAuth)
+		public string GetAuthToken(string mccEmail, bool newAuth, string authConnectionString)
 		{
 			string pass;
-			string auth = GetAuthFromDB(mccEmail,out pass);
+			string auth = GetAuthFromDB(mccEmail,authConnectionString,out pass);
 			this._mccPass = pass;
 			if (newAuth || string.IsNullOrEmpty(auth))
-				auth = GetAuthFromApi(mccEmail, pass);
+				auth = GetAuthFromApi(mccEmail, pass, authConnectionString);
 			return auth;
 		}
 
-		private string GetAuthFromApi(string mccEmail, string pass)
+		private string GetAuthFromApi(string mccEmail, string pass, string authConnectionString)
 		{
 			string auth;
 			AdWordsAppConfig config = new AdWordsAppConfig()
@@ -102,7 +83,7 @@ namespace Edge.Services.Google.Adwords
 				AdWordsUser user = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 				var reportService = (ReportDefinitionService)user.GetService(AdWordsService.v201101.ReportDefinitionService);
 				auth = reportService.RequestHeader.authToken;
-				SetAuthToken(mccEmail, auth);
+				SetAuthToken(mccEmail, auth, authConnectionString);
 			}
 			catch (Exception ex)
 			{
@@ -114,11 +95,22 @@ namespace Edge.Services.Google.Adwords
 
 		}
 
-		private void SetAuthToken(string mccEmail, string auth)
+		private void SetAuthToken(string mccEmail, string auth, string authConnectionString)
 		{
+			SqlConnection connection;
+
+			if (string.IsNullOrEmpty(authConnectionString))
+			{
+				connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
+			}
+			else
+				connection = new SqlConnection(authConnectionString);
+
+			//	connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+
 			try
 			{
-				using (SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth")))
+				using (connection)
 				{
 					SqlCommand cmd = DataManager.CreateCommand(@"SetGoogleMccAuth(@MccEmail:Nvarchar,@AuthToken:Nvarchar)", System.Data.CommandType.StoredProcedure);
 					cmd.Connection = connection;
@@ -135,18 +127,21 @@ namespace Edge.Services.Google.Adwords
 			
 		}
 
-		public string GetAuthFromDB(string mccEmail,out string mccPassword)
+		public string GetAuthFromDB(string mccEmail,string authConnectionString,out string mccPassword)
 		{
 			string auth = "";
 			mccPassword = "";
+			SqlConnection connection;
 
-//#if (DEBUG)
-//			SqlConnection connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+			if (string.IsNullOrEmpty(authConnectionString))
+			{
+				connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
+			}
+			else
+				connection = new SqlConnection(authConnectionString);
+			
+			//	connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
 
-//#else 
-			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
-
-//#endif
 			try
 			{
 				using (connection)
