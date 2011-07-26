@@ -37,11 +37,12 @@ namespace Edge.Services.Google.AdWords
 		private bool _includeConversionTypes { set; get; }
 		public string customizedReportName { set; get; }
 		private string _reportEmail { set; get; }
+		public string _adwordsClientId { get; set; }
 		private string _reportMcc { set; get; }
 
 		static string DEFAULT_ADWORDSAPI_SERVER = "https://adwords.google.com";
 
-		#region Reports fields
+		#region Supported Reports fields
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
@@ -71,7 +72,7 @@ namespace Edge.Services.Google.AdWords
 		/// <param name="dateRange">Report Definition Date Range Type. Default value is YESTERDAY.</param>
 		/// <param name="ReportType">Report Definition Report Type. Default value is AD_PERFORMANCE_REPORT </param>
 		/// <param name="includeConversionTypes">In order to create report with conversion types such as signups and purchase , set this value to be true. </param>
-		public AdwordsReport(int AccountId, string mccEmail, string accountEmail, string StartDate, string EndDate, bool IncludeZeroImpression = false,
+		public AdwordsReport(int AccountId, string mccEmail, string AdwordsClientId, string StartDate, string EndDate, bool IncludeZeroImpression = false,
 							GA.v201101.ReportDefinitionDateRangeType dateRange = GA.v201101.ReportDefinitionDateRangeType.YESTERDAY,
 							GA.v201101.ReportDefinitionReportType ReportType = GA.v201101.ReportDefinitionReportType.AD_PERFORMANCE_REPORT,
 							bool includeConversionTypes = false, string Name = "")
@@ -85,10 +86,11 @@ namespace Edge.Services.Google.AdWords
 			this.dateRangeType = dateRange;
 			this.startDate = StartDate;
 			this.endDate = EndDate;
-			this._reportEmail = accountEmail;
+			//this._reportEmail = accountEmail;
+			this._adwordsClientId = AdwordsClientId;
 			this._reportMcc = mccEmail;
 			//SetAccountEmails(accountEmails);
-			this.user = new GoogleUserEntity(_reportMcc, _reportEmail);
+			this.user = new GoogleUserEntity(_reportMcc, _adwordsClientId);
 			this._includeConversionTypes = includeConversionTypes;
 
 			//Setting customized Report Name
@@ -369,8 +371,10 @@ namespace Edge.Services.Google.AdWords
 			return _reportDefinition;
 		}
 
-		
 
+
+
+		
 	}
 
 }
