@@ -166,33 +166,33 @@ namespace Edge.Services.Google.AdWords
 			long ReportId;
 			if (!InvalidReportId)
 			{
-				ReportId = GetReportIdFromDB(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, this.startDate, this.endDate);
+				ReportId = GetReportIdFromDB(this._accountId, this._adwordsClientId, this.dateRangeType, this._reportType, this.startDate, this.endDate);
 				if (ReportId == -1)
-					ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, Retry);
+					ReportId = GetReportIdFromGoogleApi(this._accountId, this._adwordsClientId,this.dateRangeType, this._reportType, Retry);
 			}
 			else // Invalid Report Id - get from API
 			{
-				ReportId = GetReportIdFromGoogleApi(this._accountId, this.user._accountEmail, this.dateRangeType, this._reportType, Retry);
-				SetReportID(this._accountId, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate, true);
+				ReportId = GetReportIdFromGoogleApi(this._accountId, this._adwordsClientId, this.dateRangeType, this._reportType, Retry);
+				SetReportID(this._accountId, this._adwordsClientId, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate, true);
 			}
 
 			this.Id = ReportId;
 			return ReportId;
 		}
 
-		private long GetReportIdFromGoogleApi(int Account_Id, string p, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType, bool CreateNewAuth)
+		private long GetReportIdFromGoogleApi(int Account_Id, string GoogleUniqueID, GA.v201101.ReportDefinitionDateRangeType reportDefinitionDateRangeType, GA.v201101.ReportDefinitionReportType reportDefinitionReportType, bool CreateNewAuth)
 		{
 			long ReportId = CreateGoogleReport(Account_Id, CreateNewAuth);
-			SetReportID(Account_Id, this.user._accountEmail, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate);
+			SetReportID(Account_Id, GoogleUniqueID, this._reportDefinition.dateRangeType, this._reportDefinition.reportType, ReportId, this.startDate, this.endDate);
 			return ReportId;
 		}
 
-		private void SetReportID(int Account_Id, string Account_Email, GA.v201101.ReportDefinitionDateRangeType Date_Range, GA.v201101.ReportDefinitionReportType Google_Report_Type,
+		private void SetReportID(int Account_Id, string GoogleUniqueID, GA.v201101.ReportDefinitionDateRangeType Date_Range, GA.v201101.ReportDefinitionReportType Google_Report_Type,
 								long ReportId, String StartDate, String EndDate, bool Update = false)
 		{
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "SystemDatabase")))
 			{
-				SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @Account_Email:Nvarchar" +
+				SqlCommand cmd = DataManager.CreateCommand("SetGoogleReportDefinitionId(@Google_Report_Id:int,@Account_ID:Int, @GoogleUniqueID:Nvarchar" +
 								",@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar ,@Google_Report_ID:int,@StartDay:Nvarchar,@EndDay:Nvarchar,@Update:bit,@reportName:Nvarchar,@reportfields:Nvarchar)"
 								, System.Data.CommandType.StoredProcedure);
 				sqlCon.Open();
@@ -200,7 +200,7 @@ namespace Edge.Services.Google.AdWords
 				cmd.Connection = sqlCon;
 				cmd.Parameters["@Google_Report_Id"].Value = ReportId;
 				cmd.Parameters["@Account_Id"].Value = Account_Id;
-				cmd.Parameters["@Account_Email"].Value = Account_Email;
+				cmd.Parameters["@GoogleUniqueID"].Value = GoogleUniqueID;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
 				cmd.Parameters["@reportName"].Value = customizedReportName;
@@ -221,7 +221,7 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		private long GetReportIdFromDB(int Account_Id, string Account_Email, GA.v201101.ReportDefinitionDateRangeType Date_Range,
+		private long GetReportIdFromDB(int Account_Id, string GoogleUniqueID, GA.v201101.ReportDefinitionDateRangeType Date_Range,
 							GA.v201101.ReportDefinitionReportType Google_Report_Type, String StartDate, String EndDate)
 		{
 			long ReportId = -1;
@@ -230,12 +230,12 @@ namespace Edge.Services.Google.AdWords
 				sqlCon.Open();
 				//SqlCommand sqlCommand = DataManager.CreateCommand("SELECT Gateway_id from UserProcess_GUI_Gateway where account_id = @AccountId:int");
 
-				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @Account_Email:Nvarchar," +
+				SqlCommand cmd = DataManager.CreateCommand("GetGoogleReportDefinitionId(@Account_ID:Int, @GoogleUniqueID:Nvarchar," +
 						"@Date_Range:Nvarchar, @Google_Report_Type:Nvarchar,@StartDay:Nvarchar, @EndDay:Nvarchar,@reportName:Nvarchar,@reportfields:Nvarchar )", System.Data.CommandType.StoredProcedure);
 				cmd.Connection = sqlCon;
 
 				cmd.Parameters["@Account_Id"].Value = Account_Id;
-				cmd.Parameters["@Account_Email"].Value = Account_Email;
+				cmd.Parameters["@GoogleUniqueID"].Value = GoogleUniqueID;
 				cmd.Parameters["@Date_Range"].Value = Date_Range.ToString();
 				cmd.Parameters["@Google_Report_Type"].Value = Google_Report_Type.ToString();
 				if (Date_Range.Equals(GA.v201101.ReportDefinitionDateRangeType.CUSTOM_DATE))
@@ -317,7 +317,7 @@ namespace Edge.Services.Google.AdWords
 				else
 				{
 					//Creating new Authentication
-					this.user = new GoogleUserEntity(this._reportMcc, this._reportEmail, true);
+					this.user = new GoogleUserEntity(this._reportMcc, this._adwordsClientId, true);
 					this.reportService = CreateReportService(this.user);
 					Log.Write("AuthenticationError.GOOGLE_ACCOUNT_COOKIE_INVALID, Authentication has been renewed : ", ex);
 					throw ex;

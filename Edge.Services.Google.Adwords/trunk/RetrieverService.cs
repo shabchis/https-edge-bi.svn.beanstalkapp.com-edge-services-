@@ -140,7 +140,7 @@ namespace Edge.Services.Google.AdWords
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
 
 			request.Headers.Add("clientCustomerId: " + file.Parameters["clientCustomerId"]);
-			request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
+			//request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
 			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
 			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
 			//request.Method = "POST";
