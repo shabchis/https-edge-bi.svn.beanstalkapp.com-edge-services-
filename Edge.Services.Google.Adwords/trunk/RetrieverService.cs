@@ -43,23 +43,23 @@ namespace Edge.Services.Google.AdWords
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 			_waitHandle = new AutoResetEvent(false);
 
-			foreach (string email in (string[])this.Delivery.Parameters["accountEmails"])
+			foreach (string clientId in (string[])this.Delivery.Parameters["AdwordsClientIDs"])
 			{
-				//Get all files on specific email
+				//Get all files on specific client
 				var files = from f in this.Delivery.Files
-							where f.Parameters["Email"].ToString() == email
+							where f.Parameters["AdwordsClientID"].ToString() == clientId
 							select f;
 
 				foreach (var file in files)
 				{
 					if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"))
 					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), clientId, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.AD_PERFORMANCE_REPORT, true);
 					}
 					else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]))
 					{
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, false, _dateRange,
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), clientId, startDate, endDate, false, _dateRange,
 														ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT);
 					}
 					//else if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]))
@@ -73,7 +73,7 @@ namespace Edge.Services.Google.AdWords
 									 where r.Value == file.Name
 									 select r.Key;
 
-						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), email, startDate, endDate, includeZeroImpression, _dateRange, (ReportDefinitionReportType)report.First());
+						_googleReport = new AdwordsReport(Instance.AccountID, this.Delivery.Parameters["MccEmail"].ToString(), clientId, startDate, endDate, includeZeroImpression, _dateRange, (ReportDefinitionReportType)report.First());
 					}
 					try
 					{

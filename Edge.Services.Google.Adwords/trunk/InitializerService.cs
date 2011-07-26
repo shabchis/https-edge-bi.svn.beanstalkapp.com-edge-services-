@@ -17,10 +17,10 @@ namespace Edge.Services.Google.AdWords
 			this.Delivery = this.NewDelivery(); // setup delivery
 
 			//checking for conflicts 
-			this.Delivery.Signature = String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,GoogleAccountEmail , TargetPeriod
+			this.Delivery.Signature = String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
-				this.Instance.Configuration.Options["Adwords.Email"].ToString(),
+				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
 				this.TargetPeriod.ToAbsolute());
 
 
@@ -59,6 +59,11 @@ namespace Edge.Services.Google.AdWords
 			//Get Account Emails
 			string[] accountEmails = this.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
 			this.Delivery.Parameters["accountEmails"] = accountEmails;
+
+			//Get Account Client Id's
+			string[] adwordsClientIds = this.Instance.ParentInstance.Configuration.Options["Adwords.ClientID"].Split('|');
+			this.Delivery.Parameters["AdwordsClientIDs"] = adwordsClientIds;
+
 			#endregion
 
 			#region Nice to have params
@@ -89,15 +94,15 @@ namespace Edge.Services.Google.AdWords
 
 			#endregion
 
-			//Creating Delivery files Per Email 
-			foreach (string email in accountEmails)
+			//Creating Delivery files Per Client ID 
+			foreach (string clientId in adwordsClientIds)
 			{
 				foreach (GA.ReportDefinitionReportType reportType in (List<GA.ReportDefinitionReportType>)this.Delivery.Parameters["reportTypes"])
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[reportType];
 					//file.Name = reportType.ToString();
-					file.Parameters.Add("Email", email);
+					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
 				if (Boolean.Parse(includeConversionTypes)) // if AD Performance With conversion type is required 
@@ -105,7 +110,7 @@ namespace Edge.Services.Google.AdWords
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv";
 					//file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
-					file.Parameters.Add("Email", email);
+					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
 				if (Boolean.Parse(includeDisplaytData)) // if AD Performance With conversion type is required 
@@ -113,7 +118,7 @@ namespace Edge.Services.Google.AdWords
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT];
 					//file.Name = "MANAGED_PLACEMENTS_PERFORMANCE_REPORT";
-					file.Parameters.Add("Email", email);
+					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
 
