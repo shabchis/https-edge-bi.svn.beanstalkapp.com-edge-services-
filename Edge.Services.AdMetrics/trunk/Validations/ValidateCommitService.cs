@@ -14,7 +14,7 @@ namespace Edge.Services.AdMetrics
 	public class ValidateCommitService : ValidationService
 	{
 		protected override ValidationResult Validate()
-		{
+		{ 
 			DeliveryHistoryEntry rollbackEntry = null;
 			ValidationResult result = new ValidationResult() { Success = true };
 			if (this.Delivery.History.Count(entry => entry.Operation == DeliveryOperation.Imported) == 0)

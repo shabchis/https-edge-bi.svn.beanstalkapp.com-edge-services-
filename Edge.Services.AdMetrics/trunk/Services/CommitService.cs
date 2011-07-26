@@ -9,7 +9,7 @@ using Edge.Data.Pipeline.Services;
 namespace Edge.Services.AdMetrics
 {
 	public class CommitService: PipelineService
-	{
+	{ 
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()

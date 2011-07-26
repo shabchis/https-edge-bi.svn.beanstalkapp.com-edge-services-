@@ -6,4 +6,4 @@ using System.Configuration;
 
 namespace Edge.Services.AdMetrics
 {
-}
+} 

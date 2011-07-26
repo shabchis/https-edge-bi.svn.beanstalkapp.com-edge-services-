@@ -12,7 +12,7 @@ namespace Edge.Services.AdMetrics
 	public class ProcessorService: PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
-		{
+		{ 
 			string fileName;
 			if (!this.Instance.Configuration.Options.TryGetValue(Const.ConfigurationOptions.DeliveryFileName, out fileName))
 				throw new ConfigurationException(String.Format("{0} is missing in the service configuration options.", Const.ConfigurationOptions.DeliveryFileName));

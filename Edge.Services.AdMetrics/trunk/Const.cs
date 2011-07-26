@@ -11,7 +11,7 @@ namespace Edge.Services.AdMetrics
 		{
 			public const string FileFormat = "FileFormat";
 			public const string Compression = "Compression";
-			public const string DeliveryFileName = "DeliveryFileName";
+			public const string DeliveryFileName = "DeliveryFileName"; 
 		}
 
 		public static class HistoryParameters

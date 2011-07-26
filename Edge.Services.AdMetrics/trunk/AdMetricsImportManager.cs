@@ -20,7 +20,7 @@ namespace Edge.Services.AdMetrics
 	/// Encapsulates the process of adding ads and ad metrics to the delivery staging database.
 	/// </summary>
 	public class AdMetricsImportManager : DeliveryImportManager, IDisposable
-	{
+	{ 
 		#region Consts
 		public class Consts
 		{
