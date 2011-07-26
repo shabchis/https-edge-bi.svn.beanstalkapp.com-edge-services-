@@ -5,9 +5,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{49
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{C56DBE29-1646-4475-919E-C02CFD749263}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Core", "..\..\Edge Framework\Edge.Core\Edge.Core.csproj", "{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Core", "..\..\Framework\Edge.Core\Edge.Core.csproj", "{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Data.Pipeline", "..\..\Edge Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj", "{53391A99-E8CA-4262-A8E0-5F05A1CC6608}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Data.Pipeline", "..\..\Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj", "{53391A99-E8CA-4262-A8E0-5F05A1CC6608}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Microsoft.AdCenter", "..\Microsoft\Edge.Services.Microsoft.AdCenter\Edge.Services.Microsoft.AdCenter.csproj", "{C73E557C-2B70-4040-9FA5-5AA2C0A95717}"
 EndProject
