@@ -23,6 +23,8 @@ namespace Edge.Services.Google.AdWords
 		private string _mccPass { set; get; }
 		private string _mccEmail { set; get; }
 		public string _accountEmail { set; get; }
+		public string AdwordsClientId { set; get; }
+
 
 		public GoogleUserEntity()
 		{
@@ -38,18 +40,23 @@ namespace Edge.Services.Google.AdWords
 			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
 		}
 
-		public GoogleUserEntity(string mccEmail, string accountEmail,bool newAuth = false,string authConnectionString="")
+		public GoogleUserEntity(string mccEmail, string adwordsClientId, bool newAuth = false, string authConnectionString = "")
 		{
+			if (String.IsNullOrWhiteSpace(mccEmail) || String.IsNullOrWhiteSpace(adwordsClientId))
+				throw new Exception(String.Format("{0} says: Invalid arguments", this));
+			
+			
 			this._mccEmail = mccEmail;
-			this._accountEmail = accountEmail;
+			//this._accountEmail = accountEmail;
+			this.AdwordsClientId = adwordsClientId;
 			this._authToken = GetAuthToken(mccEmail, newAuth, authConnectionString);
 			AdWordsAppConfig config = new AdWordsAppConfig()
 			{
 				AuthToken = _authToken,
 				DeveloperToken = _developerToken,
 				ApplicationToken = _applicationToken,
-
-				ClientEmail = accountEmail,
+				//ClientEmail = accountEmail,
+				ClientCustomerId = this.AdwordsClientId,
 				UserAgent = "Edge.BI",
 				EnableGzipCompression = true
 			};
