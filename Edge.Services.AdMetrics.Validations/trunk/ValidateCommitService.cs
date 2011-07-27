@@ -9,7 +9,7 @@ using Edge.Core.Configuration;
 using System.Data.SqlClient;
 using Edge.Core.Data;
 
-namespace Edge.Services.AdMetrics
+namespace Edge.Services.AdMetrics.Services
 {
 	public class ValidateCommitService : ValidationService
 	{
