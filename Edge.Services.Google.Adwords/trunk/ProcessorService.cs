@@ -48,7 +48,7 @@ namespace Edge.Services.Google.AdWords
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			#region Getting Keywords Data
-
+			Dictionary<string,double> _totals=new Dictionary<string,double>();
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
 			string[] requiredHeaders = new string[1];
 			requiredHeaders[0] = Const.RequiredHeader;
@@ -176,14 +176,28 @@ namespace Edge.Services.Google.AdWords
 			{
 				//session.Begin(false);
 				session.BeginImport(this.Delivery);
-
+				foreach (KeyValuePair<string,Measure> measure in session.Measures)
+				{
+					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					{
+						_totals.Add(measure.Key, 0);
+					}
+					
+				}
 				using (_adsReader)
 				{
 					while (_adsReader.Read())
 					{
 
 						if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
+						{
+							//Seting Totals
+							_totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks);
+							_totals[Measure.Common.Cost] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
+							_totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions);
+
 							break;
+						}
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 						Ad ad;
@@ -342,6 +356,7 @@ namespace Edge.Services.Google.AdWords
 						};
 						session.ImportMetrics(adMetricsUnit);
 					}
+					session.HistoryEntryParameters.Add("Totals", _totals);
 					session.EndImport();
 				}
 
