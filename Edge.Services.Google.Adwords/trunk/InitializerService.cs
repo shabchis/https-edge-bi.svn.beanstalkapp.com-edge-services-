@@ -41,12 +41,12 @@ namespace Edge.Services.Google.AdWords
 			#region Must Have Params
 
 			//Get MCC Email
-			if (String.IsNullOrEmpty(this.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"]))
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
-			else this.Delivery.Parameters["MccEmail"] = this.Instance.ParentInstance.Configuration.Options["Adwords.MccEmail"];
+			else this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get Report types
-			string[] reportTypeNames = this.Instance.ParentInstance.Configuration.Options["Adwords.ReportType"].Split('|');
+			string[] reportTypeNames = this.Instance.Configuration.Options["Adwords.ReportType"].Split('|');
 			List<GA.ReportDefinitionReportType> reportTypes = new List<GA.ReportDefinitionReportType>();
 			foreach (string reportTypeName in reportTypeNames)
 			{
@@ -56,12 +56,12 @@ namespace Edge.Services.Google.AdWords
 			}
 			this.Delivery.Parameters["reportTypes"] = reportTypes;
 
-			//Get Account Emails
-			string[] accountEmails = this.Instance.ParentInstance.Configuration.Options["Adwords.Email"].Split('|');
-			this.Delivery.Parameters["accountEmails"] = accountEmails;
+			////Get Account Emails
+			//string[] accountEmails = this.Instance.Configuration.Options["Adwords.Email"].Split('|');
+			//this.Delivery.Parameters["accountEmails"] = accountEmails;
 
 			//Get Account Client Id's
-			string[] adwordsClientIds = this.Instance.ParentInstance.Configuration.Options["Adwords.ClientID"].Split('|');
+			string[] adwordsClientIds = this.Instance.Configuration.Options["Adwords.ClientID"].Split('|');
 			this.Delivery.Parameters["AdwordsClientIDs"] = adwordsClientIds;
 
 			#endregion
@@ -70,7 +70,7 @@ namespace Edge.Services.Google.AdWords
 
 			//Check for includeZeroImpression
 			string includeZeroImpression;
-			if (!String.IsNullOrEmpty(includeZeroImpression = Instance.ParentInstance.Configuration.Options["includeZeroImpression"]))
+			if (!String.IsNullOrEmpty(includeZeroImpression = Instance.Configuration.Options["includeZeroImpression"]))
 			{
 				this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
 			}
@@ -78,7 +78,7 @@ namespace Edge.Services.Google.AdWords
 
 			//Check for includeConversionTypes
 			string includeConversionTypes;
-			if (!String.IsNullOrEmpty(includeConversionTypes = Instance.ParentInstance.Configuration.Options["includeConversionTypes"]))
+			if (!String.IsNullOrEmpty(includeConversionTypes = Instance.Configuration.Options["includeConversionTypes"]))
 			{
 				this.Delivery.Parameters["includeConversionTypes"] = includeConversionTypes;
 			}
@@ -86,7 +86,7 @@ namespace Edge.Services.Google.AdWords
 
 			//Check for includeDisplaytData
 			string includeDisplaytData;
-			if (!String.IsNullOrEmpty(includeDisplaytData = Instance.ParentInstance.Configuration.Options["includeDisplaytData"]))
+			if (!String.IsNullOrEmpty(includeDisplaytData = Instance.Configuration.Options["includeDisplaytData"]))
 			{
 				this.Delivery.Parameters["includeDisplaytData"] = includeDisplaytData;
 			}
