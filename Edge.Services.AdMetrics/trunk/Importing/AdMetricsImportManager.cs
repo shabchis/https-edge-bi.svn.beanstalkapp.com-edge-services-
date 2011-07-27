@@ -20,7 +20,7 @@ namespace Edge.Services.AdMetrics
 	/// Encapsulates the process of adding ads and ad metrics to the delivery staging database.
 	/// </summary>
 	public class AdMetricsImportManager : DeliveryImportManager, IDisposable
-	{ 
+	{
 		#region Consts
 		public class Consts
 		{
@@ -31,6 +31,7 @@ namespace Edge.Services.AdMetrics
 				public const string MeasureOltpFieldsSql = "MeasureOltpFieldsSql";
 				public const string MeasureValidateSql = "MeasureValidateSql";
 				public const string CommitTableName = "CommitTableName";
+				public const string Totals = "Totals";
 			}
 
 			public static class AppSettings
@@ -131,7 +132,7 @@ namespace Edge.Services.AdMetrics
 				/// Reserved for post-processing
 				/// </summary>
 				public static ColumnDef KeywordGK = new ColumnDef("KeywordGK", type: SqlDbType.NChar, size: 50, nullable: true);
-				
+
 				/// <summary>
 				/// Reserved for post-processing
 				/// </summary>
@@ -337,9 +338,9 @@ namespace Edge.Services.AdMetrics
 		public class ImportManagerOptions
 		{
 			public string SqlOltpConnectionString { get; set; }
-			public string SqlPrepareCommand {get; set;}
-			public string SqlCommitCommand {get; set;}
-			public string SqlRollbackCommand {get;set;}
+			public string SqlPrepareCommand { get; set; }
+			public string SqlCommitCommand { get; set; }
+			public string SqlRollbackCommand { get; set; }
 			public double CommitValidationThreshold { get; set; }
 		}
 
@@ -359,7 +360,8 @@ namespace Edge.Services.AdMetrics
 		#region Constructors
 		/*=========================*/
 
-		public AdMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null):base(serviceInstanceID)
+		public AdMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null)
+			: base(serviceInstanceID)
 		{
 			options = options ?? new ImportManagerOptions();
 			options.SqlOltpConnectionString = options.SqlOltpConnectionString ?? AppSettings.GetConnectionString(this, Consts.ConnectionStrings.Oltp);
@@ -374,7 +376,7 @@ namespace Edge.Services.AdMetrics
 
 		#region Import
 		/*=========================*/
-	
+
 		private BulkObjects _bulkAd;
 		private BulkObjects _bulkAdSegment;
 		private BulkObjects _bulkAdTarget;
@@ -390,7 +392,7 @@ namespace Edge.Services.AdMetrics
 		{
 			this._tablePrefix = string.Format("D{0}_{1}_{2}", this.CurrentDelivery.Account.ID, DateTime.Now.ToString("yyyMMdd_HHmmss"), this.CurrentDelivery.DeliveryID.ToString("N").ToLower());
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.TablePerfix, this._tablePrefix);
-			
+
 			// Connect to database
 			_sqlConnection = NewDeliveryDbConnection();
 			_sqlConnection.Open();
@@ -412,7 +414,7 @@ namespace Edge.Services.AdMetrics
 					this.CurrentDelivery.Account,
 					this.CurrentDelivery.Channel,
 					oltpConnection,
-						// NOT IsTarget and NOT IsCalculated and NOT IsBO
+					// NOT IsTarget and NOT IsCalculated and NOT IsBO
 						MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
 						MeasureOptionsOperator.Not
 					);
@@ -423,7 +425,7 @@ namespace Edge.Services.AdMetrics
 			StringBuilder measuresNamesSQL = new StringBuilder(",");
 			StringBuilder measuresValidationSQL = new StringBuilder();
 			int count = 0;
-			foreach (Measure  measure in this.Measures.Values)
+			foreach (Measure measure in this.Measures.Values)
 			{
 				_bulkMetrics.AddColumn(new ColumnDef(
 					name: measure.Name,
@@ -431,7 +433,7 @@ namespace Edge.Services.AdMetrics
 					nullable: true
 					));
 
-				measuresFieldNamesSQL.AppendFormat("[{0}]{1}",measure.OltpName, count < this.Measures.Values.Count-1 ? "," : null);
+				measuresFieldNamesSQL.AppendFormat("[{0}]{1}", measure.OltpName, count < this.Measures.Values.Count - 1 ? "," : null);
 				measuresNamesSQL.AppendFormat("[{0}]{1}", measure.Name, count < this.Measures.Values.Count - 1 ? "," : null);
 
 				if (measure.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
@@ -439,6 +441,7 @@ namespace Edge.Services.AdMetrics
 
 				count++;
 			}
+
 
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql, measuresFieldNamesSQL.ToString());
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureNamesSql, measuresNamesSQL.ToString());
@@ -653,10 +656,12 @@ namespace Edge.Services.AdMetrics
 		SqlTransaction _commitTransaction = null;
 		SqlCommand _prepareCommand = null;
 		SqlCommand _commitCommand = null;
+		SqlCommand _validateCommand = null;
 
 		const int Commit_PREPARE_PASS = 0;
 		const int Commit_VALIDATE_PASS = 1;
 		const int Commit_COMMIT_PASS = 2;
+		const string ValidationTable = "Commit_FinalMetrics";
 
 		protected override int CommitPassCount
 		{
@@ -694,6 +699,7 @@ namespace Edge.Services.AdMetrics
 			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
 			string measuresValidateSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureValidateSql].ToString();
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
+			Dictionary<string, double> _totals = (Dictionary<string, double>)processedEntry.Parameters[Consts.DeliveryHistoryParameters.Totals];
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
 
 			if (pass == Commit_PREPARE_PASS)
@@ -724,9 +730,35 @@ namespace Edge.Services.AdMetrics
 			}
 			else if (pass == Commit_VALIDATE_PASS)
 			{
-				// measuresValidateSQL
-				if (Math.Abs(a - b) > this.Options.CommitValidationThreshold)
-					throw new Exception("asdasd");
+				if (measuresValidateSQL.Length > 0)
+				{
+					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
+					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
+					
+					using (SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL))
+					{
+						validateCommand.Connection = _sqlConnection;
+						validateCommand.Parameters["@DeliveryID"].Value = this.CurrentDelivery.DeliveryID.ToString("N");
+						using (SqlDataReader reader = validateCommand.ExecuteReader())
+						{
+
+							if (reader.Read())
+							{
+								foreach (KeyValuePair<string, double> total in _totals)
+								{
+									if (Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
+									{
+										throw new Exception(string.Format("Total {0} not equal between file sum and final metrics sum!", total.Key));
+									}
+
+								}
+							}
+
+
+						}
+
+					}
+				}
 			}
 			else if (pass == Commit_COMMIT_PASS)
 			{
@@ -804,7 +836,7 @@ namespace Edge.Services.AdMetrics
 
 			_rollbackCommand.Parameters["@DeliveryID"].Value = guid;
 			_rollbackCommand.Parameters["@TableName"].Value = commitEntry.Parameters[Consts.DeliveryHistoryParameters.CommitTableName];
-			
+
 			_rollbackCommand.ExecuteNonQuery();
 		}
 
@@ -813,7 +845,7 @@ namespace Edge.Services.AdMetrics
 			if (ex == null)
 				_rollbackTransaction.Commit();
 			else
-				_rollbackTransaction.Rollback();			
+				_rollbackTransaction.Rollback();
 		}
 
 		protected override void OnDisposeRollback()
