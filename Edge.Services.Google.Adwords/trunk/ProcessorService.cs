@@ -195,7 +195,6 @@ namespace Edge.Services.Google.AdWords
 							_totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks);
 							_totals[Measure.Common.Cost] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 							_totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions);
-
 							break;
 						}
 
