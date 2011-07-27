@@ -12,11 +12,14 @@ namespace Edge.Services.AdMetrics
 	{ 
 		protected override ServiceOutcome DoPipelineWork()
 		{
+			string validationThreshold = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.CommitValidationTheshold];
+
 			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
 			{
 				SqlPrepareCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlPrepareCommand],
 				SqlCommitCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlCommitCommand],
 				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand],
+				CommitValidationThreshold = validationThreshold == null ? 0.1 : double.Parse(validationThreshold)
 			});
 			ReportProgress(0.1);
 

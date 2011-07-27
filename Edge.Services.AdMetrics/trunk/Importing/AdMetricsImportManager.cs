@@ -29,6 +29,7 @@ namespace Edge.Services.AdMetrics
 				public const string TablePerfix = "TablePerfix";
 				public const string MeasureNamesSql = "MeasureNamesSql";
 				public const string MeasureOltpFieldsSql = "MeasureOltpFieldsSql";
+				public const string MeasureValidateSql = "MeasureValidateSql";
 				public const string CommitTableName = "CommitTableName";
 			}
 
@@ -38,6 +39,7 @@ namespace Edge.Services.AdMetrics
 				public const string SqlPrepareCommand = "SQL.PrepareCommand";
 				public const string SqlCommitCommand = "SQL.CommitCommand";
 				public const string SqlRollbackCommand = "SQL.RollbackCommand";
+				public const string CommitValidationTheshold = "CommitValidationTheshold";
 			}
 
 			public static class ConnectionStrings
@@ -338,6 +340,7 @@ namespace Edge.Services.AdMetrics
 			public string SqlPrepareCommand {get; set;}
 			public string SqlCommitCommand {get; set;}
 			public string SqlRollbackCommand {get;set;}
+			public double CommitValidationThreshold { get; set; }
 		}
 
 		/*=========================*/
@@ -418,6 +421,7 @@ namespace Edge.Services.AdMetrics
 			// Add measure columns to metrics,create measuresFieldNamesSQL,measuresNamesSQL
 			StringBuilder measuresFieldNamesSQL = new StringBuilder(",");
 			StringBuilder measuresNamesSQL = new StringBuilder(",");
+			StringBuilder measuresValidationSQL = new StringBuilder();
 			int count = 0;
 			foreach (Measure  measure in this.Measures.Values)
 			{
@@ -429,11 +433,16 @@ namespace Edge.Services.AdMetrics
 
 				measuresFieldNamesSQL.AppendFormat("[{0}]{1}",measure.OltpName, count < this.Measures.Values.Count-1 ? "," : null);
 				measuresNamesSQL.AppendFormat("[{0}]{1}", measure.Name, count < this.Measures.Values.Count - 1 ? "," : null);
+
+				if (measure.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					measuresValidationSQL.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Name, measuresValidationSQL.Length > 0 ? ", " : null);
+
 				count++;
 			}
 
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql, measuresFieldNamesSQL.ToString());
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureNamesSql, measuresNamesSQL.ToString());
+			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureValidateSql, measuresValidationSQL.ToString());
 
 			// Create the tables
 			StringBuilder createTableCmdText = new StringBuilder();
@@ -646,11 +655,12 @@ namespace Edge.Services.AdMetrics
 		SqlCommand _commitCommand = null;
 
 		const int Commit_PREPARE_PASS = 0;
-		const int Commit_COMMIT_PASS = 1;
+		const int Commit_VALIDATE_PASS = 1;
+		const int Commit_COMMIT_PASS = 2;
 
 		protected override int CommitPassCount
 		{
-			get { return 2; }
+			get { return 3; }
 		}
 
 		protected override void OnBeginCommit()
@@ -682,6 +692,7 @@ namespace Edge.Services.AdMetrics
 			// get this from last 'Processed' history entry
 			string measuresFieldNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql].ToString();
 			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
+			string measuresValidateSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureValidateSql].ToString();
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
 
@@ -702,10 +713,20 @@ namespace Edge.Services.AdMetrics
 				_prepareCommand.Parameters["@MeasuresFieldNamesSQL"].Size = 4000;
 				_prepareCommand.Parameters["@MeasuresFieldNamesSQL"].Value = measuresFieldNamesSQL;
 				_prepareCommand.Parameters["@CommitTableName"].Size = 4000;
-				
-				_prepareCommand.ExecuteNonQuery();
+
+				try { _prepareCommand.ExecuteNonQuery(); }
+				catch (Exception ex)
+				{
+					throw new Exception(String.Format("Delivery {0} failed during Prepare.", deliveryId), ex);
+				}
 
 				this.HistoryEntryParameters[Consts.DeliveryHistoryParameters.CommitTableName] = _prepareCommand.Parameters["@CommitTableName"].Value;
+			}
+			else if (pass == Commit_VALIDATE_PASS)
+			{
+				// measuresValidateSQL
+				if (Math.Abs(a - b) > this.Options.CommitValidationThreshold)
+					throw new Exception("asdasd");
 			}
 			else if (pass == Commit_COMMIT_PASS)
 			{
@@ -725,7 +746,12 @@ namespace Edge.Services.AdMetrics
 				_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Size = 4000;
 				_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Value = measuresFieldNamesSQL;
 
-				_commitCommand.ExecuteNonQuery();
+				try { _commitCommand.ExecuteNonQuery(); }
+				catch (Exception ex)
+				{
+					throw new Exception(String.Format("Delivery {0} failed during Commit.", deliveryId), ex);
+				}
+
 			}
 		}
 
