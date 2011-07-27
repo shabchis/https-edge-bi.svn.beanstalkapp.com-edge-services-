@@ -105,9 +105,9 @@ namespace Edge.Services.Facebook.AdsApi
 
 						ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
 						{
-							Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
+							Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter,1, StringSplitOptions.None)[0],
 							OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID):
-							(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID)
+							(ad.Name.Split(delimiter,1, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID)
 						};
 					}
 					else
