@@ -37,11 +37,10 @@ namespace Edge.Services.AdMetrics
 			using (SqlConnection sqlConnection = new SqlConnection(AppSettings.GetConnectionString(this, "OLTP")))
 			{
 				sqlConnection.Open();
-				Dictionary<string, Measure> measures = Measure.GetMeasures(this.Delivery.Account, this.Delivery.Channel, sqlConnection, MeasureOptions.IsCalculated | MeasureOptions.IsTarget, MeasureOptionsOperator.Not);
+				Dictionary<string, Measure> measures = Measure.GetMeasures(this.Delivery.Account, this.Delivery.Channel, sqlConnection, MeasureOptions.IntegrityCheckRequired, MeasureOptionsOperator.And);
 				foreach (KeyValuePair<string, Measure> measure in measures)
 				{
-					if (measure.Value.IntegrityCheckRequired)
-						cmd.AppendFormat("SUM({0}) AS '{1}',", measure.Value.OltpName, measure.Key);
+					cmd.AppendFormat("SUM({0}) AS '{1}',", measure.Value.OltpName, measure.Key);
 				}
 				if (cmd.Length > 1)
 				{
