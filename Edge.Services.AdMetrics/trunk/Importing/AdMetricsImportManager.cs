@@ -734,7 +734,7 @@ namespace Edge.Services.AdMetrics
 				{
 					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
 					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
-					
+
 					using (SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL))
 					{
 						validateCommand.Connection = _sqlConnection;
@@ -746,9 +746,12 @@ namespace Edge.Services.AdMetrics
 							{
 								foreach (KeyValuePair<string, double> total in _totals)
 								{
-									if (Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
+									if (reader[total.Key] == DBNull.Value || Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
 									{
-										throw new Exception(string.Format("Total {0} not equal between file sum and final metrics sum!", total.Key));
+										if (reader[total.Key] == DBNull.Value)
+											throw new Exception(string.Format("Total {0} is null in table {1},check if data has been inserted correctly!", total.Key, string.Format("{0}_{1}", tablePerfix, ValidationTable)));
+										else
+											throw new Exception(string.Format("Total {0} not equal between file sum and final metrics sum!", total.Key));
 									}
 
 								}
