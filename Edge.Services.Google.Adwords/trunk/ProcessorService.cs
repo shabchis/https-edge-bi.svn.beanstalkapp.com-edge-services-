@@ -176,25 +176,28 @@ namespace Edge.Services.Google.AdWords
 			{
 				//session.Begin(false);
 				session.BeginImport(this.Delivery);
-				foreach (KeyValuePair<string,Measure> measure in session.Measures)
-				{
-					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
-					{
-						_totals.Add(measure.Key, 0);
-					}
-					
-				}
+				
+
 				using (_adsReader)
 				{
 					while (_adsReader.Read())
 					{
 
+						// Adding totals line for validation (checksum)
 						if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
 						{
-							//Seting Totals
-							_totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks);
-							_totals[Measure.Common.Cost] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
-							_totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions);
+							foreach (KeyValuePair<string, Measure> measure in session.Measures)
+							{
+								if (!measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+									continue;
+
+								switch (measure.Key)
+								{
+									case Measure.Common.Clicks: _totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks); break;
+									case Measure.Common.Cost: _totals[Measure.Common.Cost] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000; break;
+									case Measure.Common.Impressions: _totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions); break;
+								}
+							}
 							break;
 						}
 
