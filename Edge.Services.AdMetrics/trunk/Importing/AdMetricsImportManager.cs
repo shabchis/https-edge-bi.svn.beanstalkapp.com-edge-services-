@@ -31,7 +31,7 @@ namespace Edge.Services.AdMetrics
 				public const string MeasureOltpFieldsSql = "MeasureOltpFieldsSql";
 				public const string MeasureValidateSql = "MeasureValidateSql";
 				public const string CommitTableName = "CommitTableName";
-				public const string Totals = "Totals";
+				public const string CommitValidationTotals = "CommitValidationTotals";
 			}
 
 			public static class AppSettings
@@ -699,7 +699,6 @@ namespace Edge.Services.AdMetrics
 			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
 			
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
-			Dictionary<string, double> _totals = (Dictionary<string, double>)processedEntry.Parameters[Consts.DeliveryHistoryParameters.Totals];
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
 
 			if (pass == Commit_PREPARE_PASS)
@@ -730,9 +729,16 @@ namespace Edge.Services.AdMetrics
 			}
 			else if (pass == Commit_VALIDATE_PASS)
 			{
-				object sql;
-				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
+				object totalso;
+				
+				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.CommitValidationTotals, out totalso))
 				{
+					var totals = (Dictionary<string, double>) totalso;
+
+					object sql;
+					if (!processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
+						throw new Exception("MeasureValidateSql not available for running validation."); 
+				
 					string measuresValidateSQL = (string) sql;
 					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
 					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
@@ -744,7 +750,7 @@ namespace Edge.Services.AdMetrics
 					{
 						if (reader.Read())
 						{
-							foreach (KeyValuePair<string, double> total in _totals)
+							foreach (KeyValuePair<string, double> total in totals)
 							{
 								if (reader[total.Key] == DBNull.Value || Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
 								{
