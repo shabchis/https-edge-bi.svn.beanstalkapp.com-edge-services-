@@ -697,7 +697,7 @@ namespace Edge.Services.AdMetrics
 			// get this from last 'Processed' history entry
 			string measuresFieldNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql].ToString();
 			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
-			string measuresValidateSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureValidateSql].ToString();
+			
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
 			Dictionary<string, double> _totals = (Dictionary<string, double>)processedEntry.Parameters[Consts.DeliveryHistoryParameters.Totals];
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
@@ -730,36 +730,31 @@ namespace Edge.Services.AdMetrics
 			}
 			else if (pass == Commit_VALIDATE_PASS)
 			{
-				if (measuresValidateSQL.Length > 0)
+				object sql;
+				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
 				{
+					string measuresValidateSQL = (string) sql;
 					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
 					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
 
-					using (SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL))
+					SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL);
+					validateCommand.Connection = _sqlConnection;
+					validateCommand.Parameters["@DeliveryID"].Value = this.CurrentDelivery.DeliveryID.ToString("N");
+					using (SqlDataReader reader = validateCommand.ExecuteReader())
 					{
-						validateCommand.Connection = _sqlConnection;
-						validateCommand.Parameters["@DeliveryID"].Value = this.CurrentDelivery.DeliveryID.ToString("N");
-						using (SqlDataReader reader = validateCommand.ExecuteReader())
+						if (reader.Read())
 						{
-
-							if (reader.Read())
+							foreach (KeyValuePair<string, double> total in _totals)
 							{
-								foreach (KeyValuePair<string, double> total in _totals)
+								if (reader[total.Key] == DBNull.Value || Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
 								{
-									if (reader[total.Key] == DBNull.Value || Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
-									{
-										if (reader[total.Key] == DBNull.Value)
-											throw new Exception(string.Format("Total {0} is null in table {1},check if data has been inserted correctly!", total.Key, string.Format("{0}_{1}", tablePerfix, ValidationTable)));
-										else
-											throw new Exception(string.Format("Total {0} not equal between file sum and final metrics sum!", total.Key));
-									}
-
+									if (reader[total.Key] == DBNull.Value)
+										throw new Exception(string.Format("Validation failed: total of '{0}' is null in table {1}, check if data has been inserted correctly!", total.Key, string.Format("{0}_{1}", tablePerfix, ValidationTable)));
+									else
+										throw new Exception(string.Format("Validation failed: total '{0}' not equal between file sum and final metrics sum!", total.Key));
 								}
 							}
-
-
 						}
-
 					}
 				}
 			}
