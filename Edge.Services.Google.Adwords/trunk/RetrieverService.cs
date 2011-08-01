@@ -34,8 +34,7 @@ namespace Edge.Services.Google.AdWords
 			_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
-			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
-			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
+			
 
 			//Sets Date Range and time period
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
