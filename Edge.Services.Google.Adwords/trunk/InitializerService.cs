@@ -16,6 +16,12 @@ namespace Edge.Services.Google.AdWords
 		{
 			this.Delivery = this.NewDelivery(); // setup delivery
 
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
+				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
+
+			if (String.IsNullOrEmpty (this.Instance.Configuration.Options["Adwords.ClientID"]))
+				throw new Exception("Missing Configuration Param , Adwords.ClientID");
+
 			//checking for conflicts 
 			this.Delivery.Signature = String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
 				this.Instance.AccountID,
@@ -41,9 +47,8 @@ namespace Edge.Services.Google.AdWords
 			#region Must Have Params
 
 			//Get MCC Email
-			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
-				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
-			else this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
+			
+			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
 
 			// Get Report types
 			string[] reportTypeNames = this.Instance.Configuration.Options["Adwords.ReportType"].Split('|');
@@ -55,10 +60,6 @@ namespace Edge.Services.Google.AdWords
 				else throw new Exception("Undefined ReportType");
 			}
 			this.Delivery.Parameters["reportTypes"] = reportTypes;
-
-			////Get Account Emails
-			//string[] accountEmails = this.Instance.Configuration.Options["Adwords.Email"].Split('|');
-			//this.Delivery.Parameters["accountEmails"] = accountEmails;
 
 			//Get Account Client Id's
 			string[] adwordsClientIds = this.Instance.Configuration.Options["Adwords.ClientID"].Split('|');
