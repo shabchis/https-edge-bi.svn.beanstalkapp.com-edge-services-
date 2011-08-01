@@ -47,8 +47,11 @@ namespace Edge.Services.Google.AdWords
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
+			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
+			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
+
 			#region Getting Keywords Data
-			Dictionary<string,double> _totals=new Dictionary<string,double>();
+			Dictionary<string, double> _totals = new Dictionary<string, double>();
 			DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
 			string[] requiredHeaders = new string[1];
 			requiredHeaders[0] = Const.RequiredHeader;
@@ -73,13 +76,13 @@ namespace Edge.Services.Google.AdWords
 					{
 						OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
 						Keyword = _keywordsReader.Current[Const.KeywordFieldName]
-						
+
 					};
-					
+
 					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
 					string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
 					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
-					
+
 					//Setting Tracker for Keyword
 					if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
 					{
@@ -92,13 +95,14 @@ namespace Edge.Services.Google.AdWords
 				}
 			}
 			#endregion
-			
+
+			Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
+
 			#region Getting Placements Data
+
 
 			DeliveryFile _PlacementsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]];
 			var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-			Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
-
 			using (_PlacementsReader)
 			{
 				while (_PlacementsReader.Read())
@@ -129,6 +133,7 @@ namespace Edge.Services.Google.AdWords
 				}
 			}
 			#endregion
+
 
 			#region Getting Conversions Data
 			//Get Ads Conversion ( for ex. signup , purchase )
@@ -176,7 +181,15 @@ namespace Edge.Services.Google.AdWords
 			{
 				//session.Begin(false);
 				session.BeginImport(this.Delivery);
-				
+
+				foreach (KeyValuePair<string, Measure> measure in session.Measures)
+				{
+					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					{
+						_totals.Add(measure.Key, 0);
+					}
+
+				}
 
 				using (_adsReader)
 				{
@@ -209,7 +222,6 @@ namespace Edge.Services.Google.AdWords
 						{
 							ad = new Ad();
 							ad.OriginalID = adId;
-							
 
 							//Ad Type
 							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
@@ -224,7 +236,7 @@ namespace Edge.Services.Google.AdWords
 								if (tracker != null)
 									ad.Segments[Segment.TrackerSegment] = tracker;
 							}
-							
+
 							ad.Campaign = new Campaign()
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
@@ -336,8 +348,8 @@ namespace Edge.Services.Google.AdWords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToDouble(_adsReader.Current[Const.AvgPosition]);
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble( _adsReader.Current[Const.ConversionOnePerClick]);
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble( _adsReader.Current[Const.ConversionManyPerClick]);
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]);
+						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]);
 
 
 						//Inserting conversion values
@@ -364,7 +376,7 @@ namespace Edge.Services.Google.AdWords
 
 			}
 			#endregion
-			
+
 			return Core.Services.ServiceOutcome.Success;
 		}
 
@@ -409,7 +421,7 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		
+
 	}
 }
 
