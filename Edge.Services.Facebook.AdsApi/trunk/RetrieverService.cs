@@ -135,7 +135,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters[FacebookConfigurationOptions.Account_ID].ToString());
 			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			AdGroupCreativesParameters.Add("include_deleted", "false");
+			AdGroupCreativesParameters.Add("include_deleted", "true");
 			dynamic d = new ExpandoObject();
 			d.adgroup_ids = adGroupsIds;
 

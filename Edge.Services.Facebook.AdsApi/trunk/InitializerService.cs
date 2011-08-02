@@ -112,7 +112,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupStatesParameters.Add("method",Consts.FacebookMethodsNames.GetAdGroupStats);
-			AdGroupStatesParameters.Add("include_deleted", "false");
+			AdGroupStatesParameters.Add("include_deleted", "true");
 			dynamic timeRangeIn = new ExpandoObject();
 			timeRangeIn.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
 			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
@@ -132,7 +132,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			AdGroupCreativesParameters.Add("include_deleted", "false");			
+			AdGroupCreativesParameters.Add("include_deleted", "true");			
 			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 			return body;
@@ -144,7 +144,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
 			AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupsParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroups);
-			AdGroupsParameters.Add("include_deleted", "false");
+			AdGroupsParameters.Add("include_deleted", "true");
 			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 			
 			return body;
@@ -156,7 +156,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
 			CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			CampaignsParmaters.Add("method", Consts.FacebookMethodsNames.GetCampaigns);
-			CampaignsParmaters.Add("include_deleted", "false");
+			CampaignsParmaters.Add("include_deleted", "true");
 
 
 			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
@@ -171,7 +171,7 @@ namespace Edge.Services.Facebook.AdsApi
 			Dictionary<string, string> AdGroupTargetingParameters = new Dictionary<string, string>();
 			AdGroupTargetingParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupTargetingParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupTargeting);
-			AdGroupTargetingParameters.Add("include_deleted", "false");
+			AdGroupTargetingParameters.Add("include_deleted", "true");
 			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
 			return body;
