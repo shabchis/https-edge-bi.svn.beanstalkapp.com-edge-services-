@@ -19,7 +19,7 @@ namespace Edge.Services.AdMetrics
 				SqlPrepareCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlPrepareCommand],
 				SqlCommitCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlCommitCommand],
 				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand],
-				CommitValidationThreshold = validationThreshold == null ? 0.1 : double.Parse(validationThreshold)
+				CommitValidationThreshold = validationThreshold == null ? 0.01 : double.Parse(validationThreshold)
 			});
 			ReportProgress(0.1);
 

@@ -750,17 +750,26 @@ namespace Edge.Services.AdMetrics
 					{
 						if (reader.Read())
 						{
+							var results = new StringBuilder();
 							foreach (KeyValuePair<string, double> total in totals)
 							{
-								if (reader[total.Key] == DBNull.Value || Math.Abs(total.Value - Convert.ToDouble(reader[total.Key])) > this.Options.CommitValidationThreshold)
+								if (reader[total.Key] is DBNull)
 								{
-									if (reader[total.Key] == DBNull.Value)
-										throw new Exception(string.Format("Validation failed: total of '{0}' is null in table {1}, check if data has been inserted correctly!", total.Key, string.Format("{0}_{1}", tablePerfix, ValidationTable)));
-									else
-										throw new Exception(string.Format("Validation failed: total '{0}' not equal between file sum and final metrics sum!", total.Key));
+									results.AppendFormat("{0} is null in table {1}\n", total.Key, ValidationTable);
+								}
+								else
+								{
+									double val = Convert.ToDouble(reader[total.Key]);
+									double diff = Math.Abs((total.Value - val) / total.Value);
+									if (diff > this.Options.CommitValidationThreshold)
+										results.AppendFormat("{0}: processor totals = {1}, {2} table = {3}\n", total.Key, total.Value, ValidationTable, val);
 								}
 							}
+							if (results.Length > 0)
+								throw new Exception("Commit validation (checksum) failed:\n" + results.ToString());
 						}
+						else
+							throw new Exception(String.Format("Commit validation (checksum) did not find any data matching this delivery in {0}.", ValidationTable));
 					}
 				}
 			}
