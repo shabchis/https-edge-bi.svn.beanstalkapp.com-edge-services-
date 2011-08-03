@@ -17,7 +17,8 @@ namespace Edge.Services.Google.AdWords
 		{
 			this.Delivery = this.NewDelivery(); // setup delivery
 
-			this.Delivery.Parameters["KeywordContentId"] = AppSettings.Get("Edge.Services.Google.AdWords", "KeywordContentId");
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
+				throw new Exception("Missing Configuration Param , KeywordContentId");
 			
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
@@ -52,6 +53,7 @@ namespace Edge.Services.Google.AdWords
 			//Get MCC Email
 			
 			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
+			this.Delivery.Parameters["KeywordContentId"] = this.Instance.Configuration.Options["KeywordContentId"];
 
 			// Get Report types
 			string[] reportTypeNames = this.Instance.Configuration.Options["Adwords.ReportType"].Split('|');
