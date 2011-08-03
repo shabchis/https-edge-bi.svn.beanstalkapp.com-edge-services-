@@ -305,7 +305,8 @@ namespace Edge.Services.Google.AdWords
 							CampaignId = Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])
 						};
 
-						if (ad.ExtraFields[NetworkType].Equals(Const.SystemSearchNetwork))
+						//Check if keyword file contains this kwdkey.
+						if (_keywordsData.ContainsKey(kwdKey.ToString()))
 						{
 							KeywordTarget kwd = new KeywordTarget();
 							try
@@ -350,7 +351,6 @@ namespace Edge.Services.Google.AdWords
 						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToDouble(_adsReader.Current[Const.AvgPosition]);
 						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]);
 						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]);
-
 
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
