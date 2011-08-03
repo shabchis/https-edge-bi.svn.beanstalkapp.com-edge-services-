@@ -58,6 +58,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Properties\AssemblyInfo.cs.template" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>
   <ItemGroup />
@@ -82,11 +83,18 @@
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+
+	<Target Name="BeforeCompile">
+		<SvnVersion LocalPath=".">
+			<Output TaskParameter="Revision" PropertyName="SvnRevision" />
+		</SvnVersion>
+		<FormatVersion Version="2.9.0.%2a" Revision="$(SvnRevision)">
+			<Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
+		</FormatVersion>
+	</Target>
+	<PropertyGroup>
+		<PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
+		<PostBuildEvent></PostBuildEvent>
+	</PropertyGroup>
 </Project>
