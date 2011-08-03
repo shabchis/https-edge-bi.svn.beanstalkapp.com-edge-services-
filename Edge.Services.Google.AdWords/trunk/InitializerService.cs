@@ -7,6 +7,7 @@ using Edge.Data.Pipeline.Services;
 using GA = Google.Api.Ads.AdWords.v201101;
 using Edge.Core.Services;
 using Edge.Services.AdMetrics;
+using Edge.Core.Configuration;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -16,6 +17,8 @@ namespace Edge.Services.Google.AdWords
 		{
 			this.Delivery = this.NewDelivery(); // setup delivery
 
+			this.Delivery.Parameters["KeywordContentId"] = AppSettings.Get("Edge.Services.Google.AdWords", "KeywordContentId");
+			
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
 

@@ -263,7 +263,21 @@ namespace Edge.Services.Google.AdWords
 				return -1;
 			}
 		}
-
+		public void AddFilter(string fieldName, GA.v201101.PredicateOperator op, string[] values)
+		{
+			GA.v201101.Predicate predicate = new GA.v201101.Predicate();
+			predicate.field = fieldName;
+			predicate.@operator = op;
+			predicate.values = values;
+			if (_selector.predicates == null)
+				_selector.predicates = new GA.v201101.Predicate[] { predicate };
+			else
+			{
+				List<GA.v201101.Predicate> predicatesList = _selector.predicates.ToList<GA.v201101.Predicate>();
+				predicatesList.Add(predicate);
+				_selector.predicates = predicatesList.ToArray();
+			}
+		}
 		public long CreateGoogleReport(int Account_Id, bool AuthRetry = true)
 		{
 			
@@ -289,6 +303,7 @@ namespace Edge.Services.Google.AdWords
 				impPredicate.values = new string[] { "0" };
 				_selector.predicates = new GA.v201101.Predicate[] { impPredicate };
 			}
+
 			#endregion
 			
 			// Create reportDefinition
@@ -331,21 +346,7 @@ namespace Edge.Services.Google.AdWords
 			return this.Id;
 		}
 
-		public void AddFilter(string fieldName, GA.v201101.PredicateOperator op, string[] values)
-		{
-			GA.v201101.Predicate predicate = new GA.v201101.Predicate();
-			predicate.field = fieldName;
-			predicate.@operator = op;
-			predicate.values = values;
-			if (_selector.predicates == null)
-				_selector.predicates = new GA.v201101.Predicate[] { predicate };
-			else
-			{
-				List<GA.v201101.Predicate> predicatesList = _selector.predicates.ToList<GA.v201101.Predicate>();
-				predicatesList.Add(predicate);
-				_selector.predicates = predicatesList.ToArray();
-			}
-		}
+		
 
 		//TODO: check what is IsReturnMoneyInMicros param in google
 		public GoogleRequestEntity GetReportUrlParams(bool IsReturnMoneyInMicros = true)

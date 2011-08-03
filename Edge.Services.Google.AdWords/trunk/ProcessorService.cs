@@ -306,7 +306,7 @@ namespace Edge.Services.Google.AdWords
 						};
 
 						//Check if keyword file contains this kwdkey.
-						if (_keywordsData.ContainsKey(kwdKey.ToString()))
+						if (kwdKey.KeywordId!=Convert.ToInt64(this.Delivery.Parameters["KeywordContentId"]) && _keywordsData.ContainsKey(kwdKey.ToString()))
 						{
 							KeywordTarget kwd = new KeywordTarget();
 							try
