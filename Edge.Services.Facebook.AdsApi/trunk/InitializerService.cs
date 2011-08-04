@@ -52,7 +52,7 @@ namespace Edge.Services.Facebook.AdsApi
 				ID = 6
 			};
 
-			this.Delivery.TargetLocationDirectory="Facebook";
+			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
