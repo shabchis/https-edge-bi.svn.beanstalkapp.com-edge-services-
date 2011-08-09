@@ -731,7 +731,7 @@ namespace Edge.Services.AdMetrics
 			{
 				object totalso;
 				
-				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.CommitValidationTotals, out totalso))
+				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
 				{
 					var totals = (Dictionary<string, double>) totalso;
 
