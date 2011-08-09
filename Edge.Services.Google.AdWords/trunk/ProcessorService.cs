@@ -370,7 +370,7 @@ namespace Edge.Services.Google.AdWords
 						};
 						session.ImportMetrics(adMetricsUnit);
 					}
-					session.HistoryEntryParameters.Add("Totals", _totals);
+					session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 					session.EndImport();
 				}
 
