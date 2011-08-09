@@ -31,7 +31,7 @@ namespace Edge.Services.AdMetrics
 				public const string MeasureOltpFieldsSql = "MeasureOltpFieldsSql";
 				public const string MeasureValidateSql = "MeasureValidateSql";
 				public const string CommitTableName = "CommitTableName";
-				public const string CommitValidationTotals = "CommitValidationTotals";
+				public const string ChecksumTotals = "ChecksumTotals";
 			}
 
 			public static class AppSettings
