@@ -339,7 +339,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 
-				session.HistoryEntryParameters.Add("Totals", _totalsValidation);
+				session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
 				session.EndImport();
 				if (!string.IsNullOrEmpty(warningsStr.ToString()))
 					Log.Write(warningsStr.ToString(), LogMessageType.Warning);
