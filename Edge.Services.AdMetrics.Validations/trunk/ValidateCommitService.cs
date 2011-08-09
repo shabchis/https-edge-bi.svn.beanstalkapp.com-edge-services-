@@ -11,6 +11,7 @@ using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics
 {
+	/*
 	public class ValidateCommitService : ValidationService
 	{
 		protected override ValidationResult Validate()
@@ -85,4 +86,5 @@ namespace Edge.Services.AdMetrics
 			return result;
 		}
 	}
+	*/
 }
