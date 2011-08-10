@@ -838,8 +838,11 @@ namespace Edge.Services.AdMetrics
 
 		protected override void OnRollback(int pass)
 		{
+			DeliveryHistoryEntry commitEntry=null;
 			string guid = this.CurrentDelivery.DeliveryID.ToString("N");
-			DeliveryHistoryEntry commitEntry = this.CurrentDelivery.History.Last(entry => entry.Operation == DeliveryOperation.Committed);
+			IEnumerable<DeliveryHistoryEntry> commitEntries = this.CurrentDelivery.History.Where(entry => entry.Operation == DeliveryOperation.Committed);
+			if (commitEntries != null && commitEntries.Count() > 0)
+				commitEntry = (DeliveryHistoryEntry)commitEntries.Last();
 			if (commitEntry == null)
 				throw new Exception(String.Format("The delivery '{0}' has never been comitted so it cannot be rolled back.", guid));
 
