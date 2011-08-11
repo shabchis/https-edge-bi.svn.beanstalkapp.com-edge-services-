@@ -445,7 +445,10 @@ namespace Edge.Services.AdMetrics
 
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql, measuresFieldNamesSQL.ToString());
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureNamesSql, measuresNamesSQL.ToString());
-			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureValidateSql, measuresValidationSQL.ToString());
+			if (string.IsNullOrEmpty(measuresValidationSQL.ToString()))
+				Log.Write("No fields to validate, continue service with out validation!!!", LogMessageType.Warning);
+			else
+				this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureValidateSql, measuresValidationSQL.ToString());
 
 			// Create the tables
 			StringBuilder createTableCmdText = new StringBuilder();
@@ -697,7 +700,7 @@ namespace Edge.Services.AdMetrics
 			// get this from last 'Processed' history entry
 			string measuresFieldNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql].ToString();
 			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
-			
+
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
 
@@ -730,16 +733,16 @@ namespace Edge.Services.AdMetrics
 			else if (pass == Commit_VALIDATE_PASS)
 			{
 				object totalso;
-				
+
 				if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
 				{
-					var totals = (Dictionary<string, double>) totalso;
+					var totals = (Dictionary<string, double>)totalso;
 
 					object sql;
 					if (!processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
-						throw new Exception("MeasureValidateSql not available for running validation."); 
-				
-					string measuresValidateSQL = (string) sql;
+						throw new Exception("MeasureValidateSql not available for running validation.");
+
+					string measuresValidateSQL = (string)sql;
 					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
 					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
 
@@ -838,7 +841,7 @@ namespace Edge.Services.AdMetrics
 
 		protected override void OnRollback(int pass)
 		{
-			DeliveryHistoryEntry commitEntry=null;
+			DeliveryHistoryEntry commitEntry = null;
 			string guid = this.CurrentDelivery.DeliveryID.ToString("N");
 			IEnumerable<DeliveryHistoryEntry> commitEntries = this.CurrentDelivery.History.Where(entry => entry.Operation == DeliveryOperation.Committed);
 			if (commitEntries != null && commitEntries.Count() > 0)
