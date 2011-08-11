@@ -740,39 +740,40 @@ namespace Edge.Services.AdMetrics
 
 					object sql;
 					if (!processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
-						throw new Exception("MeasureValidateSql not available for running validation.");
-
-					string measuresValidateSQL = (string)sql;
-					measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
-					measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
-
-					SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL);
-					validateCommand.Connection = _sqlConnection;
-					validateCommand.Parameters["@DeliveryID"].Value = this.CurrentDelivery.DeliveryID.ToString("N");
-					using (SqlDataReader reader = validateCommand.ExecuteReader())
 					{
-						if (reader.Read())
+
+						string measuresValidateSQL = (string)sql;
+						measuresValidateSQL = measuresValidateSQL.Insert(0, "SELECT ");
+						measuresValidateSQL = measuresValidateSQL + string.Format("\nFROM {0}_{1} \nWHERE DeliveryID=@DeliveryID:Nvarchar", tablePerfix, ValidationTable);
+
+						SqlCommand validateCommand = DataManager.CreateCommand(measuresValidateSQL);
+						validateCommand.Connection = _sqlConnection;
+						validateCommand.Parameters["@DeliveryID"].Value = this.CurrentDelivery.DeliveryID.ToString("N");
+						using (SqlDataReader reader = validateCommand.ExecuteReader())
 						{
-							var results = new StringBuilder();
-							foreach (KeyValuePair<string, double> total in totals)
+							if (reader.Read())
 							{
-								if (reader[total.Key] is DBNull)
+								var results = new StringBuilder();
+								foreach (KeyValuePair<string, double> total in totals)
 								{
-									results.AppendFormat("{0} is null in table {1}\n", total.Key, ValidationTable);
+									if (reader[total.Key] is DBNull)
+									{
+										results.AppendFormat("{0} is null in table {1}\n", total.Key, ValidationTable);
+									}
+									else
+									{
+										double val = Convert.ToDouble(reader[total.Key]);
+										double diff = Math.Abs((total.Value - val) / total.Value);
+										if (diff > this.Options.CommitValidationThreshold)
+											results.AppendFormat("{0}: processor totals = {1}, {2} table = {3}\n", total.Key, total.Value, ValidationTable, val);
+									}
 								}
-								else
-								{
-									double val = Convert.ToDouble(reader[total.Key]);
-									double diff = Math.Abs((total.Value - val) / total.Value);
-									if (diff > this.Options.CommitValidationThreshold)
-										results.AppendFormat("{0}: processor totals = {1}, {2} table = {3}\n", total.Key, total.Value, ValidationTable, val);
-								}
+								if (results.Length > 0)
+									throw new Exception("Commit validation (checksum) failed:\n" + results.ToString());
 							}
-							if (results.Length > 0)
-								throw new Exception("Commit validation (checksum) failed:\n" + results.ToString());
+							else
+								throw new Exception(String.Format("Commit validation (checksum) did not find any data matching this delivery in {0}.", ValidationTable));
 						}
-						else
-							throw new Exception(String.Format("Commit validation (checksum) did not find any data matching this delivery in {0}.", ValidationTable));
 					}
 				}
 			}
