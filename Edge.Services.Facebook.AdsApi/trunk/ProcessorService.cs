@@ -282,9 +282,12 @@ namespace Edge.Services.Facebook.AdsApi
 							Ad ad = ads[adGroupCreativesReader.Current.adgroup_id];
 							ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
 
-							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-							if (tracker != null)
-								ad.Segments[Segment.TrackerSegment] = tracker;
+							if (!string.IsNullOrEmpty(ad.DestinationUrl))
+							{
+								SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+								if (tracker != null)
+									ad.Segments[Segment.TrackerSegment] = tracker; 
+							}
 
 							ad.Creatives = new List<Creative>();
 							ad.Creatives.Add(new ImageCreative()
