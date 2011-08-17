@@ -113,6 +113,7 @@ namespace Edge.Services.Facebook.AdsApi
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupStatesParameters.Add("method",Consts.FacebookMethodsNames.GetAdGroupStats);
 			AdGroupStatesParameters.Add("include_deleted", "true");
+			AdGroupStatesParameters.Add("stats_mode", "with_delivery");
 			dynamic timeRangeIn = new ExpandoObject();
 			timeRangeIn.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
 			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
