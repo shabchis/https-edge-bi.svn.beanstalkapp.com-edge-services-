@@ -446,7 +446,7 @@ namespace Edge.Services.AdMetrics
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql, measuresFieldNamesSQL.ToString());
 			this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureNamesSql, measuresNamesSQL.ToString());
 			if (string.IsNullOrEmpty(measuresValidationSQL.ToString()))
-				Log.Write("No fields to validate, continue service with out validation!!!", LogMessageType.Warning);
+				Log.Write("No measures marked for checksum validation; there will be no validation before the final commit.", LogMessageType.Warning);
 			else
 				this.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.MeasureValidateSql, measuresValidationSQL.ToString());
 
@@ -739,7 +739,7 @@ namespace Edge.Services.AdMetrics
 					var totals = (Dictionary<string, double>)totalso;
 
 					object sql;
-					if (!processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
+					if (processedEntry.Parameters.TryGetValue(Consts.DeliveryHistoryParameters.MeasureValidateSql, out sql))
 					{
 
 						string measuresValidateSQL = (string)sql;
