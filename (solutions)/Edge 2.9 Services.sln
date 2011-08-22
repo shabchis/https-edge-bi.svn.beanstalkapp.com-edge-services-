@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Facebook.AdsA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.SDK.ServiceTester", "..\..\SDK\Applications\Edge.SDK.ServiceTester\Edge.SDK.ServiceTester.csproj", "{747BA114-2B73-4498-98DB-89D7EFC01C46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Google.AdWords", "..\Edge.Services.Google.AdWords\Edge.Services.Google.AdWords.csproj", "{2A0FFCF9-03B8-40E4-B410-8B62B088B6D6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Google.AdWords", "..\Edge.Services.Google.Adwords\Edge.Services.Google.AdWords.csproj", "{2A0FFCF9-03B8-40E4-B410-8B62B088B6D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.AdMetrics", "..\Edge.Services.AdMetrics\Edge.Services.AdMetrics.csproj", "{36B6740D-938E-4994-9A0D-2DCB94D032B6}"
 EndProject
@@ -28,6 +28,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Processes", "Processes", "{A0A9EF8A-1017-42D9-9BE2-E736C0E4D305}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Processes.DirectoryWatcher", "..\..\Processes\Edge.Processes.DirectoryWatcher\Edge.Processes.DirectoryWatcher.csproj", "{FB21EF04-FB87-484C-B15E-DCEBD1185977}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{F0AE84D5-D561-4F22-B1AB-E6A0F9287A9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Applications.TempScheduler", "..\..\Utilities\Edge.Applications.TempScheduler\Edge.Applications.TempScheduler.csproj", "{1C3E1103-65B9-48D0-8583-A38B0AD6E771}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -110,7 +114,6 @@ Global
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6504C8B-C482-41B9-BC6E-BEF92AF9D6FE}.Release|Any CPU.Build.0 = Release|Any CPU
@@ -137,6 +140,16 @@ Global
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Release|x86.ActiveCfg = Release|Any CPU
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Debug|x86.ActiveCfg = Debug|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Debug|x86.Build.0 = Debug|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Release|Any CPU.ActiveCfg = Release|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Release|Mixed Platforms.Build.0 = Release|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Release|x86.ActiveCfg = Release|x86
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,5 +165,6 @@ Global
 		{E700E7AA-08B7-44C3-8889-ACB4FAF92C90} = {C56DBE29-1646-4475-919E-C02CFD749263}
 		{747BA114-2B73-4498-98DB-89D7EFC01C46} = {D0B442B9-1C2B-44A4-8BDC-A806A13EAE94}
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977} = {A0A9EF8A-1017-42D9-9BE2-E736C0E4D305}
+		{1C3E1103-65B9-48D0-8583-A38B0AD6E771} = {F0AE84D5-D561-4F22-B1AB-E6A0F9287A9E}
 	EndGlobalSection
 EndGlobal
