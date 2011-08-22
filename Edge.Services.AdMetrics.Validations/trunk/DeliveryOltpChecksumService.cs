@@ -11,18 +11,18 @@ namespace Edge.Services.AdMetrics.Validations
 	{
 		protected override IEnumerable<ValidationResult> Validate()
 		{
-			Delivery d = Delivery.GetByTargetPeriod(channelID, accountID, start, end);
-
-
-			Delivery[] deliveriesToCheck;
+			// TODO: get channel ID / account ID from configuarion options (if relevant)
+			Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(this.TargetPeriod.Start.ToDateTime(), this.TargetPeriod.End.ToDateTime(), channel, account);
 
 			foreach (Delivery delivery in deliveriesToCheck)
 			{
-				yield return new ValidationResult()
-				{
+				if (1 != 2)
+					yield break;
 
-				};
+				// TODO: fill fields of Validation Result
+				yield return new ValidationResult();
 			}
+
 		}
 	}
 }
