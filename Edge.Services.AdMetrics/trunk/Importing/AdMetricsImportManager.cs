@@ -758,7 +758,11 @@ namespace Edge.Services.AdMetrics
 								{
 									if (reader[total.Key] is DBNull)
 									{
-										results.AppendFormat("{0} is null in table {1}\n", total.Key, ValidationTable);
+										
+										if (total.Value == 0)
+											Log.Write(string.Format("[zero totals] {0} has no data or total is 0 in table {1} for target period {2}", total.Key, ValidationTable, CurrentDelivery.TargetPeriod), LogMessageType.Information);
+										else 
+											results.AppendFormat("{0} is null in table {1}\n but {2} in measure {3}", total.Key, ValidationTable,total.Key,total.Value);
 									}
 									else
 									{
@@ -766,6 +770,10 @@ namespace Edge.Services.AdMetrics
 										double diff = Math.Abs((total.Value - val) / total.Value);
 										if (diff > this.Options.CommitValidationThreshold)
 											results.AppendFormat("{0}: processor totals = {1}, {2} table = {3}\n", total.Key, total.Value, ValidationTable, val);
+										else if (val==0 && total.Value==0)
+											Log.Write(string.Format("[zero totals] {0} has no data or total is 0 in table {1} for target period {2}", total.Key, ValidationTable, CurrentDelivery.TargetPeriod), LogMessageType.Information);
+
+
 									}
 								}
 								if (results.Length > 0)
