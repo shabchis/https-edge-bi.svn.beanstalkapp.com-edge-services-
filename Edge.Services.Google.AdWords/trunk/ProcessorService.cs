@@ -358,7 +358,15 @@ namespace Edge.Services.Google.AdWords
 						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
 						{
 							foreach (var pair in conversionDic)
-								adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
+							{
+								if (GoogleMeasuresDic.ContainsKey(pair.Key))
+								{
+									if (adMetricsUnit.MeasureValues.ContainsKey(session.Measures[GoogleMeasuresDic[pair.Key]]))
+									{
+										adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
+									}
+								}
+							}
 						}
 
 						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
