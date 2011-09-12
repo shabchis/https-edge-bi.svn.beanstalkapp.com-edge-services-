@@ -38,6 +38,7 @@ namespace Edge.Services.Google.AdWords
 				{"Lead","Leads"},
 				{"Signup","Signups"},
 				{"Purchase","Purchases"},
+				{"Purchase/Sale","Purchases"},
 				{"Pageview","PageViews"},
 				{"Default","Default"},
 				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
@@ -306,7 +307,7 @@ namespace Edge.Services.Google.AdWords
 						};
 
 						//Check if keyword file contains this kwdkey.
-						if (kwdKey.KeywordId!=Convert.ToInt64(this.Delivery.Parameters["KeywordContentId"]) && _keywordsData.ContainsKey(kwdKey.ToString()))
+						if (kwdKey.KeywordId != Convert.ToInt64(this.Delivery.Parameters["KeywordContentId"]) && _keywordsData.ContainsKey(kwdKey.ToString()))
 						{
 							KeywordTarget kwd = new KeywordTarget();
 							try
@@ -359,12 +360,13 @@ namespace Edge.Services.Google.AdWords
 						{
 							foreach (var pair in conversionDic)
 							{
+
 								if (GoogleMeasuresDic.ContainsKey(pair.Key))
 								{
-									if (adMetricsUnit.MeasureValues.ContainsKey(session.Measures[GoogleMeasuresDic[pair.Key]]))
-									{
-										adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
-									}
+									//if (adMetricsUnit.MeasureValues.ContainsKey(session.Measures[GoogleMeasuresDic[pair.Key]]))
+									//{
+									adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
+									//}
 								}
 							}
 						}
