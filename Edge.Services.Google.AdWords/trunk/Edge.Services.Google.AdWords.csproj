@@ -66,12 +66,12 @@
     <None Include="Properties\AssemblyInfo.cs.template" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>
-	<ItemGroup Condition=" '$(Configuration)' != 'Release' ">
-		<None Include="Edge.Services.config">
-			<SubType>Designer</SubType>
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' != 'Release' ">
+    <None Include="Edge.Services.config">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\Edge.Core\Edge.Core.csproj">
       <Project>{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}</Project>
