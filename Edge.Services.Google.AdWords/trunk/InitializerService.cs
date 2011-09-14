@@ -43,9 +43,10 @@ namespace Edge.Services.Google.AdWords
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
+			
+			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"]; 
 			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID };
 			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
