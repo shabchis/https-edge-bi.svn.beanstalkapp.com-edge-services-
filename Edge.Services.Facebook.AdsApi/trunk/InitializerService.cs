@@ -15,9 +15,9 @@ using Edge.Services.AdMetrics;
 
 namespace Edge.Services.Facebook.AdsApi
 {
-	public class InitializerService: PipelineService	
+	public class InitializerService : PipelineService
 	{
-		protected override ServiceOutcome  DoPipelineWork()
+		protected override ServiceOutcome DoPipelineWork()
 		{
 			// ...............................
 			// SETUP
@@ -54,6 +54,8 @@ namespace Edge.Services.Facebook.AdsApi
 
 			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 
+			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
+			throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
 				FacebookConfigurationOptions.Account_ID,
@@ -101,58 +103,58 @@ namespace Edge.Services.Facebook.AdsApi
 
 			return ServiceOutcome.Success;
 		}
-		
 
-		
+
+
 
 		private string GetAdGroupStatsHttpRequest()
 		{
-			
+
 			string body;
 			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
 			AdGroupStatesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			AdGroupStatesParameters.Add("method",Consts.FacebookMethodsNames.GetAdGroupStats);
+			AdGroupStatesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupStats);
 			AdGroupStatesParameters.Add("include_deleted", "true");
 			AdGroupStatesParameters.Add("stats_mode", "with_delivery");
 			dynamic timeRangeIn = new ExpandoObject();
-			timeRangeIn.day_start = new { month =  TargetPeriod.Start.ToDateTime().Month, day =TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
-			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day =  TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
+			timeRangeIn.day_start = new { month = TargetPeriod.Start.ToDateTime().Month, day = TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
+			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day = TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
 			dynamic timeRange = new ExpandoObject();
 			timeRange.time_range = timeRangeIn;
 			string timeRangeString = Newtonsoft.Json.JsonConvert.SerializeObject(timeRange);
 			AdGroupStatesParameters.Add("time_ranges", timeRangeString);
 			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-			
+
 
 			return body;
 		}
 		private string GetAdGroupCreativesHttpRequest()
 		{
-			
+
 			string body;
 			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
 			AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			AdGroupCreativesParameters.Add("include_deleted", "true");			
+			AdGroupCreativesParameters.Add("include_deleted", "true");
 			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-			
+
 			return body;
 		}
 		private string GetAdGroupsHttpRequest()
 		{
-			
+
 			string body;
 			Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
 			AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
 			AdGroupsParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroups);
 			AdGroupsParameters.Add("include_deleted", "true");
 			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-			
+
 			return body;
 		}
 		private string GetCampaignsHttpRequest()
 		{
-			
+
 			string body;
 			Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
 			CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
@@ -161,7 +163,7 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-			
+
 			return body;
 
 
@@ -178,7 +180,7 @@ namespace Edge.Services.Facebook.AdsApi
 			return body;
 		}
 
-		
+
 		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
 		{
 			StringBuilder builder = new StringBuilder();
@@ -236,6 +238,6 @@ namespace Edge.Services.Facebook.AdsApi
 
 
 
-		
+
 	}
 }
