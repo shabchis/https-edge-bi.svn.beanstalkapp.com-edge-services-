@@ -17,6 +17,7 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	public class InitializerService : PipelineService
 	{
+		private Uri _baseAddress;
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			// ...............................
@@ -64,21 +65,26 @@ namespace Edge.Services.Facebook.AdsApi
 				FacebookConfigurationOptions.Auth_AppSecret,
 				FacebookConfigurationOptions.Auth_SessionKey,
 				FacebookConfigurationOptions.Auth_SessionSecret,
+				FacebookConfigurationOptions.Auth_RedirectUri,
+				FacebookConfigurationOptions.Auth_AuthenticationUrl
 			};
 			foreach (string option in configOptionsToCopyToDelivery)
 				this.Delivery.Parameters[option] = this.Instance.Configuration.Options[option];
-
+			if (string.IsNullOrEmpty(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]))
+				throw new Exception("facebook base url must be configured!");
+			_baseAddress =new Uri(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]);
 			this.ReportProgress(0.2);
+
 			DeliveryFile deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
-			deliveryFile.Parameters.Add("body", GetAdGroupStatsHttpRequest());
+			deliveryFile.Parameters.Add("URL", GetAdGroupStatsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 			this.ReportProgress(0.4);
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
-			deliveryFile.Parameters.Add("body", GetAdGroupsHttpRequest());
+			deliveryFile.Parameters.Add("URL", GetAdGroupsHttpRequest());
 
 			this.Delivery.Files.Add(deliveryFile);
 
@@ -86,13 +92,13 @@ namespace Edge.Services.Facebook.AdsApi
 			this.ReportProgress(0.6);
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
-			deliveryFile.Parameters.Add("body", GetCampaignsHttpRequest());
+			deliveryFile.Parameters.Add("URL", GetCampaignsHttpRequest());
 			this.Delivery.Files.Add(deliveryFile);
 
 
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
-			deliveryFile.Parameters.Add("body", GetgetAdGroupTargeting());
+			deliveryFile.Parameters.Add("URL", GetgetAdGroupTargeting());
 
 			this.Delivery.Files.Add(deliveryFile);
 
@@ -109,75 +115,87 @@ namespace Edge.Services.Facebook.AdsApi
 
 		private string GetAdGroupStatsHttpRequest()
 		{
-
-			string body;
-			Dictionary<string, string> AdGroupStatesParameters = new Dictionary<string, string>();
-			AdGroupStatesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			AdGroupStatesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupStats);
-			AdGroupStatesParameters.Add("include_deleted", "true");
-			AdGroupStatesParameters.Add("stats_mode", "with_delivery");
 			dynamic timeRangeIn = new ExpandoObject();
 			timeRangeIn.day_start = new { month = TargetPeriod.Start.ToDateTime().Month, day = TargetPeriod.Start.ToDateTime().Day, year = TargetPeriod.Start.ToDateTime().Year };
 			timeRangeIn.day_stop = new { month = TargetPeriod.End.ToDateTime().Month, day = TargetPeriod.End.ToDateTime().Day, year = TargetPeriod.End.ToDateTime().Year };
 			dynamic timeRange = new ExpandoObject();
 			timeRange.time_range = timeRangeIn;
 			string timeRangeString = Newtonsoft.Json.JsonConvert.SerializeObject(timeRange);
-			AdGroupStatesParameters.Add("time_ranges", timeRangeString);
-			body = CreateHTTPParameterList(AdGroupStatesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
+			string AdGroupStatsSpecificUrl = string.Format("method/ads.getAdGroupStats?account_id={0}&include_deleted={1}&stats_mode={2}&time_ranges={3}", this.Delivery.Account.OriginalID.ToString(), true, "with_delivery", timeRangeString);
+			Uri url = new Uri(_baseAddress, AdGroupStatsSpecificUrl);
+			
+		
+			
+			
+		//this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
 
-			return body;
+			return url.ToString(); ;
 		}
 		private string GetAdGroupCreativesHttpRequest()
 		{
+			string specificUrl = string.Format("method/ads.getAdGroupCreatives?account_id={0}&include_deleted={1}", this.Delivery.Account.OriginalID.ToString(), true);
+			Uri url = new Uri(_baseAddress, specificUrl);
+			return url.ToString(); 
+			//string body;
+			//Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
+			//AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
+			//AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
+			//AdGroupCreativesParameters.Add("include_deleted", "true");
+			//body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
-			string body;
-			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
-			AdGroupCreativesParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			AdGroupCreativesParameters.Add("include_deleted", "true");
-			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-
-			return body;
+			//return body;
+			//FacebookConfigurationOptions
 		}
 		private string GetAdGroupsHttpRequest()
 		{
 
-			string body;
-			Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
-			AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			AdGroupsParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroups);
-			AdGroupsParameters.Add("include_deleted", "true");
-			body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
+			string specificUrl = string.Format("method/ads.getAdGroups?account_id={0}&include_deleted={1}", this.Delivery.Account.OriginalID.ToString(), true);
+			Uri url = new Uri(_baseAddress, specificUrl);
+			return url.ToString(); 
+			
+			
+			//string body;
+			//Dictionary<string, string> AdGroupsParameters = new Dictionary<string, string>();
+			//AdGroupsParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
+			//AdGroupsParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroups);
+			//AdGroupsParameters.Add("include_deleted", "true");
+			//body = CreateHTTPParameterList(AdGroupsParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
-			return body;
+			//return body;
 		}
 		private string GetCampaignsHttpRequest()
 		{
+			string specificUrl = string.Format("method/ads.getCampaigns?account_id={0}&include_deleted={1}", this.Delivery.Account.OriginalID.ToString(), true);
+			Uri url = new Uri(_baseAddress, specificUrl);
+			return url.ToString(); 
 
-			string body;
-			Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
-			CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			CampaignsParmaters.Add("method", Consts.FacebookMethodsNames.GetCampaigns);
-			CampaignsParmaters.Add("include_deleted", "true");
+			//string body;
+			//Dictionary<string, string> CampaignsParmaters = new Dictionary<string, string>();
+			//CampaignsParmaters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
+			//CampaignsParmaters.Add("method", Consts.FacebookMethodsNames.GetCampaigns);
+			//CampaignsParmaters.Add("include_deleted", "true");
 
 
-			body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
+			//body = CreateHTTPParameterList(CampaignsParmaters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
-			return body;
+			//return body;
 
 
 		}
 		private string GetgetAdGroupTargeting()
 		{
-			string body;
-			Dictionary<string, string> AdGroupTargetingParameters = new Dictionary<string, string>();
-			AdGroupTargetingParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
-			AdGroupTargetingParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupTargeting);
-			AdGroupTargetingParameters.Add("include_deleted", "true");
-			body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
+			string specificUrl = string.Format("method/ads.getAdGroupTargeting?account_id={0}&include_deleted={1}", this.Delivery.Account.OriginalID.ToString(), true);
+			Uri url = new Uri(_baseAddress, specificUrl);
+			return url.ToString(); 
+			//string body;
+			//Dictionary<string, string> AdGroupTargetingParameters = new Dictionary<string, string>();
+			//AdGroupTargetingParameters.Add("account_id", this.Delivery.Account.OriginalID.ToString());
+			//AdGroupTargetingParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupTargeting);
+			//AdGroupTargetingParameters.Add("include_deleted", "true");
+			//body = CreateHTTPParameterList(AdGroupTargetingParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
 
-			return body;
+			//return body;
 		}
 
 

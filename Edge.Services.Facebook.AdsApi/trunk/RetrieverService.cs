@@ -18,14 +18,31 @@ namespace Edge.Services.Facebook.AdsApi
 {
 	class RetrieverService : PipelineService
 	{
-		private string _baseAddress;
+		private Uri _baseAddress;
+		private string _accessToken;
 		const double firstBatchRatio = 0.5;
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			// http://api.facebook.com/restserver.php
-			_baseAddress = this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress];
+			_baseAddress = new Uri(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]);
 
+			//Get Access token
 
+			string urlAut=string.Format(string.Format(this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AuthenticationUrl].ToString(),
+				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(),
+				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_RedirectUri],
+				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AppSecret].ToString(),
+				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString()));
+			
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(urlAut);		 
+			WebResponse response = request.GetResponse();
+
+			using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+			{
+				_accessToken = stream.ReadToEnd();
+			}
+			
+			
+			
 			
 			FileDownloadOperation adgroupDownload=null; //= new FileDownloadOperation(CreateRequest("adgroups blah blah"));
 			BatchDownloadOperation batch = new BatchDownloadOperation();
@@ -35,14 +52,14 @@ namespace Edge.Services.Facebook.AdsApi
 			{
 				if (file.Name == Consts.DeliveryFilesNames.AdGroup)
 				{
-					adgroupDownload = file.Download(CreateRequest());
-					adgroupDownload.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					adgroupDownload = file.Download(CreateRequest(file.Parameters["URL"].ToString()));
+					//adgroupDownload.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
 					batch.Insert(0, adgroupDownload);
 				}
 				else
 				{
-					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest());
-					fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()));
+					//fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
 					batch.Add(fileDownloadOperation);
 				}
 			}
@@ -82,8 +99,8 @@ namespace Edge.Services.Facebook.AdsApi
 					this.Delivery.Save();
 					foreach (DeliveryFile file in deliveryFiles)
 					{
-						FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest());
-						fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+						
+						FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()));						
 						creativeBatch.Add(fileDownloadOperation);
 					}
 				}		
@@ -100,6 +117,23 @@ namespace Edge.Services.Facebook.AdsApi
 			this.Delivery.Save();
 			return ServiceOutcome.Success;
 		}
+
+		private HttpWebRequest CreateRequest(string baseUrl,string[] extraParams=null)
+		{
+			if (extraParams!=null)
+			{
+				foreach (string param in extraParams)
+				{
+					baseUrl = string.Format("{0}&{1}", baseUrl, param);
+				} 
+			}
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&{1}", baseUrl, _accessToken));
+
+			//request.Accept = "text/xml;charset=utf-8";
+
+			return request;
+		}
+		
 
 		void creativeBatch_Progressed(object sender, EventArgs e)
 		{
@@ -119,8 +153,19 @@ namespace Edge.Services.Facebook.AdsApi
 		{
 			DeliveryFile current = new DeliveryFile();
 			current.Name = string.Format(Consts.DeliveryFilesNames.Creatives, counter++);
-			current.Parameters.Add(Consts.DeliveryFileParameters.Body, GetAdGroupCreativesBody(adGroupsIds));
+			dynamic d = new ExpandoObject();
+			d.adgroup_ids = adGroupsIds;
+
+			
+			
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
+			string specificUrl = string.Format("method/ads.getAdGroupCreatives?account_id={0}&include_deleted={1}&{2}",
+				this.Delivery.Account.OriginalID.ToString(),
+				true,				
+				string.Format("adgroup_ids={0}",Newtonsoft.Json.JsonConvert.SerializeObject(d.adgroup_ids)));
+			Uri url = new Uri(_baseAddress, specificUrl);
+			current.Parameters.Add("URL",url);
+			
 			adGroupsIds.Clear();
 			if (Delivery.Files.Contains(current.Name))
 				Delivery.Files.Remove(current.Name);
@@ -129,30 +174,8 @@ namespace Edge.Services.Facebook.AdsApi
 			return current;
 		}
 
-		private object GetAdGroupCreativesBody(List<string> adGroupsIds)
-		{
-			string body;
-			Dictionary<string, string> AdGroupCreativesParameters = new Dictionary<string, string>();
-			AdGroupCreativesParameters.Add("account_id", this.Delivery.Parameters[FacebookConfigurationOptions.Account_ID].ToString());
-			AdGroupCreativesParameters.Add("method", Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			AdGroupCreativesParameters.Add("include_deleted", "true");
-			dynamic d = new ExpandoObject();
-			d.adgroup_ids = adGroupsIds;
-
-			AdGroupCreativesParameters.Add("adgroup_ids", Newtonsoft.Json.JsonConvert.SerializeObject(d.adgroup_ids));
-			body = CreateHTTPParameterList(AdGroupCreativesParameters, this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionKey].ToString(), this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
-
-			return body;
-		}
-		private HttpWebRequest CreateRequest()
-		{
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(_baseAddress);
-			request.Method = "POST";
-			request.ContentType = "application/x-www-form-urlencoded";
-			//request.Accept = "text/xml;charset=utf-8";
-			
-			return request;
-		}
+		
+		
 		
 		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
 		{

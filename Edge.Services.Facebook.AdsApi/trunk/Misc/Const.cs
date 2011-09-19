@@ -12,6 +12,9 @@ namespace Edge.Services.Facebook.AdsApi
 		public const string Account_Name = "Facebook.Account.Name";
 		public const string Auth_SessionKey = "Facebook.Auth.SessionKey";
 		public const string Auth_ApiKey = "Facebook.Auth.ApiKey";
+		public const string Auth_RedirectUri = "Facebook.Auth.RedirectUri";
+		public const string Auth_Permision = "Facebook.Auth.RedirectUri";
+		public const string Auth_AuthenticationUrl = "Facebook.AuthenticationUrl";
 		public const string Auth_AppSecret = "Facebook.Auth.AppSecret";
 		public const string Auth_SessionSecret = "Facebook.Auth.SessionSecret";
 		public const string Ads_XPath_GetAdGroups = "Facebook.Ads.XPath.GetAdGroups";
