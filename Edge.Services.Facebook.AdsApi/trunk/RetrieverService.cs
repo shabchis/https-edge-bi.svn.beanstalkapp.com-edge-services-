@@ -44,22 +44,20 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			
 			
-			FileDownloadOperation adgroupDownload=null; //= new FileDownloadOperation(CreateRequest("adgroups blah blah"));
+			FileDownloadOperation adgroupDownload=null; 
 			BatchDownloadOperation batch = new BatchDownloadOperation();
-			//adgroupDownload.Ended += new EventHandler<EndedEventArgs>(adgroupDownload_Ended);
+			
 
 			foreach (DeliveryFile file in Delivery.Files)
 			{
 				if (file.Name == Consts.DeliveryFilesNames.AdGroup)
 				{
-					adgroupDownload = file.Download(CreateRequest(file.Parameters["URL"].ToString()));
-					//adgroupDownload.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					adgroupDownload = file.Download(CreateRequest(file.Parameters["URL"].ToString()));				
 					batch.Insert(0, adgroupDownload);
 				}
 				else
 				{
-					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()));
-					//fileDownloadOperation.RequestBody = file.Parameters[Consts.DeliveryFileParameters.Body].ToString();
+					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()));					
 					batch.Add(fileDownloadOperation);
 				}
 			}
@@ -129,7 +127,7 @@ namespace Edge.Services.Facebook.AdsApi
 			}
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&{1}", baseUrl, _accessToken));
 
-			//request.Accept = "text/xml;charset=utf-8";
+			
 
 			return request;
 		}
@@ -154,10 +152,7 @@ namespace Edge.Services.Facebook.AdsApi
 			DeliveryFile current = new DeliveryFile();
 			current.Name = string.Format(Consts.DeliveryFilesNames.Creatives, counter++);
 			dynamic d = new ExpandoObject();
-			d.adgroup_ids = adGroupsIds;
-
-			
-			
+			d.adgroup_ids = adGroupsIds;			
 			current.Parameters.Add("IsCreativeDeliveryFile", true);
 			string specificUrl = string.Format("method/ads.getAdGroupCreatives?account_id={0}&include_deleted={1}&{2}",
 				this.Delivery.Account.OriginalID.ToString(),
@@ -172,62 +167,6 @@ namespace Edge.Services.Facebook.AdsApi
 			
 			this.Delivery.Files.Add(current);
 			return current;
-		}
-
-		
-		
-		
-		internal string CreateHTTPParameterList(IDictionary<string, string> parameterList, string applicationKey, string sessionKey, string sessionSecret)
-		{
-			StringBuilder builder = new StringBuilder();
-			parameterList.Add("api_key", applicationKey); //this.Session.ApplicationKey
-			parameterList.Add("session_key", sessionKey); //this.Session.ApplicationKey
-			parameterList.Add("v", "1.0");
-			parameterList.Add("call_id", DateTime.Now.Ticks.ToString("x", CultureInfo.InvariantCulture));
-			//if (this.Session.SessionSecret != null)
-			if (sessionSecret != null)
-			{
-				parameterList.Add("ss", "1");
-			}
-			parameterList.Add("sig", this.GenerateSignature(parameterList, applicationKey, sessionSecret));
-			foreach (KeyValuePair<string, string> pair in parameterList)
-			{
-				builder.Append(pair.Key);
-				builder.Append("=");
-				builder.Append(HttpUtility.UrlEncode(pair.Value));
-				builder.Append("&");
-			}
-			builder.Remove(builder.Length - 1, 1);
-			return builder.ToString();
-		}
-
-		internal string GenerateSignature(IDictionary<string, string> parameters, string applicationKey, string sessionSecret)
-		{
-			StringBuilder builder = new StringBuilder();
-			List<string> list = ParameterDictionaryToList(parameters);
-			list.Sort();
-			foreach (string str in list)
-			{
-				builder.Append(string.Format(CultureInfo.InvariantCulture, "{0}={1}", new object[] { str, parameters[str] }));
-			}
-			builder.Append(sessionSecret);
-			byte[] hash = MD5Core.GetHash(builder.ToString().Trim());
-			builder = new StringBuilder();
-			foreach (byte num in hash)
-			{
-				builder.Append(num.ToString("x2", CultureInfo.InvariantCulture));
-			}
-			return builder.ToString();
-		}
-
-		internal static List<string> ParameterDictionaryToList(IEnumerable<KeyValuePair<string, string>> parameterDictionary)
-		{
-			List<string> list = new List<string>();
-			foreach (KeyValuePair<string, string> pair in parameterDictionary)
-			{
-				list.Add(string.Format(CultureInfo.InvariantCulture, "{0}", new object[] { pair.Key }));
-			}
-			return list;
-		}
+		}		
 	}
 }
