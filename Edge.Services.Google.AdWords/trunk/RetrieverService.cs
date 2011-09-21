@@ -119,7 +119,7 @@ namespace Edge.Services.Google.AdWords
 		{
 			GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
 
-			file.Name = _googleReport.customizedReportName + ".gz";
+		//	file.Name = _googleReport.customizedReportName + ".gz";
 			file.SourceUrl = request.downloadUrl.ToString();
 			file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 			file.Parameters.Add("authToken", request.authToken);
