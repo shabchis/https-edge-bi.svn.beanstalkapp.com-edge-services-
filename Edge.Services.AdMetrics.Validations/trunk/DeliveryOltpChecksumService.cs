@@ -15,7 +15,6 @@ namespace Edge.Services.AdMetrics.Validations
     {
         protected override IEnumerable<ValidationResult> Validate()
         {
-            List<Delivery> deliverySearchList = new List<Delivery>();
             Channel channel = new Channel();
 
             //Getting Accounts list
@@ -37,6 +36,8 @@ namespace Edge.Services.AdMetrics.Validations
             //Getting TimePeriod
             DateTime fromDate = this.TargetPeriod.Start.ToDateTime();
             DateTime toDate = this.TargetPeriod.End.ToDateTime();
+            List<DeliverySearchItem> deliverySearchList = new List<DeliverySearchItem>();
+
             while (fromDate <= toDate)
             {
                 // {start: {base : '2009-01-01', h:0}, end: {base: '2009-01-01', h:'*'}}
@@ -56,26 +57,27 @@ namespace Edge.Services.AdMetrics.Validations
                             Boundary = DateTimeSpecificationBounds.Upper
                         }
                     };
-
+              
                 foreach (var Channel in channels)
                 {
+                   
                     foreach (string account in accounts)
                     {
-                        Delivery delivery = new Delivery();
-                        delivery.Account = new Account() { ID = Convert.ToInt16(account) };
-                        delivery.Channel = new Channel() { ID = Convert.ToInt16(Channel) };
-                        delivery.TargetPeriod = subRange;
-
+                        DeliverySearchItem delivery = new DeliverySearchItem();
+                        delivery.account = new Account() { ID = Convert.ToInt16(account) };
+                        delivery.channel = new Channel() { ID = Convert.ToInt16(Channel) };
+                        delivery.targetPeriod = subRange;
                         deliverySearchList.Add(delivery);
                     }
                 }
-                fromDate.AddDays(1);
+                fromDate = fromDate.AddDays(1);
             }
 
-            foreach (Delivery deliverySearch in deliverySearchList)
+            foreach (DeliverySearchItem deliveryToSearch in deliverySearchList)
             {
                 //Getting matched deliveries
-                Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliverySearch.TargetPeriod.Start.ToDateTime(), deliverySearch.TargetPeriod.End.ToDateTime(), deliverySearch.Channel, deliverySearch.Account);
+                Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
+              
                 foreach (Delivery d in deliveriesToCheck)
                 {
                     int rollbackIndex = -1;
@@ -109,14 +111,14 @@ namespace Edge.Services.AdMetrics.Validations
 
                             //Check data vs OLTP
                             ValidationResult validationResult = new ValidationResult();
-                            string dayCode = String.Format("yyyyMMdd", deliverySearch.TargetPeriod.Start.ToDateTime());
+                            string dayCode = String.Format("yyyyMMdd", deliveryToSearch.targetPeriod.Start.ToDateTime());
 
                             using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString("Edge.Core.Services", "SystemDatabase")))
                             {
                                 sqlCon.Open();
                                 SqlCommand sqlCommand = DataManager.CreateCommand(
                                     "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
-                                    " where account_id =" + deliverySearch.Account.ID +
+                                    " where account_id =" + deliveryToSearch.account.ID +
                                     " and Day_Code =" + dayCode +
                                     " and Channel_ID = " + channel.ID);
 
@@ -135,7 +137,7 @@ namespace Edge.Services.AdMetrics.Validations
                                         if (costDif != 0 || clicksDif != 0 || impsDif != 0)
                                         {
                                             validationResult.ResultType = ValidationResultType.Error;
-                                            validationResult.AccountID = deliverySearch.Account.ID;
+                                            validationResult.AccountID = deliveryToSearch.account.ID;
                                             validationResult.DeliveryID = d.DeliveryID;
                                             validationResult.TargetPeriodStart = d.TargetPeriodStart;
                                             validationResult.TargetPeriodEnd = d.TargetPeriodEnd;
@@ -144,7 +146,7 @@ namespace Edge.Services.AdMetrics.Validations
                                         else
                                         {
                                             validationResult.ResultType = ValidationResultType.Information;
-                                            validationResult.AccountID = deliverySearch.Account.ID;
+                                            validationResult.AccountID = deliveryToSearch.account.ID;
                                             validationResult.DeliveryID = d.DeliveryID;
                                             validationResult.TargetPeriodStart = d.TargetPeriodStart;
                                             validationResult.TargetPeriodEnd = d.TargetPeriodEnd;
@@ -166,4 +168,11 @@ namespace Edge.Services.AdMetrics.Validations
 
         }
     }
+    public class DeliverySearchItem
+    {
+        public Account account { set; get; }
+        public Channel channel { set; get; }
+        public DateTimeRange targetPeriod { set; get; }
+    }
+
 }
