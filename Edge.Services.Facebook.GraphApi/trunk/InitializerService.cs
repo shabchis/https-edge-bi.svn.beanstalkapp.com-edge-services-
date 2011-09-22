@@ -76,13 +76,14 @@ namespace Edge.Services.Facebook.GraphApi
 
 			Dictionary<string, string> methodParams = new Dictionary<string, string>();
 			string methodUrl;
-
-			#region adgroupstats
 			DeliveryFile deliveryFile = new DeliveryFile();
+			#region adgroupstats
+
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
 			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToTimestamp(TargetPeriod.Start.ToDateTime()).ToString());
-			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToTimestamp(TargetPeriod.Start.ToDateTime()).ToString());
-			methodUrl = string.Format("act_{0}/{1},", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
+			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToTimestamp(TargetPeriod.End.ToDateTime()).ToString());
+			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
 			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
@@ -91,9 +92,11 @@ namespace Edge.Services.Facebook.GraphApi
 			#region adgroup
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
-			methodUrl = string.Format("act_{0}/{1},", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
+			deliveryFile.Name =Consts.DeliveryFilesNames.AdGroup;
+			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
+			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add("fileType", "count");
 
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
@@ -102,33 +105,40 @@ namespace Edge.Services.Facebook.GraphApi
 
 			#region Campaigns
 
-			
+
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
-			methodUrl = string.Format("act_{0}/{1},", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
+			deliveryFile.Parameters.Add("fileType", "count");
+			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
 			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
 			this.Delivery.Files.Add(deliveryFile);
-
-			#endregion
-
-			#region AdGroupTargeting
-			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
-			methodUrl = string.Format("act_{0}/{1},", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupTargeting);
-			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
 
 			#endregion
 
 			#region Creatives
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
-			methodUrl = string.Format("act_{0}/{1},", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
+			deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
+			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
 			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
-
+			deliveryFile.Parameters.Add("fileType", "count");
+			this.Delivery.Files.Add(deliveryFile);
 			#endregion
 
+			//#region AdGroupTargeting
+			//deliveryFile = new DeliveryFile();
+			//deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
+			//deliveryFile.Parameters.Add("fileType", "count");
+			//methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupTargeting);
+			//deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
 
-			this.Delivery.Files.Add(deliveryFile);
+			//#endregion
+
+			
+
+
+			
 			#endregion
 
 			this.ReportProgress(0.9);
@@ -141,8 +151,21 @@ namespace Edge.Services.Facebook.GraphApi
 
 		private string GetMethodUrl(string relativeUrl, Dictionary<string, string> methodParams)
 		{
+			
+			StringBuilder urlParams=new StringBuilder();
+			urlParams.Append(relativeUrl);
+			urlParams.Append("?");
+			foreach (KeyValuePair<string,string> param in methodParams)
+			{
+				urlParams.Append(param.Key);
+				urlParams.Append("=");
+				urlParams.Append(param.Value);
+				urlParams.Append("&");				
+			}
+			Uri uri = new Uri(_baseAddress, urlParams.ToString());
 			methodParams.Clear();
-			return "https://graph.facebook.com";
+			return uri.ToString();
+			
 		}
 		/// <summary>
 		/// method for converting a System.DateTime value to a UNIX Timestamp

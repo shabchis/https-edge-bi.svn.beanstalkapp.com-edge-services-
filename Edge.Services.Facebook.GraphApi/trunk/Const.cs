@@ -37,18 +37,16 @@ namespace Edge.Services.Facebook.GraphApi
 		public static class FacebookMethodsParams
 		{
 			public const string StartTime = "start_time";
-			public const string EndTime = "start_time";
-
-
-			public static string IncludeDeleted = "include_deleted";
+			public const string EndTime = "end_time";
+			public const string IncludeDeleted = "include_deleted";
 		}
 		public static class DeliveryFilesNames
 		{
-			public const string AdGroupTargeting = "AdGroupTargeting.xml";
-			public const string Campaigns = "Campaigns.xml";
-			public const string AdGroup = "AdGroups.xml";
-			public const string AdGroupStats = "AdGroupStats.xml";
-			public const string Creatives = "AdGroupCreatives-{0}.xml";
+			public const string AdGroupTargeting = "AdGroupTargeting-{0}.json";
+			public const string Campaigns = "Campaigns-{0}.json";
+			public const string AdGroup = "AdGroups-{0}.json";
+			public const string AdGroupStats = "AdGroupStats-{0}.json";
+			public const string Creatives = "AdGroupCreatives-{0}.json";
 		}
 		public static class DeliveryFileParameters
 		{
