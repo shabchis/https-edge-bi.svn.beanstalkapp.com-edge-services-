@@ -11,8 +11,11 @@ using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics.Validations
 {
+ 
     public class DeliveryOltpChecksumService : ValidationService
     {
+        private static Double  ALLOWED_DIFF = 0.1;
+
         protected override IEnumerable<ValidationResult> Validate()
         {
             Channel channel = new Channel();
@@ -34,8 +37,18 @@ namespace Edge.Services.AdMetrics.Validations
             string[] channels = this.Instance.Configuration.Options["ChannelList"].Split(',');
 
             //Getting TimePeriod
-            DateTime fromDate = this.TargetPeriod.Start.ToDateTime();
-            DateTime toDate = this.TargetPeriod.End.ToDateTime();
+            DateTime fromDate,toDate;
+            if ((String.IsNullOrEmpty(this.Instance.Configuration.Options["fromDate"])) && (String.IsNullOrEmpty(this.Instance.Configuration.Options["toDate"])))
+            {
+                fromDate = this.TargetPeriod.Start.ToDateTime();
+                toDate = this.TargetPeriod.End.ToDateTime();
+            }
+            else
+            {
+                fromDate = Convert.ToDateTime(this.Instance.Configuration.Options["fromDate"]);
+                toDate = Convert.ToDateTime(this.Instance.Configuration.Options["toDate"]);
+            }
+
             List<DeliverySearchItem> deliverySearchList = new List<DeliverySearchItem>();
 
             while (fromDate <= toDate)
@@ -57,10 +70,10 @@ namespace Edge.Services.AdMetrics.Validations
                             Boundary = DateTimeSpecificationBounds.Upper
                         }
                     };
-              
+
                 foreach (var Channel in channels)
                 {
-                   
+
                     foreach (string account in accounts)
                     {
                         DeliverySearchItem delivery = new DeliverySearchItem();
@@ -77,7 +90,7 @@ namespace Edge.Services.AdMetrics.Validations
             {
                 //Getting matched deliveries
                 Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
-              
+
                 foreach (Delivery d in deliveriesToCheck)
                 {
                     int rollbackIndex = -1;
@@ -110,17 +123,17 @@ namespace Edge.Services.AdMetrics.Validations
 
 
                             //Check data vs OLTP
-                            ValidationResult validationResult = new ValidationResult();
-                            string dayCode = String.Format("yyyyMMdd", deliveryToSearch.targetPeriod.Start.ToDateTime());
+                            string dayCode = deliveryToSearch.targetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
 
-                            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString("Edge.Core.Services", "SystemDatabase")))
+                            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "CompareDB")))
                             {
                                 sqlCon.Open();
                                 SqlCommand sqlCommand = DataManager.CreateCommand(
                                     "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
-                                    " where account_id =" + deliveryToSearch.account.ID +
+                                    " where account_id =" + d.Account.ID +
                                     " and Day_Code =" + dayCode +
-                                    " and Channel_ID = " + channel.ID);
+                                    " and Channel_ID = " + d.Channel.ID
+                                    );
 
                                 sqlCommand.Connection = sqlCon;
 
@@ -130,44 +143,86 @@ namespace Edge.Services.AdMetrics.Validations
                                     {
                                         while (_reader.Read())
                                         {
-                                            costDif = Convert.ToInt64(_reader[0]) - totals["cost"];
-                                            clicksDif = Convert.ToInt64(_reader[1]) - totals["clicks"];
-                                            impsDif = Convert.ToInt64(_reader[2]) - totals["impressions"];
+                                            if (!_reader[0].Equals(DBNull.Value))
+                                            {
+                                                costDif = Math.Abs(Convert.ToUInt64(_reader[0]) - totals["Cost"]);
+                                                clicksDif = Math.Abs(Convert.ToUInt64(_reader[2]) - totals["Clicks"]);
+                                                impsDif = Math.Abs(Convert.ToUInt64(_reader[1]) - totals["Impressions"]);
+                                            }
+
+                                            // if data exists in delivery and not in DB
+                                            else if (totals["Cost"] > 0 || totals["Clicks"] > 0 || totals["Impressions"] > 0)
+                                                yield return new ValidationResult()
+                                                {
+                                                    ResultType = ValidationResultType.Error,
+                                                    AccountID = d.Account.ID,
+                                                    TargetPeriodStart = d.TargetPeriodStart,
+                                                    TargetPeriodEnd = d.TargetPeriodEnd,
+                                                    Message = "Data exists in delivery but not in DB"
+                                                };
+
+                                            // data exists in both delivery and DB - checking Diff
+                                            if ((costDif != 0 && (costDif/ totals["Cost"] > ALLOWED_DIFF)) ||
+                                                (clicksDif != 0 && (clicksDif / totals["Clicks"] > ALLOWED_DIFF)) ||
+                                                (impsDif != 0 && (impsDif / totals["Impressions"] > ALLOWED_DIFF)))
+                                                
+                                                yield return new ValidationResult()
+                                                {
+                                                    ResultType = ValidationResultType.Error,
+                                                    AccountID = deliveryToSearch.account.ID,
+                                                    DeliveryID = d.DeliveryID,
+                                                    TargetPeriodStart = d.TargetPeriodStart,
+                                                    TargetPeriodEnd = d.TargetPeriodEnd,
+                                                    Message = "validation Error"
+                                                };
+
+                                            // No errors then success
+                                            else
+                                                yield return new ValidationResult()
+                                                {
+                                                    ResultType = ValidationResultType.Information,
+                                                    AccountID = deliveryToSearch.account.ID,
+                                                    DeliveryID = d.DeliveryID,
+                                                    TargetPeriodStart = d.TargetPeriodStart,
+                                                    TargetPeriodEnd = d.TargetPeriodEnd,
+                                                    Message = "validation Success"
+                                                };
                                         }
-                                        if (costDif != 0 || clicksDif != 0 || impsDif != 0)
-                                        {
-                                            validationResult.ResultType = ValidationResultType.Error;
-                                            validationResult.AccountID = deliveryToSearch.account.ID;
-                                            validationResult.DeliveryID = d.DeliveryID;
-                                            validationResult.TargetPeriodStart = d.TargetPeriodStart;
-                                            validationResult.TargetPeriodEnd = d.TargetPeriodEnd;
-                                            validationResult.Message = "validation Error";
-                                        }
-                                        else
-                                        {
-                                            validationResult.ResultType = ValidationResultType.Information;
-                                            validationResult.AccountID = deliveryToSearch.account.ID;
-                                            validationResult.DeliveryID = d.DeliveryID;
-                                            validationResult.TargetPeriodStart = d.TargetPeriodStart;
-                                            validationResult.TargetPeriodEnd = d.TargetPeriodEnd;
-                                            validationResult.Message = "validation Success";
-                                        }
-                                        yield return new ValidationResult();
+
                                     }
                                 }
                             }
                         }
 
                     }
+                    else  //if deliveries were not found
+                    {
+                        yield return new ValidationResult()
+                        {
+                            ResultType = ValidationResultType.Warning,
+                            AccountID = d.Account.ID,
+                            TargetPeriodStart = d.TargetPeriodStart,
+                            TargetPeriodEnd = d.TargetPeriodEnd,
+                            Message = "Validation Service : No deliveries were found in DB"
+                        };
+                    }
+                }
+
+                if (deliveriesToCheck.Length == 0)
+                {
+                    yield return new ValidationResult()
+                    {
+                        ResultType = ValidationResultType.Warning,
+                        AccountID = deliveryToSearch.account.ID,
+                        TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
+                        TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
+                        Message = "Validation Service : No deliveries were found in DB"
+                    };
                 }
             }
-
-
-
-
-
         }
     }
+
     public class DeliverySearchItem
     {
         public Account account { set; get; }
