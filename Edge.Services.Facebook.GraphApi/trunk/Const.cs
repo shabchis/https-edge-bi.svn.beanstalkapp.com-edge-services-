@@ -48,9 +48,23 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string AdGroupStats = "AdGroupStats-{0}.json";
 			public const string Creatives = "AdGroupCreatives-{0}.json";
 		}
+		public  enum FileTypes
+		{			
+			Campaigns,
+			AdGroups,
+			AdGroupStats,
+			Creatives			
+		}
+		public  enum FileSubType
+		{
+			Length=0,
+			Data=1,
+		}
 		public static class DeliveryFileParameters
 		{
-			public const string Body = "body";
+			public const string Url = "URL";
+			public const string FileSubType = "FileSubType";
+			public const string FileType = "FileType";
 		}
 	}
 }

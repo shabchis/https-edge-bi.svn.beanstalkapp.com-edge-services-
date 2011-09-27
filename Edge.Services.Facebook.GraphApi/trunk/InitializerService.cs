@@ -84,7 +84,9 @@ namespace Edge.Services.Facebook.GraphApi
 			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToTimestamp(TargetPeriod.End.ToDateTime()).ToString());
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
-			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType,Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
 
@@ -95,8 +97,9 @@ namespace Edge.Services.Facebook.GraphApi
 			deliveryFile.Name =Consts.DeliveryFilesNames.AdGroup;
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
-			deliveryFile.Parameters.Add("fileType", "count");
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdGroups);
 
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
@@ -107,11 +110,12 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
-			deliveryFile.Parameters.Add("fileType", "count");
+			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;			
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
-			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Campaigns);
 			this.Delivery.Files.Add(deliveryFile);
 
 			#endregion
@@ -121,18 +125,19 @@ namespace Edge.Services.Facebook.GraphApi
 			deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
-			deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
-			deliveryFile.Parameters.Add("fileType", "count");
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Creatives);
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
 
 			//#region AdGroupTargeting
 			//deliveryFile = new DeliveryFile();
-			//deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;
-			//deliveryFile.Parameters.Add("fileType", "count");
+			//deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;			
 			//methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupTargeting);
-			//deliveryFile.Parameters.Add("URL", GetMethodUrl(methodUrl, methodParams));
-
+			//deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+			//deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Data);
+			//this.Delivery.Files.Add(deliveryFile);
 			//#endregion
 
 			

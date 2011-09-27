@@ -8,6 +8,7 @@ using System.Net;
 using System.IO;
 using Edge.Data.Pipeline;
 using Newtonsoft.Json;
+using System.Collections;
 
 namespace Edge.Services.Facebook.GraphApi
 {
@@ -37,17 +38,35 @@ namespace Edge.Services.Facebook.GraphApi
 			}			
 			
 			BatchDownloadOperation countBatch = new BatchDownloadOperation();
+
+
+			var toremove = from f in Delivery.Files
+						   where !f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length)
+						   select f.Name;
+			foreach (string item in toremove.ToList())
+			{
+				Delivery.Files.Remove(item);
+				
+			}
+			
+			
 			foreach (DeliveryFile file in Delivery.Files)
-			{				
-					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()+"limit=0"));
-					countBatch.Add(fileDownloadOperation);				
+			{
+				if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length))
+				{
+					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString() + "limit=0"));
+					countBatch.Add(fileDownloadOperation);	 
+				}			
 			}
 			countBatch.Progressed += new EventHandler(counted_Batch_Progressed);
 			countBatch.Start();
 			countBatch.Wait();
 			countBatch.EnsureSuccess();
 			List<DeliveryFile> files = new List<DeliveryFile>();
-			foreach (DeliveryFile file in Delivery.Files)
+			Dictionary<Consts.FileTypes,List<string>> filesByType=new Dictionary<Consts.FileTypes,List<string>>();
+			Delivery.Parameters.Add("FilesByType", filesByType);
+
+			foreach (DeliveryFile file in Delivery.Files.Where(f => f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length)))
 			{
 				using (StreamReader reader=new StreamReader(file.OpenContents()))
 				{
@@ -58,8 +77,14 @@ namespace Edge.Services.Facebook.GraphApi
 					{
 						DeliveryFile f= new DeliveryFile();
 						f.Name = string.Format(file.Name,offset);
-						f.Parameters.Add("URL", string.Format("{0}&limit={1}&offset={2}", file.Parameters["URL"], limit, offset));
+						f.Parameters.Add(Consts.DeliveryFileParameters.Url, string.Format("{0}&limit={1}&offset={2}", file.Parameters[Consts.DeliveryFileParameters.Url], limit, offset));
+						f.Parameters.Add(Consts.DeliveryFileParameters.FileSubType,(long) Consts.FileSubType.Data);
+						f.Parameters.Add(Consts.DeliveryFileParameters.FileType,Enum.Parse(typeof(Consts.FileTypes), file.Parameters[Consts.DeliveryFileParameters.FileType].ToString()));
 						files.Add(f);
+						if (!filesByType.ContainsKey((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]))						
+							filesByType.Add((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType],new List<string>());
+						filesByType[(Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]].Add(f.Name);
+						
 						offset += limit;
 					}
 					offset = 0;				
@@ -70,9 +95,9 @@ namespace Edge.Services.Facebook.GraphApi
 				this.Delivery.Files.Add(file);
 			this.Delivery.Save();
 
-			foreach (var file in files)
+			foreach (DeliveryFile file in files.Where(fi => fi.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data)))
 			{
-				FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters["URL"].ToString()));
+				FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
 				batch.Add(fileDownloadOperation);
 			}
 
