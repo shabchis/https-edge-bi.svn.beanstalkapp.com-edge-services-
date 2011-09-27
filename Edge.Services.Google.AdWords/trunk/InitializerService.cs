@@ -48,7 +48,7 @@ namespace Edge.Services.Google.AdWords
 			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID };
+            this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
 			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
