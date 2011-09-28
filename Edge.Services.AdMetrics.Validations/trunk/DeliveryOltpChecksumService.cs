@@ -11,14 +11,16 @@ using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics.Validations
 {
- 
+
     public class DeliveryOltpChecksumService : ValidationService
     {
-        private static Double  ALLOWED_DIFF = 0.1;
-
+        private static Double ALLOWED_DIFF = 0.1;
+        private double progress = 0;
         protected override IEnumerable<ValidationResult> Validate()
         {
             Channel channel = new Channel();
+            progress += 0.1;
+            this.ReportProgress(progress);
 
             //Getting Accounts list
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["AccountsList"]))
@@ -37,7 +39,7 @@ namespace Edge.Services.AdMetrics.Validations
             string[] channels = this.Instance.Configuration.Options["ChannelList"].Split(',');
 
             //Getting TimePeriod
-            DateTime fromDate,toDate;
+            DateTime fromDate, toDate;
             if ((String.IsNullOrEmpty(this.Instance.Configuration.Options["fromDate"])) && (String.IsNullOrEmpty(this.Instance.Configuration.Options["toDate"])))
             {
                 fromDate = this.TargetPeriod.Start.ToDateTime();
@@ -81,6 +83,9 @@ namespace Edge.Services.AdMetrics.Validations
                         delivery.channel = new Channel() { ID = Convert.ToInt16(Channel) };
                         delivery.targetPeriod = subRange;
                         deliverySearchList.Add(delivery);
+
+                        progress += 0.3 / 1 - progress / (channels.LongLength + accounts.LongLength);
+                        this.ReportProgress(progress);
                     }
                 }
                 fromDate = fromDate.AddDays(1);
@@ -90,6 +95,9 @@ namespace Edge.Services.AdMetrics.Validations
             {
                 //Getting matched deliveries
                 Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
+
+                progress += 0.3 / 1 - progress;
+                this.ReportProgress(progress);
 
                 foreach (Delivery d in deliveriesToCheck)
                 {
@@ -105,7 +113,6 @@ namespace Edge.Services.AdMetrics.Validations
 
                     if (commitIndex > rollbackIndex)
                     {
-
                         object totalso;
                         DeliveryHistoryEntry commitEntry = null;
                         IEnumerable<DeliveryHistoryEntry> processedEntries = d.History.Where(entry => (entry.Operation == DeliveryOperation.Imported));
@@ -132,13 +139,17 @@ namespace Edge.Services.AdMetrics.Validations
                                     "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
                                     " where account_id =" + d.Account.ID +
                                     " and Day_Code =" + dayCode +
-                                    " and Channel_ID = " + d.Channel.ID
+                                    " and Channel_ID = " + d.Channel.ID + 
+                                    " and [Account_ID_SRC] ='"+d.Account.OriginalID+"'"
                                     );
 
                                 sqlCommand.Connection = sqlCon;
 
                                 using (var _reader = sqlCommand.ExecuteReader())
                                 {
+                                    progress += 0.5 / 1 - progress;
+                                    this.ReportProgress(progress);
+
                                     if (!_reader.IsClosed)
                                     {
                                         while (_reader.Read())
@@ -158,14 +169,16 @@ namespace Edge.Services.AdMetrics.Validations
                                                     AccountID = d.Account.ID,
                                                     TargetPeriodStart = d.TargetPeriodStart,
                                                     TargetPeriodEnd = d.TargetPeriodEnd,
-                                                    Message = "Data exists in delivery but not in DB"
+                                                    Message = "Data exists in delivery but not in DB for Account Original ID: "+ d.Account.OriginalID,
+                                                    ChannelID = d.Channel.ID,
+                                                    CheckType = ValidationCheckType.DeliveryOltp
                                                 };
 
                                             // data exists in both delivery and DB - checking Diff
-                                            if ((costDif != 0 && (costDif/ totals["Cost"] > ALLOWED_DIFF)) ||
+                                            if ((costDif != 0 && (costDif / totals["Cost"] > ALLOWED_DIFF)) ||
                                                 (clicksDif != 0 && (clicksDif / totals["Clicks"] > ALLOWED_DIFF)) ||
                                                 (impsDif != 0 && (impsDif / totals["Impressions"] > ALLOWED_DIFF)))
-                                                
+
                                                 yield return new ValidationResult()
                                                 {
                                                     ResultType = ValidationResultType.Error,
@@ -173,7 +186,9 @@ namespace Edge.Services.AdMetrics.Validations
                                                     DeliveryID = d.DeliveryID,
                                                     TargetPeriodStart = d.TargetPeriodStart,
                                                     TargetPeriodEnd = d.TargetPeriodEnd,
-                                                    Message = "validation Error"
+                                                    Message = "validation Error - differences has been found - Account Original ID: "+ d.Account.OriginalID,
+                                                    ChannelID = d.Channel.ID,
+                                                    CheckType = ValidationCheckType.DeliveryOltp
                                                 };
 
                                             // No errors then success
@@ -185,7 +200,9 @@ namespace Edge.Services.AdMetrics.Validations
                                                     DeliveryID = d.DeliveryID,
                                                     TargetPeriodStart = d.TargetPeriodStart,
                                                     TargetPeriodEnd = d.TargetPeriodEnd,
-                                                    Message = "validation Success"
+                                                    Message = "validation Success - Account Original ID: " + d.Account.OriginalID,
+                                                    ChannelID = d.Channel.ID,
+                                                    CheckType = ValidationCheckType.DeliveryOltp
                                                 };
                                         }
 
@@ -203,7 +220,9 @@ namespace Edge.Services.AdMetrics.Validations
                             AccountID = d.Account.ID,
                             TargetPeriodStart = d.TargetPeriodStart,
                             TargetPeriodEnd = d.TargetPeriodEnd,
-                            Message = "Validation Service : No deliveries were found in DB"
+                            Message = String.Format("Cannot find commited deliveries for Account Original ID: {0} in DB",d.Account.OriginalID),
+                            ChannelID = d.Channel.ID,
+                            CheckType = ValidationCheckType.DeliveryOltp
                         };
                     }
                 }
@@ -216,7 +235,9 @@ namespace Edge.Services.AdMetrics.Validations
                         AccountID = deliveryToSearch.account.ID,
                         TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
                         TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
-                        Message = "Validation Service : No deliveries were found in DB"
+                        Message = "Cannot find deliveries in DB",
+                        ChannelID = deliveryToSearch.channel.ID,
+                        CheckType = ValidationCheckType.DeliveryOltp
                     };
                 }
             }
