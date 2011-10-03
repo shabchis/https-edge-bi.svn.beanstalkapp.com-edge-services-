@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DbDbChecksumBaseService.cs" />
-    <Compile Include="DeliveryDBChecksumService.cs" />
+    <Compile Include="DeliveryDBChecksumBaseService.cs" />
     <Compile Include="DeliveryDwhChecksumService.cs.cs" />
     <Compile Include="DeliveryOltpChecksumService.cs" />
     <Compile Include="DwhOltpChecksumService.cs" />

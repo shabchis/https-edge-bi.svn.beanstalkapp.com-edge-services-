@@ -11,7 +11,7 @@ using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics.Validations
 {
-    abstract public class DeliveryDBChecksumService  : ValidationService
+    abstract public class DeliveryDBChecksumBaseService  : ValidationService
     {
         abstract protected ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable);
         public static Double ALLOWED_DIFF = 0.1;

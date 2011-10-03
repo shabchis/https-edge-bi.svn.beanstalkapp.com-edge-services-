@@ -12,7 +12,7 @@ using Edge.Core.Data;
 namespace Edge.Services.AdMetrics.Validations
 {
 
-    public class DeliveryOltpChecksumService : DeliveryDBChecksumService
+    public class DeliveryOltpChecksumService : DeliveryDBChecksumBaseService
     {
         protected override ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
         {
