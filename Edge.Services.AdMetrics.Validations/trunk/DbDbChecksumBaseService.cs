@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
+using Edge.Data.Pipeline;
 
 namespace Edge.Services.AdMetrics.Validations
 {
     abstract class DbDbChecksumBaseService : ValidationService
     {
         public double progress = 0;
+        Dictionary<string, string> Params = new Dictionary<string, string>();
 
         protected override IEnumerable<ValidationResult> Validate()
         {
@@ -22,11 +24,16 @@ namespace Edge.Services.AdMetrics.Validations
                 throw new Exception("Missing Configuration option AccountsList");
             string[] accounts = this.Instance.Configuration.Options["AccountsList"].Split(',');
 
-            //Getting Table 
-            string comparisonTable;
-            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["ComparisonTable"]))
-                throw new Exception("Missing Configuration option ComparisonTable");
-            else comparisonTable = this.Instance.Configuration.Options["ComparisonTable"];
+            //Getting Tables 
+            string SourceTable;
+            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["SourceTable"]))
+                throw new Exception("Missing Configuration option SourceTable");
+            else SourceTable = this.Instance.Configuration.Options["SourceTable"];
+
+            string TargetTable;
+            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["TargetTable"]))
+                throw new Exception("Missing Configuration option TargetTable");
+            else TargetTable = this.Instance.Configuration.Options["TargetTable"];
 
             //Getting Channel List
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["ChannelList"]))
@@ -47,11 +54,44 @@ namespace Edge.Services.AdMetrics.Validations
             }
             #endregion
 
-            //TO DO : Get connection string and tabels
-            yield return Compare();
-         
+            while (fromDate <= toDate)
+            {
+                // {start: {base : '2009-01-01', h:0}, end: {base: '2009-01-01', h:'*'}}
+                var subRange = new DateTimeRange()
+                {
+                    Start = new DateTimeSpecification()
+                    {
+                        BaseDateTime = fromDate,
+                        Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Exact, Value = 0 },
+                        Boundary = DateTimeSpecificationBounds.Lower
+                    },
+
+                    End = new DateTimeSpecification()
+                    {
+                        BaseDateTime = fromDate,
+                        Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Max },
+                        Boundary = DateTimeSpecificationBounds.Upper
+                    }
+                };
+
+                foreach (string account in accounts)
+                {
+                    foreach (string channel in channels)
+                    {
+                        yield return Compare(SourceTable, TargetTable, new Dictionary<string, string>() 
+                        {
+                           {"AccountID",account},
+                           {"ChannelID",channel},
+                           {"Date",fromDate.ToString()}
+                        });
+                    }
+
+                }
+                fromDate = fromDate.AddDays(1);
+            }
+
         }
-        protected abstract ValidationResult Compare(string SourceDB, string SourceTable, string TargetDB, string TargetTabel);
+        protected abstract ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params);
 
     }
 }

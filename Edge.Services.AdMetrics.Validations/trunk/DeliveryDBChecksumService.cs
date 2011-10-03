@@ -88,7 +88,7 @@ namespace Edge.Services.AdMetrics.Validations
                         delivery.targetPeriod = subRange;
                         deliverySearchList.Add(delivery);
 
-                        progress += 0.3 / 1 - progress / (channels.LongLength + accounts.LongLength);
+                        progress += 0.3 *( 1 - progress / (channels.LongLength + accounts.LongLength));
                         this.ReportProgress(progress);
                     }
                 }
@@ -101,7 +101,7 @@ namespace Edge.Services.AdMetrics.Validations
                 //Getting criterion matched deliveries
                 Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
 
-                progress += 0.3 / 1 - progress;
+                progress += 0.3 *( 1 - progress);
                 this.ReportProgress(progress);
 
                 foreach (Delivery d in deliveriesToCheck)
