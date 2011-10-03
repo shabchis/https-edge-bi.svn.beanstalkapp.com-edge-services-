@@ -45,10 +45,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DbDbChecksumBaseService.cs" />
     <Compile Include="DeliveryDBChecksumService.cs" />
     <Compile Include="DeliveryDwhChecksumService.cs.cs" />
-    <Compile Include="DeliveryMDXChecksumService.cs" />
     <Compile Include="DeliveryOltpChecksumService.cs" />
+    <Compile Include="DwhOltpChecksumService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValidateCommitService.cs" />
   </ItemGroup>

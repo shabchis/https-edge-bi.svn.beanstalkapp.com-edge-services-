@@ -11,9 +11,9 @@ using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics.Validations
 {
-    abstract class DeliveryDBChecksumService  : ValidationService
+    abstract public class DeliveryDBChecksumService  : ValidationService
     {
-        abstract protected ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)();
+        abstract protected ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable);
         public static Double ALLOWED_DIFF = 0.1;
         public double progress = 0;
 
@@ -31,9 +31,9 @@ namespace Edge.Services.AdMetrics.Validations
 
             //Getting Table 
             string comparisonTable;
-            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["ComparisonTable"]))
-                throw new Exception("Missing Configuration option ComparisonTable");
-            else comparisonTable = this.Instance.Configuration.Options["ComparisonTable"];
+            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["SourceTable"]))
+                throw new Exception("Missing Configuration option SourceTable");
+            else comparisonTable = this.Instance.Configuration.Options["SourceTable"];
 
             //Getting Channel List
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["ChannelList"]))
@@ -171,8 +171,12 @@ namespace Edge.Services.AdMetrics.Validations
                 }
             }
         }
-
        
-       
+    }
+    public class DeliverySearchItem
+    {
+        public Account account { set; get; }
+        public Channel channel { set; get; }
+        public DateTimeRange targetPeriod { set; get; }
     }
 }

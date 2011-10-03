@@ -14,7 +14,7 @@ namespace Edge.Services.AdMetrics.Validations
 
     public class DeliveryDwhChecksumService : DeliveryDBChecksumService
     {
-        private ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
+        protected override ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
         {
             double costDif = 0;
             double impsDif = 0;
@@ -23,14 +23,25 @@ namespace Edge.Services.AdMetrics.Validations
 
             using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, DbConnectionStringName)))
             {
+                // This option is relevant only for account with one commited delivery.
+                // for example it is not relevant for Easy forex.
                 sqlCon.Open();
                 SqlCommand sqlCommand = DataManager.CreateCommand(
-                    "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
-                    " where account_id =" + delivery.Account.ID +
-                    " and Day_Code =" + dayCode +
-                    " and Channel_ID = " + delivery.Channel.ID +
-                    " and [Account_ID_SRC] ='" + delivery.Account.OriginalID + "'"
-                    );
+               "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
+               " where Account_ID = @Account_ID and Day_ID = @Daycode and Channel_ID = @Channel_ID" 
+               );
+
+                SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
+                SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
+                SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
+
+                accountIdParam.Value = delivery.Account.ID;
+                daycodeParam.Value = dayCode;
+                channelIdParam.Value = delivery.Channel.ID;
+
+                sqlCommand.Parameters.Add(accountIdParam);
+                sqlCommand.Parameters.Add(daycodeParam);
+                sqlCommand.Parameters.Add(channelIdParam);
 
                 sqlCommand.Connection = sqlCon;
 
@@ -105,7 +116,7 @@ namespace Edge.Services.AdMetrics.Validations
                     }
 
                     // If reader is closed
-                    else  
+                    else
                         return new ValidationResult()
                         {
                             ResultType = ValidationResultType.Error,
