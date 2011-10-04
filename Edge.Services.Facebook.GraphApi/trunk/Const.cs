@@ -39,6 +39,7 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string StartTime = "start_time";
 			public const string EndTime = "end_time";
 			public const string IncludeDeleted = "include_deleted";
+			public const string StatsMode = "stats_mode";
 		}
 		public static class DeliveryFilesNames
 		{

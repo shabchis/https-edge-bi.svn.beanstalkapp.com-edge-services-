@@ -83,6 +83,7 @@ namespace Edge.Services.Facebook.GraphApi
 			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToTimestamp(TargetPeriod.Start.ToDateTime()).ToString());
 			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToTimestamp(TargetPeriod.End.ToDateTime()).ToString());
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
@@ -179,12 +180,9 @@ namespace Edge.Services.Facebook.GraphApi
 		/// <returns></returns>
 		private double ConvertToTimestamp(DateTime value)
 		{
-			//create Timespan by subtracting the value provided from
-			//the Unix Epoch
-			TimeSpan span = (value - new DateTime(1970, 1, 1, 0, 0, 0, 0).ToLocalTime());
-
-			//return the total seconds (which is a UNIX timestamp)
-			return (double)span.TotalSeconds;
+			DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+			TimeSpan diff = value.AddMilliseconds(999) - origin;
+			return Math.Floor(diff.TotalSeconds);
 		}
 
 

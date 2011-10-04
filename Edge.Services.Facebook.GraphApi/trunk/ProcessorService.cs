@@ -31,6 +31,7 @@ namespace Edge.Services.Facebook.GraphApi
 			Dictionary<string, double> _totalsValidation = new Dictionary<string, double>();
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
+			Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
 
 			#region Campaigns
 			List<string> campaignsFiles = filesByType[Consts.FileTypes.Campaigns];
@@ -40,7 +41,7 @@ namespace Edge.Services.Facebook.GraphApi
 				DeliveryFile campaigns = this.Delivery.Files[campaignFile];
 
 
-				var campaignsReader = new JsonDynamicReader(campaigns.OpenContents(), 3);
+				var campaignsReader = new JsonDynamicReader(campaigns.OpenContents(), "$.data[*].*");
 
 				using (campaignsReader)
 				{
@@ -51,7 +52,7 @@ namespace Edge.Services.Facebook.GraphApi
 						{
 
 							Name = campaignsReader.Current.name,
-							OriginalID = campaignsReader.Current.campaign_id,
+							OriginalID = Convert.ToString(campaignsReader.Current.campaign_id),
 
 							Channel = new Channel()
 							{
@@ -64,7 +65,7 @@ namespace Edge.Services.Facebook.GraphApi
 							}
 
 						};
-						int campaignStatus = int.Parse(campaignsReader.Current.campaign_status);
+						long campaignStatus = long.Parse(campaignsReader.Current.campaign_status);
 						switch (campaignStatus)
 						{
 							case 1:
@@ -91,7 +92,7 @@ namespace Edge.Services.Facebook.GraphApi
 			{
 				DeliveryFile adGroups = this.Delivery.Files[adGroup];
 
-				var adGroupsReader = new JsonDynamicReader(FileManager.Open(adGroups.Location), 3);
+				var adGroupsReader = new JsonDynamicReader(FileManager.Open(adGroups.Location), "$.data[*].*");
 
 
 
@@ -100,12 +101,11 @@ namespace Edge.Services.Facebook.GraphApi
 				{
 					while (adGroupsReader.Read())
 					{
-						Ad ad = new Ad()
-						{
-							OriginalID = adGroupsReader.Current.ad_id,
-							Campaign = campaignsData[adGroupsReader.Current.campaign_id],
-							Name = adGroupsReader.Current.name,
-						};
+						Ad ad = new Ad();
+						ad.OriginalID = Convert.ToString(adGroupsReader.Current.ad_id);
+						ad.Campaign = campaignsData[Convert.ToString(adGroupsReader.Current.campaign_id)];
+						ad.Name = adGroupsReader.Current.name;
+
 
 						if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
 						{
@@ -130,17 +130,21 @@ namespace Edge.Services.Facebook.GraphApi
 							ad.Segments[Segment.AdGroupSegment].OriginalID = ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID;
 						}
 						// adgroup targeting
-						string age_min = adGroupsReader.Current["targeting.age_min"];
-						if (!string.IsNullOrEmpty(age_min))
+						string age_min = string.Empty;
+						if (((Dictionary<string, object>)adGroupsReader.Current.targeting).ContainsKey("age_min"))
+							age_min = adGroupsReader.Current.targeting["age_min"];
+
+						if (string.IsNullOrEmpty(age_min))
 						{
-							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupsReader.Current["targeting.age_max"]) };
+							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupsReader.Current.targeting["age_max"]) };
 							ad.Targets.Add(ageTarget);
 						}
+						List<object> genders = null;
+						if (((Dictionary<string, object>)adGroupsReader.Current.targeting).ContainsKey("genders"))
+							genders = adGroupsReader.Current.targeting["genders"];
 
-						
-						if(((Dictionary<string,object>)adGroupsReader.Current).ContainsKey("targeting.genders"))
+						if (genders != null)
 						{
-							List<object> genders = adGroupsReader.Current["targeting.genders"];
 							foreach (object gender in genders)
 							{
 								GenderTarget genderTarget = new GenderTarget();
@@ -157,7 +161,16 @@ namespace Edge.Services.Facebook.GraphApi
 							}
 
 						}
+						if (adGroupsReader.Current.creative_ids != null)
+						{
+							foreach (string creative in adGroupsReader.Current.creative_ids)
+							{
+								if (!adsBycreatives.ContainsKey(creative))
+									adsBycreatives.Add(creative, new List<Ad>());
+								adsBycreatives[creative].Add(ad);
 
+							}
+						}
 						ads.Add(ad.OriginalID, ad);
 					}
 					adGroups.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
@@ -166,35 +179,40 @@ namespace Edge.Services.Facebook.GraphApi
 			#endregion
 
 
-			#region AdGroupStats
+			#region AdGroupStats start new import session
 			//GetAdGroupStats
-
-			List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
-			foreach (var adGroupStat in adGroupStatsFiles)
+			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
-				DeliveryFile adGroupStats = this.Delivery.Files[adGroupStat];
 
-				var adGroupStatsReader = new XmlDynamicReader
-					(adGroupStats.OpenContents(), Instance.Configuration.Options[FacebookConfigurationOptions.Ads_XPath_GetAdGroupStats]);
+				session.BeginImport(this.Delivery);
+				#region for validation
 
-
-				using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+				foreach (var measure in session.Measures)
 				{
-
-					session.BeginImport(this.Delivery);
-					#region for validation
-					foreach (var measure in session.Measures)
+					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
 					{
-						if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
-						{
+						if (!_totalsValidation.ContainsKey(measure.Key))
 							_totalsValidation.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
-
-						}
-
 
 					}
 
-					#endregion
+
+				}
+
+
+
+				#endregion
+
+				List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
+				foreach (var adGroupStat in adGroupStatsFiles)
+				{
+
+					DeliveryFile adGroupStats = this.Delivery.Files[adGroupStat];
+
+					var adGroupStatsReader = new JsonDynamicReader(adGroupStats.OpenContents(), "$.data[*].*");
+
+
+
 
 					using (adGroupStatsReader)
 					{
@@ -202,9 +220,9 @@ namespace Edge.Services.Facebook.GraphApi
 						{
 							AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
 							Ad tempAd;
-							if (adGroupStatsReader.Current.id != null)
+							if (adGroupStatsReader.Current.adgroup_id != null)
 							{
-								if (ads.TryGetValue(adGroupStatsReader.Current.id, out tempAd))
+								if (ads.TryGetValue(adGroupStatsReader.Current.adgroup_id, out tempAd))
 								{
 									adMetricsUnit.Ad = tempAd;
 
@@ -272,7 +290,7 @@ namespace Edge.Services.Facebook.GraphApi
 					foreach (string creative in creativeFiles)
 					{
 						DeliveryFile creativeFile = Delivery.Files[creative];
-						var adGroupCreativesReader = new JsonDynamicReader(creativeFile.OpenContents(), 3);
+						var adGroupCreativesReader = new JsonDynamicReader(creativeFile.OpenContents(), "$.data[*].*");
 
 
 
@@ -281,56 +299,65 @@ namespace Edge.Services.Facebook.GraphApi
 							while (adGroupCreativesReader.Read())
 							{
 
-								Ad ad = ads[adGroupCreativesReader.Current.adgroup_id];
-								ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-
-								if (!string.IsNullOrEmpty(ad.DestinationUrl))
+								List<Ad> adsByCreativeID = null;
+								if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
+									adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.creative_id];
+								if (adsByCreativeID != null)
 								{
-									SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-									if (tracker != null)
-										ad.Segments[Segment.TrackerSegment] = tracker;
+									foreach (Ad ad in adsByCreativeID)
+									{
+
+										ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+
+										if (!string.IsNullOrEmpty(ad.DestinationUrl))
+										{
+											SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+											if (tracker != null)
+												ad.Segments[Segment.TrackerSegment] = tracker;
+										}
+
+										ad.Creatives = new List<Creative>();
+										ad.Creatives.Add(new ImageCreative()
+										{
+											ImageUrl = adGroupCreativesReader.Current.image_url,
+											OriginalID = adGroupCreativesReader.Current.creative_id
+
+											//Name = adGroupCreativesReader.Current.name
+
+										});
+										ad.Creatives.Add(new TextCreative()
+										{
+											OriginalID = adGroupCreativesReader.Current.creative_id,
+											TextType = TextCreativeType.Body,
+											Text = adGroupCreativesReader.Current.body
+											//Name = adGroupCreativesReader.Current.name
+
+
+										});
+										ad.Creatives.Add(new TextCreative()
+										{
+
+											OriginalID = adGroupCreativesReader.Current.creative_id,
+											TextType = TextCreativeType.DisplayUrl,
+											Text = adGroupCreativesReader.Current.preview_url
+											//Name = adGroupCreativesReader.Current.name
+
+										});
+										ad.Creatives.Add(new TextCreative()
+										{
+
+											OriginalID = adGroupCreativesReader.Current.creative_id,
+											TextType = TextCreativeType.Title,
+											Text = adGroupCreativesReader.Current.title
+											//Name = adGroupCreativesReader.Current.name
+
+										});
+
+
+
+										session.ImportAd(ad);
+									}
 								}
-
-								ad.Creatives = new List<Creative>();
-								ad.Creatives.Add(new ImageCreative()
-								{
-									ImageUrl = adGroupCreativesReader.Current.image_url,
-									OriginalID = adGroupCreativesReader.Current.creative_id
-
-									//Name = adGroupCreativesReader.Current.name
-
-								});
-								ad.Creatives.Add(new TextCreative()
-								{
-									OriginalID = adGroupCreativesReader.Current.creative_id,
-									TextType = TextCreativeType.Body,
-									Text = adGroupCreativesReader.Current.body
-									//Name = adGroupCreativesReader.Current.name
-
-
-								});
-								ad.Creatives.Add(new TextCreative()
-								{
-
-									OriginalID = adGroupCreativesReader.Current.creative_id,
-									TextType = TextCreativeType.DisplayUrl,
-									Text = adGroupCreativesReader.Current.preview_url
-									//Name = adGroupCreativesReader.Current.name
-
-								});
-								ad.Creatives.Add(new TextCreative()
-								{
-
-									OriginalID = adGroupCreativesReader.Current.creative_id,
-									TextType = TextCreativeType.Title,
-									Text = adGroupCreativesReader.Current.title
-									//Name = adGroupCreativesReader.Current.name
-
-								});
-
-
-
-								session.ImportAd(ad);
 
 								//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
 							}
@@ -345,10 +372,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 
-					session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
-					session.EndImport();
-					if (!string.IsNullOrEmpty(warningsStr.ToString()))
-						Log.Write(warningsStr.ToString(), LogMessageType.Warning);
+
 
 
 
@@ -359,6 +383,10 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 				}
+				session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
+				session.EndImport();
+				if (!string.IsNullOrEmpty(warningsStr.ToString()))
+					Log.Write(warningsStr.ToString(), LogMessageType.Warning);
 			}
 			return Core.Services.ServiceOutcome.Success;
 		}
