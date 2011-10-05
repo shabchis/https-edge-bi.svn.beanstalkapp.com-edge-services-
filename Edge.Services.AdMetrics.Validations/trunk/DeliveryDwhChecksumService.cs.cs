@@ -73,7 +73,7 @@ namespace Edge.Services.AdMetrics.Validations
                                     TargetPeriodEnd = delivery.TargetPeriodEnd,
                                     Message = "Data exists in delivery but not in DB for Account Original ID: " + delivery.Account.OriginalID,
                                     ChannelID = delivery.Channel.ID,
-                                    CheckType = ValidationCheckType.DeliveryOltp
+                                    CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
 
@@ -92,7 +92,7 @@ namespace Edge.Services.AdMetrics.Validations
                                     TargetPeriodEnd = delivery.TargetPeriodEnd,
                                     Message = "validation Error - differences has been found - Account Original ID: " + delivery.Account.OriginalID,
                                     ChannelID = delivery.Channel.ID,
-                                    CheckType = ValidationCheckType.DeliveryOltp
+                                    CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
 
@@ -107,7 +107,7 @@ namespace Edge.Services.AdMetrics.Validations
                                     TargetPeriodEnd = delivery.TargetPeriodEnd,
                                     Message = "validation Success - Account Original ID: " + delivery.Account.OriginalID,
                                     ChannelID = delivery.Channel.ID,
-                                    CheckType = ValidationCheckType.DeliveryOltp
+                                    CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
 
@@ -126,7 +126,7 @@ namespace Edge.Services.AdMetrics.Validations
                             TargetPeriodEnd = delivery.TargetPeriodEnd,
                             Message = "Cannot Read Data from DB connection closed - Account Original ID: " + delivery.Account.OriginalID,
                             ChannelID = delivery.Channel.ID,
-                            CheckType = ValidationCheckType.DeliveryOltp
+                            CheckType = this.Instance.Configuration.Name
                         };
                 }
                 //Could not find check scenario 
@@ -139,7 +139,7 @@ namespace Edge.Services.AdMetrics.Validations
                     TargetPeriodEnd = delivery.TargetPeriodEnd,
                     Message = "Could not find check scenario - Account Original ID: " + delivery.Account.OriginalID,
                     ChannelID = delivery.Channel.ID,
-                    CheckType = ValidationCheckType.DeliveryOltp
+                    CheckType = this.Instance.Configuration.Name
                 };
 
             }

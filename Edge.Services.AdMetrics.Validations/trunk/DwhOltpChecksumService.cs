@@ -127,15 +127,15 @@ namespace Edge.Services.AdMetrics.Validations
                 double clicksDif = 0;
 
                 if ((costDif = Math.Abs(dwhTotals["Cost"] - oltpTotals["Cost"])) > 1) costAlert = true;
-                if ((impsDif = Math.Abs(dwhTotals["Imps"] - oltpTotals["Cost"])) > 1) impsAlert = true;
-                if ((clicksDif = Math.Abs(dwhTotals["Clicks"] - oltpTotals["Cost"])) > 1) clicksAlert = true;
+                if ((impsDif = Math.Abs(dwhTotals["Imps"] - oltpTotals["Imps"])) > 1) impsAlert = true;
+                if ((clicksDif = Math.Abs(dwhTotals["Clicks"] - oltpTotals["Clicks"])) > 1) clicksAlert = true;
 
 
                 StringBuilder message = new StringBuilder();
                 message.Append(string.Format("Error - Differences has been found for Account ID {0} : ", Params["AccountID"]));
-                if (costAlert) message.Append(string.Format(" OltpCost: {0},DwhCost: {1}, Diff:{3} ", oltpTotals["Cost"], dwhTotals["Cost"], costDif));
-                if (impsAlert) message.Append(string.Format(" OltpImps: {0},DwhImps: {1}, Diff:{3} ", oltpTotals["Imps"], dwhTotals["Imps"], impsDif));
-                if (clicksAlert) message.Append(string.Format(" OltpClicks: {0},DwhClicks: {1}, Diff:{3} ", oltpTotals["Clicks"], dwhTotals["Clicks"], clicksDif));
+                if (costAlert) message.Append(string.Format(" OltpCost: {0},DwhCost: {1}, Diff:{2} ", oltpTotals["Cost"], dwhTotals["Cost"], costDif));
+                if (impsAlert) message.Append(string.Format(" OltpImps: {0},DwhImps: {1}, Diff:{2} ", oltpTotals["Imps"], dwhTotals["Imps"], impsDif));
+                if (clicksAlert) message.Append(string.Format(" OltpClicks: {0},DwhClicks: {1}, Diff:{2} ", oltpTotals["Clicks"], dwhTotals["Clicks"], clicksDif));
 
                 if (costAlert || impsAlert || clicksAlert)
                     return new ValidationResult()
@@ -146,7 +146,7 @@ namespace Edge.Services.AdMetrics.Validations
                                             TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                                             TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
                                             ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                                            CheckType = ValidationCheckType.OltpDwh
+                                            CheckType = this.Instance.Configuration.Name
                                         };
 
             #endregion
@@ -161,7 +161,7 @@ namespace Edge.Services.AdMetrics.Validations
                     ChannelID = Convert.ToInt32(Params["ChannelID"]),
                     TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                     TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                    CheckType = ValidationCheckType.OltpDwh
+                    CheckType = this.Instance.Configuration.Name
                 };
             // Checking if data exists in oltp and not in dwh
             else if (dwhTotals.Count == 0 && oltpTotals.Count != 0)
@@ -173,7 +173,7 @@ namespace Edge.Services.AdMetrics.Validations
                     ChannelID = Convert.ToInt32(Params["ChannelID"]),
                     TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                     TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                    CheckType = ValidationCheckType.OltpDwh
+                    CheckType = this.Instance.Configuration.Name
                 };
 
             return new ValidationResult()
@@ -184,7 +184,7 @@ namespace Edge.Services.AdMetrics.Validations
                                 ChannelID = Convert.ToInt32(Params["ChannelID"]),
                                 TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                                 TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                                CheckType = ValidationCheckType.OltpDwh
+                                CheckType = this.Instance.Configuration.Name
                             };
         }
     }

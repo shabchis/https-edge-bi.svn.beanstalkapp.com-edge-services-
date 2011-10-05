@@ -88,7 +88,7 @@ namespace Edge.Services.AdMetrics.Validations
                         delivery.targetPeriod = subRange;
                         deliverySearchList.Add(delivery);
 
-                        progress += 0.3 *( 1 - progress / (channels.LongLength + accounts.LongLength));
+                        progress += 0.3 *( (1 - progress) / (channels.LongLength + accounts.LongLength));
                         this.ReportProgress(progress);
                     }
                 }
@@ -133,26 +133,12 @@ namespace Edge.Services.AdMetrics.Validations
                             Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
 
                             //Check Delivery data vs OLTP
-                            yield return (DeliveryDbCompare(d, totals, "CompareDB", comparisonTable));
+                            yield return (DeliveryDbCompare(d, totals, "OltpDB", comparisonTable));
                         }
 
                     }
                     #endregion
-
                   
-                    else  //if could not find Committed and RolledBack deliveries
-                    {
-                        yield return new ValidationResult()
-                        {
-                            ResultType = ValidationResultType.Warning,
-                            AccountID = d.Account.ID,
-                            TargetPeriodStart = d.TargetPeriodStart,
-                            TargetPeriodEnd = d.TargetPeriodEnd,
-                            Message = String.Format("Cannot find commited deliveries for Account Original ID: {0} in DB", d.Account.OriginalID),
-                            ChannelID = d.Channel.ID,
-                            CheckType = ValidationCheckType.DeliveryOltp
-                        };
-                    }
                 }
 
                 //could not find deliveries by user criterions
@@ -166,7 +152,7 @@ namespace Edge.Services.AdMetrics.Validations
                         TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
                         Message = "Cannot find deliveries in DB",
                         ChannelID = deliveryToSearch.channel.ID,
-                        CheckType = ValidationCheckType.DeliveryOltp
+                        CheckType = this.Instance.Configuration.Name
                     };
                 }
             }
