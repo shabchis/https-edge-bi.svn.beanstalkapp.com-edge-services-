@@ -27,7 +27,7 @@ namespace Edge.Services.AdMetrics.Validations
                 sqlCon.Open();
 
                 SqlCommand sqlCommand = new SqlCommand(
-                   "SELECT SUM(cost),sum(Impressions),sum(clicks) from " + DwhTabel +
+                   "SELECT SUM(cost),sum(Impressions),sum(clicks) from " + SourceTable +
                    " where account_id = @Account_ID and Day_ID = @Daycode and Channel_ID = @Channel_ID"
                    );
 
