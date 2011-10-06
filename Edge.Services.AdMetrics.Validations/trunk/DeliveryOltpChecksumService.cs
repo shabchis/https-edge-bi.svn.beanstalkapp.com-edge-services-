@@ -64,7 +64,6 @@ namespace Edge.Services.AdMetrics.Validations
                                 impsDif = Math.Abs(Convert.ToUInt64(_reader[1]) - totals["Impressions"]);
                             }
 
-
                             #region Scenario : data exists in delivery and not in DB
 
                             else if (totals["Cost"] > 0 || totals["Clicks"] > 0 || totals["Impressions"] > 0)
@@ -79,6 +78,7 @@ namespace Edge.Services.AdMetrics.Validations
                                     CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
+                          
 
                             #region Scenario: Found differences
 
