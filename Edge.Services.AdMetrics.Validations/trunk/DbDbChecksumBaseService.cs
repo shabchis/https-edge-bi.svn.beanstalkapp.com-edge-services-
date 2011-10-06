@@ -32,7 +32,7 @@ namespace Edge.Services.AdMetrics.Validations
 
             string TargetTable;
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["TargetTable"]))
-                throw new Exception("Missing Configuration option TargetTable");
+                TargetTable = "";
             else TargetTable = this.Instance.Configuration.Options["TargetTable"];
 
             //Getting Channel List

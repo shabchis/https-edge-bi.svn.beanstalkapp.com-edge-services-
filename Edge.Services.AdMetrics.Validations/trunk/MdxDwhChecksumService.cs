@@ -14,7 +14,6 @@ namespace Edge.Services.AdMetrics.Validations
 
         protected override Data.Pipeline.Services.ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params)
         {
-            throw new NotImplementedException();
 
             Dictionary<string, double> dwhTotals = new Dictionary<string, double>();
             Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
