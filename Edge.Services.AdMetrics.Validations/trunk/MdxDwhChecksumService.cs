@@ -70,10 +70,9 @@ namespace Edge.Services.AdMetrics.Validations
             #region Getting measures from Analysis server (MDX)
             AdomdConnection conn = new AdomdConnection("Data Source=localhost;Catalog=Seperia_UDM");
             conn.Open();
-            int accountID;
-
+         
             //TO DO : Get Cube Name from DB
-            string CubeName;
+            string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 
             string mdxCommandText = string.Format(@"Select
                                 { [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]} 
@@ -104,6 +103,41 @@ namespace Edge.Services.AdMetrics.Validations
 
             return IsEqual(Params, dwhTotals, mdxTotals, "Dwh", "Mdx");
 
+        }
+        private string GetCubeName(int accountId)
+        {
+            string cubeName = string.Empty;
+            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
+            {
+                sqlCon.Open();
+
+                SqlCommand sqlCommand = new SqlCommand(
+                  @"SELECT AnalysisSettings.value('data(/AnalysisSettings/@CubeName)[1]', 'nvarchar(MAX)')
+                    from User_GUI_Account
+                    where Account_ID = @Account_ID"
+                   );
+
+                SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
+                accountIdParam.Value = accountId;
+                sqlCommand.Parameters.Add(accountIdParam);
+
+                sqlCommand.Connection = sqlCon;
+
+                using (var _reader = sqlCommand.ExecuteReader())
+                {
+                    if (!_reader.IsClosed)
+                    {
+                        while (_reader.Read())
+                        {
+                            if (!_reader[0].Equals(DBNull.Value))
+                            {
+                                cubeName = Convert.ToString(_reader[0]);
+                            }
+                        }
+                    }
+                }
+            }
+            return cubeName;
         }
     }
 }
