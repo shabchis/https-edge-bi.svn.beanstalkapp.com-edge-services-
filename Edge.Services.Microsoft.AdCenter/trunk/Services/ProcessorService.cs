@@ -4,9 +4,9 @@ using Edge.Core.Data;
 using Edge.Core.Services;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
-using Edge.Data.Pipeline.Importing;
+using Edge.Services.AdMetrics;
 using Edge.Data.Pipeline.Services;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using WS = Edge.Services.Microsoft.AdCenter.AdCenter.Reporting;
 using System.Text.RegularExpressions;
 
 
@@ -47,9 +47,9 @@ namespace Edge.Services.Microsoft.AdCenter
 
 
 
-			using (var session = new AdDataImportSession(this.Delivery))
+			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
-				session.Begin();
+				session.BeginImport(this.Delivery);
 
 				//    // ...............................................................
 				//    // Read the ad report, and build a lookup table for later
@@ -82,7 +82,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 				}
 				this.ReportProgress(0.7);
-				adReport.History.Add(DeliveryOperation.Processed, Instance.InstanceID);
+				adReport.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 
 				//    // ...............................................................
 				//    // Read the keyword report, cross reference it with the ad data, and commit
@@ -135,25 +135,25 @@ namespace Edge.Services.Microsoft.AdCenter
 				Channel = new Channel() { ID = this.Delivery.Channel.ID }
 			};
 			string status = values[WS.CampaignPerformanceReportColumn.Status.ToString()];
-			switch (status)
-			{
+			//switch (status)
+			//{
 					
-				case "Active":
-				case "Submitted":
-					campaign.Status = CampaignStatus.Active;
-					break;
-				case "BudgetPaused":
-					campaign.Status = CampaignStatus.Suspended;
-					break;
-				case "Paused":
-					campaign.Status = CampaignStatus.Paused;
-					break;
-				case "Cancelled":
-				case "Deleted":
-					campaign.Status = CampaignStatus.Deleted;
-					break;
+			//    case "Active":
+			//    case "Submitted":
+			//        campaign.Status = CampaignStatus.Active;
+			//        break;
+			//    case "BudgetPaused":
+			//        campaign.Status = CampaignStatus.Suspended;
+			//        break;
+			//    case "Paused":
+			//        campaign.Status = CampaignStatus.Paused;
+			//        break;
+			//    case "Cancelled":
+			//    case "Deleted":
+			//        campaign.Status = CampaignStatus.Deleted;
+			//        break;
 
-			}
+			//}
 			return campaign;
 		}
 
@@ -183,7 +183,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			return ad;
 		}
 
-		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdDataImportSession session)
+		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdMetricsImportManager session)
 		{
 			//if (String.IsNullOrWhiteSpace(timePeriodColumn))
 			//    throw new ArgumentNullException("timePeriodColumn");

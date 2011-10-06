@@ -3,7 +3,7 @@ using System.Linq;
 using System.ServiceModel;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using WS = Edge.Services.Microsoft.AdCenter.AdCenter.Reporting;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
@@ -17,7 +17,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			_service = service;
 
 			// Get customer account IDs
-			string originalIDs = _service.Instance.Configuration.Options["AdCenter.AccountIDs"];
+			string originalIDs = _service.Instance.Configuration.Options["AdCenter.CustomerID"];
 			string[] split = originalIDs.Split(',');
 			_accountOriginalIDs = new long[split.Length];
 			for (int i = 0; i < _accountOriginalIDs.Length; i++)
@@ -93,9 +93,10 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReportRequest = request
 				
 			};
+
 	
 			// Open a connection
-			using (var service = new WS.ReportingServiceClient())
+			using (var service = new WS.ReportingServiceClient("AdCenter.Reporting.IReportingService"))
 			{
 				try
 				{

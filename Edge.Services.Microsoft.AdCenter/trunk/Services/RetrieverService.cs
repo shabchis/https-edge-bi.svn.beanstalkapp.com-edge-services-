@@ -6,7 +6,7 @@ using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using System.Threading;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using WS = Edge.Services.Microsoft.AdCenter.AdCenter.Reporting;
 using System.Net;
 using Edge.Core.Utilities;
 namespace Edge.Services.Microsoft.AdCenter
@@ -17,29 +17,23 @@ namespace Edge.Services.Microsoft.AdCenter
 		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
 		AdCenterApi _adCenterApi;
-		BatchDownloadOperation _batchDownload;
 		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			_adCenterApi = new AdCenterApi(this);
 			_filesInProgress = this.Delivery.Files.Count;
-			bool result = true;
+
 
 
 			CreateRequests();
 			if (!Download())
 			{
 				CreateRequests();
-				result=Download();
-			}
-			if (result == false)
-			{
-				Log.Write("Retriver error see last warnings!!", LogMessageType.Error);
-				return Core.Services.ServiceOutcome.Failure;
+				Download();
 			}
 
 
-			
+			_waitHandle.WaitOne();
 
 			//Download(adReportFile, reportRequest);
 
@@ -51,7 +45,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		private void CreateRequests()
 		{
-			List<ManualResetEvent> manualEvents = new List<ManualResetEvent>();
+			 List<ManualResetEvent> manualEvents = new List<ManualResetEvent>();
 
 
 			_waitHandle = new AutoResetEvent(false);
@@ -170,15 +164,13 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		private bool Download()
 		{
-			 _batchDownload = new BatchDownloadOperation();
-			
+			DeliveryFileDownloadOperation operation;
 			bool result = true;
 			foreach (DeliveryFile file in this.Delivery.Files)
 			{
 				try
 				{
-					_batchDownload.Add(file.Download());
-					
+					operation = file.Download();
 				}
 				catch (WebException webEx)
 				{
@@ -193,33 +185,42 @@ namespace Edge.Services.Microsoft.AdCenter
 
 				}
 
+				operation.Progressed += new EventHandler(operation_Progressed);
+				operation.Ended += new EventHandler(operation_Ended);
+				operation.Start();
 				
-				
 			}
-			_batchDownload.Progressed += new EventHandler(_batchDownload_Progressed);
-			_batchDownload.Start();
-			_batchDownload.Wait();
-			try
-			{
-				_batchDownload.EnsureSuccess();
-			}
-			catch (Exception ex)
-			{
-				Log.Write("DownloadError",ex, LogMessageType.Warning);
-				result = false;
-			}
-			
 			return result;
 			
 		}
 
-		void _batchDownload_Progressed(object sender, EventArgs e)
+		void operation_Ended(object sender, EventArgs e)
 		{
 			throw new NotImplementedException();
 		}
 
-		
+		void operation_Progressed(object sender, EventArgs e)
+		{
+			throw new NotImplementedException();
+		}
 
-		
+		//void operation_Ended(object sender, EndedEventArgs e)
+		//{
+		//    _filesInProgress -= 1;
+		//    if (_filesInProgress == 0)
+		//        _waitHandle.Set();
+
+		//}
+
+		//void operation_Progressed(object sender, ProgressEventArgs e)
+		//{
+		//    double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
+		//    if (percent >= _minProgress)
+		//    {
+		//        _minProgress += 0.05;
+		//        if (percent <= 1)
+		//            this.ReportProgress(percent);
+		//    }
+		//}
 	}
 }

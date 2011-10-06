@@ -9,33 +9,62 @@ using Edge.Core.Services;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using WS = Edge.Services.Microsoft.AdCenter.ServiceReferences.V7.ReportingService;
+using WS = Edge.Services.Microsoft.AdCenter.AdCenter.Reporting;
+using Edge.Services.AdMetrics;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
-	public class AdCenterManager : DeliveryManager
+	public class InitializerService : PipelineService
 	{
 
-		public override void ApplyUniqueness(Delivery delivery)
+		protected override ServiceOutcome DoPipelineWork()
 		{
-			delivery.TargetPeriod = CurrentService.TargetPeriod;
-			delivery.Account = new Data.Objects.Account() { ID = CurrentService.Instance.AccountID, OriginalID = CurrentService.Instance.Configuration.Options["AdCenter.CustomerAccountID"] }; //TODO: ASK DORON ORIGINAL ID? 
-			delivery.Channel = new Channel() { ID = 14 };
-		}
-	}
+			#region Init General
+			// ...............................
+			// SETUP
+			this.Delivery = this.NewDelivery();
 
-	public class InitializerService : BaseInitializerService
-	{
-		public override DeliveryManager GetDeliveryManager()
-		{
-			throw new NotImplementedException();
-		}
+			// This is for finding conflicting services
+			this.Delivery.Signature = String.Format("Microsoft-AdCenter-[{0}]-[{1}]-[{2}]",
+				this.Instance.AccountID,
+				this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString(),
+				this.TargetPeriod.ToAbsolute());
 
-		public override void ApplyDeliveryDetails()
-		{
+			// Create an import manager that will handle rollback, if necessary
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+
+			// ...............................
+
+			// Now that we have a new delivery, start adding values
+			this.Delivery.Account = new Data.Objects.Account()
+			{
+				ID = this.Instance.AccountID,
+				OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString()
+			};
+			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = 14
+			};
+
+			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
+				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
+			// Copy some options as delivery parameters
+			
+			
+			this.ReportProgress(0.2);
+			#endregion
+
 			// Wrapper for adCenter API
 			AdCenterApi adCenterApi = new AdCenterApi(this);
-			this.Delivery.TargetLocationDirectory = "Microsoft";
 
 			// ................................
 			// Campaign report
@@ -47,7 +76,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			// Ad report
 
 
-			ReportProgress(0.66);
+			ReportProgress(0.33);
 
 			// ................................
 			// Keyword report
@@ -59,14 +88,13 @@ namespace Edge.Services.Microsoft.AdCenter
 
 
 			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.AdReport });
-			ReportProgress(0.99);
+			ReportProgress(0.33);
+
+			// Save with success
 			this.Delivery.Save();
-			ReportProgress(1);
+
+			return ServiceOutcome.Success;
 		}
 
-		
-
-
-		
 	}
 }
