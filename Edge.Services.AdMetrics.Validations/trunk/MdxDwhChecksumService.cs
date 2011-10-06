@@ -19,7 +19,6 @@ namespace Edge.Services.AdMetrics.Validations
             Dictionary<string, double> dwhTotals = new Dictionary<string, double>();
             Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
 
-            //
             string dayCode = Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd");
 
             #region Get Totals from DWH
