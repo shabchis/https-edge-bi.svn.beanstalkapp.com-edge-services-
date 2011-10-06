@@ -16,8 +16,6 @@ namespace Edge.Services.AdMetrics.Validations
             Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
             Dictionary<string, double> dwhTotals = new Dictionary<string, double>();
 
-            //TO DO : get day code from configuration option 
-            //.ToString("yyyyMMdd")
             string dayCode = Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd");
 
             #region Get Totals from Oltp
@@ -116,76 +114,10 @@ namespace Edge.Services.AdMetrics.Validations
             #endregion
             #region Comparing totals results
 
-            if (oltpTotals.Count > 0 && dwhTotals.Count > 0)
-            {
-                bool costAlert = false;
-                bool impsAlert = false;
-                bool clicksAlert = false;
-
-                double costDif = 0;
-                double impsDif = 0;
-                double clicksDif = 0;
-
-                if ((costDif = Math.Abs(dwhTotals["Cost"] - oltpTotals["Cost"])) > 1) costAlert = true;
-                if ((impsDif = Math.Abs(dwhTotals["Imps"] - oltpTotals["Imps"])) > 1) impsAlert = true;
-                if ((clicksDif = Math.Abs(dwhTotals["Clicks"] - oltpTotals["Clicks"])) > 1) clicksAlert = true;
-
-
-                StringBuilder message = new StringBuilder();
-                message.Append(string.Format("Error - Differences has been found for Account ID {0} : ", Params["AccountID"]));
-                if (costAlert) message.Append(string.Format(" OltpCost: {0},DwhCost: {1}, Diff:{2} ", oltpTotals["Cost"], dwhTotals["Cost"], costDif));
-                if (impsAlert) message.Append(string.Format(" OltpImps: {0},DwhImps: {1}, Diff:{2} ", oltpTotals["Imps"], dwhTotals["Imps"], impsDif));
-                if (clicksAlert) message.Append(string.Format(" OltpClicks: {0},DwhClicks: {1}, Diff:{2} ", oltpTotals["Clicks"], dwhTotals["Clicks"], clicksDif));
-
-                if (costAlert || impsAlert || clicksAlert)
-                    return new ValidationResult()
-                                        {
-                                            ResultType = ValidationResultType.Error,
-                                            AccountID = Convert.ToInt32(Params["AccountID"]),
-                                            Message = message.ToString(),
-                                            TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
-                                            TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                                            ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                                            CheckType = this.Instance.Configuration.Name
-                                        };
-
+            return IsEqual(Params, oltpTotals, dwhTotals,"Oltp","Dwh");
             #endregion
-            }
-            // Checking if data exists in dwh and not in oltp
-            else if (oltpTotals.Count == 0 && dwhTotals.Count != 0 )
-                return new ValidationResult()
-                {
-                    ResultType = ValidationResultType.Error,
-                    AccountID = Convert.ToInt32(Params["AccountID"]),
-                    Message = "Data exists in Dwh but not in Oltp",
-                    ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                    TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
-                    TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                    CheckType = this.Instance.Configuration.Name
-                };
-            // Checking if data exists in oltp and not in dwh
-            else if (dwhTotals.Count == 0 && oltpTotals.Count != 0)
-                return new ValidationResult()
-                {
-                    ResultType = ValidationResultType.Error,
-                    AccountID = Convert.ToInt32(Params["AccountID"]),
-                    Message = "Data exists in Oltp but not in Dwh",
-                    ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                    TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
-                    TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                    CheckType = this.Instance.Configuration.Name
-                };
-
-            return new ValidationResult()
-                            {
-                                ResultType = ValidationResultType.Information,
-                                AccountID = Convert.ToInt32(Params["AccountID"]),
-                                Message = "Validation Success - no differences",
-                                ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                                TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
-                                TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                                CheckType = this.Instance.Configuration.Name
-                            };
         }
+
+     
     }
 }

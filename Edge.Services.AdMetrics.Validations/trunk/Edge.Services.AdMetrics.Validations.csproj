@@ -34,6 +34,10 @@
     <Reference Include="Google.AdWords">
       <HintPath>..\..\(third party)\GoogleAdwords\Google.AdWords.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.AnalysisServices.AdomdClient, Version=10.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\(third party)\ADOMD\Microsoft.AnalysisServices.AdomdClient.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -47,9 +51,11 @@
   <ItemGroup>
     <Compile Include="DbDbChecksumBaseService.cs" />
     <Compile Include="DeliveryDBChecksumBaseService.cs" />
-    <Compile Include="DeliveryDwhChecksumService.cs.cs" />
+    <Compile Include="DeliveryDwhChecksumService.cs" />
     <Compile Include="DeliveryOltpChecksumService.cs" />
     <Compile Include="DwhOltpChecksumService.cs" />
+    <Compile Include="MdxDwhChecksumService.cs" />
+    <Compile Include="MdxOltpChecksumService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ValidateCommitService.cs" />
   </ItemGroup>
