@@ -653,45 +653,29 @@ namespace Edge.Services.AdMetrics
 		/*=========================*/
 		#endregion
 
-		#region Commit
+		#region Prepare
 		/*=========================*/
-
-		SqlTransaction _commitTransaction = null;
 		SqlCommand _prepareCommand = null;
-		SqlCommand _commitCommand = null;
 		SqlCommand _validateCommand = null;
-
-		const int Commit_PREPARE_PASS = 0;
-		const int Commit_VALIDATE_PASS = 1;
-		const int Commit_COMMIT_PASS = 2;
+		const int Prepare_PREPARE_PASS = 0;
+		const int Prepare_VALIDATE_PASS = 1;
 		const string ValidationTable = "Commit_FinalMetrics";
 
-		protected override int CommitPassCount
+		protected override int PreparePassCount
 		{
-			get { return 3; }
+			get { return 2; }
 		}
 
-		protected override void OnBeginCommit()
+		protected override void OnBeginPrepare()
 		{
 			if (String.IsNullOrWhiteSpace(this.Options.SqlPrepareCommand))
 				throw new ConfigurationException("Options.SqlPrepareCommand is empty.");
-
-			if (String.IsNullOrWhiteSpace(this.Options.SqlCommitCommand))
-				throw new ConfigurationException("Options.SqlCommitCommand is empty.");
 
 			_sqlConnection = NewDeliveryDbConnection();
 			_sqlConnection.Open();
 		}
 
-		protected override void OnBeginCommitPass(int pass)
-		{
-			if (pass == Commit_COMMIT_PASS)
-			{
-				_commitTransaction = _sqlConnection.BeginTransaction("Delivery Commit");
-			}
-		}
-
-		protected override void OnCommit(int pass)
+		protected override void OnPrepare(int pass)
 		{
 			DeliveryHistoryEntry processedEntry = this.CurrentDelivery.History.Last(entry => entry.Operation == DeliveryOperation.Imported);
 			if (processedEntry == null)
@@ -704,7 +688,7 @@ namespace Edge.Services.AdMetrics
 			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
 			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
 
-			if (pass == Commit_PREPARE_PASS)
+			if (pass == Prepare_PREPARE_PASS)
 			{
 				// ...........................
 				// PREPARE data
@@ -721,6 +705,7 @@ namespace Edge.Services.AdMetrics
 				_prepareCommand.Parameters["@MeasuresFieldNamesSQL"].Size = 4000;
 				_prepareCommand.Parameters["@MeasuresFieldNamesSQL"].Value = measuresFieldNamesSQL;
 				_prepareCommand.Parameters["@CommitTableName"].Size = 4000;
+				_prepareCommand.Parameters["@CommitTableName"].Direction = ParameterDirection.Output;
 
 				try { _prepareCommand.ExecuteNonQuery(); }
 				catch (Exception ex)
@@ -730,7 +715,7 @@ namespace Edge.Services.AdMetrics
 
 				this.HistoryEntryParameters[Consts.DeliveryHistoryParameters.CommitTableName] = _prepareCommand.Parameters["@CommitTableName"].Value;
 			}
-			else if (pass == Commit_VALIDATE_PASS)
+			else if (pass == Prepare_VALIDATE_PASS)
 			{
 				object totalso;
 
@@ -758,11 +743,11 @@ namespace Edge.Services.AdMetrics
 								{
 									if (reader[total.Key] is DBNull)
 									{
-										
+
 										if (total.Value == 0)
 											Log.Write(string.Format("[zero totals] {0} has no data or total is 0 in table {1} for target period {2}", total.Key, ValidationTable, CurrentDelivery.TargetPeriod), LogMessageType.Information);
-										else 
-											results.AppendFormat("{0} is null in table {1}\n but {2} in measure {3}", total.Key, ValidationTable,total.Key,total.Value);
+										else
+											results.AppendFormat("{0} is null in table {1}\n but {2} in measure {3}", total.Key, ValidationTable, total.Key, total.Value);
 									}
 									else
 									{
@@ -770,7 +755,7 @@ namespace Edge.Services.AdMetrics
 										double diff = Math.Abs((total.Value - val) / total.Value);
 										if (diff > this.Options.CommitValidationThreshold)
 											results.AppendFormat("{0}: processor totals = {1}, {2} table = {3}\n", total.Key, total.Value, ValidationTable, val);
-										else if (val==0 && total.Value==0)
+										else if (val == 0 && total.Value == 0)
 											Log.Write(string.Format("[zero totals] {0} has no data or total is 0 in table {1} for target period {2}", total.Key, ValidationTable, CurrentDelivery.TargetPeriod), LogMessageType.Information);
 
 
@@ -785,30 +770,107 @@ namespace Edge.Services.AdMetrics
 					}
 				}
 			}
-			else if (pass == Commit_COMMIT_PASS)
+		}
+
+		/*=========================*/
+		#endregion
+
+
+		#region Commit
+		/*=========================*/
+
+		SqlTransaction _commitTransaction = null;
+		SqlCommand _commitCommand = null;
+
+		protected override int CommitPassCount
+		{
+			get { return 1; }
+		}
+
+		protected override void OnBeginCommit()
+		{
+			if (String.IsNullOrWhiteSpace(this.Options.SqlCommitCommand))
+				throw new ConfigurationException("Options.SqlCommitCommand is empty.");
+
+			_sqlConnection = NewDeliveryDbConnection();
+			_sqlConnection.Open();
+
+			_commitTransaction = _sqlConnection.BeginTransaction("Delivery Commit");
+		}
+
+		protected override void OnCommit(int pass)
+		{
+			 DeliveryHistoryEntry processedEntry = this.CurrentDelivery.History.Last(entry => entry.Operation == DeliveryOperation.Imported);
+			if (processedEntry == null)
+				throw new Exception("This delivery has not been imported yet (could not find an 'Imported' history entry).");
+
+			DeliveryHistoryEntry preparedEntry = this.CurrentDelivery.History.Last(entry => entry.Operation == DeliveryOperation.Prepared);
+			if (preparedEntry == null)
+				throw new Exception("This delivery has not been prepared yet (could not find an 'Prepared' history entry).");
+
+			// get this from last 'Processed' history entry
+			string measuresFieldNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureOltpFieldsSql].ToString();
+			string measuresNamesSQL = processedEntry.Parameters[Consts.DeliveryHistoryParameters.MeasureNamesSql].ToString();
+
+			string tablePerfix = processedEntry.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
+			string deliveryId = this.CurrentDelivery.DeliveryID.ToString("N");
+
+
+			// ...........................
+			// COMMIT data to OLTP
+
+			_commitCommand = _commitCommand ?? DataManager.CreateCommand(this.Options.SqlCommitCommand, CommandType.StoredProcedure);
+			_commitCommand.Connection = _sqlConnection;
+			_commitCommand.Transaction = _commitTransaction;
+
+			_commitCommand.Parameters["@DeliveryFileName"].Size = 4000;
+			_commitCommand.Parameters["@DeliveryFileName"].Value = tablePerfix;
+			_commitCommand.Parameters["@CommitTableName"].Size = 4000;
+			_commitCommand.Parameters["@CommitTableName"].Value = preparedEntry.Parameters["CommitTableName"];
+			_commitCommand.Parameters["@MeasuresNamesSQL"].Size = 4000;
+			_commitCommand.Parameters["@MeasuresNamesSQL"].Value = measuresNamesSQL;
+			_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Size = 4000;
+			_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Value = measuresFieldNamesSQL;
+			_commitCommand.Parameters["@Signature"].Size = 4000;
+			_commitCommand.Parameters["@Signature"].Value = this.CurrentDelivery.Signature; ;
+			_commitCommand.Parameters["@DeliveryIDsPerSignature"].Size = 4000;
+			_commitCommand.Parameters["@DeliveryIDsPerSignature"].Direction = ParameterDirection.Output;
+			_commitCommand.Parameters["@DeliveryID"].Size = 4000;
+			_commitCommand.Parameters["@DeliveryID"].Value = deliveryId;
+
+
+
+			try
 			{
-				// ...........................
-				// COMMIT data to OLTP
+				_commitCommand.ExecuteNonQuery();
+				//	_commitTransaction.Commit();
 
-				_commitCommand = _commitCommand ?? DataManager.CreateCommand(this.Options.SqlCommitCommand, CommandType.StoredProcedure);
-				_commitCommand.Connection = _sqlConnection;
-				_commitCommand.Transaction = _commitTransaction;
+				string deliveryIDsPerSignature = _commitCommand.Parameters["@DeliveryIDsPerSignature"].Value.ToString();
 
-				_commitCommand.Parameters["@DeliveryFileName"].Size = 4000;
-				_commitCommand.Parameters["@DeliveryFileName"].Value = tablePerfix;
-				_commitCommand.Parameters["@CommitTableName"].Size = 4000;
-				_commitCommand.Parameters["@CommitTableName"].Value = this.HistoryEntryParameters["CommitTableName"];
-				_commitCommand.Parameters["@MeasuresNamesSQL"].Size = 4000;
-				_commitCommand.Parameters["@MeasuresNamesSQL"].Value = measuresNamesSQL;
-				_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Size = 4000;
-				_commitCommand.Parameters["@MeasuresFieldNamesSQL"].Value = measuresFieldNamesSQL;
-
-				try { _commitCommand.ExecuteNonQuery(); }
-				catch (Exception ex)
+				string[] existDeliveries;
+				if ((!string.IsNullOrEmpty(deliveryIDsPerSignature) && deliveryIDsPerSignature != "0"))
 				{
-					throw new Exception(String.Format("Delivery {0} failed during Commit.", deliveryId), ex);
-				}
+					_commitTransaction.Rollback();
+					existDeliveries = deliveryIDsPerSignature.Split(',');
+					List<Delivery> deliveries = new List<Delivery>();
+					foreach (string existDelivery in existDeliveries)
+					{
+						deliveries.Add(Delivery.Get(Guid.Parse(existDelivery)));
+					}
+					throw new DeliveryConflictException(string.Format("deliveries with the same signature already comitted in database\n deliveries:\n {0}:", deliveryIDsPerSignature)) { ConflictingDeliveries = deliveries.ToArray() };
 
+
+
+
+
+				}
+				else
+					//already updated by sp, this is so we don't override it
+					this.CurrentDelivery.IsCommited = true;
+			}
+			finally
+			{
+				this.State = DeliveryImportManagerState.Idle;
 			}
 		}
 
@@ -821,6 +883,7 @@ namespace Edge.Services.AdMetrics
 				else
 					_commitTransaction.Rollback();
 			}
+			this.State = DeliveryImportManagerState.Idle;
 		}
 
 		protected override void OnDisposeCommit()
@@ -850,12 +913,12 @@ namespace Edge.Services.AdMetrics
 
 		protected override void OnRollback(int pass)
 		{
-			DeliveryHistoryEntry commitEntry = null;
+			DeliveryHistoryEntry prepareEntry = null;
 			string guid = this.CurrentDelivery.DeliveryID.ToString("N");
-			IEnumerable<DeliveryHistoryEntry> commitEntries = this.CurrentDelivery.History.Where(entry => entry.Operation == DeliveryOperation.Committed);
-			if (commitEntries != null && commitEntries.Count() > 0)
-				commitEntry = (DeliveryHistoryEntry)commitEntries.Last();
-			if (commitEntry == null)
+			IEnumerable<DeliveryHistoryEntry> prepareEntries = this.CurrentDelivery.History.Where(entry => entry.Operation == DeliveryOperation.Prepared);
+			if (prepareEntries != null && prepareEntries.Count() > 0)
+				prepareEntry = (DeliveryHistoryEntry)prepareEntries.Last();
+			if (prepareEntry == null)
 				throw new Exception(String.Format("The delivery '{0}' has never been comitted so it cannot be rolled back.", guid));
 
 			_rollbackCommand = _rollbackCommand ?? DataManager.CreateCommand(this.Options.SqlRollbackCommand, CommandType.StoredProcedure);
@@ -863,9 +926,10 @@ namespace Edge.Services.AdMetrics
 			_rollbackCommand.Transaction = _rollbackTransaction;
 
 			_rollbackCommand.Parameters["@DeliveryID"].Value = guid;
-			_rollbackCommand.Parameters["@TableName"].Value = commitEntry.Parameters[Consts.DeliveryHistoryParameters.CommitTableName];
+			_rollbackCommand.Parameters["@TableName"].Value = prepareEntry.Parameters[Consts.DeliveryHistoryParameters.CommitTableName];
 
 			_rollbackCommand.ExecuteNonQuery();
+			this.CurrentDelivery.IsCommited = false;
 		}
 
 		protected override void OnEndRollback(Exception ex)
@@ -885,6 +949,9 @@ namespace Edge.Services.AdMetrics
 		/*=========================*/
 		#endregion
 
+		#region Misc
+		/*=========================*/
+
 		SqlConnection NewDeliveryDbConnection()
 		{
 			return new SqlConnection(AppSettings.GetConnectionString(typeof(Delivery), Delivery.Consts.ConnectionStrings.SqlStagingDatabase));
@@ -896,5 +963,7 @@ namespace Edge.Services.AdMetrics
 				_sqlConnection.Dispose();
 		}
 
+		/*=========================*/
+		#endregion
 	}
 }

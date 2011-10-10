@@ -23,15 +23,44 @@ namespace Edge.Services.AdMetrics
 			});
 			ReportProgress(0.1);
 
-			DeliveryRollbackOperation rollback = this.HandleConflicts(importManager, DeliveryConflictBehavior.Rollback,
-				getBehaviorFromConfiguration:false
-			);
-			ReportProgress(0.2);
-			if (rollback != null)
-				rollback.Wait();
-			ReportProgress(0.3);
 
-			importManager.Commit(new Delivery[] { this.Delivery });
+			// ----------------
+			// TICKETS
+
+			// Only check tickets, don't check conflicts
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Ignore, getBehaviorFromConfiguration:false);
+			ReportProgress(0.2);
+
+			// ----------------
+			// PREPARE
+			importManager.Prepare(new Delivery[] { this.Delivery });
+			ReportProgress(0.6);
+
+			// ----------------
+			// COMMIT
+			bool success = false;
+			do
+			{
+				try
+				{
+					
+					importManager.Commit(new Delivery[] { this.Delivery });
+					success = true;
+				}
+				catch (DeliveryConflictException dceex)
+				{
+					importManager.Rollback(dceex.ConflictingDeliveries);
+				}
+				catch (Exception ex)
+				{
+					throw new Exception(String.Format("Delivery {0} failed during Commit.", this.Delivery.DeliveryID), ex);
+				}
+			}
+			while (!success);
+
+			
+			///////////////////////////////////////////////////
+
 
 			return ServiceOutcome.Success;
 		}
