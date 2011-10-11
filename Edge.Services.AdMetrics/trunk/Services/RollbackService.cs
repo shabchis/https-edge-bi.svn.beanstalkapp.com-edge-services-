@@ -5,64 +5,59 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Core.Utilities;
+using System.Data.SqlClient;
+using Edge.Core.Configuration;
+using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics
 {
-	public class RollbackService: PipelineService
+	public class RollbackService : PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			Edge.Core.Services.ServiceOutcome outcome=Core.Services.ServiceOutcome.Success;
+			Edge.Core.Services.ServiceOutcome outcome = Core.Services.ServiceOutcome.Success;
+			int roledBack = 0;
 			if (this.Instance.Configuration.Options.ContainsKey("DeliveriesIDS"))
 			{
 				string[] deliveriesIds = this.Instance.Configuration.Options["DeliveriesIDS"].Split(',');
-				List<Delivery> deliverires = new List<Delivery>();
+
 				foreach (string deliveryID in deliveriesIds)
 				{
-
-					Guid currentGuid;
-					if (Guid.TryParse(deliveryID, out currentGuid))
+					using (SqlConnection conn = new SqlConnection(AppSettings.GetConnectionString(this,"OLTP")))
 					{
-						try
+						conn.Open();
+						using (SqlCommand cmd = DataManager.CreateCommand("SP_Delivery_Rollback_By_DeliveryID(@DeliveryID:NvarChar,@TableName:NvarChar)", System.Data.CommandType.StoredProcedure))
 						{
-							Delivery delivery = Delivery.Get(currentGuid);
-							if (delivery != null)
-								deliverires.Add(delivery);
-							else
-								Log.Write(string.Format("Could not find delivery id {0}", currentGuid.ToString()), LogMessageType.Warning);
-
-						}
-						catch (Exception ex)
-						{
-
-							Log.Write(string.Format("Could not find delivery id {0}", currentGuid.ToString()), ex, LogMessageType.Warning);
+							cmd.Connection = conn;
+							cmd.Parameters["@DeliveryID"].Value = deliveryID;
+							cmd.Parameters["@TableName"].Value="Paid_API_AllColumns_v29";
+							cmd.ExecuteNonQuery();
+								roledBack++;
 						}
 					}
 				}
-				AdMetricsImportManager adMetricsImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+				if (roledBack != deliveriesIds.Count())
 				{
-					SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
-				});
-				if (deliverires.Count == 0)
-				{
-					Log.Write("No deliveries found", LogMessageType.Error);
 					outcome = Core.Services.ServiceOutcome.Failure;
+					Log.Write(string.Format("from {0} only {1} roled back", deliveriesIds.Count(), roledBack), LogMessageType.Error);
+
 				}
-				else
-				{
-					adMetricsImportManager.Rollback(deliverires.ToArray());
-					outcome = Core.Services.ServiceOutcome.Success;
-				}
+
+
+
+
+
+
 			}
 			else
 			{
 				outcome = Core.Services.ServiceOutcome.Failure;
-				Log.Write("the option 'DeliveriesIDS' could not be found" , LogMessageType.Error);
+				Log.Write("the option 'DeliveriesIDS' could not be found", LogMessageType.Error);
 
 			}
 			return outcome;
 		}
 
-		
+
 	}
 }
