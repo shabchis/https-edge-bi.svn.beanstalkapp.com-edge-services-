@@ -12,6 +12,7 @@ using System.Web;
 using System.Dynamic;
 using Edge.Data.Pipeline.Services;
 using System.Threading;
+using Edge.Core.Utilities;
 
 
 namespace Edge.Services.Facebook.AdsApi
@@ -27,12 +28,12 @@ namespace Edge.Services.Facebook.AdsApi
 
 			//Get Access token
 
-			string urlAut=string.Format(string.Format(this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AuthenticationUrl].ToString(),
+			string urlAut=string.Format(this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AuthenticationUrl].ToString(),
 				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(),
 				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_RedirectUri],
 				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AppSecret].ToString(),
-				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString()));
-			
+				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString());
+			Log.Write(string.Format("authenticate via {0}",urlAut),LogMessageType.Information);
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(urlAut);		 
 			WebResponse response = request.GetResponse();
 
