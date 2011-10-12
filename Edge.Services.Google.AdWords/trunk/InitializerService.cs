@@ -27,11 +27,11 @@ namespace Edge.Services.Google.AdWords
 				throw new Exception("Missing Configuration Param , Adwords.ClientID");
 
 			//checking for conflicts 
-			this.Delivery.Signature = String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
+			this.Delivery.Signature =Delivery.CreateSignature( String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
-				this.TargetPeriod.ToAbsolute());
+				this.TargetPeriod.ToAbsolute()));
 
 
 			// Create an import manager that will handle rollback, if necessary
