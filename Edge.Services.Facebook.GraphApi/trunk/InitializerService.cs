@@ -21,10 +21,10 @@ namespace Edge.Services.Facebook.GraphApi
 			this.Delivery = this.NewDelivery();
 
 			// This is for finding conflicting services
-			this.Delivery.Signature = String.Format("facebook-[{0}]-[{1}]-[{2}]",
+			this.Delivery.Signature =Delivery.CreateSignature( String.Format("facebook-[{0}]-[{1}]-[{2}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
-				this.TargetPeriod.ToAbsolute());
+				this.TargetPeriod.ToAbsolute()));
 
 			// Create an import manager that will handle rollback, if necessary
 			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
@@ -181,7 +181,9 @@ namespace Edge.Services.Facebook.GraphApi
 		private double ConvertToTimestamp(DateTime value)
 		{
 			DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-			TimeSpan diff = value.AddMilliseconds(999) - origin;
+			if (value.Millisecond > 0)
+				value = value.AddMilliseconds(-value.Millisecond);
+			TimeSpan diff = value - origin;
 			return Math.Floor(diff.TotalSeconds);
 		}
 
