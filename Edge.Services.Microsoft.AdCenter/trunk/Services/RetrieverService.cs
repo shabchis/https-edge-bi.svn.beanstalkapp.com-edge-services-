@@ -196,12 +196,12 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		void operation_Ended(object sender, EventArgs e)
 		{
-			throw new NotImplementedException();
+			_filesInProgress -= 1;
 		}
 
 		void operation_Progressed(object sender, EventArgs e)
 		{
-			throw new NotImplementedException();
+			
 		}
 
 		//void operation_Ended(object sender, EndedEventArgs e)
