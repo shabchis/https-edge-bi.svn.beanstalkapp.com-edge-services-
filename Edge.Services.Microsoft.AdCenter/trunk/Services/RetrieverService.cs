@@ -34,14 +34,14 @@ namespace Edge.Services.Microsoft.AdCenter
 				CreateRequests();
 				Download();
 			}
-
-			_waitHandle.WaitOne();
-
-			//Download(adReportFile, reportRequest);
-
             _batchDownloadOperation.Start();
             _batchDownloadOperation.Wait();
             _batchDownloadOperation.EnsureSuccess();
+			//_waitHandle.WaitOne();
+
+			//Download(adReportFile, reportRequest);
+
+          
 
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
@@ -206,6 +206,7 @@ namespace Edge.Services.Microsoft.AdCenter
                 //operation.Ended += new EventHandler(operation_Ended);
                 //operation.Start();
 			}
+
 			return result;
 		}
 
