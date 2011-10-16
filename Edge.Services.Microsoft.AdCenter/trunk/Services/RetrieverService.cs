@@ -23,11 +23,10 @@ namespace Edge.Services.Microsoft.AdCenter
 		{
             _batchDownloadOperation = new BatchDownloadOperation();
             _batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
+            _batchDownloadOperation.Ended += new EventHandler(_batchDownloadOperation_Ended);
             
             _adCenterApi = new AdCenterApi(this);
 			_filesInProgress = this.Delivery.Files.Count;
-
-
 
 			CreateRequests();
 			if (!Download())
@@ -47,6 +46,11 @@ namespace Edge.Services.Microsoft.AdCenter
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}
+
+        void _batchDownloadOperation_Ended(object sender, EventArgs e)
+        {
+            
+        }
 
         void _batchDownloadOperation_Progressed(object sender, EventArgs e)
         {
@@ -82,6 +86,7 @@ namespace Edge.Services.Microsoft.AdCenter
             if (string.IsNullOrEmpty(adReportFile.SourceUrl))
             {
                 ManualResetEvent asyncWait = new ManualResetEvent(false);
+              
                 manualEvents.Add(asyncWait);
                 Action getAdReportUrl = () =>
                 {
@@ -170,8 +175,8 @@ namespace Edge.Services.Microsoft.AdCenter
             } 
             #endregion
 
-			if (manualEvents.Count > 1)
-				WaitHandle.WaitAll(manualEvents.ToArray());
+            if (manualEvents.Count > 1)
+                WaitHandle.WaitAll(manualEvents.ToArray());
 		}
 
 		private bool Download()
@@ -183,7 +188,8 @@ namespace Edge.Services.Microsoft.AdCenter
 				try
 				{
 					//operation = file.Download();
-                    _batchDownloadOperation.Add(file.Download());
+                    HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
+                    _batchDownloadOperation.Add(file.Download(request));
 				}
 				catch (WebException webEx)
 				{
@@ -192,7 +198,6 @@ namespace Edge.Services.Microsoft.AdCenter
 					foreach (DeliveryFile deliveryFile in this.Delivery.Files)
 					{
 						deliveryFile.SourceUrl = string.Empty;
-						
 					}
 					break;
 				}
