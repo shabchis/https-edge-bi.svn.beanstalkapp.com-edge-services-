@@ -13,6 +13,7 @@ namespace Edge.Services.Microsoft.AdCenter
 {
 	class RetrieverService : PipelineService
 	{
+        private BatchDownloadOperation _batchDownloadOperation;
 		private AutoResetEvent _waitHandle;
 		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
@@ -20,7 +21,10 @@ namespace Edge.Services.Microsoft.AdCenter
 		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			_adCenterApi = new AdCenterApi(this);
+            _batchDownloadOperation = new BatchDownloadOperation();
+            _batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
+            
+            _adCenterApi = new AdCenterApi(this);
 			_filesInProgress = this.Delivery.Files.Count;
 
 
@@ -32,131 +36,139 @@ namespace Edge.Services.Microsoft.AdCenter
 				Download();
 			}
 
-
 			_waitHandle.WaitOne();
 
 			//Download(adReportFile, reportRequest);
+
+            _batchDownloadOperation.Start();
+            _batchDownloadOperation.Wait();
+            _batchDownloadOperation.EnsureSuccess();
 
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-
+        void _batchDownloadOperation_Progressed(object sender, EventArgs e)
+        {
+            BatchDownloadOperation DownloadOperation = (BatchDownloadOperation)sender;
+            this.ReportProgress(DownloadOperation.Progress);
+        }
 
 		private void CreateRequests()
 		{
 			 List<ManualResetEvent> manualEvents = new List<ManualResetEvent>();
 
-
 			_waitHandle = new AutoResetEvent(false);
 
+            #region ADREPORT
+            DeliveryFile adReportFile = this.Delivery.Files[Const.Files.AdReport];
+            WS.ReportRequest adReportRequest;
+            adReportRequest = _adCenterApi.NewAdPerformanceReportRequest
+             (
+                WS.AdPerformanceReportColumn.AccountName, //required field
+                WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
+                WS.AdPerformanceReportColumn.CampaignName,//required field
+                WS.AdPerformanceReportColumn.TimePeriod,//required field if aggregation time!=Summary
+                //WS.AdPerformanceReportColumn.CampaignId, // why did MS leave this out? stupid fucks
+                WS.AdPerformanceReportColumn.AdGroupName,
+                WS.AdPerformanceReportColumn.AdGroupId,
+                WS.AdPerformanceReportColumn.AdId,
+                WS.AdPerformanceReportColumn.AdTitle,
+                WS.AdPerformanceReportColumn.AdDescription,
+                WS.AdPerformanceReportColumn.DestinationUrl,
+                WS.AdPerformanceReportColumn.Clicks
+            );
 
-			//ADREPORT----------------------------------------
-			DeliveryFile adReportFile = this.Delivery.Files[Const.Files.AdReport];
-			WS.ReportRequest adReportRequest;
-			adReportRequest = _adCenterApi.NewAdPerformanceReportRequest
-			 (
-				WS.AdPerformanceReportColumn.AccountName, //required field
-				WS.AdPerformanceReportColumn.AccountNumber, // not necessary for this service version
-				WS.AdPerformanceReportColumn.CampaignName,//required field
-				WS.AdPerformanceReportColumn.TimePeriod,//required field if aggregation time!=Summary
-				//WS.AdPerformanceReportColumn.CampaignId, // why did MS leave this out? stupid fucks
-				WS.AdPerformanceReportColumn.AdGroupName,
-				WS.AdPerformanceReportColumn.AdGroupId,
-				WS.AdPerformanceReportColumn.AdId,
-				WS.AdPerformanceReportColumn.AdTitle,
-				WS.AdPerformanceReportColumn.AdDescription,
-				WS.AdPerformanceReportColumn.DestinationUrl,
-				WS.AdPerformanceReportColumn.Clicks
-			);
+            if (string.IsNullOrEmpty(adReportFile.SourceUrl))
+            {
+                ManualResetEvent asyncWait = new ManualResetEvent(false);
+                manualEvents.Add(asyncWait);
+                Action getAdReportUrl = () =>
+                {
+                    string innerFileName;
+                    adReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(adReportRequest, out innerFileName);
+                    adReportFile.Parameters["InnerFileName"] = string.Format(@"\{0}.Csv", innerFileName);
+                };
 
-			if (string.IsNullOrEmpty(adReportFile.SourceUrl))
-			{
-				ManualResetEvent asyncWait = new ManualResetEvent(false);
-				manualEvents.Add(asyncWait);
-				Action getAdReportUrl = () =>
-				{
-					string innerFileName;
-					adReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(adReportRequest, out innerFileName);
-					adReportFile.Parameters["InnerFileName"] = string.Format(@"\{0}.Csv", innerFileName);
-				};
+                getAdReportUrl.BeginInvoke(result =>
+                {
+                    asyncWait.Set();
+                },
+                null);
+            } 
+            #endregion
 
-				getAdReportUrl.BeginInvoke(result =>
-				{
-					asyncWait.Set();
-				},
-				null);
-			}
+            #region CAMPAIGNREPORT
+            DeliveryFile campaignReportFile = this.Delivery.Files[Const.Files.CampaignReport];
+            WS.ReportRequest campaignReportRequest;
+            campaignReportRequest = _adCenterApi.NewCampaignPerformanceReportRequest
+                (
+                    WS.CampaignPerformanceReportColumn.AccountName,
+                    WS.CampaignPerformanceReportColumn.CampaignName,
+                    WS.CampaignPerformanceReportColumn.TimePeriod,
+                    WS.CampaignPerformanceReportColumn.CampaignId,
+                    WS.CampaignPerformanceReportColumn.Status,
+                    WS.CampaignPerformanceReportColumn.Clicks
+                );
+
+            if (string.IsNullOrEmpty(campaignReportFile.SourceUrl))
+            {
+                ManualResetEvent asyncWait = new ManualResetEvent(false);
+                manualEvents.Add(asyncWait);
+                Action getCampaignReportUrl = () =>
+                {
+                    string innerFileName;
+                    campaignReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(campaignReportRequest, out innerFileName);
+                    campaignReportFile.Parameters["InnerFileName"] = string.Format(@"\{0}.Csv", innerFileName);
+
+                };
+
+                getCampaignReportUrl.BeginInvoke(result =>
+                {
+                    asyncWait.Set();
+                },
+                null);
+
+            } 
+            #endregion
 
 
-			//CAMPAIGNREPORT----------------------------------------
-			DeliveryFile campaignReportFile = this.Delivery.Files[Const.Files.CampaignReport];
-			WS.ReportRequest campaignReportRequest;
-			campaignReportRequest = _adCenterApi.NewCampaignPerformanceReportRequest
-				(
-					WS.CampaignPerformanceReportColumn.AccountName,
-					WS.CampaignPerformanceReportColumn.CampaignName,
-					WS.CampaignPerformanceReportColumn.TimePeriod,
-					WS.CampaignPerformanceReportColumn.CampaignId,
-					WS.CampaignPerformanceReportColumn.Status,
-					WS.CampaignPerformanceReportColumn.Clicks
-				);
+            #region KEYWORDREPORT
+            DeliveryFile keywordReportFile = this.Delivery.Files[Const.Files.KeywordReport];
+            WS.ReportRequest keywordReportRequest;
+            keywordReportRequest = _adCenterApi.NewKeywordPerformanceReportRequest(
+                    WS.KeywordPerformanceReportColumn.TimePeriod, // special column
+                    WS.KeywordPerformanceReportColumn.AdId,
+                    WS.KeywordPerformanceReportColumn.Keyword,
+                    WS.KeywordPerformanceReportColumn.KeywordId,
+                    WS.KeywordPerformanceReportColumn.DestinationUrl,
+                    WS.KeywordPerformanceReportColumn.MatchType,
+                    WS.KeywordPerformanceReportColumn.CurrencyCode,
+                    WS.KeywordPerformanceReportColumn.Impressions,
+                    WS.KeywordPerformanceReportColumn.Clicks,
+                    WS.KeywordPerformanceReportColumn.Spend,
+                    WS.KeywordPerformanceReportColumn.AveragePosition,
+                    WS.KeywordPerformanceReportColumn.Conversions
+                );
 
-			if (string.IsNullOrEmpty(campaignReportFile.SourceUrl))
-			{
-				ManualResetEvent asyncWait = new ManualResetEvent(false);
-				manualEvents.Add(asyncWait);
-				Action getCampaignReportUrl = () =>
-				{
-					string innerFileName;
-					campaignReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(campaignReportRequest,out innerFileName);
-					campaignReportFile.Parameters["InnerFileName"]= string.Format(@"\{0}.Csv", innerFileName);
+            if (string.IsNullOrEmpty(keywordReportFile.SourceUrl))
+            {
+                ManualResetEvent asyncWait = new ManualResetEvent(false);
+                manualEvents.Add(asyncWait);
+                Action getKeywordReportUrl = () =>
+                {
+                    string innerFileName;
+                    keywordReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(keywordReportRequest, out innerFileName);
+                    keywordReportFile.Parameters["InnerFileName"] = string.Format(@"\{0}.Csv", innerFileName);
+                };
 
-				};
-
-				getCampaignReportUrl.BeginInvoke(result =>
-				{
-					asyncWait.Set();
-				},
-				null);
-
-			}
-			//KEYWORDREPORT----------------------------------------
-			DeliveryFile keywordReportFile = this.Delivery.Files[Const.Files.KeywordReport];
-			WS.ReportRequest keywordReportRequest;
-			keywordReportRequest = _adCenterApi.NewKeywordPerformanceReportRequest(
-					WS.KeywordPerformanceReportColumn.TimePeriod, // special column
-					WS.KeywordPerformanceReportColumn.AdId,
-					WS.KeywordPerformanceReportColumn.Keyword,
-					WS.KeywordPerformanceReportColumn.KeywordId,
-					WS.KeywordPerformanceReportColumn.DestinationUrl,
-					WS.KeywordPerformanceReportColumn.MatchType,
-					WS.KeywordPerformanceReportColumn.CurrencyCode,
-					WS.KeywordPerformanceReportColumn.Impressions,
-					WS.KeywordPerformanceReportColumn.Clicks,
-					WS.KeywordPerformanceReportColumn.Spend,
-					WS.KeywordPerformanceReportColumn.AveragePosition,
-					WS.KeywordPerformanceReportColumn.Conversions
-				);
-
-			if (string.IsNullOrEmpty(keywordReportFile.SourceUrl))
-			{
-				ManualResetEvent asyncWait = new ManualResetEvent(false);
-				manualEvents.Add(asyncWait);
-				Action getKeywordReportUrl = () =>
-				{
-					string innerFileName;
-					keywordReportFile.SourceUrl = _adCenterApi.SubmitReportRequest(keywordReportRequest,out innerFileName);
-					keywordReportFile.Parameters["InnerFileName"]= string.Format(@"\{0}.Csv", innerFileName);
-				};
-
-				getKeywordReportUrl.BeginInvoke(result =>
-				{
-					asyncWait.Set();
-				},
-				null);
-			}
-
+                getKeywordReportUrl.BeginInvoke(result =>
+                {
+                    asyncWait.Set();
+                },
+                null);
+            } 
+            #endregion
 
 			if (manualEvents.Count > 1)
 				WaitHandle.WaitAll(manualEvents.ToArray());
@@ -164,13 +176,14 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		private bool Download()
 		{
-			DeliveryFileDownloadOperation operation;
+			//DeliveryFileDownloadOperation operation;
 			bool result = true;
 			foreach (DeliveryFile file in this.Delivery.Files)
 			{
 				try
 				{
-					operation = file.Download();
+					//operation = file.Download();
+                    _batchDownloadOperation.Add(file.Download());
 				}
 				catch (WebException webEx)
 				{
@@ -182,27 +195,24 @@ namespace Edge.Services.Microsoft.AdCenter
 						
 					}
 					break;
-
 				}
 
-				operation.Progressed += new EventHandler(operation_Progressed);
-				operation.Ended += new EventHandler(operation_Ended);
-				operation.Start();
-				
+                //operation.Progressed += new EventHandler(operation_Progressed);
+                //operation.Ended += new EventHandler(operation_Ended);
+                //operation.Start();
 			}
 			return result;
-			
 		}
 
-		void operation_Ended(object sender, EventArgs e)
-		{
-			_filesInProgress -= 1;
-		}
+        //void operation_Ended(object sender, EventArgs e)
+        //{
+        //    _filesInProgress -= 1;
+        //}
 
-		void operation_Progressed(object sender, EventArgs e)
-		{
+        //void operation_Progressed(object sender, EventArgs e)
+        //{
 			
-		}
+        //}
 
 		//void operation_Ended(object sender, EndedEventArgs e)
 		//{
@@ -222,5 +232,5 @@ namespace Edge.Services.Microsoft.AdCenter
 		//            this.ReportProgress(percent);
 		//    }
 		//}
-	}
+    }
 }
