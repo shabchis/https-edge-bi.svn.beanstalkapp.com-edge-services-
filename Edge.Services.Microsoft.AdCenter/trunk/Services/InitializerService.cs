@@ -14,10 +14,10 @@ using Edge.Services.AdMetrics;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
-	public class InitializerService : PipelineService
-	{
+    public class InitializerService : PipelineService
+    {
 
-		protected override ServiceOutcome DoPipelineWork()
+        protected override ServiceOutcome DoPipelineWork()
 		{
 			#region Init General
 			// ...............................
@@ -68,7 +68,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			// ................................
 			// Campaign report
-			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.CampaignReport });
+			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.CampaignReport});
 
 			ReportProgress(0.33);
 
@@ -80,14 +80,14 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			// ................................
 			// Keyword report
-			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.KeywordReport });
+            this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.KeywordReport});
 
 
 
 			this.Delivery.Files[Const.Files.KeywordReport].Parameters.Add(Const.Parameters.TimePeriodColumnName, AdCenterApi.GetTimePeriodColumnName(WS.ReportAggregation.Daily));
 
 
-			this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.AdReport });
+            this.Delivery.Files.Add(new DeliveryFile() { Name = Const.Files.AdReport});
 			ReportProgress(0.33);
 
 			// Save with success
@@ -96,5 +96,5 @@ namespace Edge.Services.Microsoft.AdCenter
 			return ServiceOutcome.Success;
 		}
 
-	}
+    }
 }

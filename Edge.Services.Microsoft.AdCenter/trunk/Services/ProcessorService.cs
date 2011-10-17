@@ -34,7 +34,10 @@ namespace Edge.Services.Microsoft.AdCenter
 			_adCache = new Dictionary<long, Ad>();
 			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
 			DeliveryFile campaignReport = this.Delivery.Files[Const.Files.CampaignReport];
-            var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(), requiredHeaders);
+            FileInfo campaignReportFileInfo = campaignReport.GetFileInfo(ArchiveType.Zip);
+            string[] campaignReportSubFiles = campaignReportFileInfo.GetSubFiles();
+
+            var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(subLocation: campaignReportSubFiles[0],archiveType: ArchiveType.Zip) , requiredHeaders);
             
             #region Reading campaigns file
             while (campaignReportReader.Read())
@@ -88,10 +91,10 @@ namespace Edge.Services.Microsoft.AdCenter
 				this.ReportProgress(0.7);
 				adReport.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 
-				//    // ...............................................................
-				//    // Read the keyword report, cross reference it with the ad data, and commit
+				// ...............................................................
+				// Read the keyword report, cross reference it with the ad data, and commit
 
-				//    // The name of the time period column is specified by the initializer, depending on the report
+				// The name of the time period column is specified by the initializer, depending on the report
 				DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
 				string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
 
