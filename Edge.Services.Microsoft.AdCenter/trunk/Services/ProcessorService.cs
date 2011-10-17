@@ -37,7 +37,10 @@ namespace Edge.Services.Microsoft.AdCenter
             FileInfo campaignReportFileInfo = campaignReport.GetFileInfo(ArchiveType.Zip);
             string[] campaignReportSubFiles = campaignReportFileInfo.GetSubFiles();
 
-            var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(subLocation: campaignReportSubFiles[0],archiveType: ArchiveType.Zip) , requiredHeaders);
+            var campaignReportReader = new CsvDynamicReader(
+                campaignReport.OpenContents(subLocation: campaignReportSubFiles[0],archiveType: ArchiveType.Zip),
+                requiredHeaders
+                );
             
             #region Reading campaigns file
             while (campaignReportReader.Read())
@@ -52,56 +55,63 @@ namespace Edge.Services.Microsoft.AdCenter
             this.ReportProgress(0.2); 
             #endregion
 
-
-			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
-			{
-				session.BeginImport(this.Delivery);
-
+            #region Read the ad report, and build a lookup table for later
+            using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+            {
+                session.BeginImport(this.Delivery);
               
+                // create the ad report reader
+                requiredHeaders = new string[1];
+                requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
 
-				//    // ...............................................................
-				//    // Read the ad report, and build a lookup table for later
+                string[] adReportSubFiles = adReport.GetFileInfo(ArchiveType.Zip).GetSubFiles();
 
-				// create the ad report reader
-				requiredHeaders = new string[1];
-				requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
+                var adReportReader = new CsvDynamicReader(
+                    adReport.OpenContents(subLocation: adReportSubFiles[0], archiveType: ArchiveType.Zip),
+                    requiredHeaders);
+                
+                //read
+                using (adReportReader)
+                {
 
-				var adReportReader = new CsvDynamicReader(adReport.OpenContents(), requiredHeaders);
-				//    // read
-				using (adReportReader)
-				{
+                    while (adReportReader.Read())
+                    {
+                        // create the ad
+                        string accountNameColVal = adReportReader.Current[WS.AdPerformanceReportColumn.AccountName.ToString()];//end of file
+                        if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())
+                            break;
+                        Ad ad = CreateAd(adReportReader.Current);
 
-					while (adReportReader.Read())
-					{
-						// create the ad
-						string accountNameColVal = adReportReader.Current[WS.AdPerformanceReportColumn.AccountName.ToString()];//end of file
-						if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())
-							break;
-						Ad ad = CreateAd(adReportReader.Current);
+                        ad.Campaign = _campaignsCache[ad.Campaign.Name];
+                        session.ImportAd(ad);
 
-						ad.Campaign = _campaignsCache[ad.Campaign.Name];
-						session.ImportAd(ad);
+                        _adCache.Add(long.Parse(ad.OriginalID), ad);
 
-						_adCache.Add(long.Parse(ad.OriginalID), ad);
-
-					}
+                    }
 
 
-				}
-				this.ReportProgress(0.7);
-				adReport.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
+                }
+                this.ReportProgress(0.7);
+                adReport.History.Add(DeliveryOperation.Imported, Instance.InstanceID); 
+            #endregion
 
 				// ...............................................................
-				// Read the keyword report, cross reference it with the ad data, and commit
+                #region Read the keyword report, cross reference it with the ad data, and commit
+                // Read the keyword report, cross reference it with the ad data, and commit
 
-				// The name of the time period column is specified by the initializer, depending on the report
-				DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
-				string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
+                // The name of the time period column is specified by the initializer, depending on the report
+                DeliveryFile keywordReport = this.Delivery.Files[Const.Files.KeywordReport];
+                string timePeriodColumn = keywordReport.Parameters[Const.Parameters.TimePeriodColumnName] as string;
 
-				//    // create the keyword report reader
-				requiredHeaders = new string[1];
-				requiredHeaders[0] = "Keyword";
-				var keywordReportReader = new CsvDynamicReader(keywordReport.OpenContents(), requiredHeaders);
+                //    // create the keyword report reader
+                requiredHeaders = new string[1];
+                requiredHeaders[0] = "Keyword";
+
+                string[] keywordReportSubFiles = keywordReport.GetFileInfo(ArchiveType.Zip).GetSubFiles();
+
+                var keywordReportReader = new CsvDynamicReader(
+                    keywordReport.OpenContents(subLocation: keywordReportSubFiles[0], archiveType: ArchiveType.Zip),
+                    requiredHeaders);
 
                 Dictionary<string, double> _totals = new Dictionary<string, double>(); //for checksum validation
                 //Added by Shay for validation 
@@ -110,32 +120,33 @@ namespace Edge.Services.Microsoft.AdCenter
                     _totals.Add(measure.Key, 0);
                 }
 
+                // read and save in transaction
+                using (keywordReportReader)
+                {
+                    while (keywordReportReader.Read())
+                    {
+                        string GregorianDateColVal = keywordReportReader.Current.GregorianDate;
 
-				// read and save in transaction
-				using (keywordReportReader)
-				{
-					while (keywordReportReader.Read())
-					{
-						string GregorianDateColVal = keywordReportReader.Current.GregorianDate;
-
-						if (GregorianDateColVal.Trim() == string.Empty || GregorianDateColVal.Trim() == endOfFileMicrosoftCorporation.Trim())//end of file
-							break;
-						// get the unit from the keyword report, and add the missing ad data
-						AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn, session);
+                        if (GregorianDateColVal.Trim() == string.Empty || GregorianDateColVal.Trim() == endOfFileMicrosoftCorporation.Trim())//end of file
+                            break;
+                        // get the unit from the keyword report, and add the missing ad data
+                        AdMetricsUnit unit = CreateMetrics(keywordReportReader.Current, timePeriodColumn, session);
                         session.ImportMetrics(unit);
 
+                        // Validation information:
                         _totals[Measure.Common.Clicks] += unit.MeasureValues[session.Measures[Measure.Common.Clicks]];
                         _totals[Measure.Common.Cost] += unit.MeasureValues[session.Measures[Measure.Common.Cost]];
-                        //_totals[Measure.Common.Impressions] += unit.MeasureValues[session.Measures[Measure.Common.Impressions]];
+                        _totals[Measure.Common.Impressions] += unit.MeasureValues[session.Measures[Measure.Common.Impressions]];
 
-						
-					}
+
+                    }
 
                     session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
                     session.EndImport();
 
-					ReportProgress(1);
-				}
+                    ReportProgress(1);
+                } 
+                #endregion
 
 			}
 
@@ -216,6 +227,8 @@ namespace Edge.Services.Microsoft.AdCenter
 			unit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 			unit.MeasureValues[session.Measures[Measure.Common.Clicks]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
 			unit.MeasureValues[session.Measures[Measure.Common.Cost]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
+            unit.MeasureValues[session.Measures[Measure.Common.Impressions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
+
 			
 			unit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] =double.Parse( values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
 			unit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
