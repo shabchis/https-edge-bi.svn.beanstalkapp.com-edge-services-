@@ -34,8 +34,8 @@ namespace Edge.Services.Microsoft.AdCenter
 			_adCache = new Dictionary<long, Ad>();
 			DeliveryFile adReport = this.Delivery.Files[Const.Files.AdReport];
 			DeliveryFile campaignReport = this.Delivery.Files[Const.Files.CampaignReport];
-			var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(), requiredHeaders);
-
+            var campaignReportReader = new CsvDynamicReader(campaignReport.OpenContents(), requiredHeaders);
+            
             #region Reading campaigns file
             while (campaignReportReader.Read())
             {
