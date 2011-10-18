@@ -80,7 +80,8 @@ namespace Edge.Services.Microsoft.AdCenter
                 WS.AdPerformanceReportColumn.AdTitle,
                 WS.AdPerformanceReportColumn.AdDescription,
                 WS.AdPerformanceReportColumn.DestinationUrl,
-                WS.AdPerformanceReportColumn.Clicks
+                WS.AdPerformanceReportColumn.Clicks,
+                WS.AdPerformanceReportColumn.AdType
             );
 
             if (string.IsNullOrEmpty(adReportFile.SourceUrl))
@@ -144,6 +145,8 @@ namespace Edge.Services.Microsoft.AdCenter
             keywordReportRequest = _adCenterApi.NewKeywordPerformanceReportRequest(
                     WS.KeywordPerformanceReportColumn.TimePeriod, // special column
                     WS.KeywordPerformanceReportColumn.AdId,
+                    WS.KeywordPerformanceReportColumn.AdGroupId,
+                    WS.KeywordPerformanceReportColumn.CampaignId,
                     WS.KeywordPerformanceReportColumn.Keyword,
                     WS.KeywordPerformanceReportColumn.KeywordId,
                     WS.KeywordPerformanceReportColumn.DestinationUrl,

@@ -19,9 +19,24 @@ namespace Edge.Services.Microsoft.AdCenter
 		{
 			public const string AdCenterConversions = "AdCenterConversions";
 		}
+        static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
+        static Dictionary<string, int> AdCenterAdTypeDic;
 		Dictionary<string, Campaign> _campaignsCache;
 		Dictionary<long, Ad> _adCache;
 
+        public ProcessorService()
+        {
+
+            AdCenterAdTypeDic = new Dictionary<string, int>()
+			{
+				{"Text ad",1},
+				{"RichAd",2},
+				{"Image",3}, // Not supported by AdCenter
+				{"Local",4},// Not supported by AdCenter
+				{"Mobile",5},
+				{"ThirdPartyCreative",6}
+			};
+        }
 		protected override ServiceOutcome DoPipelineWork()
 		{
 
@@ -83,6 +98,18 @@ namespace Edge.Services.Microsoft.AdCenter
                         Ad ad = CreateAd(adReportReader.Current);
 
                         ad.Campaign = _campaignsCache[ad.Campaign.Name];
+
+                        // Adgroup
+                        ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+                        {
+                            Value = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupName.ToString()],
+                            OriginalID = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupId.ToString()]
+                        };
+
+                        //Ad Type
+                        string adTypeKey = Convert.ToString(adReportReader.Current[WS.AdPerformanceReportColumn.AdType.ToString()]);
+                        ad.ExtraFields[AdType] = AdCenterAdTypeDic[adTypeKey];
+                        
                         session.ImportAd(ad);
 
                         _adCache.Add(long.Parse(ad.OriginalID), ad);
@@ -117,7 +144,10 @@ namespace Edge.Services.Microsoft.AdCenter
                 //Added by Shay for validation 
                 foreach (KeyValuePair<string, Measure> measure in session.Measures)
                 {
-                    _totals.Add(measure.Key, 0);
+                    if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+                    {
+                        _totals.Add(measure.Key, 0);
+                    }
                 }
 
                 // read and save in transaction
@@ -153,7 +183,6 @@ namespace Edge.Services.Microsoft.AdCenter
 			return ServiceOutcome.Success;
 		}
 
-      
 		private Campaign CreateCampaign(dynamic values)
 		{
 			Campaign campaign = new Campaign()
@@ -185,7 +214,6 @@ namespace Edge.Services.Microsoft.AdCenter
 			//}
 			return campaign;
 		}
-
 
         private Ad CreateAd(dynamic values)
 		{
