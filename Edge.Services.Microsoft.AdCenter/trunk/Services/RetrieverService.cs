@@ -181,13 +181,11 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		private bool Download()
 		{
-			//DeliveryFileDownloadOperation operation;
 			bool result = true;
 			foreach (DeliveryFile file in this.Delivery.Files)
 			{
 				try
 				{
-					//operation = file.Download();
                     HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
                     _batchDownloadOperation.Add(file.Download(request));
 				}
@@ -201,42 +199,10 @@ namespace Edge.Services.Microsoft.AdCenter
 					}
 					break;
 				}
-
-                //operation.Progressed += new EventHandler(operation_Progressed);
-                //operation.Ended += new EventHandler(operation_Ended);
-                //operation.Start();
 			}
 
 			return result;
 		}
 
-        //void operation_Ended(object sender, EventArgs e)
-        //{
-        //    _filesInProgress -= 1;
-        //}
-
-        //void operation_Progressed(object sender, EventArgs e)
-        //{
-			
-        //}
-
-		//void operation_Ended(object sender, EndedEventArgs e)
-		//{
-		//    _filesInProgress -= 1;
-		//    if (_filesInProgress == 0)
-		//        _waitHandle.Set();
-
-		//}
-
-		//void operation_Progressed(object sender, ProgressEventArgs e)
-		//{
-		//    double percent = Math.Round(Convert.ToDouble(Convert.ToDouble(e.DownloadedBytes) / Convert.ToDouble(e.TotalBytes) / (double)_filesInProgress), 3);
-		//    if (percent >= _minProgress)
-		//    {
-		//        _minProgress += 0.05;
-		//        if (percent <= 1)
-		//            this.ReportProgress(percent);
-		//    }
-		//}
     }
 }
