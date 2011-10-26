@@ -185,7 +185,7 @@ namespace Edge.Services.Google.AdWords
 
 				foreach (KeyValuePair<string, Measure> measure in session.Measures)
 				{
-					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
 						_totals.Add(measure.Key, 0);
 					}
@@ -202,7 +202,7 @@ namespace Edge.Services.Google.AdWords
 						{
 							foreach (KeyValuePair<string, Measure> measure in session.Measures)
 							{
-								if (!measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+								if (!measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 									continue;
 
 								switch (measure.Key)
