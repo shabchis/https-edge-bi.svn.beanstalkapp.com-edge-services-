@@ -189,7 +189,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 				foreach (var measure in session.Measures)
 				{
-					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
 						if (!_totalsValidation.ContainsKey(measure.Key))
 							_totalsValidation.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
