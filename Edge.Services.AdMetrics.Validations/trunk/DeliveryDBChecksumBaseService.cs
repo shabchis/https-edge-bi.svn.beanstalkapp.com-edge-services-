@@ -66,14 +66,14 @@ namespace Edge.Services.AdMetrics.Validations
                     {
                         BaseDateTime = fromDate,
                         Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Exact, Value = 0 },
-                        Boundary = DateTimeSpecificationBounds.Lower
+                        //Boundary = DateTimeSpecificationBounds.Lower
                     },
 
                     End = new DateTimeSpecification()
                     {
                         BaseDateTime = fromDate,
                         Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Max },
-                        Boundary = DateTimeSpecificationBounds.Upper
+                       // Boundary = DateTimeSpecificationBounds.Upper
                     }
                 };
 
@@ -83,8 +83,8 @@ namespace Edge.Services.AdMetrics.Validations
                     foreach (string account in accounts)
                     {
                         DeliverySearchItem delivery = new DeliverySearchItem();
-                        delivery.account = new Account() { ID = Convert.ToInt16(account) };
-                        delivery.channel = new Channel() { ID = Convert.ToInt16(Channel) };
+                        delivery.account = new Account() { ID = Convert.ToInt32(account) };
+                        delivery.channel = new Channel() { ID = Convert.ToInt32(Channel) };
                         delivery.targetPeriod = subRange;
                         deliverySearchList.Add(delivery);
 
