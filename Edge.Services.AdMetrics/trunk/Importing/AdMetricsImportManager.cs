@@ -436,7 +436,7 @@ namespace Edge.Services.AdMetrics
 				measuresFieldNamesSQL.AppendFormat("[{0}]{1}", measure.OltpName, count < this.Measures.Values.Count - 1 ? "," : null);
 				measuresNamesSQL.AppendFormat("[{0}]{1}", measure.Name, count < this.Measures.Values.Count - 1 ? "," : null);
 
-				if (measure.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+				if (measure.Options.HasFlag(MeasureOptions.ValidationRequired))
 					measuresValidationSQL.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Name, measuresValidationSQL.Length > 0 ? ", " : null);
 
 				count++;
