@@ -142,7 +142,7 @@ namespace Edge.Services.Facebook.AdsApi
 				#region for validation
 				foreach (var measure in session.Measures)
 				{
-					if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
 						_totalsValidation.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
 
