@@ -66,14 +66,12 @@ namespace Edge.Services.AdMetrics.Validations
                     {
                         BaseDateTime = fromDate,
                         Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Exact, Value = 0 },
-                        //Boundary = DateTimeSpecificationBounds.Lower
                     },
 
                     End = new DateTimeSpecification()
                     {
                         BaseDateTime = fromDate,
                         Hour = new DateTimeTransformation() { Type = DateTimeTransformationType.Max },
-                       // Boundary = DateTimeSpecificationBounds.Upper
                     }
                 };
 
