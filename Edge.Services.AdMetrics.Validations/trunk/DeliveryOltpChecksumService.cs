@@ -19,7 +19,7 @@ namespace Edge.Services.AdMetrics.Validations
             double costDif = 0;
             double impsDif = 0;
             double clicksDif = 0;
-            string dayCode = delivery.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
+            string dayCode = delivery.TargetPeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
 
             using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, DbConnectionStringName)))
             {
