@@ -76,7 +76,7 @@ namespace Edge.Services.AdMetrics.Validations
              string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 
              string mdxCommandText = string.Format(@"Select
-                                { [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]} 
+                                {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
                                     On Columns , 
                                 (
 	                            [Accounts Dim].[Accounts].[Account].&[{0}]
