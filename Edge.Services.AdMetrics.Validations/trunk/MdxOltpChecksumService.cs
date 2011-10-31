@@ -113,9 +113,9 @@ namespace Edge.Services.AdMetrics.Validations
                 sqlCon.Open();
 
                 SqlCommand sqlCommand = new SqlCommand(
-                  @"SELECT AnalysisSettings.value('data(/AnalysisSettings/@CubeName)[1]', 'nvarchar(MAX)')
-                    from User_GUI_Account
-                    where Account_ID = @Account_ID"
+                     @" SELECT SUBSTRING([AccountSettings], CHARINDEX(':', [AccountSettings])+1, CHARINDEX(';',[AccountSettings])-6 )
+                        FROM [Seperia].[dbo].[User_GUI_Account]
+                        where Account_ID = @Account_ID"
                    );
 
                 SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
