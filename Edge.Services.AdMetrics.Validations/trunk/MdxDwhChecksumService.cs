@@ -6,6 +6,7 @@ using Microsoft.AnalysisServices.AdomdClient;
 using System.Data;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
+using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.AdMetrics.Validations
 {
@@ -68,12 +69,14 @@ namespace Edge.Services.AdMetrics.Validations
 
             #region Getting measures from Analysis server (MDX)
             AdomdConnection conn = new AdomdConnection("Data Source=localhost;Catalog=Seperia_UDM");
-            conn.Open();
+            try
+            {
+                conn.Open();
 
-            //TO DO : Get Cube Name from DB
-            string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+                //TO DO : Get Cube Name from DB
+                string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 
-            string mdxCommandText = String.Format(@"Select
+                string mdxCommandText = String.Format(@"Select
                                 {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}} On Columns , 
                                 ([Accounts Dim].[Accounts].[Account].&[{0}])On Rows 
                                 From
@@ -84,20 +87,35 @@ namespace Edge.Services.AdMetrics.Validations
                                 ) 
                                 ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 
-            AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
-            AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
+                AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
+                AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
 
 
-            while (mdxReader.Read())
-            {
-                mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
-                mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
-                mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
-            }
-            mdxReader.Close();
+                while (mdxReader.Read())
+                {
+                    mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
+                    mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
+                    mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
+                }
+                mdxReader.Close();
             #endregion
 
-            return IsEqual(Params, dwhTotals, mdxTotals, "Dwh", "Mdx");
+                return IsEqual(Params, dwhTotals, mdxTotals, "Dwh", "Mdx");
+            }
+            catch (Exception e)
+            {
+                return new ValidationResult()
+                {
+                    ResultType = ValidationResultType.Error,
+                    AccountID = Convert.ToInt32(Params["AccountID"]),
+                    Message = e.Message,
+                    TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
+                    TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
+                    ChannelID = Convert.ToInt32(Params["ChannelID"]),
+                    CheckType = this.Instance.Configuration.Name
+                };
+            }
+
 
         }
         private string GetCubeName(int accountId)
