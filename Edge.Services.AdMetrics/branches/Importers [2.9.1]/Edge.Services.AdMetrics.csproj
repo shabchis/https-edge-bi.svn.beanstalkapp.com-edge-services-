@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="%28examples%29.cs" />
     <Compile Include="Importing\AdMetricsImportManager.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Const.cs" />

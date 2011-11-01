@@ -52,8 +52,11 @@ namespace Edge.Services.AdMetrics
 		}
 
 
-		public void Apply(object targetObject)
+		public void Apply(object targetObject, Func<string,string> readFunction, Dictionary<string,string> sources)
 		{
+			// -------------------------------------------------------
+			// STEP 1: COLLECTIONS
+
 			// Determine if we're dealing with a collection
 			object currentCollection = null;
 			bool newCollection = false;
@@ -81,6 +84,13 @@ namespace Edge.Services.AdMetrics
 				}
 			}
 
+			// -------------------------------------------------------
+			// STEP 2: READ FROM SOURCE
+			//foreach(
+
+			// -------------------------------------------------------
+			// STEP 3: FORMAT VALUE
+
 			// Get the required value, if necessary
 			object value = null;
 			if (Value != null)
@@ -102,6 +112,9 @@ namespace Edge.Services.AdMetrics
 					), ex);
 				}
 			}
+
+			// -------------------------------------------------------
+			// STEP 4: APPLY VALUE
 
 			// Apply the value
 			if (currentCollection != null)
@@ -184,13 +197,16 @@ namespace Edge.Services.AdMetrics
 				}
 			}
 
+			// -------------------------------------------------------
+			// STEP 5: RECURSION
+
 			// Activate child mappings on the value
 			if (value != null)
 			{
 				foreach (MapSpec spec in this.SubSpecs)
 				{
 					// TODO: wrap this somehow for exception handling
-					spec.Apply(value);
+					spec.Apply(value, readFunction);
 				}
 			}
 		}
