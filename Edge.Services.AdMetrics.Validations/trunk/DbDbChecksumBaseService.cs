@@ -91,6 +91,9 @@ namespace Edge.Services.AdMetrics.Validations
         }
         public ValidationResult IsEqual(Dictionary<string, string> Params, Dictionary<string, double> sourceTotals, Dictionary<string, double> targetTotals, string sourceDbName, string targeDbtName)
         {
+           
+            
+            
             if (sourceTotals.Count > 0 && targetTotals.Count > 0)
             {
                 bool costAlert = false;
@@ -128,28 +131,44 @@ namespace Edge.Services.AdMetrics.Validations
             }
             // Checking if data exists in dwh and not in oltp
             else if (sourceTotals.Count == 0 && targetTotals.Count != 0)
+            {
+                double SumOfTargetTotals = 0; 
+                foreach (var item in targetTotals)
+                {
+                    SumOfTargetTotals += item.Value;
+                }
+                if (SumOfTargetTotals !=0)
                 return new ValidationResult()
                 {
                     ResultType = ValidationResultType.Error,
                     AccountID = Convert.ToInt32(Params["AccountID"]),
-                    Message = "Data exists in Dwh but not in Oltp",
+                    Message = "Alert- Missing Data in target DB ",
                     ChannelID = Convert.ToInt32(Params["ChannelID"]),
                     TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                     TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
                     CheckType = this.Instance.Configuration.Name
                 };
+            }
             // Checking if data exists in oltp and not in dwh
             else if (targetTotals.Count == 0 && sourceTotals.Count != 0)
+            {
+                double SumOfsourceTotals = 0;
+                foreach (var item in sourceTotals)
+                {
+                    SumOfsourceTotals += item.Value;
+                }
+                if (SumOfsourceTotals != 0)
                 return new ValidationResult()
                 {
                     ResultType = ValidationResultType.Error,
                     AccountID = Convert.ToInt32(Params["AccountID"]),
-                    Message = "Data exists in Oltp but not in Dwh",
+                    Message = "Alert- Missing Data in Source DB",
                     ChannelID = Convert.ToInt32(Params["ChannelID"]),
                     TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
                     TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
                     CheckType = this.Instance.Configuration.Name
                 };
+            }
 
             return new ValidationResult()
             {
