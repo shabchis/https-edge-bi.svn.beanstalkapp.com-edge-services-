@@ -59,9 +59,9 @@ namespace Edge.Services.AdMetrics.Validations
                         {
                             if (!_reader[0].Equals(DBNull.Value))
                             {
-                                costDif = Math.Abs(Convert.ToUInt64(_reader[0]) - totals["Cost"]);
-                                clicksDif = Math.Abs(Convert.ToUInt64(_reader[2]) - totals["Clicks"]);
-                                impsDif = Math.Abs(Convert.ToUInt64(_reader[1]) - totals["Impressions"]);
+                                costDif = Math.Abs(Convert.ToDouble(_reader[0]) - totals["Cost"]);
+                                clicksDif = Math.Abs(Convert.ToDouble(_reader[2]) - totals["Clicks"]);
+                                impsDif = Math.Abs(Convert.ToDouble(_reader[1]) - totals["Impressions"]);
                             }
 
                             #region Scenario : data exists in delivery and not in DB
