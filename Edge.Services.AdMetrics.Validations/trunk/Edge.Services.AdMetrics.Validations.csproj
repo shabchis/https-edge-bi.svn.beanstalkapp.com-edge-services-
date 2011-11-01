@@ -52,6 +52,7 @@
     <Compile Include="DbDbChecksumBaseService.cs" />
     <Compile Include="DeliveryDBChecksumBaseService.cs" />
     <Compile Include="DeliveryDwhChecksumService.cs" />
+    <Compile Include="DeliveryMdxChecksumService.cs" />
     <Compile Include="DeliveryOltpChecksumService.cs" />
     <Compile Include="DwhOltpChecksumService.cs" />
     <Compile Include="MdxDwhChecksumService.cs" />
