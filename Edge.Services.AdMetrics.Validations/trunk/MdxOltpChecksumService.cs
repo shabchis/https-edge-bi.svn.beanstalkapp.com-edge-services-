@@ -6,12 +6,13 @@ using Microsoft.AnalysisServices.AdomdClient;
 using System.Data;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
+using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.AdMetrics.Validations
 {
     class MdxOltpChecksumService : DbDbChecksumBaseService
     {
-       
+
         protected override Data.Pipeline.Services.ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params)
         {
 
@@ -69,13 +70,15 @@ namespace Edge.Services.AdMetrics.Validations
             #endregion
 
             #region Getting measures from Analysis server (MDX)
-             AdomdConnection conn = new AdomdConnection("Data Source=localhost;Catalog=Seperia_UDM");
-             conn.Open();
+            AdomdConnection conn = new AdomdConnection("Data Source=localhost;Catalog=Seperia_UDM");
+            try
+            {
+                conn.Open();
 
-             //TO DO : Get Cube Name from DB
-             string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+                //TO DO : Get Cube Name from DB
+                string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 
-             string mdxCommandText = string.Format(@"Select
+                string mdxCommandText = string.Format(@"Select
                                 {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
                                     On Columns , 
                                 (
@@ -89,25 +92,40 @@ namespace Edge.Services.AdMetrics.Validations
                                 ) 
                                 ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 
-             AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
-             AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
-            
-             while (mdxReader.Read())
-             {
-                 mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
-                 mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
-                 mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
-             }
-             mdxReader.Close();
+                AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
+                AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
+
+                while (mdxReader.Read())
+                {
+                    mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
+                    mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
+                    mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
+                }
+                mdxReader.Close();
             #endregion
 
-            return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
+                return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
+            }
+            catch ( Exception e )
+            {
+                return new ValidationResult()
+                {
+                    ResultType = ValidationResultType.Error,
+                    AccountID = Convert.ToInt32(Params["AccountID"]),
+                    Message = e.Message,
+                    TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
+                    TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
+                    ChannelID = Convert.ToInt32(Params["ChannelID"]),
+                    CheckType = this.Instance.Configuration.Name
+                };
+            }
+
 
         }
 
         private string GetCubeName(int accountId)
         {
-            string cubeName=string.Empty;
+            string cubeName = string.Empty;
             using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
             {
                 sqlCon.Open();
@@ -121,18 +139,18 @@ namespace Edge.Services.AdMetrics.Validations
                 SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
                 accountIdParam.Value = accountId;
                 sqlCommand.Parameters.Add(accountIdParam);
-               
+
                 sqlCommand.Connection = sqlCon;
 
                 using (var _reader = sqlCommand.ExecuteReader())
                 {
-                  if (!_reader.IsClosed)
+                    if (!_reader.IsClosed)
                     {
                         while (_reader.Read())
                         {
                             if (!_reader[0].Equals(DBNull.Value))
                             {
-                              cubeName =  Convert.ToString(_reader[0]);
+                                cubeName = Convert.ToString(_reader[0]);
                             }
                         }
                     }
