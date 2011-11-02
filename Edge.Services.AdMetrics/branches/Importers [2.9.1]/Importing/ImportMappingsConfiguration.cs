@@ -51,9 +51,16 @@ namespace Edge.Services.AdMetrics
 			throw new NotImplementedException();
 		}
 
-
-		public void Apply(object targetObject, Func<string,string> readFunction, Dictionary<string,string> sources)
+		public void Apply(object targetObject, Func<string, string> readFunction)
 		{
+			var readSources = new Dictionary<string, string>();
+			this.Apply(targetObject, readFunction, sources);
+		}
+
+		private void Apply(object targetObject, Func<string, string> readFunction, Dictionary<string, string> readSources)
+		{
+			bool newSources = false;
+
 			// -------------------------------------------------------
 			// STEP 1: COLLECTIONS
 
@@ -86,7 +93,51 @@ namespace Edge.Services.AdMetrics
 
 			// -------------------------------------------------------
 			// STEP 2: READ FROM SOURCE
-			//foreach(
+			foreach (MapSource source in this.Sources)
+			{
+				if (!newSources)
+				{
+					// Duplicate for sources for this branch only
+					newSources = true;
+					readSources = new Dictionary<string, string>(readSources);
+				}
+
+				if (String.IsNullOrWhiteSpace(source.Field))
+					throw new MappingException("The 'Field' property must be defined.");
+
+				// Validate the name
+				string name;
+				bool usingFieldName = false;
+				if ( String.IsNullOrWhiteSpace(source.Name))
+				{
+					name = source.Field;
+					usingFieldName = true;
+				}
+				else
+					name = source.Name;
+
+				if (!Regex.IsMatch(name, "[A-Za-z_][A-Za-z0-9_]*"))
+				{
+					throw new MappingException(String.Format(usingFieldName ?
+						"The field name '{0}' cannot be used as the mapping source name because it includes illegal characters. Please specify a separate 'Name' attribute.":
+						"The mapping source name '{0}' is not valid because it includes illegal characters.",
+						name
+					));
+				}
+
+				string value = readFunction(source.Field);
+				readSources[name] = value;
+
+				// Capture groups
+				if (source.Regex != null)
+				{
+					Match m = source.Regex.Match(value);
+					foreach (string groupName in source.Regex.GetGroupNames())
+					{
+						readSources[name + "." + groupName] = m.Groups[groupName].Value;
+					}
+				}
+			}
 
 			// -------------------------------------------------------
 			// STEP 3: FORMAT VALUE
@@ -206,7 +257,7 @@ namespace Edge.Services.AdMetrics
 				foreach (MapSpec spec in this.SubSpecs)
 				{
 					// TODO: wrap this somehow for exception handling
-					spec.Apply(value, readFunction);
+					spec.Apply(value, readFunction, readSources);
 				}
 			}
 		}
@@ -217,7 +268,6 @@ namespace Edge.Services.AdMetrics
 		public string Name;
 		public string Field;
 		public Regex Regex;
-		public string Value;
 	}
 
 	public enum MapSourceType
