@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="InitializerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RetrieverService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Framework\Edge.Core\Edge.Core.csproj">

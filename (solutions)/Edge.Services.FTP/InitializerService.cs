@@ -70,7 +70,7 @@ namespace Edge.Services.FTP
                     string[] fileExtension = file.Split('.');
                     foreach (string item in AllowedExtensions)
                     {
-                        if (fileExtension[1].ToLower().Equals(item.ToLower()))
+                        if (fileExtension[fileExtension.Length-1].ToLower().Equals(item.ToLower()))
                             continue;
                         ExtensionsFlag = true;
                     }
