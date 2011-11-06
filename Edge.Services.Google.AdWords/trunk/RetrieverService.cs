@@ -124,6 +124,7 @@ namespace Edge.Services.Google.AdWords
 			file.Parameters.Add("clientCustomerId", request.clientCustomerId);
 			file.Parameters.Add("authToken", request.authToken);
 			file.Parameters.Add("returnMoneyInMicros", request.returnMoneyInMicros);
+            file.Parameters.Add("developerToken", request.developerToken);
 		}
 
 		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
@@ -142,6 +143,7 @@ namespace Edge.Services.Google.AdWords
 			//request.Headers.Add("clientEmail: " + file.Parameters["Email"]);
 			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
 			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
+            request.Headers.Add("developerToken: " + file.Parameters["developerToken"]);
 			//request.Method = "POST";
 			_batchDownloadOperation.Add(file.Download(request));
 

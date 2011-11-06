@@ -356,7 +356,9 @@ namespace Edge.Services.Google.AdWords
 				reportService.RequestHeader.clientCustomerId,
 				reportService.RequestHeader.clientEmail,
 				reportService.RequestHeader.authToken,
-				IsReturnMoneyInMicros);
+				IsReturnMoneyInMicros,
+                reportService.RequestHeader.developerToken
+                );
 		}
 
 		public GA.v201101.ReportDefinition CreateReportDefinition(GA.v201101.Selector selector, GA.v201101.ClientSelector[] clients,

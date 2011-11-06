@@ -11,13 +11,14 @@ namespace Edge.Services.Google.AdWords
 		{
 
 		}
-		public GoogleRequestEntity(Uri Url , string Id , string Email , string AuthToken , bool IsReturnMoneyInMicros)
+        public GoogleRequestEntity(Uri Url, string Id, string Email, string AuthToken, bool IsReturnMoneyInMicros, string DeveloperToken)
 		{
-			downloadUrl = Url;
-			clientCustomerId = Id;
-			clientEmail = Email;
-			authToken = AuthToken;
-			returnMoneyInMicros = IsReturnMoneyInMicros.ToString().ToLower();
+			this.downloadUrl = Url;
+            this.clientCustomerId = Id;
+            this.clientEmail = Email;
+            this.authToken = AuthToken;
+            this.returnMoneyInMicros = IsReturnMoneyInMicros.ToString().ToLower();
+            this.developerToken = DeveloperToken;
 		}
 		
 		public Uri downloadUrl { set; get; }
@@ -25,6 +26,7 @@ namespace Edge.Services.Google.AdWords
 		public string clientEmail { set; get; } // TODO : remove
 		public string authToken { set; get; }
 		public string returnMoneyInMicros { set; get; }
+        public string developerToken { set; get; }
 	}
 
 	
