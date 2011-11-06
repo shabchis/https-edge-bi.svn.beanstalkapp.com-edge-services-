@@ -5,6 +5,8 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
+using System.Data.SqlClient;
+using Edge.Core.Configuration;
 
 namespace Edge.Services.AdMetrics.Validations
 {
@@ -180,6 +182,47 @@ namespace Edge.Services.AdMetrics.Validations
                 TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
                 CheckType = this.Instance.Configuration.Name
             };
+        }
+        public string GetCubeName(int accountId)
+        {
+            string cubeName = string.Empty;
+            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
+            {
+                sqlCon.Open();
+
+//                SqlCommand sqlCommand = new SqlCommand(
+//                  @" SELECT SUBSTRING([AccountSettings], CHARINDEX(':', [AccountSettings])+1, CHARINDEX(';',[AccountSettings])-6 )
+//                        FROM [dbo].[User_GUI_Account]
+//                        where Account_ID = @Account_ID"
+//                   );
+
+                SqlCommand sqlCommand = new SqlCommand(
+                    @"SELECT AnalysisSettings.value('data(/AnalysisSettings/@CubeName)[1]', 'nvarchar(MAX)')
+                        from [dbo].[User_GUI_Account]
+                        where Account_ID = @Account_ID"
+                    );
+
+                SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
+                accountIdParam.Value = accountId;
+                sqlCommand.Parameters.Add(accountIdParam);
+
+                sqlCommand.Connection = sqlCon;
+
+                using (var _reader = sqlCommand.ExecuteReader())
+                {
+                    if (!_reader.IsClosed)
+                    {
+                        while (_reader.Read())
+                        {
+                            if (!_reader[0].Equals(DBNull.Value))
+                            {
+                                cubeName = Convert.ToString(_reader[0]);
+                            }
+                        }
+                    }
+                }
+            }
+            return cubeName;
         }
         protected abstract ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params);
 

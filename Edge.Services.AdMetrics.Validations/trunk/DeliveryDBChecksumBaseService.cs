@@ -98,6 +98,7 @@ namespace Edge.Services.AdMetrics.Validations
             {
                 //Getting criterion matched deliveries
                 Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
+                bool foundCommited = false;
 
                 progress += 0.3 *( 1 - progress);
                 this.ReportProgress(progress);
@@ -119,6 +120,8 @@ namespace Edge.Services.AdMetrics.Validations
                     if (commitIndex > rollbackIndex)
                     {
                         object totalso;
+                        foundCommited = true;
+
                         DeliveryHistoryEntry commitEntry = null;
                         IEnumerable<DeliveryHistoryEntry> processedEntries = d.History.Where(entry => (entry.Operation == DeliveryOperation.Imported));
                         if (processedEntries != null && processedEntries.Count() > 0)
@@ -139,6 +142,7 @@ namespace Edge.Services.AdMetrics.Validations
                   
                 }
 
+                
                 //could not find deliveries by user criterions
                 if (deliveriesToCheck.Length == 0)
                 {
@@ -149,6 +153,19 @@ namespace Edge.Services.AdMetrics.Validations
                         TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
                         TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
                         Message = "Cannot find deliveries in DB",
+                        ChannelID = deliveryToSearch.channel.ID,
+                        CheckType = this.Instance.Configuration.Name
+                    };
+                }
+                else if (!foundCommited)
+                {
+                    yield return new ValidationResult()
+                    {
+                        ResultType = ValidationResultType.Warning,
+                        AccountID = deliveryToSearch.account.ID,
+                        TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
+                        TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
+                        Message = "Cannot find Commited deliveries in DB",
                         ChannelID = deliveryToSearch.channel.ID,
                         CheckType = this.Instance.Configuration.Name
                     };

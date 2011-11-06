@@ -123,40 +123,6 @@ namespace Edge.Services.AdMetrics.Validations
 
         }
 
-        private string GetCubeName(int accountId)
-        {
-            string cubeName = string.Empty;
-            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
-            {
-                sqlCon.Open();
-
-                SqlCommand sqlCommand = new SqlCommand(
-                     @" SELECT SUBSTRING([AccountSettings], CHARINDEX(':', [AccountSettings])+1, CHARINDEX(';',[AccountSettings])-6 )
-                        FROM [Seperia].[dbo].[User_GUI_Account]
-                        where Account_ID = @Account_ID"
-                   );
-
-                SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
-                accountIdParam.Value = accountId;
-                sqlCommand.Parameters.Add(accountIdParam);
-
-                sqlCommand.Connection = sqlCon;
-
-                using (var _reader = sqlCommand.ExecuteReader())
-                {
-                    if (!_reader.IsClosed)
-                    {
-                        while (_reader.Read())
-                        {
-                            if (!_reader[0].Equals(DBNull.Value))
-                            {
-                                cubeName = Convert.ToString(_reader[0]);
-                            }
-                        }
-                    }
-                }
-            }
-            return cubeName;
-        }
+       
     }
 }
