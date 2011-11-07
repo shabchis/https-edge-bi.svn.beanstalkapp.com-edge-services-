@@ -144,7 +144,7 @@ namespace Edge.Services.Microsoft.AdCenter
                 //Added by Shay for validation 
                 foreach (KeyValuePair<string, Measure> measure in session.Measures)
                 {
-                    if (measure.Value.Options.HasFlag(MeasureOptions.IntegrityCheckRequired))
+                    if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
                     {
                         _totals.Add(measure.Key, 0);
                     }
@@ -228,7 +228,8 @@ namespace Edge.Services.Microsoft.AdCenter
 				Creatives = new List<Creative>()
 				{
 					new TextCreative(){ TextType = TextCreativeType.Title, Text = values[WS.AdPerformanceReportColumn.AdTitle.ToString()] },
-					new TextCreative(){ TextType = TextCreativeType.Body, Text = values[WS.AdPerformanceReportColumn.AdDescription.ToString()] }
+					new TextCreative(){ TextType = TextCreativeType.Body, Text = values[WS.AdPerformanceReportColumn.AdDescription.ToString()] },
+                    new TextCreative(){ TextType = TextCreativeType.DisplayUrl, Text = string.Empty }
 					
 				},
 				DestinationUrl=values[WS.AdPerformanceReportColumn.DestinationUrl.ToString()],
