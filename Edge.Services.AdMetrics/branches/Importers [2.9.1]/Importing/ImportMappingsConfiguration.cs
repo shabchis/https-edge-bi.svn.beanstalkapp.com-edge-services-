@@ -15,24 +15,18 @@ using System.Collections;
 namespace Edge.Services.AdMetrics
 {
 
-	public enum IndexType
-	{
-		Auto,
-		Segment,
-		Measure
-	}
-
 	public class MapSpec
 	{
 		public MapSpec Parent { get; set; }
 		public MemberInfo TargetMember { get; set; }
 		public Type TargetMemberType { get; private set; }
 		public object CollectionKey { get; set; }
-		public IndexType CollectionKeyType { get; set; }
+		public Func<object,object> CollectionKeyLookup { get; set; }
 		public Type NewObjectType { get; set; }
 		public List<MapSpec> SubSpecs { get; set; }
 		public List<MapSource> Sources { get; set; }
 		public object Value { get; set; }
+
 
 		public MapSpec(string propertyName)
 		{
@@ -54,7 +48,7 @@ namespace Edge.Services.AdMetrics
 		public void Apply(object targetObject, Func<string, string> readFunction)
 		{
 			var readSources = new Dictionary<string, string>();
-			this.Apply(targetObject, readFunction, sources);
+			this.Apply(targetObject, readFunction, readSources);
 		}
 
 		private void Apply(object targetObject, Func<string, string> readFunction, Dictionary<string, string> readSources)
@@ -125,34 +119,55 @@ namespace Edge.Services.AdMetrics
 					));
 				}
 
-				string value = readFunction(source.Field);
-				readSources[name] = value;
+				string readValue = readFunction(source.Field);
+				readSources[name] = readValue;
 
 				// Capture groups
 				if (source.Regex != null)
 				{
-					Match m = source.Regex.Match(value);
+					Match m = source.Regex.Match(readValue);
 					foreach (string groupName in source.Regex.GetGroupNames())
 					{
 						readSources[name + "." + groupName] = m.Groups[groupName].Value;
 					}
+
+					/*
+					MatchCollection matches = source.Regex.Matches(source);
+					foreach (Match match in matches)
+					{
+						if (!match.Success)
+							continue;
+
+						int fragmentCounter = 0;
+						for (int g = 0; g < match.Groups.Count; g++)
+						{
+							Group group = match.Groups[g];
+							string groupName = pattern.RawGroupNames[g];
+							if (!group.Success || !AutoSegmentPattern.IsValidFragmentName(groupName))
+								continue;
+
+							// Save the fragment
+							fragmentValues[pattern.Fragments[fragmentCounter++]] = group.Value;
+						}
+					}*/
 				}
 			}
 
 			// -------------------------------------------------------
 			// STEP 3: FORMAT VALUE
 
+			object mapValue;
+
 			// Get the required value, if necessary
-			object value = null;
 			if (Value != null)
 			{
-				value = Value;
+				mapValue = Value;
 			}
 			else if (NewObjectType != null)
 			{
 				// TODO-IF-EVER-THERE-IS-TIME-(YEAH-RIGHT): support constructor arguments
 
-				try { value = Activator.CreateInstance(this.NewObjectType); }
+				try { mapValue = Activator.CreateInstance(this.NewObjectType); }
 				catch(Exception ex)
 				{
 					throw new MappingException(string.Format(
@@ -170,11 +185,22 @@ namespace Edge.Services.AdMetrics
 			// Apply the value
 			if (currentCollection != null)
 			{
+				object key = this.CollectionKeyLookup != null ?
+					this.CollectionKeyLookup(this.CollectionKey) :
+					this.CollectionKey;
+
 				// Add the value to the collection
 				if (currentCollection is IDictionary)
 				{
+					if (key == null)
+						throw new MappingException(String.Format("Cannot use a null value as the key for the dictionary {0}.{1}.",
+								targetObject.GetType().Name,
+								this.TargetMember.Name,
+								this.CollectionKey
+							));
+
 					var dict = (IDictionary)currentCollection;
-					try { dict.Add(this.CollectionKey, value); }
+					try { dict.Add(key, mapValue); }
 					catch (Exception ex)
 					{
 						throw new MappingException(String.Format("Could not add the value to the dictionary {0}.{1}. See inner exception for more details.",
@@ -186,10 +212,10 @@ namespace Edge.Services.AdMetrics
 				else if (currentCollection is IList)
 				{
 					var list = (IList)currentCollection;
-					if (this.CollectionKey != null)
+					if (key != null)
 					{
-						if (this.CollectionKey is Int32)
-							list[(int)this.CollectionKey] = value;
+						if (key is Int32)
+							list[(int)key] = mapValue;
 						else
 							throw new MappingException(String.Format("Cannot use the non-integer \"{2}\" as the index for the list {0}.{1}.",
 								targetObject.GetType().Name,
@@ -198,7 +224,7 @@ namespace Edge.Services.AdMetrics
 							));
 					}
 					else
-						list.Add(value);
+						list.Add(mapValue);
 				}
 				else
 				{
