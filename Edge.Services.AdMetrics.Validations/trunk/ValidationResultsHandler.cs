@@ -13,15 +13,16 @@ namespace Edge.Services.AdMetrics.Validations
 {
 	class ValidationResultsHandler : Service
 	{
-		protected override Core.Services.ServiceOutcome DoPipelineWork()
+		protected sealed override ServiceOutcome DoWork()
 		{
 			foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))
 			{
-				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(this.Instance.InstanceID);
+				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(Convert.ToInt64(checkInstance));
 				if (results[ValidationResultType.Error.ToString()].Count > 0)
 				{
 					Alert(results[ValidationResultType.Error.ToString()]);
 				}
+				Alert(results[ValidationResultType.Information.ToString()]);
 			}
 
 			return ServiceOutcome.Success;
@@ -33,7 +34,7 @@ namespace Edge.Services.AdMetrics.Validations
 			msg.AppendLine("Errors have been found while running CheckSum Service on the following accounts:");
 			foreach (ValidationResult item in results)
 			{
-				msg.AppendLine(string.Format("Account: {0} | Channel: {1} | Message: {3}",item.AccountID,item.ChannelID,item.Message));
+				msg.AppendLine(string.Format("Account: {0} | Channel: {1} | Message: {2}",item.AccountID,item.ChannelID,item.Message));
 			}
 
 			Smtp.SetFromTo(this.Instance.Configuration.Options["AlertFrom"].ToString(), this.Instance.Configuration.Options["AlertTo"].ToString());
