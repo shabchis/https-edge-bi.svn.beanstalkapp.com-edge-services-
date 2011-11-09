@@ -62,7 +62,7 @@ namespace Edge.Services.Microsoft.AdCenter
             {
                 string accountNameColVal = campaignReportReader.Current[WS.CampaignPerformanceReportColumn.AccountName.ToString()];
 
-                if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())//end of file
+                if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim().Contains(endOfFileMicrosoftCorporation.Trim()))//end of file
                     break;
                 Campaign campaign = CreateCampaign(campaignReportReader.Current);
                 _campaignsCache.Add(campaign.Name, campaign);
