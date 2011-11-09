@@ -22,7 +22,8 @@ namespace Edge.Services.AdMetrics.Validations
 				{
 					Alert(results[ValidationResultType.Error.ToString()]);
 				}
-				Alert(results[ValidationResultType.Information.ToString()]);
+
+				//Alert(results[ValidationResultType.Information.ToString()]);
 			}
 
 			return ServiceOutcome.Success;
