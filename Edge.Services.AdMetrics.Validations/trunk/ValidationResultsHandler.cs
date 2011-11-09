@@ -30,15 +30,14 @@ namespace Edge.Services.AdMetrics.Validations
 		private void Alert(List<ValidationResult> results)
 		{
 			StringBuilder msg = new StringBuilder();
-			msg.AppendLine("");
 			foreach (ValidationResult item in results)
 			{
 				msg.AppendLine(string.Format("ID:{0}-Channel:{1}",item.AccountID,item.ChannelID));
 			}
 
 			Smtp.SetFromTo(this.Instance.Configuration.Options["AlertFrom"].ToString(), this.Instance.Configuration.Options["AlertTo"].ToString());
-			
-			if(!string.IsNullOrEmpty(this.Instance.Configuration.Options["AlertFrom"].ToString()))
+
+			if (!string.IsNullOrEmpty(this.Instance.Configuration.Options["CC"].ToString()))
 			{
 				Smtp.SetCc(this.Instance.Configuration.Options["CC"].ToString());
 			}
