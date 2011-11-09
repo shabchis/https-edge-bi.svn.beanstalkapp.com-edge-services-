@@ -22,8 +22,6 @@ namespace Edge.Services.AdMetrics.Validations
 				{
 					Alert(results[ValidationResultType.Error.ToString()]);
 				}
-
-				//Alert(results[ValidationResultType.Information.ToString()]);
 			}
 
 			return ServiceOutcome.Success;
@@ -32,14 +30,14 @@ namespace Edge.Services.AdMetrics.Validations
 		private void Alert(List<ValidationResult> results)
 		{
 			StringBuilder msg = new StringBuilder();
-			msg.AppendLine("Errors have been found while running CheckSum Service on the following accounts:");
+			msg.AppendLine("");
 			foreach (ValidationResult item in results)
 			{
-				msg.AppendLine(string.Format("Account: {0} | Channel: {1} | Message: {2}",item.AccountID,item.ChannelID,item.Message));
+				msg.AppendLine(string.Format("ID:{0}-Channel:{1}",item.AccountID,item.ChannelID));
 			}
 
 			Smtp.SetFromTo(this.Instance.Configuration.Options["AlertFrom"].ToString(), this.Instance.Configuration.Options["AlertTo"].ToString());
-			Smtp.Send("Validation Error !!!",msg.ToString(),highPriority: true);
+			Smtp.Send("Data Error:", msg.ToString(), highPriority: true);
 
 		}
 
