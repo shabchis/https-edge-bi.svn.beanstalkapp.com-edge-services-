@@ -37,6 +37,12 @@ namespace Edge.Services.AdMetrics.Validations
 			}
 
 			Smtp.SetFromTo(this.Instance.Configuration.Options["AlertFrom"].ToString(), this.Instance.Configuration.Options["AlertTo"].ToString());
+			
+			if(!string.IsNullOrEmpty(this.Instance.Configuration.Options["AlertFrom"].ToString()))
+			{
+				Smtp.SetCc(this.Instance.Configuration.Options["CC"].ToString());
+			}
+
 			Smtp.Send("Data Error:", msg.ToString(), highPriority: true);
 
 		}
