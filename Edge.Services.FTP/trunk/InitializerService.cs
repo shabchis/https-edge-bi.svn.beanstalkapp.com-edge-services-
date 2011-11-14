@@ -27,6 +27,13 @@ namespace Edge.Services.FTP
 				throw new Exception("Missing Configuration Param , AllowedExtensions");
 			string[] AllowedExtensions = this.Instance.Configuration.Options["AllowedExtensions"].Split('|');
 
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["UsePassive"]))
+				throw new Exception("Missing Configuration Param , UsePassive");
+			this.Delivery.Parameters.Add("UsePassive",bool.Parse(this.Instance.Configuration.Options["UsePassive"]));
+
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["UseBinary"]))
+				throw new Exception("Missing Configuration Param , UsePassive");
+			this.Delivery.Parameters.Add("UseBinary",bool.Parse(this.Instance.Configuration.Options["UseBinary"]));
 
 			//Get Permissions
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["UserID"]))
@@ -60,7 +67,8 @@ namespace Edge.Services.FTP
 			try
 			{
 				request = (FtpWebRequest)FtpWebRequest.Create(new Uri(FtpServer + "/"));
-				request.UseBinary = true;
+				request.UseBinary =(bool) this.Delivery.Parameters["UseBinary"];
+				request.UsePassive = (bool)this.Delivery.Parameters["UsePassive"];
 				request.Credentials = new NetworkCredential(UserId, Password);
 				request.Method = WebRequestMethods.Ftp.ListDirectory;
 
@@ -87,7 +95,10 @@ namespace Edge.Services.FTP
 				response.Close();
 
 				if (files.Count == 0)
+				{
 					Core.Utilities.Log.Write("No files in FTP directory for account id " + this.Instance.AccountID.ToString(), Core.Utilities.LogMessageType.Information);
+					
+				}
 				else
 					//creating Delivery File foreach file in ftp
 					foreach (string fileName in files)
@@ -106,7 +117,7 @@ namespace Edge.Services.FTP
 						}
 						);
 
-						this.Delivery.Files ["FTP_" + fileName].Parameters.Add("Size", size);
+						this.Delivery.Files["FTP_" + fileName].Parameters.Add("Size", size);
 						sizeResponse.Close();
 
 					}
@@ -117,6 +128,7 @@ namespace Edge.Services.FTP
 					string.Format("Cannot connect FTP server for account ID:{0}  Exception: {1}",
 					this.Instance.AccountID.ToString(), e.Message),
 					Core.Utilities.LogMessageType.Information);
+				return ServiceOutcome.Failure;
 			}
 
 

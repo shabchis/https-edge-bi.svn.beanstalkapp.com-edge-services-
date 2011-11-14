@@ -13,12 +13,14 @@ namespace Edge.Services.FTP
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			//CopyFiles to Watcher Directory
-
-			foreach (DeliveryFile file in this.Delivery.Files)
+			if (Delivery.Files != null && Delivery.Files.Count > 0)
 			{
-				string source = System.IO.Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), file.Location);
-				string target = System.IO.Path.Combine(this.Delivery.Parameters["DirectoryWatcherLocation"].ToString(), System.IO.Path.GetFileName(source));
-				System.IO.File.Copy(source, target, overwrite: true);
+				foreach (DeliveryFile file in this.Delivery.Files)
+				{
+					string source = System.IO.Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), file.Location);
+					string target = System.IO.Path.Combine(this.Delivery.Parameters["DirectoryWatcherLocation"].ToString(), System.IO.Path.GetFileName(source));
+					System.IO.File.Copy(source, target, overwrite: true);
+				}
 			}
 
 			return Core.Services.ServiceOutcome.Success;

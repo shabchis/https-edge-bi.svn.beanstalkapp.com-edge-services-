@@ -17,20 +17,23 @@ namespace Edge.Services.FTP
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			_batchDownloadOperation = new BatchDownloadOperation();
-			_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
-
-			_filesInProgress = this.Delivery.Files.Count;
-
-			foreach (DeliveryFile file in this.Delivery.Files)
+			if (Delivery.Files!=null && Delivery.Files.Count>0)
 			{
-				DownloadFile(file);
-			}
+				_batchDownloadOperation = new BatchDownloadOperation();
+				_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
 
-			_batchDownloadOperation.Start();
-			_batchDownloadOperation.Wait();
-			_batchDownloadOperation.EnsureSuccess();
-			this.Delivery.Save();
+				_filesInProgress = this.Delivery.Files.Count;
+
+				foreach (DeliveryFile file in this.Delivery.Files)
+				{
+					DownloadFile(file);
+				}
+
+				_batchDownloadOperation.Start();
+				_batchDownloadOperation.Wait();
+				_batchDownloadOperation.EnsureSuccess();
+				this.Delivery.Save(); 
+			}
 
 			
 
