@@ -20,7 +20,7 @@ namespace Edge.Services.AdMetrics.Validations
 				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(Convert.ToInt64(checkInstance));
 				if (results[ValidationResultType.Error.ToString()].Count > 0)
 				{
-					Alert(this.Instance.ParentInstance.Configuration.Name,results[ValidationResultType.Error.ToString()]);
+					Alert(this.Instance.ParentInstance.Configuration.Name.Trim(),results[ValidationResultType.Error.ToString()]);
 				}
 			}
 
