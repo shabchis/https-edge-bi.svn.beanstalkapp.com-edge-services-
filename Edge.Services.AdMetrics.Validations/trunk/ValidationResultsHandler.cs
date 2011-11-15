@@ -20,14 +20,14 @@ namespace Edge.Services.AdMetrics.Validations
 				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(Convert.ToInt64(checkInstance));
 				if (results[ValidationResultType.Error.ToString()].Count > 0)
 				{
-					Alert(results[ValidationResultType.Error.ToString()]);
+					Alert(this.Instance.ParentInstance.Configuration.Name,results[ValidationResultType.Error.ToString()]);
 				}
 			}
 
 			return ServiceOutcome.Success;
 		}
 
-		private void Alert(List<ValidationResult> results)
+		private void Alert(string topic, List<ValidationResult> results)
 		{
 			StringBuilder msg = new StringBuilder();
 			foreach (ValidationResult item in results)
@@ -42,7 +42,7 @@ namespace Edge.Services.AdMetrics.Validations
 				Smtp.SetCc(this.Instance.Configuration.Options["CC"].ToString());
 			}
 
-			Smtp.Send("Data Error:", msg.ToString(), highPriority: true);
+			Smtp.Send(topic+" Data Error:", msg.ToString(), highPriority: true);
 
 		}
 
