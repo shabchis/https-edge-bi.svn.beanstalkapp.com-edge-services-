@@ -148,7 +148,7 @@ namespace Edge.Services.AdMetrics.Validations
                 {
                     yield return new ValidationResult()
                     {
-                        ResultType = ValidationResultType.Warning,
+                        ResultType = ValidationResultType.Error,
                         AccountID = deliveryToSearch.account.ID,
                         TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
                         TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
@@ -161,7 +161,7 @@ namespace Edge.Services.AdMetrics.Validations
                 {
                     yield return new ValidationResult()
                     {
-                        ResultType = ValidationResultType.Warning,
+                        ResultType = ValidationResultType.Error,
                         AccountID = deliveryToSearch.account.ID,
                         TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
                         TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
