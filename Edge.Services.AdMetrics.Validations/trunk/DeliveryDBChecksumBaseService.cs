@@ -94,83 +94,108 @@ namespace Edge.Services.AdMetrics.Validations
             }
             #endregion
 
-            foreach (DeliverySearchItem deliveryToSearch in deliverySearchList)
-            {
-                //Getting criterion matched deliveries
-                Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
-                bool foundCommited = false;
+			if (this.Delivery == null || this.Delivery.DeliveryID.Equals(Guid.Empty))
+			{
+				foreach (DeliverySearchItem deliveryToSearch in deliverySearchList)
+				{
+					#region Foreach
 
-                progress += 0.3 *( 1 - progress);
-                this.ReportProgress(progress);
+					//Getting criterion matched deliveries
+					Delivery[] deliveriesToCheck = Delivery.GetByTargetPeriod(deliveryToSearch.targetPeriod.Start.ToDateTime(), deliveryToSearch.targetPeriod.End.ToDateTime(), deliveryToSearch.channel, deliveryToSearch.account);
+					bool foundCommited = false;
 
-                foreach (Delivery d in deliveriesToCheck)
-                {
-                    int rollbackIndex = -1;
-                    int commitIndex = -1;
+					progress += 0.3 * (1 - progress);
+					this.ReportProgress(progress);
 
-                    #region Searching and researching commited and rolledback deliveries
-                    for (int i = 0; i < d.History.Count; i++)
-                    {
-                        if (d.History[i].Operation == DeliveryOperation.Committed)
-                            commitIndex = i;
-                        else if (d.History[i].Operation == DeliveryOperation.RolledBack)
-                            rollbackIndex = i;
-                    }
+					foreach (Delivery d in deliveriesToCheck)
+					{
+						int rollbackIndex = -1;
+						int commitIndex = -1;
 
-                    if (commitIndex > rollbackIndex)
-                    {
-                        object totalso;
-                        foundCommited = true;
+						#region Searching and researching commited and rolledback deliveries
+						for (int i = 0; i < d.History.Count; i++)
+						{
+							if (d.History[i].Operation == DeliveryOperation.Committed)
+								commitIndex = i;
+							else if (d.History[i].Operation == DeliveryOperation.RolledBack)
+								rollbackIndex = i;
+						}
 
-                        DeliveryHistoryEntry commitEntry = null;
-                        IEnumerable<DeliveryHistoryEntry> processedEntries = d.History.Where(entry => (entry.Operation == DeliveryOperation.Imported));
-                        if (processedEntries != null && processedEntries.Count() > 0)
-                            commitEntry = (DeliveryHistoryEntry)processedEntries.Last();
-                        else
-                            continue;
+						if (commitIndex > rollbackIndex)
+						{
+							object totalso;
+							foundCommited = true;
 
-                        if (commitEntry.Parameters.TryGetValue(Edge.Services.AdMetrics.AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
-                        {
-                            Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
+							DeliveryHistoryEntry commitEntry = null;
+							IEnumerable<DeliveryHistoryEntry> processedEntries = d.History.Where(entry => (entry.Operation == DeliveryOperation.Imported));
+							if (processedEntries != null && processedEntries.Count() > 0)
+								commitEntry = (DeliveryHistoryEntry)processedEntries.Last();
+							else
+								continue;
 
-                            //Check Delivery data vs OLTP
-                            yield return (DeliveryDbCompare(d, totals, "OltpDB", comparisonTable));
-                        }
+							if (commitEntry.Parameters.TryGetValue(Edge.Services.AdMetrics.AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
+							{
+								Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
 
-                    }
-                    #endregion
-                  
-                }
+								//Check Delivery data vs OLTP
+								yield return (DeliveryDbCompare(d, totals, "OltpDB", comparisonTable));
+							}
 
-                
-                //could not find deliveries by user criterions
-                if (deliveriesToCheck.Length == 0)
-                {
-                    yield return new ValidationResult()
-                    {
-                        ResultType = ValidationResultType.Error,
-                        AccountID = deliveryToSearch.account.ID,
-                        TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
-                        TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
-                        Message = "Cannot find deliveries in DB",
-                        ChannelID = deliveryToSearch.channel.ID,
-                        CheckType = this.Instance.Configuration.Name
-                    };
-                }
-                else if (!foundCommited)
-                {
-                    yield return new ValidationResult()
-                    {
-                        ResultType = ValidationResultType.Error,
-                        AccountID = deliveryToSearch.account.ID,
-                        TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
-                        TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
-                        Message = "Cannot find Commited deliveries in DB",
-                        ChannelID = deliveryToSearch.channel.ID,
-                        CheckType = this.Instance.Configuration.Name
-                    };
-                }
-            }
+						}
+						#endregion
+
+					}
+
+
+					//could not find deliveries by user criterions
+					if (deliveriesToCheck.Length == 0)
+					{
+						yield return new ValidationResult()
+						{
+							ResultType = ValidationResultType.Error,
+							AccountID = deliveryToSearch.account.ID,
+							TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
+							TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
+							Message = "Cannot find deliveries in DB",
+							ChannelID = deliveryToSearch.channel.ID,
+							CheckType = this.Instance.Configuration.Name
+						};
+					}
+					else if (!foundCommited)
+					{
+						yield return new ValidationResult()
+						{
+							ResultType = ValidationResultType.Error,
+							AccountID = deliveryToSearch.account.ID,
+							TargetPeriodStart = deliveryToSearch.targetPeriod.Start.ToDateTime(),
+							TargetPeriodEnd = deliveryToSearch.targetPeriod.End.ToDateTime(),
+							Message = "Cannot find Commited deliveries in DB",
+							ChannelID = deliveryToSearch.channel.ID,
+							CheckType = this.Instance.Configuration.Name
+						};
+					}
+					#endregion
+				} // End of foreach
+
+			}
+			else
+			{
+				//Getting current Delivery totals
+				object totalso;
+				DeliveryHistoryEntry commitEntry = null;
+				IEnumerable<DeliveryHistoryEntry> processedEntries = this.Delivery.History.Where(entry => (entry.Operation == DeliveryOperation.Imported));
+				if (processedEntries != null && processedEntries.Count() > 0)
+				{
+					commitEntry = (DeliveryHistoryEntry)processedEntries.Last();
+					if (commitEntry.Parameters.TryGetValue(Edge.Services.AdMetrics.AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
+					{
+						Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
+						yield return (DeliveryDbCompare(this.Delivery, totals, "OltpDB", comparisonTable));
+					}
+				}
+			}
+				
+
         }
        
     }
