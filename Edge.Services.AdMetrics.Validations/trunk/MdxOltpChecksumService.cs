@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Data.Pipeline.Services;
+using System.Configuration;
 
 namespace Edge.Services.AdMetrics.Validations
 {
@@ -70,7 +71,8 @@ namespace Edge.Services.AdMetrics.Validations
             #endregion
 
             #region Getting measures from Analysis server (MDX)
-            AdomdConnection conn = new AdomdConnection("Data Source=localhost;Catalog=Seperia_UDM");
+			string admobConnection = ConfigurationManager.AppSettings["AdmobConnection"];
+			AdomdConnection conn = new AdomdConnection(admobConnection);
             try
             {
                 conn.Open();
@@ -88,7 +90,7 @@ namespace Edge.Services.AdMetrics.Validations
                                 [{1}]
                                 WHERE
                                 ([Channels Dim].[Channels].[Channel].&[{2}]
-                                ,[Time Dim].[DayCode].[DayCode].&[{3}]
+                                ,[Time Dim].[Time Dim].[Day].&[{3}]
                                 ) 
                                 ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 
