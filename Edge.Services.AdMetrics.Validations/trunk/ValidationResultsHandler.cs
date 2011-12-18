@@ -13,7 +13,7 @@ namespace Edge.Services.AdMetrics.Validations
 {
 	class ValidationResultsHandler : Service
 	{
-		protected sealed override ServiceOutcome DoWork()
+		protected sealed override ServiceOutcome DoWork() 
 		{
 			foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))
 			{

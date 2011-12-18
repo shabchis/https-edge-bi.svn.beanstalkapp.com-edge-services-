@@ -71,7 +71,8 @@ namespace Edge.Services.AdMetrics.Validations
             #endregion
 
             #region Getting measures from Analysis server (MDX)
-			string admobConnection = ConfigurationManager.AppSettings["AdmobConnection"];
+
+			string admobConnection = this.Instance.Configuration.Options["AdmobConnection"];
 			AdomdConnection conn = new AdomdConnection(admobConnection);
             try
             {
