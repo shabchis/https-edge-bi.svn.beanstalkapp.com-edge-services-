@@ -396,7 +396,7 @@ namespace Edge.Services.AdMetrics
 			// Connect to database
 			_sqlConnection = NewDeliveryDbConnection();
 			_sqlConnection.Open();
-
+			
 			_bulkAd = new BulkObjects(this._tablePrefix, typeof(Tables.Ad), _sqlConnection);
 			_bulkAdSegment = new BulkObjects(this._tablePrefix, typeof(Tables.AdSegment), _sqlConnection);
 			_bulkAdTarget = new BulkObjects(this._tablePrefix, typeof(Tables.AdTarget), _sqlConnection);
@@ -460,6 +460,7 @@ namespace Edge.Services.AdMetrics
 			createTableCmdText.Append(_bulkMetricsTargetMatch.GetCreateTableSql());
 			createTableCmdText.Append(_bulkMetricsTargetMatchSegment.GetCreateTableSql());
 			SqlCommand cmd = new SqlCommand(createTableCmdText.ToString(), _sqlConnection);
+			cmd.CommandTimeout = 80; //DEFAULT IS 30 AND SOMTIME NOT ENOUGH WHEN RUNING CUBE
 			cmd.ExecuteNonQuery();
 
 		}
