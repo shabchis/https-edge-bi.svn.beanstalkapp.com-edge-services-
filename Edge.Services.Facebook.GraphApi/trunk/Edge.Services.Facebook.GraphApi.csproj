@@ -68,6 +68,7 @@
   <ItemGroup>
     <None Include="Edge.Services.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </None>
     <None Include="Properties\AssemblyInfo.cs.template" />
   </ItemGroup>

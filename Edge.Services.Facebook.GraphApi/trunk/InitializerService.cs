@@ -80,8 +80,8 @@ namespace Edge.Services.Facebook.GraphApi
 			#region adgroupstats
 
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
-			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToTimestamp(TargetPeriod.Start.ToDateTime()).ToString());
-			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToTimestamp(TargetPeriod.End.ToDateTime()).ToString());
+			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TargetPeriod.Start.ToDateTime()));
+			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TargetPeriod.End.ToDateTime()));
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
@@ -185,6 +185,20 @@ namespace Edge.Services.Facebook.GraphApi
 				value = value.AddMilliseconds(-value.Millisecond);
 			TimeSpan diff = value - origin;
 			return Math.Floor(diff.TotalSeconds);
+		}
+		private string ConvertToFacebookDateTime(DateTime value)
+		{
+			int? timeZone;
+			if (Instance.Configuration.Options.ContainsKey("TimeZone"))
+			{
+				
+			}
+
+
+			return value.ToString("yyyy-MM-ddTHH:mm:ss");
+				
+
+			
 		}
 
 
