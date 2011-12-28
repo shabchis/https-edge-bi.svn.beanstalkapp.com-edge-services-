@@ -5,7 +5,7 @@ using Edge.Data.Objects;
 namespace Edge.Services.AdMetrics
 {
 
-
+	/*
 	class example
 	{
 		static void Main()
@@ -64,5 +64,5 @@ namespace Edge.Services.AdMetrics
 
 		}
 	}
-
+	*/
 }

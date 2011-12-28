@@ -7,40 +7,64 @@ using System.Reflection;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using System.Configuration;
-using Edge.Services.AdMetrics.Configuration;
 using Edge.Core.Configuration;
 using System.Xml;
 using System.Collections;
-
-namespace Edge.Services.AdMetrics
+using Edge.Core.Utilities;
+using System.ComponentModel;
+/*
+namespace Edge.Data.Pipeline.ImportMapping
 {
-
-	public class MapSpec
+	/// <summary>
+	/// 
+	/// </summary>
+	public class ReadSource
 	{
-		public MapSpec Parent { get; set; }
+		string _name;
+		string _field;
+
+		public string Name
+		{
+			get { return _name; }
+			set
+			{
+				if (!Regex.IsMatch(value, "[A-Za-z_][A-Za-z0-9_]*"))
+					throw new MappingException(String.Format("The read source name '{0}' is not valid because it includes illegal characters.", value));
+				
+				_name = value;
+			}
+		}
+
+		public string Field
+		{
+			get { return _field; }
+			set { _field = value; }
+		}
+		public Regex Regex;
+	}
+
+
+	/// <summary>
+	/// 
+	/// </summary>
+	public class Assignment
+	{
+		public Assignment Parent { get; set; }
 		public MemberInfo TargetMember { get; set; }
 		public Type TargetMemberType { get; private set; }
 		public object CollectionKey { get; set; }
-		public Func<object,object> CollectionKeyLookup { get; set; }
 		public Type NewObjectType { get; set; }
-		public List<MapSpec> SubSpecs { get; set; }
-		public List<MapSource> Sources { get; set; }
-		public object Value { get; set; }
+		public List<Assignment> SubAssignments { get; set; }
+		public List<ReadSource> ReadSources { get; set; }
+		public ValueExpression Value { get; set; }
 
-
-		public MapSpec(string propertyName)
+		public Assignment(string propertyName)
 		{
-			SubSpecs = new List<MapSpec>();
-			Sources = new List<MapSource>();
+			SubAssignments = new List<Assignment>();
+			ReadSources = new List<ReadSource>();
 		}
 
-		public static Dictionary<Type, MapSpec[]> LoadFromConfiguration(MappingConfiguration config)
-		{
-			var mappings = new Dictionary<Type, MapSpec[]>();
-			throw new NotImplementedException();
-		}
-
-		public MapSource GetSource(string name, bool useParentSources = true)
+		public ReadSource GetSource(string name, bool useParentSources = true)
 		{
 			throw new NotImplementedException();
 		}
@@ -87,7 +111,7 @@ namespace Edge.Services.AdMetrics
 
 			// -------------------------------------------------------
 			// STEP 2: READ FROM SOURCE
-			foreach (MapSource source in this.Sources)
+			foreach (ReadSource source in this.ReadSources)
 			{
 				if (!newSources)
 				{
@@ -113,8 +137,8 @@ namespace Edge.Services.AdMetrics
 				if (!Regex.IsMatch(name, "[A-Za-z_][A-Za-z0-9_]*"))
 				{
 					throw new MappingException(String.Format(usingFieldName ?
-						"The field name '{0}' cannot be used as the mapping source name because it includes illegal characters. Please specify a separate 'Name' attribute.":
-						"The mapping source name '{0}' is not valid because it includes illegal characters.",
+						"The field name '{0}' cannot be used as the read source name because it includes illegal characters. Please specify a separate 'Name' attribute.":
+						"The read source name '{0}' is not valid because it includes illegal characters.",
 						name
 					));
 				}
@@ -131,25 +155,25 @@ namespace Edge.Services.AdMetrics
 						readSources[name + "." + groupName] = m.Groups[groupName].Value;
 					}
 
-					/*
-					MatchCollection matches = source.Regex.Matches(source);
-					foreach (Match match in matches)
-					{
-						if (!match.Success)
-							continue;
+					
+					//MatchCollection matches = source.Regex.Matches(source);
+					//foreach (Match match in matches)
+					//{
+					//    if (!match.Success)
+					//        continue;
 
-						int fragmentCounter = 0;
-						for (int g = 0; g < match.Groups.Count; g++)
-						{
-							Group group = match.Groups[g];
-							string groupName = pattern.RawGroupNames[g];
-							if (!group.Success || !AutoSegmentPattern.IsValidFragmentName(groupName))
-								continue;
+					//    int fragmentCounter = 0;
+					//    for (int g = 0; g < match.Groups.Count; g++)
+					//    {
+					//        Group group = match.Groups[g];
+					//        string groupName = pattern.RawGroupNames[g];
+					//        if (!group.Success || !AutoSegmentPattern.IsValidFragmentName(groupName))
+					//            continue;
 
-							// Save the fragment
-							fragmentValues[pattern.Fragments[fragmentCounter++]] = group.Value;
-						}
-					}*/
+					//        // Save the fragment
+					//        fragmentValues[pattern.Fragments[fragmentCounter++]] = group.Value;
+					//    }
+					//}
 				}
 			}
 
@@ -280,7 +304,7 @@ namespace Edge.Services.AdMetrics
 			// Activate child mappings on the value
 			if (value != null)
 			{
-				foreach (MapSpec spec in this.SubSpecs)
+				foreach (Assignment spec in this.SubAssignments)
 				{
 					// TODO: wrap this somehow for exception handling
 					spec.Apply(value, readFunction, readSources);
@@ -289,19 +313,85 @@ namespace Edge.Services.AdMetrics
 		}
 	}
 
-	public class MapSource
+
+	public class ValueExpression
 	{
-		public string Name;
-		public string Field;
-		public Regex Regex;
+		public List<ValueExpressionComponent> Components;
+
+		public T Ouput<T>()
+		{
+			return (T) this.Output(typeof(T));
+		}
+
+		public object Output(Type ouputType)
+		{
+			bool isstring = ouputType == typeof(string);
+			TypeConverter converter = null;
+			
+			if (!isstring)
+			{
+				converter = TypeDescriptor.GetConverter(ouputType);
+				if (converter == null)
+					throw new MappingException(String.Format("Cannot convert string to {0}.", ouputType.FullName));
+			}
+
+			var output = new StringBuilder();	
+
+			foreach (ValueExpressionComponent component in this.Components)
+			{
+				output.Append(component.Ouput());
+			}
+
+			string value = output.ToString();
+			object returnValue;
+
+			if (isstring)
+			{
+				// avoid compiler errors
+				object o = output.ToString();
+				returnValue = o;
+			}
+			else
+			{
+				if (!converter.IsValid(value))
+					throw new MappingException(String.Format("'{0}' is not a valid value for {1}", value, ouputType.FullName));
+				else
+					returnValue = converter.ConvertFrom(value);
+			}
+
+			return returnValue;
+		}
 	}
 
-	public enum MapSourceType
+	public abstract class ValueExpressionComponent
 	{
-		Field,
-		Regex,
-		Method
+		public abstract string Ouput();
 	}
+
+	public class FunctionInvokeComponent:ValueExpressionComponent
+	{
+		public string FunctionName;
+		public List<ValueExpression> Parameters;
+	}
+
+	public class EvalComponent
+	{
+		public Evaluator Eval;
+		public List<ValueExpression> Variables;
+	}
+
+	public class ReadSourceOuputComponent
+	{
+		public ReadSource ReadSource;
+	}
+
+	public class StringComponent
+	{
+		public string String;
+	}
+
+
+
 
 	[Serializable]
 	public class MappingException : Exception
@@ -314,120 +404,57 @@ namespace Edge.Services.AdMetrics
 		  System.Runtime.Serialization.StreamingContext context)
 			: base(info, context) { }
 	}
+
+	public class MappingConfiguration
+	{
+		public List<MappedObject> Objects = new List<MappedObject>();
+
+		public static MappingConfiguration Load(XmlElement root)
+		{
+			var output = new MappingConfiguration();
+
+			foreach (XmlElement objectXml in root.SelectNodes("Object"))
+			{
+				var objectMapping = new MappedObject();
+				string typeName = objectXml.HasAttribute("Type") ? objectXml.GetAttribute("Type") : null;
+				if (typeName == null)
+					throw new MappingException("<Object>: 'Type' attribute is missing.");
+				objectMapping.TargetType = Type.GetType(typeName, false);
+				if (objectMapping.TargetType == null)
+					throw new MappingException(String.Format("<Object>: Type '{0}' could not be found.", typeName));
+
+				foreach(XmlNode node in objectXml.ChildNodes)
+				{
+					if (!(node is XmlElement))
+						continue;
+
+					var element = (XmlElement) node;
+					if (element.Name == "Read")
+					{
+						var read = new ReadSource();
+						if (!element.HasAttribute("Field"))
+							throw new MappingException("<Read>: Missing 'Field' attribute.");
+						read.Field = element.GetAttribute("Field");
+
+						if (element.HasAttribute("Name"))
+							read.Name = element.GetAttribute("Name");
+					}
+					else if (node.Name == "Map")
+					{
+					}
+					else
+					{
+						throw new MappingException(String.Format("<Object>: Element {0} is invalid.", node.Name));
+					}
+				}
+			}
+		}
+	}
+
+	public class MappedObject
+	{
+		public Type TargetType;
+		//public List<MapSpec>
+	}
 }
-
-namespace Edge.Services.AdMetrics.Configuration
-{
-	public class MappingConfiguration: ConfigurationElementCollectionBase<TypeElement>
-	{
-		protected override string ElementName { get { return "Type"; }}
-		protected override ConfigurationElement  CreateNewElement() { return new TypeElement(); }
-		public override ConfigurationElementCollectionType  CollectionType { get { return ConfigurationElementCollectionType.BasicMap; }}
-		protected override object GetElementKey(ConfigurationElement element) { return (element as TypeElement).Name; }
-	}
-
-	public class TypeElement: ConfigurationElement
-	{
-		[ConfigurationProperty("Name")]
-		public string Name
-		{
-			get { return base["Name"] as string; }
-		}
-
-		[ConfigurationProperty("", IsDefaultCollection = true)]
-		public MapElementCollection ChildMappings
-		{
-			get { return (MapElementCollection)base[""]; }
-		}
-	}
-
-
-	public class MapElementCollection : ConfigurationElementCollectionBase<ReadElement>
-	{
-		public override ConfigurationElementCollectionType CollectionType
-		{
-			get { return ConfigurationElementCollectionType.BasicMap; }
-		}
-
-		protected override ConfigurationElement CreateNewElement()
-		{
-			throw new NotImplementedException();
-		}
-
-		protected override bool OnDeserializeUnrecognizedElement(string elementName, System.Xml.XmlReader reader)
-		{
-			ReadElement elem;
-			if (elementName == "Read")
-				elem = new ReadElement();
-			else if (elementName == "Map")
-				elem = new MapElement();
-			else
-				return false;
-
-			((ISerializableConfigurationElement)elem).Deserialize(reader);
-			return true;
-		}
-
-		protected override object GetElementKey(ConfigurationElement element)
-		{
-			var read = (ReadElement) element;
-			if (element is MapElement)
-				return ((MapElement)element).To;
-			else
-				return read.Name ?? read.Field;
-		}
-	}
-
-	public class ReadElement : ConfigurationElement, ISerializableConfigurationElement
-	{
-		[ConfigurationProperty("Name")]
-		public string Name
-		{
-			get { return base["Name"] as string; }
-		}
-
-		[ConfigurationProperty("Field")]
-		public string Field
-		{
-			get { return base["Field"] as string; }
-		}
-
-		[ConfigurationProperty("Regex")]
-		public string Regex
-		{
-			get { return base["Regex"] as string; }
-		}
-
-		void ISerializableConfigurationElement.Deserialize(XmlReader reader)
-		{
-			this.DeserializeElement(reader, false);
-		}
-
-		void ISerializableConfigurationElement.Serialize(XmlWriter writer, string elementName)
-		{
-			this.SerializeToXmlElement(writer, elementName);
-		}
-	}
-
-	public class MapElement : ReadElement
-	{
-		[ConfigurationProperty("To")]
-		public string To
-		{
-			get { return base["To"] as string; }
-		}
-
-		[ConfigurationProperty("Value")]
-		public string Value
-		{
-			get { return base["Value"] as string; }
-		}
-
-		[ConfigurationProperty("", IsDefaultCollection=true)]
-		public MapElementCollection ChildMappings
-		{
-			get { return (MapElementCollection)base[""]; }
-		}
-	}
-
-}
+*/
