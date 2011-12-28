@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Edge.Data.Pipeline.Services;
 using Edge.Core.Data;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
+using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.AdMetrics
 {
+	/*
 	public class ProcessorService: PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
@@ -74,5 +75,7 @@ namespace Edge.Services.AdMetrics
 		{
 			throw new NotImplementedException();
 		}
+	
 	}
+	*/
 }

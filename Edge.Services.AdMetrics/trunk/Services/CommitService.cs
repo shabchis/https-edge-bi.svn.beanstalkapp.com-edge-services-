@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
+using Edge.Data.Pipeline.Common.Importing;
 using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.AdMetrics
@@ -12,13 +13,13 @@ namespace Edge.Services.AdMetrics
 	{ 
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			string validationThreshold = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.CommitValidationTheshold];
+			string validationThreshold = Instance.Configuration.Options[Consts.AppSettings.CommitValidationTheshold];
 
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new ImportManagerOptions()
 			{
-				SqlPrepareCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlPrepareCommand],
-				SqlCommitCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlCommitCommand],
-				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand],
+				SqlPrepareCommand = Instance.Configuration.Options[Consts.AppSettings.SqlPrepareCommand],
+				SqlCommitCommand = Instance.Configuration.Options[Consts.AppSettings.SqlCommitCommand],
+				SqlRollbackCommand = Instance.Configuration.Options[Consts.AppSettings.SqlRollbackCommand],
 				CommitValidationThreshold = validationThreshold == null ? 0.01 : double.Parse(validationThreshold)
 			});
 			ReportProgress(0.1);
