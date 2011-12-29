@@ -31,9 +31,9 @@ namespace Edge.Services.Facebook.AdsApi
 				this.TargetPeriod.ToAbsolute()));
 
 			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new AdMetricsImportManager.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[AdMetricsImportManager.Consts.AppSettings.SqlRollbackCommand]
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
 			});
 
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
