@@ -144,7 +144,7 @@ namespace Edge.Services.AdMetrics.Validations
 							else
 								continue;
 
-							if (commitEntry.Parameters.TryGetValue(Edge.Services.AdMetrics.AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
+							if (commitEntry.Parameters.TryGetValue(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
 							{
 								Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
 
@@ -198,7 +198,7 @@ namespace Edge.Services.AdMetrics.Validations
 				if (processedEntries != null && processedEntries.Count() > 0)
 				{
 					commitEntry = (DeliveryHistoryEntry)processedEntries.Last();
-					if (commitEntry.Parameters.TryGetValue(Edge.Services.AdMetrics.AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
+					if (commitEntry.Parameters.TryGetValue(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, out totalso))
 					{
 						Dictionary<string, double> totals = (Dictionary<string, double>)totalso;
 						yield return (DeliveryDbCompare(this.Delivery, totals, "OltpDB", comparisonTable));
