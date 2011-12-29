@@ -34,7 +34,8 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.AdWords">
+    <Reference Include="Google.AdWords, Version=12.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\(third party)\GoogleAdwords\Google.AdWords.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
