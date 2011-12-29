@@ -171,7 +171,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
                     }
 
-                    session.HistoryEntryParameters.Add(AdMetricsImportManager.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
                     session.EndImport();
 
                     ReportProgress(1);
