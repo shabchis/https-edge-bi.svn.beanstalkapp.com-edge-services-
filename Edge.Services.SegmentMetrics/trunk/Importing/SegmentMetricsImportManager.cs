@@ -39,7 +39,10 @@ namespace Edge.Services.SegmentMetrics
 
 			public static class Metrics
 			{
+		
 				public static ColumnDef Usid = new ColumnDef("Usid", size: 100, nullable: false);
+				public static ColumnDef DownloadedDate = new ColumnDef("DownloadedDate", type: SqlDbType.DateTime, nullable: false, defaultValue: "GetDate()");
+				public static ColumnDef AccountID = new ColumnDef("Account_ID", type: SqlDbType.BigInt);
 				public static ColumnDef TargetPeriodStart = new ColumnDef("TargetPeriodStart", type: SqlDbType.DateTime, nullable: false);
 				public static ColumnDef TargetPeriodEnd = new ColumnDef("TargetPeriodEnd", type: SqlDbType.DateTime, nullable: false);
 
