@@ -6,14 +6,17 @@ using Edge.Core.Data;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.ImportMapping;
 
 namespace Edge.Services.AdMetrics
 {
-	/*
-	public class ProcessorService: PipelineService
+	public class XmlProcessorService: PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{ 
+			// TODO: setup/defaults/configuration/etc.
+			// ------------------------------------------
+			
 			string fileName;
 			if (!this.Instance.Configuration.Options.TryGetValue(Const.ConfigurationOptions.DeliveryFileName, out fileName))
 				throw new ConfigurationException(String.Format("{0} is missing in the service configuration options.", Const.ConfigurationOptions.DeliveryFileName));
@@ -31,39 +34,47 @@ namespace Edge.Services.AdMetrics
 			}
 			else
 				compression = FileCompression.None;
+			
+
+			string xpath = null; // TODO: 
+
+
+			MappingConfiguration mappingConfig = MappingConfiguration.Load("conduit-mappings.xml");
+			MappedObject adMappings = mappingConfig.Objects[typeof(Ad)];
+			MappedObject metricsMappings = mappingConfig.Objects[typeof(AdMetricsUnit)];
+
+			// ------------------------------------------
+
+			
 
 			using (var stream = file.OpenContents(compression: compression))
 			{
-				using (ReaderBase<dynamic> reader = this.CreateReader())
+				using (XmlDynamicReader reader = new XmlDynamicReader(stream, xpath))
 				{
+					Func<string, string> readFunction = requestedField => 
+					{
+						if (requestedField.StartsWith("@"))
+							return reader.Current.Attributes[requestedField];
+						else
+							return reader.Current[requestedField];
+					};
+
 					using (AdMetricsImportManager session = new AdMetricsImportManager(this.Instance.InstanceID))
 					{
 						session.OnAdUsidRequired = null; // TODO: create Ad USID
 
 						while (reader.Read())
 						{
-							var ad = new Ad()
-							{
-								Campaign = new Campaign()
-								{
-									Account = new Account()
-									{
-										// TODO: sniff account ID
-									},
-									Channel = new Channel()
-									{
-										// TODO: channel
-										
-									},
-									Name = null,
-									OriginalID = null,
-									Status = ObjectStatus.Unknown,
-								},
-								OriginalID = null,
-								DestinationUrl = null,
-								Name = null,
-							};
+							var ad = new Ad();
+							adMappings.Apply(ad, readFunction);
+							session.ImportAd(ad);
+
+							var metrics = new AdMetricsUnit();
+							metricsMappings.Apply(metrics, readFunction);
+							session.ImportMetrics(metrics);
 						}
+
+						session.EndImport();
 					}
 				}
 			}
@@ -71,11 +82,5 @@ namespace Edge.Services.AdMetrics
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		private ReaderBase<dynamic> CreateReader()
-		{
-			throw new NotImplementedException();
-		}
-	
 	}
-	*/
 }
