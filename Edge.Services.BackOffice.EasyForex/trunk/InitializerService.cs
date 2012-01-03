@@ -59,6 +59,7 @@ namespace Edge.Services.BackOffice.EasyForex
                 Name = "EasyForexBackOffice",
                 
             };
+
 			_file.SourceUrl = Instance.Configuration.Options["SourceUrl"];// "https://classic.easy-forex.com/BackOffice/API/Marketing.asmx";
             //_file.Parameters.Add("SOAPAction", "http://www.easy-forex.com/GetGatewayStatistics");
             _file.Parameters.Add("Content-Type", "text/xml; charset=utf-8");
