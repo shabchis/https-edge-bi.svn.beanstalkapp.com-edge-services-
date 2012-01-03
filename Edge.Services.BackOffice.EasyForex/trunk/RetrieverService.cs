@@ -16,10 +16,6 @@ namespace Edge.Services.BackOffice.EasyForex
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
-
-
-			/* SoapRetriever */
-
 			// Create a batch and use its progress as the service's progress
 			BatchDownloadOperation batch = new BatchDownloadOperation();
 			batch.Progressed += new EventHandler((sender, e) =>
@@ -39,7 +35,6 @@ namespace Edge.Services.BackOffice.EasyForex
 				byte[] bytes = Encoding.UTF8.GetBytes(file.Parameters["Body"].ToString());
 				request.ContentLength = bytes.Length;
 
-			//	request.Headers = new WebHeaderCollection();
 				using (var stream = request.GetRequestStream())
 				{
 					stream.Write(bytes,0,bytes.Length);
@@ -48,12 +43,6 @@ namespace Edge.Services.BackOffice.EasyForex
 				//Headers
 				request.Headers.Add("SOAPAction", file.Parameters["SoapAction"].ToString());
 
-				//foreach (var per in file.Parameters)
-				//{
-				//    if (per.Key.StartsWith("Header"))
-				//        request.Headers.Add(per.Value.ToString());
-				//}
-                
                 this.Delivery.Save();
 				DeliveryFileDownloadOperation download = file.Download(request);
 				download.Ended += new EventHandler(download_Ended);
