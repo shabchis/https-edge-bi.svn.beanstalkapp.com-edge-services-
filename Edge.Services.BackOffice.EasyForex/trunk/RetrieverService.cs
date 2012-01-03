@@ -41,7 +41,7 @@ namespace Edge.Services.BackOffice.EasyForex
 				}
 
 				//Headers
-				request.Headers.Add("SOAPAction", file.Parameters["SoapAction"].ToString());
+				request.Headers.Add("SOAPAction", file.Parameters["SOAPAction"].ToString());
 
                 this.Delivery.Save();
 				DeliveryFileDownloadOperation download = file.Download(request);

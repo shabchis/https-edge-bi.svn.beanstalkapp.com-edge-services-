@@ -21,6 +21,7 @@ namespace Edge.Services.BackOffice.EasyForex
 			// This is for finding conflicting services
 			this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]", this.Instance.AccountID, this.TargetPeriod.ToAbsolute()));
 
+            /*
 			// Create an import manager that will handle rollback, if necessary
 			SegmentMetricsImportManager importManager = new SegmentMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
 			{
@@ -31,7 +32,7 @@ namespace Edge.Services.BackOffice.EasyForex
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			// ...............................
-
+            */
 			// Now that we have a new delivery, start adding values
 			this.Delivery.Account = new Data.Objects.Account()
 			{
@@ -133,22 +134,22 @@ namespace Edge.Services.BackOffice.EasyForex
             strSoapEnvelope += "<startGid>{START_GID}</startGid>";
             strSoapEnvelope += "<finishGid>{END_GID}</finishGid>";
             //strSoapEnvelope += string.Format("<fromDateTime>{0}</fromDateTime>", _requiredDay.ToString("yyyy-MM-ddTHH:mm:ss"));
-            strSoapEnvelope += string.Format("<fromDateTime>{FROM_DATE}</fromDateTime>");
+            strSoapEnvelope += "<fromDateTime>{FROM_DATE}</fromDateTime>";
             //strSoapEnvelope += string.Format("<toDateTime>{0}</toDateTime>", _requiredDay.AddDays(1).AddTicks(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffffff"));
-            strSoapEnvelope += string.Format("<toDateTime>{TO_DATE}</toDateTime>");
+            strSoapEnvelope += "<toDateTime>{TO_DATE}</toDateTime>";
             //strSoapEnvelope += " </GetGatewayStatistics>";
             strSoapEnvelope += " </{METHOD}>";
             strSoapEnvelope += " </soap:Body>";
             strSoapEnvelope += " </soap:Envelope>";
 	        #endregion
             /*-----------------------------------------------------------------*/
-            strSoapEnvelope.Replace("{USER}",user);
-            strSoapEnvelope.Replace("{PASS}",pass);
-            strSoapEnvelope.Replace("{METHOD}",methodName);
-            strSoapEnvelope.Replace("{START_GID}",startGid);
-            strSoapEnvelope.Replace("{END_GID}",endGid);
-            strSoapEnvelope.Replace("{FROM_DATE}",endGid);
-            strSoapEnvelope.Replace("{TO_DATE}", endGid);
+            strSoapEnvelope = strSoapEnvelope.Replace("{USER}", user);
+            strSoapEnvelope = strSoapEnvelope.Replace("{PASS}", pass);
+            strSoapEnvelope = strSoapEnvelope.Replace("{METHOD}", methodName);
+            strSoapEnvelope = strSoapEnvelope.Replace("{START_GID}", startGid);
+            strSoapEnvelope = strSoapEnvelope.Replace("{END_GID}", endGid);
+            strSoapEnvelope = strSoapEnvelope.Replace("{FROM_DATE}", fromDate);
+            strSoapEnvelope = strSoapEnvelope.Replace("{TO_DATE}", toDate);
 
             return strSoapEnvelope;
         }
