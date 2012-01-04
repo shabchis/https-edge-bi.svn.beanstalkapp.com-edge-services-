@@ -15,26 +15,12 @@ namespace Edge.Services.BackOffice.EasyForex
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			// ------------------------------------------
-			// ------------------------------------------
-			// ------------------------------------------
-			// THIS IS JUST FOR SETTING UP EXAMPLE
-
-			//INIT 
-			this.Delivery = this.NewDelivery();
-			this.Delivery.Account = new Account() { ID = this.Instance.AccountID };
-			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Channel = new Channel() { ID = -1 };
-			this.Delivery.TargetLocationDirectory = @"D:\";
-			this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",this.Instance.AccountID,this.TargetPeriod.ToAbsolute()));
-
-			this.Delivery.Save();
 
 			StreamReader streamReader = new StreamReader(@"D:\test\ 007 20111229@0440 (1026240) .xml", Encoding.UTF8);
 			// ------------------------------------------
 			// ------------------------------------------
 			// ------------------------------------------
-
+            
 			var boReader = new XmlDynamicReader(streamReader.BaseStream, "DocumentElement/CampaignStatisticsForEasyNetSeperia");
 
 			using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
