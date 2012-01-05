@@ -20,6 +20,7 @@ namespace Edge.Services.SegmentMetrics
 		private SqlConnection _sqlConnection;
 		public ImportManagerOptions Options { get; private set; }
 		public Dictionary<string, Measure> Measures { get; private set; }
+		public Dictionary<Segment, SegmentValue> Segments { get; private set; }
 
 		public SegmentMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null)
 			: base(serviceInstanceID)
@@ -41,7 +42,7 @@ namespace Edge.Services.SegmentMetrics
 			{
 		
 				public static ColumnDef Usid = new ColumnDef("Usid", size: 100, nullable: false);
-				public static ColumnDef DownloadedDate = new ColumnDef("DownloadedDate", type: SqlDbType.DateTime, nullable: false, defaultValue: "GetDate()");
+				public static ColumnDef DownloadedDate = new ColumnDef("DownloadedDate", type: SqlDbType.DateTime, nullable: true, defaultValue: "GetDate()");
 				public static ColumnDef AccountID = new ColumnDef("Account_ID", type: SqlDbType.BigInt);
 				public static ColumnDef TargetPeriodStart = new ColumnDef("TargetPeriodStart", type: SqlDbType.DateTime, nullable: false);
 				public static ColumnDef TargetPeriodEnd = new ColumnDef("TargetPeriodEnd", type: SqlDbType.DateTime, nullable: false);
@@ -144,7 +145,8 @@ namespace Edge.Services.SegmentMetrics
 			{
 				{Tables.Metrics.Usid, boUsid},
 				{Tables.Metrics.TargetPeriodStart, metrics.PeriodStart},
-				{Tables.Metrics.TargetPeriodEnd, metrics.PeriodEnd},
+				{Tables.Metrics.TargetPeriodEnd, metrics.PeriodEnd}
+				
 			};
 			
 			foreach (KeyValuePair<Measure, double> measure in metrics.MeasureValues)
