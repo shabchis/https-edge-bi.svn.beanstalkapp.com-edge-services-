@@ -47,7 +47,6 @@
   <ItemGroup>
     <Compile Include="Consts.cs" />
     <Compile Include="BoInitializerService.cs" />
-    <Compile Include="BoProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SegmentMetricsImportManager.cs" />
   </ItemGroup>
@@ -72,6 +71,7 @@
   <ItemGroup>
     <None Include="Edge.Services.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
