@@ -51,7 +51,7 @@ namespace Edge.Services.SegmentMetrics
 			public static class Segment
 			{
 				public static ColumnDef Usid = new ColumnDef("Usid", size: 100, nullable: false);
-				public static ColumnDef AccountID = new ColumnDef("Account_ID", type: SqlDbType.BigInt);				
+				public static ColumnDef AccountID = new ColumnDef("AccountID", type: SqlDbType.BigInt);				
 				public static ColumnDef SegmentID = new ColumnDef("SegmentID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef ValueOriginalID = new ColumnDef("ValueOriginalID", size: 4000);
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);

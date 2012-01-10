@@ -52,6 +52,7 @@
     <Compile Include="Importing\SegmentMetricsImportManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\BoProcessorService.cs" />
+    <Compile Include="Services\CommitService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\Edge.Core\Edge.Core.csproj">
