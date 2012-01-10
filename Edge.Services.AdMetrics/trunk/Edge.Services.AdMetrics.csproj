@@ -34,6 +34,9 @@
     <Reference Include="Microsoft.Data.Schema, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Data.Schema.UnitTesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\(third party)\Json.net\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -61,6 +64,10 @@
     <ProjectReference Include="..\..\Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj">
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Edge.Services.SegmentMetrics\Edge.Services.SegmentMetrics.csproj">
+      <Project>{90C8D5F3-B580-41C4-9567-E06B14772D24}</Project>
+      <Name>Edge.Services.SegmentMetrics</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition=" '$(Configuration)' != 'Release' ">
