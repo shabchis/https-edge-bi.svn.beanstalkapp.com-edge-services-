@@ -7,7 +7,7 @@ using Edge.Data.Pipeline.Services;
 using Edge.Services.AdMetrics;
 
 
-namespace Edge.Services.BackOffice.Cunduit
+namespace Edge.Services.BackOffice.Generic
 {
 	class BoInitializerService : PipelineService
 	{

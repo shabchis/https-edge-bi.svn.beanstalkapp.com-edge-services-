@@ -8,8 +8,8 @@
     <ProjectGuid>{2AAA976A-3BE0-4A44-9A74-6406C02E1BB8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Edge.Services.BackOffice.Cunduit</RootNamespace>
-    <AssemblyName>Edge.Services.BackOffice.Cunduit</AssemblyName>
+    <RootNamespace>Edge.Services.BackOffice.Generic</RootNamespace>
+    <AssemblyName>Edge.Services.BackOffice.Generic</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -48,7 +48,6 @@
     <Compile Include="Consts.cs" />
     <Compile Include="BoInitializerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SegmentMetricsImportManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\Edge.Core\Edge.Core.csproj">
