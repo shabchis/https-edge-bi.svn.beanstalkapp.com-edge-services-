@@ -53,8 +53,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DbDbChecksumBaseService.cs" />
-    <Compile Include="DeliveryDBChecksumBaseService.cs" />
     <Compile Include="DeliveryDwhChecksumService.cs" />
     <Compile Include="DeliveryMdxChecksumService.cs" />
     <Compile Include="DeliveryOltpChecksumService.cs" />
@@ -78,6 +76,10 @@
       <Project>{36B6740D-938E-4994-9A0D-2DCB94D032B6}</Project>
       <Name>Edge.Services.AdMetrics</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Edge.Services.Metrics.Validations\Edge.Services.Metrics.Validations.csproj">
+      <Project>{56A8CB52-D3C6-4DD9-8D36-2E54ECFEB253}</Project>
+      <Name>Edge.Services.Metrics.Validations</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Edge.Services.config">
@@ -85,19 +87,19 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-	<Target Name="BeforeCompile">
-		<SvnVersion LocalPath=".">
-			<Output TaskParameter="Revision" PropertyName="SvnRevision" />
-		</SvnVersion>
-		<FormatVersion Version="2.9.0.%2a" Revision="$(SvnRevision)">
-			<Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
-		</FormatVersion>
-	</Target>
-	<PropertyGroup>
-		<PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
-		<PostBuildEvent>
-		</PostBuildEvent>
-	</PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <Target Name="BeforeCompile">
+    <SvnVersion LocalPath=".">
+      <Output TaskParameter="Revision" PropertyName="SvnRevision" />
+    </SvnVersion>
+    <FormatVersion Version="2.9.0.%2a" Revision="$(SvnRevision)">
+      <Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
+    </FormatVersion>
+  </Target>
+  <PropertyGroup>
+    <PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project>
