@@ -10,7 +10,7 @@ using Edge.Core.Configuration;
 
 namespace Edge.Services.Metrics.Validations
 {
-    abstract class DbDbChecksumBaseService : ValidationService
+    abstract public class DbDbChecksumBaseService : ValidationService
     {
         public double progress = 0;
         Dictionary<string, string> Params = new Dictionary<string, string>();
