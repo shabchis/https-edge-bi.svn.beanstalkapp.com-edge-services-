@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Edge.Services.SegmentMetrics.Validations")]
+[assembly: AssemblyTitle("Edge.Services.Facebook.AdsApi")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Edge.BI")]
@@ -31,6 +31,6 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("2.9.0.428")]
-[assembly: AssemblyFileVersion("2.9.0.428")]
+[assembly: AssemblyVersion("2.9.0.465")]
+[assembly: AssemblyFileVersion("2.9.0.465")]
 
