@@ -7,9 +7,9 @@ using Edge.Services.SegmentMetrics;
 using Edge.Data.Pipeline.Common.Importing;
 using Edge.Data.Pipeline;
 
-namespace Edge.Services.BackOfficeMetrics.Services
+namespace Edge.Services.SegmentMetrics
 {
-	class CommitService : PipelineService
+	public class CommitService : PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{

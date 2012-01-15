@@ -8,8 +8,8 @@
     <ProjectGuid>{90C8D5F3-B580-41C4-9567-E06B14772D24}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Edge.Services.BackOfficeMetrics</RootNamespace>
-    <AssemblyName>Edge.Services.BackOfficeMetrics</AssemblyName>
+    <RootNamespace>Edge.Services.SegmentMetrics</RootNamespace>
+    <AssemblyName>Edge.Services.SegmentMetrics</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
