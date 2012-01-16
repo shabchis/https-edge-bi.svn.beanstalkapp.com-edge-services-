@@ -111,7 +111,7 @@ namespace Edge.Services.SegmentMetrics
 
 				//TO ASK : DO WE NEED VALIDATION ? 
 				if (measure.Options.HasFlag(MeasureOptions.ValidationRequired))
-					measuresValidationSQL.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Name, measuresValidationSQL.Length > 0 ? ", " : null);
+					measuresValidationSQL.AppendFormat("{1}SUM([{0}]) as [{2}]", measure.Name, measuresValidationSQL.Length > 0 ? ", " : null,measure.SourceName);
 
 				count++;
 			}
