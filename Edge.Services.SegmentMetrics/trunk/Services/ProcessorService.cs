@@ -8,18 +8,18 @@ using Edge.Data.Objects;
 using Edge.Services.SegmentMetrics;
 using Newtonsoft.Json;
 
-namespace Edge.Services.SegmentMetrics
+namespace Edge.Services.SegmentMetrics.Services
 {
-	public class BoProcessorService : PipelineService
+	public class ProcessorService : PipelineService
 	{
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			
-			foreach (var boReportFile in Delivery.Files)
+			foreach (var ReportFile in Delivery.Files)
 			{
-				var boReportReader = new XmlDynamicReader
-					(boReportFile.OpenContents(), "OnlineMarketingReport/Trackers/Tracker");
+				var ReportReader = new XmlDynamicReader
+					(ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
 				Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
 
 				using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
@@ -38,21 +38,21 @@ namespace Edge.Services.SegmentMetrics
 
 					}
 					#endregion
-					using (boReportReader)
+					using (ReportReader)
 					{
 
-						while (boReportReader.Read())
+						while (ReportReader.Read())
 						{
 
 							SegmentMetricsUnit boMetricsUnit = new SegmentMetricsUnit();
 							//TODO: Validations
-							boMetricsUnit.Segments[Segment.TrackerSegment] = new SegmentValue() { Value = boReportReader.Current.Attributes.ID };
+							boMetricsUnit.Segments[Segment.TrackerSegment] = new SegmentValue() { Value = ReportReader.Current.Attributes.ID };
 							foreach (var measure in session.Measures.Values)
 							{
 
 								if (totalsValidation.ContainsKey(measure.SourceName))
-									totalsValidation[measure.SourceName] += Convert.ToDouble(boReportReader.Current.Attributes[measure.SourceName]);
-								boMetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(boReportReader.Current.Attributes[measure.SourceName]);
+									totalsValidation[measure.SourceName] += Convert.ToDouble(ReportReader.Current.Attributes[measure.SourceName]);
+								boMetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(ReportReader.Current.Attributes[measure.SourceName]);
 
 
 
