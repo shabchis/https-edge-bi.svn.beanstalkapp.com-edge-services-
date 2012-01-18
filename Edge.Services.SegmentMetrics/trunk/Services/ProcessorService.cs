@@ -18,6 +18,7 @@ namespace Edge.Services.SegmentMetrics.Services
 			
 			foreach (var ReportFile in Delivery.Files)
 			{
+				bool isAttribute =(bool) ReportFile.Parameters["Bo.IsAttribute"];
 				var ReportReader = new XmlDynamicReader
 					(ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
 				Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
@@ -40,19 +41,24 @@ namespace Edge.Services.SegmentMetrics.Services
 					#endregion
 					using (ReportReader)
 					{
-
+						dynamic readerHelper;
+						
+						
 						while (ReportReader.Read())
 						{
-
-							SegmentMetricsUnit boMetricsUnit = new SegmentMetricsUnit();
+							if (isAttribute)
+								readerHelper = ReportReader.Current.Attributes;
+							else
+								readerHelper = ReportReader.Current;
+							SegmentMetricsUnit MetricsUnit = new SegmentMetricsUnit();
 							//TODO: Validations
-							boMetricsUnit.Segments[Segment.TrackerSegment] = new SegmentValue() { Value = ReportReader.Current.Attributes.ID };
+							MetricsUnit.Segments[Segment.TrackerSegment] = new SegmentValue() { Value = readerHelper[ReportFile.Parameters["Bo.TrackerIDField"]] };
 							foreach (var measure in session.Measures.Values)
 							{
 
 								if (totalsValidation.ContainsKey(measure.SourceName))
-									totalsValidation[measure.SourceName] += Convert.ToDouble(ReportReader.Current.Attributes[measure.SourceName]);
-								boMetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(ReportReader.Current.Attributes[measure.SourceName]);
+									totalsValidation[measure.SourceName] += Convert.ToDouble(readerHelper[measure.SourceName]);
+								MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(readerHelper[measure.SourceName]);
 
 
 
@@ -60,14 +66,14 @@ namespace Edge.Services.SegmentMetrics.Services
 
 							//Create Usid
 							Dictionary<string, string> usid = new Dictionary<string, string>();
-							foreach (var segment in boMetricsUnit.Segments)
+							foreach (var segment in MetricsUnit.Segments)
 							{
 								usid.Add(segment.Key.Name, segment.Value.Value);
 							}
 
-							boMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-							boMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-							session.ImportMetrics(boMetricsUnit, JsonConvert.SerializeObject(usid));
+							MetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+							MetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+							session.ImportMetrics(MetricsUnit, JsonConvert.SerializeObject(usid));
 						}
 					}
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, totalsValidation);
