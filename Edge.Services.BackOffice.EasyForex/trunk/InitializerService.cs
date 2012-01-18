@@ -72,6 +72,7 @@ namespace Edge.Services.BackOffice.EasyForex
             Delivery.Parameters.Add("StartGid",Instance.Configuration.Options["StartGid"]);
             Delivery.Parameters.Add("EndGid",Instance.Configuration.Options["EndGid"]);
 
+
             //Creating  Soap Body
             string strSoapEnvelope = GetSoapEnvelope(
                  Delivery.Parameters["User"].ToString(),
@@ -103,6 +104,10 @@ namespace Edge.Services.BackOffice.EasyForex
             //strSoapEnvelope += "</soap12:Envelope>";
 	#endregion
             _file.Parameters.Add("Body", strSoapEnvelope);
+            _file.Parameters.Add("Bo.IsAttribute", Instance.Configuration.Options["Bo.IsAttribute"]);
+            _file.Parameters.Add("Bo.Xpath",Instance.Configuration.Options["Bo.Xpath"]);
+            _file.Parameters.Add("Bo.TrackerIDField",Instance.Configuration.Options["Bo.TrackerIDField"]);
+
             this.Delivery.Files.Add(_file);
         
 			// Save with success
