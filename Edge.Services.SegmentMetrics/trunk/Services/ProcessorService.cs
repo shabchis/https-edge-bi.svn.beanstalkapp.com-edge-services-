@@ -18,7 +18,7 @@ namespace Edge.Services.SegmentMetrics.Services
 			
 			foreach (var ReportFile in Delivery.Files)
 			{
-				bool isAttribute =(bool) ReportFile.Parameters["Bo.IsAttribute"];
+				bool isAttribute = Boolean.Parse(ReportFile.Parameters["Bo.IsAttribute"].ToString());
 				var ReportReader = new XmlDynamicReader
 					(ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
 				Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
