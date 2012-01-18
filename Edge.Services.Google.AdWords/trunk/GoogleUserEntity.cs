@@ -26,19 +26,19 @@ namespace Edge.Services.Google.AdWords
 		public string AdwordsClientId { set; get; }
 
 
-		public GoogleUserEntity()
-		{
-			AdWordsAppConfig config = new AdWordsAppConfig()
-			{
-				AuthToken = _authToken,
-				DeveloperToken = _developerToken,
-				ApplicationToken = _applicationToken,
-				ClientEmail = "Demo@gmail.com",
-				UserAgent = "Edge.BI",
-				EnableGzipCompression = true
-			};
-			adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
-		}
+		//public GoogleUserEntity()
+		//{
+		//    AdWordsAppConfig config = new AdWordsAppConfig()
+		//    {
+		//        AuthToken = _authToken,
+		//        DeveloperToken = _developerToken,
+		//        ApplicationToken = _applicationToken,
+		//        ClientEmail = "Demo@gmail.com",
+		//        UserAgent = "Edge.BI",
+		//        EnableGzipCompression = true
+		//    };
+		//    adwordsUser = new AdWordsUser(new AdWordsServiceFactory().ReadHeadersFromConfig(config));
+		//}
 
 		public GoogleUserEntity(string mccEmail, string adwordsClientId, bool newAuth = false, string authConnectionString = "")
 		{
