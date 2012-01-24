@@ -134,7 +134,7 @@ namespace Edge.Services.Facebook.GraphApi
 						if (((Dictionary<string, object>)adGroupsReader.Current.targeting).ContainsKey("age_min"))
 							age_min = adGroupsReader.Current.targeting["age_min"];
 
-						if (string.IsNullOrEmpty(age_min))
+						if (!string.IsNullOrEmpty(age_min))
 						{
 							AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupsReader.Current.targeting["age_max"]) };
 							ad.Targets.Add(ageTarget);
