@@ -203,74 +203,76 @@ namespace Edge.Services.Facebook.GraphApi
 
 				#endregion
 
-				List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
-				foreach (var adGroupStat in adGroupStatsFiles)
+				if (filesByType.ContainsKey(Consts.FileTypes.AdGroupStats))
 				{
-
-					DeliveryFile adGroupStats = this.Delivery.Files[adGroupStat];
-
-					var adGroupStatsReader = new JsonDynamicReader(adGroupStats.OpenContents(), "$.data[*].*");
-
-
-
-
-					using (adGroupStatsReader)
+					List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
+					foreach (var adGroupStat in adGroupStatsFiles)
 					{
-						while (adGroupStatsReader.Read())
+
+						DeliveryFile adGroupStats = this.Delivery.Files[adGroupStat];
+
+						var adGroupStatsReader = new JsonDynamicReader(adGroupStats.OpenContents(), "$.data[*].*");
+
+
+
+
+						using (adGroupStatsReader)
 						{
-							AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
-							Ad tempAd;
-							if (adGroupStatsReader.Current.adgroup_id != null)
+							while (adGroupStatsReader.Read())
 							{
-								if (ads.TryGetValue(adGroupStatsReader.Current.adgroup_id, out tempAd))
+								AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+								Ad tempAd;
+								if (adGroupStatsReader.Current.adgroup_id != null)
 								{
-									adMetricsUnit.Ad = tempAd;
+									if (ads.TryGetValue(adGroupStatsReader.Current.adgroup_id, out tempAd))
+									{
+										adMetricsUnit.Ad = tempAd;
 
-									adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-									adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+										adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+										adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
-									// Common and Facebook specific meausures
-									if (_totalsValidation.ContainsKey(Measure.Common.Clicks))
-										_totalsValidation[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
-									adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-									adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
-									if (_totalsValidation.ContainsKey(Measure.Common.Impressions))
-										_totalsValidation[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
-									adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
-									adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
-									if (_totalsValidation.ContainsKey(Measure.Common.Cost))
-										_totalsValidation[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
-									adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToDouble(Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d);
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
-									adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
+										// Common and Facebook specific meausures
+										if (_totalsValidation.ContainsKey(Measure.Common.Clicks))
+											_totalsValidation[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
+										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
+										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
+										if (_totalsValidation.ContainsKey(Measure.Common.Impressions))
+											_totalsValidation[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
+										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
+										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
+										if (_totalsValidation.ContainsKey(Measure.Common.Cost))
+											_totalsValidation[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
+										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToDouble(Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d);
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
 
 
-									adMetricsUnit.TargetMatches = new List<Target>();
+										adMetricsUnit.TargetMatches = new List<Target>();
 
-									session.ImportMetrics(adMetricsUnit);
+										session.ImportMetrics(adMetricsUnit);
+									}
+									else
+									{
+										warningsStr.AppendLine(string.Format("Ad {0} does not exist in the stats report delivery id: {1}", adGroupStatsReader.Current.id, this.Delivery.DeliveryID));
+
+
+									}
 								}
 								else
 								{
-									warningsStr.AppendLine(string.Format("Ad {0} does not exist in the stats report delivery id: {1}", adGroupStatsReader.Current.id, this.Delivery.DeliveryID));
-
-
+									warningsStr.AppendLine("adGroupStatsReader.Current.id=null");
 								}
-							}
-							else
-							{
-								warningsStr.AppendLine("adGroupStatsReader.Current.id=null");
+
 							}
 
+							adGroupStats.History.Add(DeliveryOperation.Imported, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
+							this.ReportProgress(0.4);
 						}
-
-						adGroupStats.History.Add(DeliveryOperation.Imported, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
-						this.ReportProgress(0.4);
-					}
 
 			#endregion
 
@@ -281,107 +283,108 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 
-					this.ReportProgress(0.6);
+						this.ReportProgress(0.6);
 
-					#region Creatives
-					List<string> creativeFiles = filesByType[Consts.FileTypes.Creatives];
-
-
-					foreach (string creative in creativeFiles)
-					{
-						DeliveryFile creativeFile = Delivery.Files[creative];
-						var adGroupCreativesReader = new JsonDynamicReader(creativeFile.OpenContents(), "$.data[*].*");
+						#region Creatives
+						List<string> creativeFiles = filesByType[Consts.FileTypes.Creatives];
 
 
-
-						using (adGroupCreativesReader)
+						foreach (string creative in creativeFiles)
 						{
-							while (adGroupCreativesReader.Read())
+							DeliveryFile creativeFile = Delivery.Files[creative];
+							var adGroupCreativesReader = new JsonDynamicReader(creativeFile.OpenContents(), "$.data[*].*");
+
+
+
+							using (adGroupCreativesReader)
 							{
-
-								List<Ad> adsByCreativeID = null;
-								if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
-									adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.creative_id];
-								if (adsByCreativeID != null)
+								while (adGroupCreativesReader.Read())
 								{
-									foreach (Ad ad in adsByCreativeID)
+
+									List<Ad> adsByCreativeID = null;
+									if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
+										adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.creative_id];
+									if (adsByCreativeID != null)
 									{
-
-										ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-
-										if (!string.IsNullOrEmpty(ad.DestinationUrl))
+										foreach (Ad ad in adsByCreativeID)
 										{
-											SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-											if (tracker != null)
-												ad.Segments[Segment.TrackerSegment] = tracker;
+
+											ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+
+											if (!string.IsNullOrEmpty(ad.DestinationUrl))
+											{
+												SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+												if (tracker != null)
+													ad.Segments[Segment.TrackerSegment] = tracker;
+											}
+
+											ad.Creatives = new List<Creative>();
+											ad.Creatives.Add(new ImageCreative()
+											{
+												ImageUrl = adGroupCreativesReader.Current.image_url,
+												OriginalID = adGroupCreativesReader.Current.creative_id
+
+												//Name = adGroupCreativesReader.Current.name
+
+											});
+											ad.Creatives.Add(new TextCreative()
+											{
+												OriginalID = adGroupCreativesReader.Current.creative_id,
+												TextType = TextCreativeType.Body,
+												Text = adGroupCreativesReader.Current.body
+												//Name = adGroupCreativesReader.Current.name
+
+
+											});
+											ad.Creatives.Add(new TextCreative()
+											{
+
+												OriginalID = adGroupCreativesReader.Current.creative_id,
+												TextType = TextCreativeType.DisplayUrl,
+												Text = adGroupCreativesReader.Current.preview_url
+												//Name = adGroupCreativesReader.Current.name
+
+											});
+											ad.Creatives.Add(new TextCreative()
+											{
+
+												OriginalID = adGroupCreativesReader.Current.creative_id,
+												TextType = TextCreativeType.Title,
+												Text = adGroupCreativesReader.Current.title
+												//Name = adGroupCreativesReader.Current.name
+
+											});
+
+
+
+											session.ImportAd(ad);
 										}
-
-										ad.Creatives = new List<Creative>();
-										ad.Creatives.Add(new ImageCreative()
-										{
-											ImageUrl = adGroupCreativesReader.Current.image_url,
-											OriginalID = adGroupCreativesReader.Current.creative_id
-
-											//Name = adGroupCreativesReader.Current.name
-
-										});
-										ad.Creatives.Add(new TextCreative()
-										{
-											OriginalID = adGroupCreativesReader.Current.creative_id,
-											TextType = TextCreativeType.Body,
-											Text = adGroupCreativesReader.Current.body
-											//Name = adGroupCreativesReader.Current.name
-
-
-										});
-										ad.Creatives.Add(new TextCreative()
-										{
-
-											OriginalID = adGroupCreativesReader.Current.creative_id,
-											TextType = TextCreativeType.DisplayUrl,
-											Text = adGroupCreativesReader.Current.preview_url
-											//Name = adGroupCreativesReader.Current.name
-
-										});
-										ad.Creatives.Add(new TextCreative()
-										{
-
-											OriginalID = adGroupCreativesReader.Current.creative_id,
-											TextType = TextCreativeType.Title,
-											Text = adGroupCreativesReader.Current.title
-											//Name = adGroupCreativesReader.Current.name
-
-										});
-
-
-
-										session.ImportAd(ad);
 									}
+
+									//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
 								}
 
-								//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
+								creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
 							}
+						#endregion
 
-							creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
+
 						}
-					#endregion
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 					}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 				}
 				session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
 				session.EndImport();
