@@ -21,7 +21,7 @@ namespace Edge.Services.Facebook.GraphApi
 			this.Delivery = this.NewDelivery();
 
 			// This is for finding conflicting services
-			this.Delivery.Signature =Delivery.CreateSignature( String.Format("facebook-[{0}]-[{1}]-[{2}]",
+			this.Delivery.Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
 				this.TargetPeriod.ToAbsolute()));
@@ -87,7 +87,7 @@ namespace Edge.Services.Facebook.GraphApi
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType,Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
+			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
 			this.Delivery.Files.Add(deliveryFile);
 			#endregion
 
@@ -95,7 +95,7 @@ namespace Edge.Services.Facebook.GraphApi
 			#region adgroup
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name =Consts.DeliveryFilesNames.AdGroup;
+			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
@@ -111,7 +111,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 			deliveryFile = new DeliveryFile();
-			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;			
+			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
@@ -141,10 +141,10 @@ namespace Edge.Services.Facebook.GraphApi
 			//this.Delivery.Files.Add(deliveryFile);
 			//#endregion
 
-			
 
 
-			
+
+
 			#endregion
 
 			this.ReportProgress(0.9);
@@ -157,21 +157,21 @@ namespace Edge.Services.Facebook.GraphApi
 
 		private string GetMethodUrl(string relativeUrl, Dictionary<string, string> methodParams)
 		{
-			
-			StringBuilder urlParams=new StringBuilder();
+
+			StringBuilder urlParams = new StringBuilder();
 			urlParams.Append(relativeUrl);
 			urlParams.Append("?");
-			foreach (KeyValuePair<string,string> param in methodParams)
+			foreach (KeyValuePair<string, string> param in methodParams)
 			{
 				urlParams.Append(param.Key);
 				urlParams.Append("=");
 				urlParams.Append(param.Value);
-				urlParams.Append("&");				
+				urlParams.Append("&");
 			}
 			Uri uri = new Uri(_baseAddress, urlParams.ToString());
 			methodParams.Clear();
 			return uri.ToString();
-			
+
 		}
 		/// <summary>
 		/// method for converting a System.DateTime value to a UNIX Timestamp
@@ -188,23 +188,25 @@ namespace Edge.Services.Facebook.GraphApi
 		}
 		private string ConvertToFacebookDateTime(DateTime value)
 		{
-			int? timeZone;
-			if (Instance.Configuration.Options.ContainsKey("TimeZone"))
-			{
-				
-			}
-
-
-			return value.ToString("yyyy-MM-ddTHH:mm:ss");
-				
-
+			int timeZone;
+			int offset;
+			if (!Instance.Configuration.Options.ContainsKey("TimeZone"))
+				throw new Exception("Time zone must be configured! for utc please put 0!");
+			timeZone = int.Parse(Instance.Configuration.Options["TimeZone"]);
 			
+			if (!Instance.Configuration.Options.ContainsKey("Offset"))
+				throw new Exception("Offset must be configured!for non offset please put 0");
+			offset = int.Parse(Instance.Configuration.Options["Offset"]);
+
+			value = value.AddHours(-timeZone);
+			value = value.AddHours(offset);
+			return value.ToString("yyyy-MM-ddTHH:mm:ss");
 		}
 
 
-		
-		
-		
-		
+
+
+
+
 	}
 }
