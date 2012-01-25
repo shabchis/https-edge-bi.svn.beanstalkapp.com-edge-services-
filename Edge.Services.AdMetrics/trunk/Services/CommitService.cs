@@ -9,8 +9,8 @@ using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.AdMetrics
 {
-	public class CommitService: PipelineService
-	{ 
+	public class CommitService : PipelineService
+	{
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			string validationThreshold = Instance.Configuration.Options[Consts.AppSettings.CommitValidationTheshold];
@@ -29,12 +29,34 @@ namespace Edge.Services.AdMetrics
 			// TICKETS
 
 			// Only check tickets, don't check conflicts
-			this.HandleConflicts(importManager, DeliveryConflictBehavior.Ignore, getBehaviorFromConfiguration:false);
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Ignore, getBehaviorFromConfiguration: false);
 			ReportProgress(0.2);
 
 			// ----------------
 			// PREPARE
+			//for debug locks on edge 888
+			try
+			{
+				Edge.Core.Utilities.Log.Write(string.Format("{0} Start Prepare", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+			}
+			catch (Exception)
+			{
+
+
+			}
+
 			importManager.Prepare(new Delivery[] { this.Delivery });
+
+
+			try
+			{
+				Edge.Core.Utilities.Log.Write(string.Format("{0} End Prepare", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+			}
+			catch (Exception)
+			{
+
+
+			}
 			ReportProgress(0.6);
 
 			// ----------------
@@ -44,13 +66,49 @@ namespace Edge.Services.AdMetrics
 			{
 				try
 				{
-					
+					try
+					{
+						Edge.Core.Utilities.Log.Write(string.Format("{0} Start Commit", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+					}
+					catch (Exception)
+					{
+
+
+					}
 					importManager.Commit(new Delivery[] { this.Delivery });
+					try
+					{
+						Edge.Core.Utilities.Log.Write(string.Format("{0} End Commit", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+					}
+					catch (Exception)
+					{
+
+
+					}
 					success = true;
 				}
 				catch (DeliveryConflictException dceex)
 				{
+					try
+					{
+						Edge.Core.Utilities.Log.Write(string.Format("{0} Start RoleBack", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+					}
+					catch (Exception)
+					{
+
+
+					}
 					importManager.Rollback(dceex.ConflictingDeliveries);
+
+					try
+					{
+						Edge.Core.Utilities.Log.Write(string.Format("{0} End RoleBack", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+					}
+					catch (Exception)
+					{
+
+
+					}
 				}
 				catch (Exception ex)
 				{
@@ -59,7 +117,7 @@ namespace Edge.Services.AdMetrics
 			}
 			while (!success);
 
-			
+
 			///////////////////////////////////////////////////
 
 

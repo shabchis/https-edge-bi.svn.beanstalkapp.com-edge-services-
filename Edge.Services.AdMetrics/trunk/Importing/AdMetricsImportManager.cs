@@ -557,7 +557,6 @@ namespace Edge.Services.AdMetrics
 		/*=========================*/
 		#endregion
 
-
 		#region Commit
 		/*=========================*/
 
