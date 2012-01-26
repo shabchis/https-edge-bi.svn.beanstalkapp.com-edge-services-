@@ -81,7 +81,7 @@ namespace Edge.Services.BackOffice.EasyForex
                  Delivery.Parameters["StartGid"].ToString(),
                  Delivery.Parameters["EndGid"].ToString(),
                  this.Delivery.TargetPeriodStart.ToString("yyyy-MM-ddTHH:mm:ss"),
-                 this.Delivery.TargetPeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss")
+                 this.Delivery.TargetPeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
                  );
            
             #region Soap 1.2
