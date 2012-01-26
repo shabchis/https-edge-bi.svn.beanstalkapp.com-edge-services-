@@ -84,6 +84,10 @@ namespace Edge.Services.BackOffice.Generic
 			UrlParams.Add("Password", this.Delivery.Parameters["Password"].ToString());
 			boFile.SourceUrl = CreateUrl(UrlParams, baseAddress.ToString());
 
+            boFile.Parameters[BoConfigurationOptions.IsAttribute] = Instance.Configuration.Options[BoConfigurationOptions.IsAttribute];
+            boFile.Parameters[BoConfigurationOptions.TrackerFieldName] = Instance.Configuration.Options[BoConfigurationOptions.TrackerFieldName];
+
+
 			this.Delivery.Files.Add(boFile);
 			this.Delivery.Save();
 
