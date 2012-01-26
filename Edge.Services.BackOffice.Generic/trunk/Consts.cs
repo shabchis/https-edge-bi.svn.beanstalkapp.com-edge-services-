@@ -13,6 +13,9 @@ namespace Edge.Services.BackOffice.Generic
 		public const string Password = "Bo.Password";
 		public const string BoFileName="BO.xml";
 		public const string UtcOffset = "Bo.UTCOffest";
+        public const string TrackerFieldName = "Bo.TrackerIDField";
+        public const string IsAttribute = "Bo.IsAttribute";
+
 	}
 	
 	public class Consts
