@@ -67,7 +67,7 @@ namespace Edge.Services.BackOffice.EasyForex
             _file.Parameters.Add("SOAPAction",Instance.Configuration.Options["SOAPAction"]);
 
             Delivery.Parameters.Add("User",Instance.Configuration.Options["User"]);
-            Delivery.Parameters.Add("Pass",Instance.Configuration.Options["Pass"]);
+            Delivery.Parameters.Add("Pass",Core.Utilities.Encryptor.Dec(Instance.Configuration.Options["Pass"].ToString()));
             Delivery.Parameters.Add("SoapMethod",Instance.Configuration.Options["SoapMethod"]);
             Delivery.Parameters.Add("StartGid",Instance.Configuration.Options["StartGid"]);
             Delivery.Parameters.Add("EndGid",Instance.Configuration.Options["EndGid"]);
