@@ -57,13 +57,7 @@ namespace Edge.Services.BackOffice.Generic
                 throw new Exception("base url must be configured!");
             baseAddress = this.Instance.Configuration.Options[BoConfigurationOptions.BaseServiceAddress];
 
-            if (string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.UserName]))
-                throw new Exception("base url must be configured!");
-            this.Delivery.Parameters["UserName"] = this.Instance.Configuration.Options[BoConfigurationOptions.UserName];
-
-            if (string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.Password]))
-                throw new Exception("base url must be configured!");
-            this.Delivery.Parameters["Password"] = this.Instance.Configuration.Options[BoConfigurationOptions.Password];
+            
 
             int utcOffset = 0;
             if (!string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.UtcOffset]))
@@ -78,11 +72,8 @@ namespace Edge.Services.BackOffice.Generic
             DeliveryFile boFile = new DeliveryFile();
             boFile.Parameters[BoConfigurationOptions.BO_XPath_Trackers] = Instance.Configuration.Options[BoConfigurationOptions.BO_XPath_Trackers];
             boFile.Name = BoConfigurationOptions.BoFileName;
-            UrlParams.Add("from", utcOffset == 0 ? Delivery.TargetPeriod.Start.ToDateTime().ToString("yyyy-MM-ddTHH:MMZ") : ConvertToTimeZone(utcOffset, TargetPeriod.Start.ToDateTime()));
-            UrlParams.Add("to", utcOffset == 0 ? Delivery.TargetPeriod.End.ToDateTime().ToString("yyyy-MM-ddTHH:MMZ") : ConvertToTimeZone(utcOffset, TargetPeriod.Start.ToDateTime()));
-            UrlParams.Add("vendor", this.Delivery.Parameters["UserName"].ToString());
-            UrlParams.Add("Password", this.Delivery.Parameters["Password"].ToString());
-            boFile.SourceUrl = CreateUrl(UrlParams, baseAddress.ToString());
+			boFile.SourceUrl = string.Format(baseAddress, TargetPeriod.Start.ToDateTime(), TargetPeriod.End.ToDateTime());
+            
 
             boFile.Parameters.Add(BoConfigurationOptions.IsAttribute, Instance.Configuration.Options[BoConfigurationOptions.IsAttribute]);
             boFile.Parameters.Add(BoConfigurationOptions.TrackerFieldName, Instance.Configuration.Options[BoConfigurationOptions.TrackerFieldName]);
@@ -96,27 +87,24 @@ namespace Edge.Services.BackOffice.Generic
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private string CreateUrl(Dictionary<string, string> UrlParams, string baseAddress)
-        {
-            StringBuilder fullAddress = new StringBuilder();
-            fullAddress.Append(baseAddress);
-            fullAddress.Append("?");
-            foreach (KeyValuePair<string, string> param in UrlParams)
-            {
-                fullAddress.Append(param.Key);
-                fullAddress.Append("=");
-                fullAddress.Append(param.Value);
-                fullAddress.Append("&");
-            }
+		//private string CreateUrl(Dictionary<string, string> UrlParams, string baseAddress)
+		//{
+		//    StringBuilder fullAddress = new StringBuilder();
+		//    fullAddress.Append(baseAddress);
+		//    fullAddress.Append("?");
+		//    foreach (KeyValuePair<string, string> param in UrlParams)
+		//    {
+		//        fullAddress.Append(param.Key);
+		//        fullAddress.Append("=");
+		//        fullAddress.Append(param.Value);
+		//        fullAddress.Append("&");
+		//    }
 
 
-            return fullAddress.ToString();
-        }
+		//    return fullAddress.ToString();
+		//}
 
-        private string ConvertToTimeZone(int utcOffset, DateTime dateTime)
-        {
-            throw new NotImplementedException();
-        }
+       
 
 
     }
