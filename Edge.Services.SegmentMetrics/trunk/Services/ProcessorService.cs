@@ -60,10 +60,20 @@ namespace Edge.Services.SegmentMetrics.Services
 
                                 if (measure.Account != null)
                                 {
-                                    MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(readerHelper[measure.SourceName]);
+
+                                    if (string.IsNullOrEmpty(readerHelper[measure.SourceName]))
+                                        MetricsUnit.MeasureValues[session.Measures[measure.Name]] = 0;
+                                    else
+                                        MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(readerHelper[measure.SourceName]);
+
+                                    
+                                  
 
                                     if (totalsValidation.ContainsKey(measure.SourceName))
-                                        totalsValidation[measure.SourceName] += Convert.ToDouble(readerHelper[measure.SourceName]);
+                                    {
+                                        if (!string.IsNullOrEmpty(readerHelper[measure.SourceName]))
+                                            totalsValidation[measure.SourceName] += Convert.ToDouble(readerHelper[measure.SourceName]);
+                                    }
                                 }
 
                             }
