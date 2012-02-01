@@ -248,7 +248,11 @@ namespace Edge.Services.Facebook.GraphApi
 										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
 										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
 										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], double.Parse(adGroupStatsReader.Current.social_spent));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
+										
+										
+										
+										//adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
+										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], 0);
 										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
 
 
