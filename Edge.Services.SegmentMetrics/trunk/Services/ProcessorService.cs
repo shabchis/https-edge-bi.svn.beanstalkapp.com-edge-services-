@@ -61,9 +61,7 @@ namespace Edge.Services.SegmentMetrics.Services
                                 if (measure.Account != null)
                                 {
 
-                                    if (string.IsNullOrEmpty(readerHelper[measure.SourceName]))
-                                        MetricsUnit.MeasureValues[session.Measures[measure.Name]] = 0;
-                                    else
+                                    if (!string.IsNullOrEmpty(readerHelper[measure.SourceName]))                                   
                                         MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(readerHelper[measure.SourceName]);
 
                                     
