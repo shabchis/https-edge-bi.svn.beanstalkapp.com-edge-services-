@@ -54,8 +54,9 @@ namespace Edge.Services.Google.AdWords
 			#region Must Have Params
 
 			//Get MCC Email
-			
+			this.Delivery.Parameters["DeveloperToken"] = this.Instance.Configuration.Options["DeveloperToken"];
 			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
+			this.Delivery.Parameters["MccPass"] = Core.Utilities.Encryptor.Dec(this.Instance.Configuration.Options["Adwords.MccPass"].ToString());
 			this.Delivery.Parameters["KeywordContentId"] = this.Instance.Configuration.Options["KeywordContentId"];
 
 			// Get Report types
@@ -110,7 +111,8 @@ namespace Edge.Services.Google.AdWords
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[reportType];
-					//file.Name = reportType.ToString();
+					file.Parameters.Add("ReportType", reportType.ToString());
+					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
@@ -118,7 +120,8 @@ namespace Edge.Services.Google.AdWords
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv";
-					//file.Name = "AD_PERFORMANCE_REPORT_(Conversion)";
+					file.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT.ToString());
+					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.CONVERSION);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
@@ -126,20 +129,12 @@ namespace Edge.Services.Google.AdWords
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT];
-					//file.Name = "MANAGED_PLACEMENTS_PERFORMANCE_REPORT";
+					file.Parameters.Add("ReportType", GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
 
-				//...............................
-				//AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT
-				//{
-				//    DeliveryFile file = new DeliveryFile();
-				//    file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT];
-				//    file.Parameters.Add("Email", email);
-				//    this.Delivery.Files.Add(file);
-				//}
-				//...............................
 			}
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;

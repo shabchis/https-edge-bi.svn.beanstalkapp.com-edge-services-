@@ -11,6 +11,8 @@ using System.Threading;
 using Edge.Core.Utilities;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util.Reports;
+using Google.Api.Ads.Common.Lib;
+using System.IO;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -21,7 +23,6 @@ namespace Edge.Services.Google.AdWords
 		private BatchDownloadOperation _batchDownloadOperation;
 		private int _filesInProgress = 0;
 		private double _minProgress = 0.05;
-		AdwordsReport _googleReport;
 		ReportDefinitionDateRangeType _dateRange;
 		private AutoResetEvent _waitHandle;
 		long _reportId;
@@ -31,7 +32,7 @@ namespace Edge.Services.Google.AdWords
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
-			_batchDownloadOperation = new BatchDownloadOperation();
+			_batchDownloadOperation = new BatchDownloadOperation() { MaxConcurrent = 1 };
 			_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
@@ -43,42 +44,7 @@ namespace Edge.Services.Google.AdWords
 			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
 			_waitHandle = new AutoResetEvent(false);
 
-			Dictionary<string, string> headers = new Dictionary<string, string>()
-			{
-				{"DeveloperToken" , "5eCsvAOU06Fs4j5qHWKTCA"},
-				{"UserAgent" , "Edge.BI"},
-				{"EnableGzipCompression","true"},
-				{"ClientCustomerId","281-492-7878"},
-				{"Email","ppc.easynet@gmail.com"},
-				{"Password","mccpass2012"}
-			};
 
-			AdWordsUser user = new AdWordsUser(headers);
-
-			//Create ReportDefintion
-			ReportDefinition definition = new ReportDefinition();
-
-			definition.reportName = "Last 7 days ADGROUP_PERFORMANCE_REPORT";
-			definition.reportType = ReportDefinitionReportType.AD_PERFORMANCE_REPORT;
-			definition.downloadFormat = DownloadFormat.GZIPPED_CSV;
-			definition.dateRangeType = ReportDefinitionDateRangeType.YESTERDAY;
-
-			// Get the ReportDefinitionService.
-			ReportDefinitionService reportDefinitionService = (ReportDefinitionService)user.GetService(
-			AdWordsService.v201109.ReportDefinitionService);
-
-			// Create the selector.
-			Selector selector = new Selector();
-			selector.fields = new string[] { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
-		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
-		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
-		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
-		                                                   "ConversionsManyPerClick",
-		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
-		                                                   "AdNetworkType1"
-		                                               };
-
-			definition.selector = selector;
 
 			foreach (string clientId in (string[])this.Delivery.Parameters["AdwordsClientIDs"])
 			{
@@ -87,51 +53,32 @@ namespace Edge.Services.Google.AdWords
 							where f.Parameters["AdwordsClientID"].ToString() == clientId
 							select f;
 
-				foreach (var file in files)
+				//Setting Adwords User
+				Dictionary<string, string> headers = new Dictionary<string, string>()
+						{
+							{"DeveloperToken" ,this.Delivery.Parameters["DeveloperToken"].ToString()},
+							{"UserAgent" , FileManager.UserAgentString},
+							{"EnableGzipCompression","true"},
+							{"ClientCustomerId",clientId},
+							{"Email",this.Delivery.Parameters["MccEmail"].ToString()},
+							{"Password",this.Delivery.Parameters["MccPass"].ToString()}
+						};
+
+				AdWordsUser user = new AdWordsUser(headers);
+
+				//Downloading Files
+				foreach (DeliveryFile file in files)
 				{
-					
+					//if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.AD_PERFORMANCE_REPORT]))
+					{
+						//Creating Report Definition
+						ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate);
 
-					
+						//new ReportUtilities(user).DownloadClientReport(definition, @"D:\"+file.Name+".gzip");
 
-					//_googleReport.CreateGoogleReport();
-
-
-					new ReportUtilities(user).DownloadClientReport(definition, @"D:\gaTest.gzip");
-
-
-
-					InitalizeReportParams(file);
-					DownloadFile(file);
-
-					//try
-					//{
-					//    _googleReport.intializingGoogleReport();
-					//}
-					//catch (AdWordsApiException e)
-					//{
-					//    bool InvalidreportID = false;
-					//    bool retry = true;
-					//    _googleReport.intializingGoogleReport(InvalidreportID, retry);
-					//}
-
-					//InitalizeReportParams(file);
-
-					//try
-					//{
-					//    DownloadFile(file, this._googleReport);
-					//}
-					//catch (FileDownloadException ex) // if Getting a report ID exception
-					//{
-
-					//    Log.Write(ex.Message, LogMessageType.Warning);
-					//    bool invalidReportID = true;
-					//    _googleReport.intializingGoogleReport(invalidReportID); // Report ID is invalid - create new report ID
-					//    Log.Write("Retriever : renewing Google Auth key", ex);
-					//    InitalizeReportParams(file);
-					//    DownloadFile(file);
-
-
-					//}
+						SetDeliveryFileParams(file, user);
+						DownloadFile(file, user);
+					}
 				}
 
 			}
@@ -144,18 +91,17 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		private void InitalizeReportParams(DeliveryFile file)
+		private void SetDeliveryFileParams(DeliveryFile file, AdWordsUser user)
 		{
-			GoogleRequestEntity request = _googleReport.GetReportUrlParams(true);
+			Dictionary<string, string> requestParams = AdwordsUtill.GetRequestParams(user);
 
-			file.SourceUrl = request.DownloadUrl;
-			file.Parameters.Add("clientEmail", request.ClientEmail);
-			file.Parameters.Add("clientCustomerId", request.ClientCustomerId);
-			file.Parameters.Add("authToken", request.AuthToken);
-			file.Parameters.Add("returnMoneyInMicros", request.ReturnMoneyInMicros);
-			file.Parameters.Add("developerToken", request.DeveloperToken);
-			file.Parameters.Add("RequestBody", request.Body);
-			file.Parameters.Add("EnableGzipCompression", request.EnableGzipCompression);
+			file.SourceUrl = requestParams["DownloadURL"]; ;
+			foreach (var item in requestParams)
+			{
+				if (item.Key == "DownloadURL")
+					continue;
+				file.Parameters.Add(item.Key, item.Value);
+			}
 
 
 		}
@@ -167,33 +113,73 @@ namespace Edge.Services.Google.AdWords
 		}
 
 
-		private void DownloadFile(DeliveryFile file)
+		private void DownloadFile(DeliveryFile file, AdWordsUser user)
 		{
 
+			#region Creating request
 			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
-
-			request.Headers.Add("clientEmail: " + file.Parameters["clientEmail"]);
-			request.Headers.Add("clientCustomerId: " + file.Parameters["clientCustomerId"]);
-			request.Headers.Add("Authorization: GoogleLogin auth=" + file.Parameters["authToken"]);
-			request.Headers.Add("returnMoneyInMicros: " + file.Parameters["returnMoneyInMicros"]);
-			request.Headers.Add("developerToken: " + file.Parameters["developerToken"]);
-			request.Method = "POST";
-
-			if (Convert.ToBoolean(file.Parameters["EnableGzipCompression"]))
+			request.Timeout = 100000;
+			if (!string.IsNullOrEmpty(file.Parameters["PostBody"].ToString()))
 			{
-				request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-			}
-			else request.AutomaticDecompression = DecompressionMethods.None;
-
-			byte[] bytes = Encoding.UTF8.GetBytes(file.Parameters["RequestBody"].ToString());
-			request.ContentLength = bytes.Length;
-
-			using (var stream = request.GetRequestStream())
-			{
-				stream.Write(bytes, 0, bytes.Length);
+				request.Method = file.Parameters["Method"].ToString();
 			}
 
-			_batchDownloadOperation.Add(file.Download(request));
+			if (!string.IsNullOrEmpty((user.Config as AdWordsAppConfig).ClientEmail))
+			{
+				request.Headers.Add(file.Parameters["ClientEmail"].ToString());
+			}
+			else if (!string.IsNullOrEmpty((user.Config as AdWordsAppConfig).ClientCustomerId))
+			{
+				request.Headers.Add(file.Parameters["ClientCustomerId"].ToString());
+			}
+			request.ContentType = file.Parameters["ContentType"].ToString();
+
+			if ((user.Config as AdWordsAppConfig).EnableGzipCompression)
+			{
+				(request as HttpWebRequest).AutomaticDecompression = DecompressionMethods.GZip
+					| DecompressionMethods.Deflate;
+			}
+			else
+			{
+				(request as HttpWebRequest).AutomaticDecompression = DecompressionMethods.None;
+			}
+
+			if ((user.Config as AdWordsAppConfig).AuthorizationMethod == AdWordsAuthorizationMethod.ClientLogin)
+			{
+				string authToken = (!string.IsNullOrEmpty((user.Config as AdWordsAppConfig).AuthToken)) ? (user.Config as AdWordsAppConfig).AuthToken :
+					new AuthToken(
+						(user.Config as AdWordsAppConfig), AdWordsSoapClient.SERVICE_NAME, (user.Config as AdWordsAppConfig).Email,
+						(user.Config as AdWordsAppConfig).Password).GetToken();
+
+				(user.Config as AdWordsAppConfig).AuthToken = authToken;
+				//string authToken = AdwordsUtill.GetAuthToken(user);
+
+				request.Headers["Authorization"] = "GoogleLogin auth=" + authToken;
+			}
+
+			request.Headers.Add(file.Parameters["ReturnMoneyInMicros"].ToString());
+			request.Headers.Add("developerToken: " + this.Delivery.Parameters["DeveloperToken"].ToString());
+
+			//byte[] bytes = Encoding.UTF8.GetBytes(file.Parameters["PostBody"].ToString());
+			//request.ContentLength = bytes.Length;
+
+			//using (var stream = request.GetRequestStream())
+			//{
+			//    stream.Write(bytes, 0, bytes.Length);
+			//}
+
+			if (!string.IsNullOrEmpty(file.Parameters["PostBody"].ToString()))
+			{
+				using (StreamWriter writer = new StreamWriter(request.GetRequestStream()))
+				{
+					writer.Write(file.Parameters["PostBody"].ToString());
+				}
+			}
+			#endregion
+
+			var response = (HttpWebResponse) request.GetResponse();
+			
+			_batchDownloadOperation.Add(file.Download(response.GetResponseStream(), response.ContentLength));
 
 
 		}

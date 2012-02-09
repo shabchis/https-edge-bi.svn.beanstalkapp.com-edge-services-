@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2A0FFCF9-03B8-40E4-B410-8B62B088B6D6}</ProjectGuid>
+    <ProjectGuid>{DFC1976B-10A9-4E74-8C61-48FA5732766E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Edge.Services.Google.AdWords</RootNamespace>
@@ -55,16 +55,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AccountEntity.cs" />
-    <Compile Include="AdwordsReport.cs" />
-    <Compile Include="ErrorFile.cs" />
-    <Compile Include="GoogleRequestEntity.cs" />
-    <Compile Include="GoogleStaticReportsNamesUtill.cs" />
+    <Compile Include="AdwordsUtill.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
     <Compile Include="ProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GoogleUserEntity.cs" />
     <None Include="Properties\AssemblyInfo.cs.template" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>
