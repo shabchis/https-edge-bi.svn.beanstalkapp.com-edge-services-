@@ -13,6 +13,7 @@ using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util.Reports;
 using Google.Api.Ads.Common.Lib;
 using System.IO;
+using Edge.Core.Configuration;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -73,22 +74,39 @@ namespace Edge.Services.Google.AdWords
 					{
 						//Creating Report Definition
 						ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate);
+						
+						string path = SetTargetLocation(file.CreateLocation());
+						file.Location = path;
+						//file.Save();
+						new ReportUtilities(user).DownloadClientReport(definition, path);
 
-						//new ReportUtilities(user).DownloadClientReport(definition, @"D:\"+file.Name+".gzip");
-
-						SetDeliveryFileParams(file, user);
-						DownloadFile(file, user);
+						//SetDeliveryFileParams(file, user);
+						//DownloadFile(file, user);
 					}
 				}
 
 			}
-			_batchDownloadOperation.Start();
-			_batchDownloadOperation.Wait();
-			_batchDownloadOperation.EnsureSuccess();
+			//_batchDownloadOperation.Start();
+			//_batchDownloadOperation.Wait();
+			//_batchDownloadOperation.EnsureSuccess();
 			this.Delivery.Save();
 
 			return Core.Services.ServiceOutcome.Success;
 
+		}
+
+		protected string SetTargetLocation(string targetLocation)
+		{
+
+			Uri uri;
+			uri = FileManager.GetRelativeUri(targetLocation);
+
+			// Get full path
+			string fullPath = Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), uri.ToString());
+			if (!Directory.Exists(Path.GetDirectoryName(fullPath)))
+				Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+
+			return   fullPath;
 		}
 
 		private void SetDeliveryFileParams(DeliveryFile file, AdWordsUser user)

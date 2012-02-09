@@ -243,7 +243,7 @@ namespace Edge.Services.Google.AdWords
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
 								Channel = new Channel() { ID = 1 },
-								Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["clientCustomerId"] }
+								Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] }
 							};
 
 							//Image Type > Create Image
