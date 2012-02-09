@@ -60,11 +60,11 @@ namespace Edge.Services.BackOffice.Generic
             
 
             int utcOffset = 0;
-            if (!string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.UtcOffset]))
+            if (this.Instance.Configuration.Options.ContainsKey(BoConfigurationOptions.UtcOffset))
                 utcOffset = int.Parse(this.Instance.Configuration.Options[BoConfigurationOptions.UtcOffset]);
 			Delivery.Parameters.Add(BoConfigurationOptions.UtcOffset, utcOffset);
 			int timeZone=0;
-			if (!Instance.Configuration.Options.ContainsKey(BoConfigurationOptions.TimeZone))
+			if (Instance.Configuration.Options.ContainsKey(BoConfigurationOptions.TimeZone))
 				timeZone = int.Parse(Instance.Configuration.Options[BoConfigurationOptions.TimeZone]);
 			Delivery.Parameters.Add(BoConfigurationOptions.TimeZone, timeZone);
             this.ReportProgress(0.2);
