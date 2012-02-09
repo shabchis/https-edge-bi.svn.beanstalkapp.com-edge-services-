@@ -62,17 +62,36 @@ namespace Edge.Services.BackOffice.Generic
             int utcOffset = 0;
             if (!string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.UtcOffset]))
                 utcOffset = int.Parse(this.Instance.Configuration.Options[BoConfigurationOptions.UtcOffset]);
-
-
+			Delivery.Parameters.Add(BoConfigurationOptions.UtcOffset, utcOffset);
+			int timeZone=0;
+			if (!Instance.Configuration.Options.ContainsKey(BoConfigurationOptions.TimeZone))
+				timeZone = int.Parse(Instance.Configuration.Options[BoConfigurationOptions.TimeZone]);
+			Delivery.Parameters.Add(BoConfigurationOptions.TimeZone, timeZone);
             this.ReportProgress(0.2);
             #endregion
 
             #region DeliveryFile
             Dictionary<string, string> UrlParams = new Dictionary<string, string>();
             DeliveryFile boFile = new DeliveryFile();
+			DateTime start=TargetPeriod.Start.ToDateTime();
+			DateTime end = TargetPeriod.End.ToDateTime();
             boFile.Parameters[BoConfigurationOptions.BO_XPath_Trackers] = Instance.Configuration.Options[BoConfigurationOptions.BO_XPath_Trackers];
             boFile.Name = BoConfigurationOptions.BoFileName;
-			boFile.SourceUrl = string.Format(baseAddress, TargetPeriod.Start.ToDateTime(), TargetPeriod.End.ToDateTime());
+			if (utcOffset != 0)
+			{
+				start.AddHours(utcOffset);
+				end.AddHours(utcOffset);				
+			}
+			if (timeZone != 0)
+			{
+				start.AddHours(-timeZone);
+				end.AddHours(-timeZone);
+			}
+
+
+
+
+			boFile.SourceUrl = string.Format(baseAddress, start, end);
             
 
             boFile.Parameters.Add(BoConfigurationOptions.IsAttribute, Instance.Configuration.Options[BoConfigurationOptions.IsAttribute]);
