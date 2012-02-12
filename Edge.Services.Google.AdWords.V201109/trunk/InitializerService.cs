@@ -10,6 +10,7 @@ using Edge.Services.AdMetrics;
 using Edge.Core.Configuration;
 using Google.Api.Ads.AdWords.v201109;
 using Google.Api.Ads.AdWords.Lib;
+using Google.Api.Ads.AdWords.Util.Reports;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -105,52 +106,6 @@ namespace Edge.Services.Google.AdWords
 			this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
 
 			#endregion
-
-			Dictionary<string, string> headers = new Dictionary<string, string>()
-						{
-							{"DeveloperToken" ,this.Delivery.Parameters["DeveloperToken"].ToString()},
-							{"UserAgent" , FileManager.UserAgentString},
-							{"EnableGzipCompression","true"},
-							{"ClientCustomerId",clientId},
-							{"Email",this.Delivery.Parameters["MccEmail"].ToString()},
-							{"Password",this.Delivery.Parameters["MccPass"].ToString()}
-						};
-
-			AdWordsUser user = new AdWordsUser(headers);
-
-			// Get the ReportDefinitionService.
-			ReportDefinitionService reportDefinitionService = (ReportDefinitionService)user.GetService(
-				AdWordsService.v201109.ReportDefinitionService);
-
-			// Create selector.
-			ReportDefinitionSelector selector = new ReportDefinitionSelector();
-			try
-			{
-				// Get all report definitions.
-				ReportDefinitionPage page = reportDefinitionService.get(selector);
-
-				// Display report definitions.
-				if (page != null && page.entries != null && page.entries.Length > 0)
-				{
-					foreach (ReportDefinition reportDefinition in page.entries)
-					{
-						Console.WriteLine("ReportDefinition with name \"{0}\" and id \"{1}\" was found.",
-							reportDefinition.reportName, reportDefinition.id);
-					}
-				}
-				else
-				{
-					Console.WriteLine("No report definitions were found.");
-				}
-
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Failed to retrieve report definitions. Exception says \"{0}\"",
-					ex.Message);
-			}
-
-
 
 			//Creating Delivery files Per Client ID 
 			foreach (string clientId in adwordsClientIds)

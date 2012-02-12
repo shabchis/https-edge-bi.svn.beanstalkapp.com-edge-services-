@@ -97,7 +97,6 @@ namespace Edge.Services.Google.AdWords
 
 		protected string SetTargetLocation(string targetLocation)
 		{
-
 			Uri uri;
 			uri = FileManager.GetRelativeUri(targetLocation);
 
@@ -121,7 +120,6 @@ namespace Edge.Services.Google.AdWords
 				file.Parameters.Add(item.Key, item.Value);
 			}
 
-
 		}
 
 		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
@@ -129,7 +127,6 @@ namespace Edge.Services.Google.AdWords
 			BatchDownloadOperation DownloadOperation = (BatchDownloadOperation)sender;
 			this.ReportProgress(DownloadOperation.Progress);
 		}
-
 
 		private void DownloadFile(DeliveryFile file, AdWordsUser user)
 		{

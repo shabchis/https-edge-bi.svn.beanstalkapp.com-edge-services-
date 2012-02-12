@@ -8,6 +8,11 @@ using System.Web;
 using Google.Api.Ads.Common.Util;
 using System.Xml;
 using Google.Api.Ads.Common.Lib;
+using Google.Api.Ads.AdWords.v201109;
+using System.Data.SqlClient;
+using Edge.Core.Configuration;
+using Edge.Core.Data;
+using Edge.Core.Utilities;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -15,8 +20,8 @@ namespace Edge.Services.Google.AdWords
 
 	public static class AdwordsUtill
 	{
-		
-		
+
+
 		private const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201109";
 		private static GA.v201109.ReportDefinition _definition;
 
@@ -34,10 +39,19 @@ namespace Edge.Services.Google.AdWords
 
 			// Create the selector.
 			/*----------------------------------------------------------------*/
+			GA.v201109.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString());
+
+
+			definition.selector = selector;
+			return _definition = definition;
+		}
+
+		public static GA.v201109.Selector GetNewSelector(string startDate, string endDate, GA.v201109.ReportDefinitionReportType reportType, string reportFieldsType)
+		{
 			GA.v201109.Selector selector = new GA.v201109.Selector();
 
 			//Setting report fields
-			selector.fields = GoogleStaticReportFields.ReportNames[definition.reportType][deliveryFile.Parameters["ReportFieldsType"].ToString()];
+			selector.fields = GoogleStaticReportFields.ReportNames[reportType][reportFieldsType];
 
 			//Setting Date Range
 			selector.dateRange = new GA.v201109.DateRange
@@ -56,9 +70,8 @@ namespace Edge.Services.Google.AdWords
 				selector.predicates = new GA.v201109.Predicate[] { impPredicate };
 				/*----------------------------------------------------------------*/
 			}
+			return selector;
 
-			definition.selector = selector;
-			return _definition = definition;
 		}
 
 		public static Dictionary<string, string> GetRequestParams(GA.Lib.AdWordsUser user, bool returnMoneyInMicros = true)
@@ -74,13 +87,12 @@ namespace Edge.Services.Google.AdWords
 			requestParams.Add("ClientEmail", "clientEmail: " + config.ClientEmail);
 			requestParams.Add("ClientCustomerId", "clientCustomerId: " + config.ClientCustomerId);
 			requestParams.Add("EnableGzipCompression", config.EnableGzipCompression.ToString());
-			requestParams.Add("ReturnMoneyInMicros","returnMoneyInMicros: " + returnMoneyInMicros.ToString().ToLower());
+			requestParams.Add("ReturnMoneyInMicros", "returnMoneyInMicros: " + returnMoneyInMicros.ToString().ToLower());
 			requestParams.Add("developerToken", "developerToken: " + config.DeveloperToken);
 
 			return requestParams;
 
 		}
-
 
 		private static string ConvertDefinitionToXml(GA.v201109.ReportDefinition definition)
 		{
@@ -96,114 +108,99 @@ namespace Edge.Services.Google.AdWords
 			return doc.OuterXml;
 		}
 
-		//internal static string GetAuthToken(GA.Lib.AdWordsUser user)
-		//{
-		//    //(!string.IsNullOrEmpty((user.Config as AdWordsAppConfig).AuthToken)) ? (user.Config as AdWordsAppConfig).AuthToken :
-		//    //    new AuthToken(
-		//    //        (user.Config as AdWordsAppConfig), AdWordsSoapClient.SERVICE_NAME, (user.Config as AdWordsAppConfig).Email,
-		//    //        (user.Config as AdWordsAppConfig).Password).GetToken();
-		//    string pass;
-		//    string auth = GetAuthFromDB(user.Config as GA.Lib.AdWordsAppConfig, authConnectionString, out pass);
-		//    if (newAuth || string.IsNullOrEmpty(auth))
-		//        auth = GetAuthFromApi(mccEmail, pass, authConnectionString);
-		//    return auth;
-		//}
+		private static string GetAuthToken(GA.Lib.AdWordsUser user)
+		{
 
-		//private string GetAuthFromApi(GA.Lib.AdWordsUser user, string authConnectionString)
-		//{
-		//    try
-		//    {
-		//        if(!string.IsNullOrEmpty((user.Config as GA.Lib.AdWordsAppConfig).AuthToken)) ? (user.Config as GA.Lib.AdWordsAppConfig).AuthToken :
-		//            new AuthToken(
-		//                (user.Config as GA.Lib.AdWordsAppConfig), GA.Lib.AdWordsSoapClient.SERVICE_NAME, (user.Config as GA.Lib.AdWordsAppConfig).Email,
-		//                (user.Config as GA.Lib.AdWordsAppConfig).Password).GetToken();
-		//    }
-		//    catch (Exception ex)
-		//    {
-		//        Log.Write("Error while trying to create new Auth key", ex);
-		//        throw new Exception("Error while trying to create new Auth key", ex);
-		//    }
+			string pass;
+			string auth = GetAuthFromDB(
+										(user.Config as GA.Lib.AdWordsAppConfig).Email,
+										out pass
+										);
+			
+			//Setting Adwords Password
+			(user.Config as GA.Lib.AdWordsAppConfig).Password = pass;
 
-		//    return auth;
+			return string.IsNullOrEmpty(auth) ? GetAuthFromApi(user) : auth;
+		}
 
-		//}
+		private static string GetAuthFromApi(GA.Lib.AdWordsUser user)
+		{
+			string auth;
+			try
+			{
+				auth = new AuthToken(
+					   (user.Config as GA.Lib.AdWordsAppConfig),
+					   GA.Lib.AdWordsSoapClient.SERVICE_NAME,
+					   (user.Config as GA.Lib.AdWordsAppConfig).Email,
+					   (user.Config as GA.Lib.AdWordsAppConfig).Password).GetToken();
+			}
+			catch (Exception ex)
+			{
+				Log.Write("Error while trying to create new Auth key", ex);
+				throw new Exception("Error while trying to create new Auth key", ex);
+			}
+			return auth;
 
-		//private void SetAuthToken(string mccEmail, string auth, string authConnectionString)
-		//{
-		//    SqlConnection connection;
+		}
 
-		//    if (string.IsNullOrEmpty(authConnectionString))
-		//    {
-		//        connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
-		//    }
-		//    else
-		//        connection = new SqlConnection(authConnectionString);
+		private static void SaveAuthTokenInDB(string mccEmail, string authToken)
+		{
+			SqlConnection connection;
 
-		//    //	connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+			connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "MCC_Auth"));
 
-		//    try
-		//    {
-		//        using (connection)
-		//        {
-		//            SqlCommand cmd = DataManager.CreateCommand(@"SetGoogleMccAuth(@MccEmail:Nvarchar,@AuthToken:Nvarchar)", System.Data.CommandType.StoredProcedure);
-		//            cmd.Connection = connection;
-		//            connection.Open();
-		//            cmd.Parameters["@MccEmail"].Value = mccEmail;
-		//            cmd.Parameters["@AuthToken"].Value = auth;
-		//            cmd.ExecuteNonQuery();
-		//        }
-		//    }
-		//    catch (Exception ex)
-		//    {
-		//        throw new Exception("Error while trying to set a new Auth key", ex);
-		//    }
+			try
+			{
+				using (connection)
+				{
+					SqlCommand cmd = DataManager.CreateCommand(@"SetGoogleMccAuth(@MccEmail:Nvarchar,@AuthToken:Nvarchar)", System.Data.CommandType.StoredProcedure);
+					cmd.Connection = connection;
+					connection.Open();
+					cmd.Parameters["@MccEmail"].Value = mccEmail;
+					cmd.Parameters["@AuthToken"].Value = authToken;
+					cmd.ExecuteNonQuery();
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("Error while trying to set a new Auth key", ex);
+			}
 
-		//}
+		}
 
-		//public string GetAuthFromDB(string mccEmail, string authConnectionString, out string mccPassword)
-		//{
-		//    string auth = "";
-		//    mccPassword = "";
-		//    SqlConnection connection;
+		private static string GetAuthFromDB(string mccEmail, out string mccPassword)
+		{
+			string auth = "";
+			mccPassword = "";
+			SqlConnection connection;
 
-		//    if (string.IsNullOrEmpty(authConnectionString))
-		//    {
-		//        connection = new SqlConnection(AppSettings.GetConnectionString(this, "MCC_Auth"));
-		//    }
-		//    else
-		//        connection = new SqlConnection(authConnectionString);
+			connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "MCC_Auth"));
+			try
+			{
+				using (connection)
+				{
+					SqlCommand cmd = DataManager.CreateCommand(@"GetGoogleMccAuth(@MccEmail:Nvarchar)", System.Data.CommandType.StoredProcedure);
+					cmd.Connection = connection;
+					connection.Open();
+					cmd.Parameters["@MccEmail"].Value = mccEmail;
 
-		//    //	connection = new SqlConnection("Data Source=shayba-pc; Database=Edge_System; User ID=sa; Password=sbarchen");
+					using (SqlDataReader reader = cmd.ExecuteReader())
+					{
+						while (reader.Read())
+						{
+							mccPassword = Encryptor.Dec(reader[0].ToString());
+							auth = reader[1].ToString();
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("Error while trying to get auth key from DB", ex);
+			}
 
-		//    try
-		//    {
-		//        using (connection)
-		//        {
-		//            SqlCommand cmd = DataManager.CreateCommand(@"GetGoogleMccAuth(@MccEmail:Nvarchar)", System.Data.CommandType.StoredProcedure);
-		//            cmd.Connection = connection;
-		//            connection.Open();
-		//            cmd.Parameters["@MccEmail"].Value = mccEmail;
-
-		//            using (SqlDataReader reader = cmd.ExecuteReader())
-		//            {
-		//                while (reader.Read())
-		//                {
-		//                    mccPassword = Encryptor.Dec(reader[0].ToString());
-		//                    auth = reader[1].ToString();
-		//                }
-		//            }
-		//        }
-		//    }
-		//    catch (Exception ex)
-		//    {
-		//        throw new Exception("Error while trying to get auth key from DB", ex);
-		//    }
-
-		//    return auth;
-		//}
-
-
-
+			return auth;
+		}
 
 	}
 
@@ -237,7 +234,6 @@ namespace Edge.Services.Google.AdWords
 		public static string DEFAULT = "DEFAULT";
 		public static string CONVERSION = "CONVERSION";
 	}
-	
 
 	public static class GoogleStaticReportFields
 	{
@@ -258,7 +254,7 @@ namespace Edge.Services.Google.AdWords
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 
-		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status"};
+		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "CriteriaParameters", "Domain" };
 		#endregion Reports fields
