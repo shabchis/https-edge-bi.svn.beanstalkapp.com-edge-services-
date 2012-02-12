@@ -56,7 +56,7 @@ namespace Edge.Services.Google.AdWords
 
 			#region Must Have Params
 
-			//Get MCC Email
+			//Get MCC Paramerters
 			this.Delivery.Parameters["DeveloperToken"] = this.Instance.Configuration.Options["DeveloperToken"];
 			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
 			this.Delivery.Parameters["MccPass"] = Core.Utilities.Encryptor.Dec(this.Instance.Configuration.Options["Adwords.MccPass"].ToString());
@@ -69,7 +69,7 @@ namespace Edge.Services.Google.AdWords
 			{
 				if (Enum.IsDefined(typeof(GA.ReportDefinitionReportType), reportTypeName))
 					reportTypes.Add((GA.ReportDefinitionReportType)Enum.Parse(typeof(GA.ReportDefinitionReportType), reportTypeName, true));
-				else throw new Exception("Undefined ReportType");
+				else throw new Exception("Undefined Google Adwords ReportType");
 			}
 			this.Delivery.Parameters["reportTypes"] = reportTypes;
 

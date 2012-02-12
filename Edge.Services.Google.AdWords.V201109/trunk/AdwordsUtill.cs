@@ -116,7 +116,7 @@ namespace Edge.Services.Google.AdWords
 										(user.Config as GA.Lib.AdWordsAppConfig).Email,
 										out pass
 										);
-			
+
 			//Setting Adwords Password
 			(user.Config as GA.Lib.AdWordsAppConfig).Password = pass;
 
@@ -256,7 +256,8 @@ namespace Edge.Services.Google.AdWords
 
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
-		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "CriteriaParameters", "Domain" };
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
+																			 "CriteriaParameters", "Domain" };
 		#endregion Reports fields
 
 		public static Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>>()
