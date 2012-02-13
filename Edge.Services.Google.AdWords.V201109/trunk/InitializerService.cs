@@ -95,7 +95,7 @@ namespace Edge.Services.Google.AdWords
 			{
 				this.Delivery.Parameters["includeConversionTypes"] = includeConversionTypes;
 			}
-			this.Delivery.Parameters["includeConversionTypes"] = false; // deafult
+			this.Delivery.Parameters["includeConversionTypes"] =  false; // deafult
 
 			//Check for includeDisplaytData
 			string includeDisplaytData;
@@ -119,7 +119,7 @@ namespace Edge.Services.Google.AdWords
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
-				if (Boolean.Parse(includeConversionTypes)) // if AD Performance With conversion type is required 
+				if (Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString())) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv";
@@ -128,7 +128,7 @@ namespace Edge.Services.Google.AdWords
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
 				}
-				if (Boolean.Parse(includeDisplaytData)) // if AD Performance With conversion type is required 
+				if (Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString())) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();
 					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT];

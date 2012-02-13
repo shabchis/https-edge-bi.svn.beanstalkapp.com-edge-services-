@@ -239,6 +239,7 @@ namespace Edge.Services.Google.AdWords
 	{
 
 		#region Supported Reports fields
+
 		static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
@@ -247,6 +248,7 @@ namespace Edge.Services.Google.AdWords
 		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
 		                                                   "AdNetworkType1"
 		                                               };
+
 		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
 
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
@@ -256,8 +258,13 @@ namespace Edge.Services.Google.AdWords
 
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
-		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
-																			 "CriteriaParameters", "Domain" };
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id","Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
+																			 "CriteriaParameters", "Domain","AdNetworkType1","AdNetworkType2","AverageCpc",
+																			 "AverageCpm","ConversionsManyPerClick","Conversions","CostPerConversion","Ctr","IsAutoOptimized",
+																			 "TotalConvValue","ViewThroughConversions","ConversionValue"
+																		 };
+
+		
 		#endregion Reports fields
 
 		public static Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>>()
