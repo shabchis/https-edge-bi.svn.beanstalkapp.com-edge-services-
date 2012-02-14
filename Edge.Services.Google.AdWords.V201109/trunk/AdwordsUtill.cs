@@ -22,8 +22,7 @@ namespace Edge.Services.Google.AdWords
 	{
 
 
-		private const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201109";
-		private static GA.v201109.ReportDefinition _definition;
+		public const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201109";
 
 		public static GA.v201109.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate)
 		{
@@ -43,7 +42,7 @@ namespace Edge.Services.Google.AdWords
 
 
 			definition.selector = selector;
-			return _definition = definition;
+			return definition;
 		}
 
 		public static GA.v201109.Selector GetNewSelector(string startDate, string endDate, GA.v201109.ReportDefinitionReportType reportType, string reportFieldsType)
@@ -74,27 +73,7 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		public static Dictionary<string, string> GetRequestParams(GA.Lib.AdWordsUser user, bool returnMoneyInMicros = true)
-		{
-			Dictionary<string, string> requestParams = new Dictionary<string, string>();
-
-			GA.Lib.AdWordsAppConfig config = (GA.Lib.AdWordsAppConfig)user.Config;
-
-			requestParams.Add("DownloadURL", string.Format(ADHOC_REPORT_URL_FORMAT, config.AdWordsApiServer));
-			requestParams.Add("PostBody", "__rdxml=" + HttpUtility.UrlEncode(ConvertDefinitionToXml(_definition)));
-			requestParams.Add("ContentType", "application/x-www-form-urlencoded");
-			requestParams.Add("Method", "POST");
-			requestParams.Add("ClientEmail", "clientEmail: " + config.ClientEmail);
-			requestParams.Add("ClientCustomerId", "clientCustomerId: " + config.ClientCustomerId);
-			requestParams.Add("EnableGzipCompression", config.EnableGzipCompression.ToString());
-			requestParams.Add("ReturnMoneyInMicros", "returnMoneyInMicros: " + returnMoneyInMicros.ToString().ToLower());
-			requestParams.Add("developerToken", "developerToken: " + config.DeveloperToken);
-
-			return requestParams;
-
-		}
-
-		private static string ConvertDefinitionToXml(GA.v201109.ReportDefinition definition)
+		public static string ConvertDefinitionToXml(GA.v201109.ReportDefinition definition)
 		{
 			string xml = SerializationUtilities.SerializeAsXmlText(definition).Replace(
 				"ReportDefinition", "reportDefinition");
@@ -108,17 +87,14 @@ namespace Edge.Services.Google.AdWords
 			return doc.OuterXml;
 		}
 
-		private static string GetAuthToken(GA.Lib.AdWordsUser user)
+		public static string GetAuthToken(GA.Lib.AdWordsUser user, bool generateNew = false)
 		{
 
 			string pass;
-			string auth = GetAuthFromDB(
-										(user.Config as GA.Lib.AdWordsAppConfig).Email,
-										out pass
-										);
+			string auth = string.Empty;
 
-			//Setting Adwords Password
-			(user.Config as GA.Lib.AdWordsAppConfig).Password = pass;
+			if (!generateNew)
+				auth = GetAuthFromDB((user.Config as GA.Lib.AdWordsAppConfig).Email, out pass);
 
 			return string.IsNullOrEmpty(auth) ? GetAuthFromApi(user) : auth;
 		}
@@ -133,6 +109,8 @@ namespace Edge.Services.Google.AdWords
 					   GA.Lib.AdWordsSoapClient.SERVICE_NAME,
 					   (user.Config as GA.Lib.AdWordsAppConfig).Email,
 					   (user.Config as GA.Lib.AdWordsAppConfig).Password).GetToken();
+
+				SaveAuthTokenToDB((user.Config as GA.Lib.AdWordsAppConfig).Email, auth);
 			}
 			catch (Exception ex)
 			{
@@ -143,7 +121,7 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		private static void SaveAuthTokenInDB(string mccEmail, string authToken)
+		private static void SaveAuthTokenToDB(string mccEmail, string authToken)
 		{
 			SqlConnection connection;
 
@@ -264,7 +242,7 @@ namespace Edge.Services.Google.AdWords
 																			 "TotalConvValue","ViewThroughConversions","ConversionValue"
 																		 };
 
-		
+
 		#endregion Reports fields
 
 		public static Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>>()

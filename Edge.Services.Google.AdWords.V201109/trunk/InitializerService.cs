@@ -22,15 +22,15 @@ namespace Edge.Services.Google.AdWords
 
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
 				throw new Exception("Missing Configuration Param , KeywordContentId");
-			
+
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.MccEmail"]))
 				throw new Exception("Missing Configuration Param , Adwords.MccEmail");
 
-			if (String.IsNullOrEmpty (this.Instance.Configuration.Options["Adwords.ClientID"]))
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.ClientID"]))
 				throw new Exception("Missing Configuration Param , Adwords.ClientID");
 
 			//checking for conflicts 
-			this.Delivery.Signature =Delivery.CreateSignature( String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
+			this.Delivery.Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
@@ -46,12 +46,12 @@ namespace Edge.Services.Google.AdWords
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
-			
+
 			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 			this.Delivery.TargetPeriod = this.TargetPeriod;
-            this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
 			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
@@ -87,7 +87,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				this.Delivery.Parameters["includeZeroImpression"] = includeZeroImpression;
 			}
-			this.Delivery.Parameters["includeZeroImpression"] = false;
+			else
+				this.Delivery.Parameters["includeZeroImpression"] = false;
 
 			//Check for includeConversionTypes
 			string includeConversionTypes;
@@ -95,7 +96,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				this.Delivery.Parameters["includeConversionTypes"] = includeConversionTypes;
 			}
-			this.Delivery.Parameters["includeConversionTypes"] =  false; // deafult
+			else
+				this.Delivery.Parameters["includeConversionTypes"] = false; // deafult
 
 			//Check for includeDisplaytData
 			string includeDisplaytData;
@@ -103,7 +105,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				this.Delivery.Parameters["includeDisplaytData"] = includeDisplaytData;
 			}
-			this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
+			else
+				this.Delivery.Parameters["includeDisplaytData"] = false; // deafult
 
 			#endregion
 
