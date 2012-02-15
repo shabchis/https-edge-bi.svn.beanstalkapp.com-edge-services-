@@ -71,70 +71,64 @@ namespace Edge.Services.Google.AdWords
 						};
 
 				AdWordsUser user = new AdWordsUser(headers);
-
+				bool firstCheck = true;
 				//Downloading Files
 				foreach (DeliveryFile file in files)
 				{
-					if (file.Name.ToString().Equals(GoogleStaticReportsNamesUtill._reportNames[ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]))
-					{
 						//Creating Report Definition
 						ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate);
 
-						string path = SetTargetLocation(file.CreateLocation());
-						file.Location = path;
-
+						//Getting AuthToken
 						(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user);
-					//	new ReportUtilities(user).DownloadClientReport(definition, path);
+						//new ReportUtilities(user).DownloadClientReport(definition, path);
 
 						file.SourceUrl = string.Format(AdwordsUtill.ADHOC_REPORT_URL_FORMAT, (user.Config as AdWordsAppConfig).AdWordsApiServer);
 
 						//Validate Report
-						string error = string.Empty;
-						if (!ValidateReport(file, user, definition, out error))
+						if (firstCheck)
 						{
-							if (error.Contains(AuthenticationErrorReason.GOOGLE_ACCOUNT_COOKIE_INVALID.ToString()))
+							string error = string.Empty;
+							if (!ValidateReport(file, user, definition, out error))
 							{
-								//Renew Auth
-								(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user, generateNew: true);
+								//CHEKING FOR INVALID AUTHTOKEN
+								if (error.Contains(AuthenticationErrorReason.GOOGLE_ACCOUNT_COOKIE_INVALID.ToString()))
+								{
+									//RENEWING AUTHTOKEN
+									(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user, generateNew: true);
+								}
+								else throw new Exception("Google Adwords API Error: " + error);
 							}
-							else throw new Exception("Google Adwords API Error: " + error);
+							firstCheck = !firstCheck;
 						}
-						//DownloadFile(file, user);
-					}
+						DownloadFile(file, user, definition);
+					
 				}
 
 			}
+
 			_batchDownloadOperation.Start();
 			_batchDownloadOperation.Wait();
-			_batchDownloadOperation.EnsureSuccess();
 
-			//TO DO : GET ERRORS IN CASE FAILED TO RETRIEVE FILES
+			_batchDownloadOperation.EnsureSuccess(); //INCASE OF GENERAL EXCEPTION OPEN DELIVERY FILE HAS HTML AND VIEW INNER ERROR
 
 			this.Delivery.Save();
-
-			//foreach (DeliveryFileDownloadOperation operation in _batchDownloadOperation)
-			//{
-			//    /**/
-			//}
 
 			return Core.Services.ServiceOutcome.Success;
 
 		}
 
+		//protected string SetTargetLocation(string targetLocation)
+		//{
+		//    Uri uri;
+		//    uri = FileManager.GetRelativeUri(targetLocation);
 
+		//    // Get full path
+		//    string fullPath = Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), uri.ToString());
+		//    if (!Directory.Exists(Path.GetDirectoryName(fullPath)))
+		//        Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
-		protected string SetTargetLocation(string targetLocation)
-		{
-			Uri uri;
-			uri = FileManager.GetRelativeUri(targetLocation);
-
-			// Get full path
-			string fullPath = Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), uri.ToString());
-			if (!Directory.Exists(Path.GetDirectoryName(fullPath)))
-				Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-
-			return fullPath;
-		}
+		//    return fullPath;
+		//}
 
 		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
 		{
@@ -148,11 +142,10 @@ namespace Edge.Services.Google.AdWords
 			WebRequest request = CreateRequest(file, user, reportDefinition);
 			//var response = (HttpWebResponse) request.GetResponse();
 			FileDownloadOperation operation = file.Download(request);
-			operation.RequestBody = AdwordsUtill.ConvertDefinitionToXml(reportDefinition);
+			string postBody = "__rdxml=" + HttpUtility.UrlEncode(AdwordsUtill.ConvertDefinitionToXml(reportDefinition));
+			operation.RequestBody = "";
 
 			_batchDownloadOperation.Add(operation);
-
-
 
 		}
 
@@ -167,7 +160,7 @@ namespace Edge.Services.Google.AdWords
 
 			if (!string.IsNullOrEmpty((user.Config as AdWordsAppConfig).ClientCustomerId))
 			{
-				request.Headers.Add("clientCustomerId: "+(user.Config as AdWordsAppConfig).ClientCustomerId);
+				request.Headers.Add("clientCustomerId: " + (user.Config as AdWordsAppConfig).ClientCustomerId);
 			}
 
 			request.ContentType = "application/x-www-form-urlencoded";
@@ -230,7 +223,7 @@ namespace Edge.Services.Google.AdWords
 					}
 				}
 			}
-						
+
 			return true;
 		}
 		private string ConvertPreviewBytesToString(byte[] previewBytes)
