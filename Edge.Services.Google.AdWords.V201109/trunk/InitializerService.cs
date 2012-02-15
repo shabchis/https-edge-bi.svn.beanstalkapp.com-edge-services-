@@ -58,7 +58,7 @@ namespace Edge.Services.Google.AdWords
 
 			//Get MCC Paramerters
 			this.Delivery.Parameters["DeveloperToken"] = this.Instance.Configuration.Options["DeveloperToken"];
-			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
+			//this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
 			this.Delivery.Parameters["MccPass"] = Core.Utilities.Encryptor.Dec(this.Instance.Configuration.Options["Adwords.MccPass"].ToString());
 			this.Delivery.Parameters["KeywordContentId"] = this.Instance.Configuration.Options["KeywordContentId"];
 

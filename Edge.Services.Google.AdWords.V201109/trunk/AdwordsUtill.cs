@@ -93,8 +93,13 @@ namespace Edge.Services.Google.AdWords
 			string pass;
 			string auth = string.Empty;
 
-			if (!generateNew)
-				auth = GetAuthFromDB((user.Config as GA.Lib.AdWordsAppConfig).Email, out pass);
+			auth = GetAuthFromDB((user.Config as GA.Lib.AdWordsAppConfig).Email, out pass);
+
+			//Set User Password
+			(user.Config as GA.Lib.AdWordsAppConfig).Password = pass;
+
+			if (generateNew) 
+				auth = GetAuthFromApi(user);
 
 			return string.IsNullOrEmpty(auth) ? GetAuthFromApi(user) : auth;
 		}

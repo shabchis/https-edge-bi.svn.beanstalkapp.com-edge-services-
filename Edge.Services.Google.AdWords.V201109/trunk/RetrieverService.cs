@@ -66,8 +66,8 @@ namespace Edge.Services.Google.AdWords
 							{"UserAgent" , FileManager.UserAgentString},
 							{"EnableGzipCompression","true"},
 							{"ClientCustomerId",clientId},
-							{"Email",this.Delivery.Parameters["MccEmail"].ToString()},
-							{"Password",this.Delivery.Parameters["MccPass"].ToString()}
+							{"Email",this.Delivery.Parameters["MccEmail"].ToString()}
+							//{"Password",this.Delivery.Parameters["MccPass"].ToString()}
 						};
 
 				AdWordsUser user = new AdWordsUser(headers);
@@ -117,39 +117,18 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		//protected string SetTargetLocation(string targetLocation)
-		//{
-		//    Uri uri;
-		//    uri = FileManager.GetRelativeUri(targetLocation);
-
-		//    // Get full path
-		//    string fullPath = Path.Combine(AppSettings.Get(typeof(FileManager), "RootPath"), uri.ToString());
-		//    if (!Directory.Exists(Path.GetDirectoryName(fullPath)))
-		//        Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-
-		//    return fullPath;
-		//}
-
-		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
-		{
-			BatchDownloadOperation DownloadOperation = (BatchDownloadOperation)sender;
-			this.ReportProgress(DownloadOperation.Progress);
-		}
-
 		private void DownloadFile(DeliveryFile file, AdWordsUser user, ReportDefinition reportDefinition)
 		{
 
-			WebRequest request = CreateRequest(file, user, reportDefinition);
-			//var response = (HttpWebResponse) request.GetResponse();
+			WebRequest request = CreateAdwordsReportRequest(file, user, reportDefinition);
 			FileDownloadOperation operation = file.Download(request);
 			string postBody = "__rdxml=" + HttpUtility.UrlEncode(AdwordsUtill.ConvertDefinitionToXml(reportDefinition));
-			operation.RequestBody = "";
+			operation.RequestBody = postBody;
 
 			_batchDownloadOperation.Add(operation);
 
 		}
-
-		private WebRequest CreateRequest(DeliveryFile file, AdWordsUser user, ReportDefinition reportDefinition)
+		private WebRequest CreateAdwordsReportRequest(DeliveryFile file, AdWordsUser user, ReportDefinition reportDefinition)
 		{
 			WebRequest request = HttpWebRequest.Create(file.SourceUrl);
 			//request.Timeout = 100000;
@@ -186,12 +165,10 @@ namespace Edge.Services.Google.AdWords
 			request.Headers.Add("developerToken: " + (user.Config as AdWordsAppConfig).DeveloperToken);
 			return request;
 		}
-
-
 		private bool ValidateReport(DeliveryFile file, AdWordsUser user, ReportDefinition reportDefinition, out string ErrorMsg)
 		{
 			ErrorMsg = string.Empty;
-			WebRequest request = CreateRequest(file, user, reportDefinition);
+			WebRequest request = CreateAdwordsReportRequest(file, user, reportDefinition);
 			request.Proxy = null;
 			request.Headers.Add("validateOnly: true"); // Add Validate
 
@@ -211,7 +188,7 @@ namespace Edge.Services.Google.AdWords
 			catch (WebException we)
 			{
 				response = we.Response;
-				byte[] preview = CopyStreamWithPreview(response.GetResponseStream(), MAX_ERROR_LENGTH);
+				byte[] preview = ConvertStreamToByteArray(response.GetResponseStream(), MAX_ERROR_LENGTH);
 				string previewString = ConvertPreviewBytesToString(preview);
 
 				if (!string.IsNullOrEmpty(previewString))
@@ -246,7 +223,7 @@ namespace Edge.Services.Google.AdWords
 				out bytesUsed, out charsUsed, out completed);
 			return new string(charArray, 0, charsUsed);
 		}
-		private static byte[] CopyStreamWithPreview(Stream sourceStream, int maxPreviewBytes)
+		private static byte[] ConvertStreamToByteArray(Stream sourceStream, int maxPreviewBytes)
 		{
 			if (sourceStream == null)
 			{
@@ -268,6 +245,11 @@ namespace Edge.Services.Google.AdWords
 				}
 			}
 			return byteArray.ToArray();
+		}
+		void _batchDownloadOperation_Progressed(object sender, EventArgs e)
+		{
+			BatchDownloadOperation DownloadOperation = (BatchDownloadOperation)sender;
+			this.ReportProgress(DownloadOperation.Progress);
 		}
 	}
 }
