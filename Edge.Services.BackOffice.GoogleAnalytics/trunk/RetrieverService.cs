@@ -62,7 +62,7 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 			}
 
 
-
+			Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}
 
@@ -110,8 +110,23 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 					Delivery.Parameters["ClientSecret"],
 					Delivery.Parameters["Redirect_URI"]));
 			}
+			HttpWebResponse myResponse;
+			try
+			{
+				myResponse = (HttpWebResponse)myRequest.GetResponse();
 
-			HttpWebResponse myResponse = (HttpWebResponse)myRequest.GetResponse();
+			}
+			catch (WebException webEx)
+			{
+				using (StreamReader reader=new StreamReader(webEx.Response.GetResponseStream()))
+				{
+					throw new Exception(reader.ReadToEnd());
+					
+				}
+				
+				
+			}
+			
 			Stream responseBody = myResponse.GetResponseStream();
 
 			Encoding encode = System.Text.Encoding.GetEncoding("utf-8");
@@ -119,6 +134,7 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 
 			StreamReader readStream = new StreamReader(responseBody, encode);
 			Auth2 oAuth2 = (Auth2)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Auth2));
+			oAuth2.updateTime = DateTime.Now;
 			oAuth2.Save(Delivery.Parameters["ClientID"].ToString());
 			//return string itself (easier to work with)
 			return oAuth2;
