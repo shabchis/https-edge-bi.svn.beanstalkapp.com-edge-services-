@@ -166,11 +166,13 @@ namespace Edge.Services.SegmentMetrics
 				});
 			}
 		}
+		protected override void OnEndImport()
+		{
+			_bulkMetrics.Flush();
+			_bulkBoSegment.Flush();
+		}
 		/*=========================*/
 		#endregion
-
-		
-
 		
 		#region Prepare
 		/*=========================*/
