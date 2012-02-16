@@ -20,10 +20,9 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 			 this.Delivery = this.NewDelivery();
 
 			 // This is for finding conflicting services
-			 this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}-{2}]",
-				 this.Instance.AccountID,
-				 backOfficeChannel,
-				 this.TargetPeriod.ToAbsolute()));
+			 this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
+			   this.Instance.AccountID,
+			   this.TargetPeriod.ToAbsolute()));
 
 			 // Create an import manager that will handle rollback, if necessary
 			 var importManager = new SegmentMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
