@@ -126,6 +126,7 @@ namespace Edge.Services.Google.AdWords
 					//Handelling conversion
 					if (Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString())) // if AD Performance With conversion type is required 
 					{
+						bool addFile = true;
 						DeliveryFile conversionFile = new DeliveryFile();
 						conversionFile.Name = GoogleStaticReportsNamesUtill._reportNames[reportType] + "_Conv";
 						switch (reportType)
@@ -137,11 +138,16 @@ namespace Edge.Services.Google.AdWords
 							case GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT:
 								conversionFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT.ToString());
 								break;
+							default: addFile = false; break;
+						}
+
+						if (addFile)
+						{
+							conversionFile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.CONVERSION);
+							conversionFile.Parameters.Add("AdwordsClientID", clientId);
+							this.Delivery.Files.Add(conversionFile);
 						}
 						
-						conversionFile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.CONVERSION);
-						conversionFile.Parameters.Add("AdwordsClientID", clientId);
-						this.Delivery.Files.Add(conversionFile);
 					}
 					
 				}
