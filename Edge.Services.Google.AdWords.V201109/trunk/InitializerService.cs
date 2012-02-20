@@ -58,8 +58,8 @@ namespace Edge.Services.Google.AdWords
 
 			//Get MCC Paramerters
 			this.Delivery.Parameters["DeveloperToken"] = this.Instance.Configuration.Options["DeveloperToken"];
-			//this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
-			this.Delivery.Parameters["MccPass"] = Core.Utilities.Encryptor.Dec(this.Instance.Configuration.Options["Adwords.MccPass"].ToString());
+			this.Delivery.Parameters["MccEmail"] = this.Instance.Configuration.Options["Adwords.MccEmail"];
+			//this.Delivery.Parameters["MccPass"] = Core.Utilities.Encryptor.Dec(this.Instance.Configuration.Options["Adwords.MccPass"].ToString());
 			this.Delivery.Parameters["KeywordContentId"] = this.Instance.Configuration.Options["KeywordContentId"];
 
 			// Get Report types
@@ -121,16 +121,31 @@ namespace Edge.Services.Google.AdWords
 					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
+
+					
+					//Handelling conversion
+					if (Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString())) // if AD Performance With conversion type is required 
+					{
+						DeliveryFile conversionFile = new DeliveryFile();
+						conversionFile.Name = GoogleStaticReportsNamesUtill._reportNames[reportType] + "_Conv";
+						switch (reportType)
+						{
+							case GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT:
+								conversionFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT.ToString());
+								break;
+
+							case GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT:
+								conversionFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+								break;
+						}
+						
+						conversionFile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.CONVERSION);
+						conversionFile.Parameters.Add("AdwordsClientID", clientId);
+						this.Delivery.Files.Add(conversionFile);
+					}
+					
 				}
-				if (Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString())) // if AD Performance With conversion type is required 
-				{
-					DeliveryFile file = new DeliveryFile();
-					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv";
-					file.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT.ToString());
-					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.CONVERSION);
-					file.Parameters.Add("AdwordsClientID", clientId);
-					this.Delivery.Files.Add(file);
-				}
+			
 				if (Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString())) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();

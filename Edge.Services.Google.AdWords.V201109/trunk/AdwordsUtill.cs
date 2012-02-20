@@ -241,11 +241,13 @@ namespace Edge.Services.Google.AdWords
 
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
-		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id","Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = {"Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
 																			 "CriteriaParameters", "Domain","AdNetworkType1","AdNetworkType2","AverageCpc",
 																			 "AverageCpm","ConversionsManyPerClick","Conversions","CostPerConversion","Ctr","IsAutoOptimized",
 																			 "TotalConvValue","ViewThroughConversions","ConversionValue"
 																		 };
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };
+																		 
 
 
 		#endregion Reports fields
@@ -263,8 +265,15 @@ namespace Edge.Services.Google.AdWords
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS}}
 			},
 			{GA.v201109.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS}}
+				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
+													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
+				}
 			},
+			{GA.v201109.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
+				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
+													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
+				}
+			}
 		};
 	}
 }
