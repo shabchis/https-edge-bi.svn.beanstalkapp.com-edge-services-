@@ -38,7 +38,7 @@ namespace Edge.Services.Google.AdWords
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
-			_batchDownloadOperation = new BatchDownloadOperation() { MaxConcurrent = 5 };
+			_batchDownloadOperation = new BatchDownloadOperation() { MaxConcurrent = 1 };
 			_batchDownloadOperation.Progressed += new EventHandler(_batchDownloadOperation_Progressed);
 			_filesInProgress = this.Delivery.Files.Count;
 			bool includeZeroImpression = Boolean.Parse(this.Delivery.Parameters["includeZeroImpression"].ToString());
