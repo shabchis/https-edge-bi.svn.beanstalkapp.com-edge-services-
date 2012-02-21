@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Edge.Services.Metrics.Validations;
 using Edge.Data.Objects;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
 using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Services.Common.Validation;
 
 namespace Edge.Services.SegmentMetrics.Validations
 {
