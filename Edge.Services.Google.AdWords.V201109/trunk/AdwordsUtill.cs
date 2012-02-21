@@ -207,6 +207,7 @@ namespace Edge.Services.Google.AdWords
 			{GA.v201109.ReportDefinitionReportType.AD_EXTENSIONS_PERFORMANCE_REPORT, "AD_EXTENSIONS_PERF"},
 			{GA.v201109.ReportDefinitionReportType.DESTINATION_URL_REPORT, "DEST_URL_REP"},
 			{GA.v201109.ReportDefinitionReportType.CREATIVE_CONVERSION_REPORT, "CREATIVE_CONV_REP"},
+			{GA.v201109.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
 			{GA.v201109.ReportDefinitionReportType.UNKNOWN, ""}
 		};
 
@@ -247,6 +248,7 @@ namespace Edge.Services.Google.AdWords
 																			 "TotalConvValue","ViewThroughConversions","ConversionValue"
 																		 };
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };
+		static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id","CriteriaDestinationUrl","ConversionsManyPerClick", "ConversionCategoryName" };
 																		 
 
 
