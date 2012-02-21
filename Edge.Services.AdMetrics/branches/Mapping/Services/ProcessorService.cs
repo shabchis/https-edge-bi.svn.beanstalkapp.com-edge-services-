@@ -37,14 +37,15 @@ namespace Edge.Services.AdMetrics
 				compression = FileCompression.None;
 			*/
 
-			MappingConfiguration mappingConfig = MappingConfiguration.Load("conduit-mappings.xml");
-
-			mappingConfig.ExternalMethods.Add("GetChannelByName", new Func<string,string>(channelName => "whats up"));
-
-			mappingConfig.Initialize();
+			var mappingConfig = new MappingConfiguration();
+			mappingConfig.ExternalMethods.Add("GetChannelByName", new Func<string, string>(channelName => "whats up"));
+			mappingConfig.Load("conduit-mappings.xml");
 
 			MappingContainer adMappings = mappingConfig.Objects[typeof(Ad)];
 			MappingContainer metricsMappings = mappingConfig.Objects[typeof(AdMetricsUnit)];
+
+			Ad ad = new Ad();
+			adMappings.Apply(ad);
 
 			// ------------------------------------------
 			
