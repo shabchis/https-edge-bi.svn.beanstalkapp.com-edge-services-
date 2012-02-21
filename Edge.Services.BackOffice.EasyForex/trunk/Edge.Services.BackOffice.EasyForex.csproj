@@ -48,6 +48,7 @@
     <Compile Include="InitializerService.cs" />
     <Compile Include="ProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Properties\AssemblyInfo.cs.template" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -70,19 +71,19 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-	<Target Name="BeforeCompile">
-		<SvnVersion LocalPath=".">
-			<Output TaskParameter="Revision" PropertyName="SvnRevision" />
-		</SvnVersion>
-		<FormatVersion Version="2.9.0.%2a" Revision="$(SvnRevision)">
-			<Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
-		</FormatVersion>
-	</Target>
-	<PropertyGroup>
-		<PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
-		<PostBuildEvent>
-		</PostBuildEvent>
-	</PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <Target Name="BeforeCompile">
+    <SvnVersion LocalPath=".">
+      <Output TaskParameter="Revision" PropertyName="SvnRevision" />
+    </SvnVersion>
+    <FormatVersion Version="2.9.0.%2a" Revision="$(SvnRevision)">
+      <Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
+    </FormatVersion>
+  </Target>
+  <PropertyGroup>
+    <PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project>
