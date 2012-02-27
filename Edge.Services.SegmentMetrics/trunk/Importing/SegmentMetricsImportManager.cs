@@ -375,7 +375,7 @@ namespace Edge.Services.SegmentMetrics
 					{
 						deliveries.Add(Delivery.Get(Guid.Parse(existDelivery)));
 					}
-					throw new DeliveryConflictException(string.Format("deliveries with the same signature already comitted in database\n deliveries:\n {0}:", deliveryIDsPerSignature)) { ConflictingDeliveries = deliveries.ToArray() };
+					throw new DeliveryConflictException(string.Format("Deliveries with the same signature are already committed in the database\n Deliveries:\n {0}:", deliveryIDsPerSignature)) { ConflictingDeliveries = deliveries.ToArray() };
 
 
 
