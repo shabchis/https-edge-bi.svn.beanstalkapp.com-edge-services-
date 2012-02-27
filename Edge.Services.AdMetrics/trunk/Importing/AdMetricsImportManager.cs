@@ -638,7 +638,7 @@ namespace Edge.Services.AdMetrics
 					{
 						deliveries.Add(Delivery.Get(Guid.Parse(existDelivery)));
 					}
-					throw new DeliveryConflictException(string.Format("deliveries with the same signature already comitted in database\n deliveries:\n {0}:", deliveryIDsPerSignature)) { ConflictingDeliveries = deliveries.ToArray() };
+					throw new DeliveryConflictException(string.Format("Deliveries with the same signature are already committed in the database\n Deliveries:\n {0}:", deliveryIDsPerSignature)) { ConflictingDeliveries = deliveries.ToArray() };
 
 
 
@@ -700,7 +700,7 @@ namespace Edge.Services.AdMetrics
 			if (prepareEntries != null && prepareEntries.Count() > 0)
 				prepareEntry = (DeliveryHistoryEntry)prepareEntries.Last();
 			if (prepareEntry == null)
-				throw new Exception(String.Format("The delivery '{0}' has never been comitted so it cannot be rolled back.", guid));
+				throw new Exception(String.Format("The delivery '{0}' has never been committed so it cannot be rolled back.", guid));
 
 			_rollbackCommand = _rollbackCommand ?? DataManager.CreateCommand(this.Options.SqlRollbackCommand, CommandType.StoredProcedure);
 			_rollbackCommand.Connection = _sqlConnection;

@@ -91,7 +91,7 @@ namespace Edge.Services.AdMetrics
 				{
 					try
 					{
-						Edge.Core.Utilities.Log.Write(string.Format("{0} Start RoleBack", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+						Edge.Core.Utilities.Log.Write(string.Format("{0} Start Rollback", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
 					}
 					catch (Exception)
 					{
@@ -102,7 +102,7 @@ namespace Edge.Services.AdMetrics
 
 					try
 					{
-						Edge.Core.Utilities.Log.Write(string.Format("{0} End RoleBack", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
+						Edge.Core.Utilities.Log.Write(string.Format("{0} End Rollback", DateTime.Now.ToString("dd-MM-yyyy HH:mm")), Core.Utilities.LogMessageType.Information);
 					}
 					catch (Exception)
 					{
