@@ -38,7 +38,8 @@ namespace Edge.Services.AdMetrics
 			*/
 
 			var mappingConfig = new MappingConfiguration();
-			mappingConfig.ExternalMethods.Add("GetChannelByName", new Func<string, string>(channelName => "whats up"));
+			mappingConfig.ExternalMethods.Add("GetChannelByName", new Func<string, Channel>(channelName => new Channel() { Name = channelName }));
+			mappingConfig.OnFieldRead = field => "chinese";
 			mappingConfig.Load("conduit-mappings.xml");
 
 			MappingContainer adMappings = mappingConfig.Objects[typeof(Ad)];

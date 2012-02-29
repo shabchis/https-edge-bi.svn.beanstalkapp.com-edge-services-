@@ -5,7 +5,7 @@
 	<Using Namespace="Edge.Data.Objects.{0}, Edge.Data.Pipeline"/>
 
 	<Object Type="Ad">
-		<Map To="Campaign.Channel" Value='chicken and {GetChannelByName("AdMob")}, yes sir ({29}) my dear'/>
+		<Map To="Campaign.Channel" Value='{GetChannelByName("AdMob")}'/>
 		<!--<Map To="Campaign.Account.ID" Value="{Instance.Configuration.AccountID}"/>-->
 		<Map To="Creatives[]::TextCreative">
 			<Map To="Text" Field="Desc1"/>
