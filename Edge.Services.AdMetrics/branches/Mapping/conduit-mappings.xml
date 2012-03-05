@@ -5,8 +5,40 @@
 	<Using Namespace="Edge.Data.Objects.{0}, Edge.Data.Pipeline"/>
 
 	<Object Type="Ad">
+		<Map To="Campaign">
+			<Map To="Name" Field="Campaign"/>
+			<Map To="Account" Field="AccountName" Value="{GetAccount(AccountName)}"/>
+			<Map To="Channel" Field="Channel" Value="{GetChannel(Channel)}"/>
+		</Map>
+
+		<Map To="DestinationUrl" Field="destUrl"/>
+		<Map To='Segments[{GetSegment("Adgroup")}].Value' Field="Adgroup"/>
+		<Map To='Segments[{GetSegment("Tracker")}]' Field="destUrl" Value='{ExtractAutoSegment("Tracker", destUrl)}' />
+			
+		<Map To='Creatives[]::TextCreative'>
+			<Map To="TextType" Value="Title"/>
+			<Map To="Text" Field="Headline"/>
+		</Map>
+		<Map To='Creatives[]::TextCreative'>
+			<Map To="TextType" Value="Body"/>
+			<Map To="Text" Field="Desc1"/>
+		</Map>
+	</Object>
+
+	<Object Type="AdMetricsUnit">
+		<Read Name="dayCode" Field="Day_Code" Regex="(?{y}[0-9]{4})(?{m}[0-9]{2})(?{d}[0-9]{2})"/>
+		<Map To="PeriodStart" Value='{CreatePeriodStart(dayCode.y, dayCode.m, dayCode.d)}'/>
+		<Map To="PeriodEnd" Value="{CreatePeriodEnd(dayCode.y, dayCode.m, dayCode.d)}"/>
+
+		<Map To='Measures[{GetMeasure("Impressions")}]' Field="Imps"/>
+		<Map To='Measures[{GetMeasure("Clicks")}]' Field="Clicks"/>
+		<Map To='Measures[{GetMeasure("Cost")}]' Field="Cost"/>
+	</Object>
+	
+
+	<!--<Object Type="Ad">
 		<Map To="Campaign.Channel" Value='{GetChannelByName("AdMob")}'/>
-		<!--<Map To="Campaign.Account.ID" Value="{Instance.Configuration.AccountID}"/>-->
+		--><!--<Map To="Campaign.Account.ID" Value="{Instance.Configuration.AccountID}"/>--><!--
 		<Map To="Creatives[]::TextCreative">
 			<Map To="Text" Field="Desc1"/>
 			<Map To="TextType" Value="Body"/>
@@ -17,7 +49,7 @@
 		<Read Field="DayCode" Regex="(?{y}[0-9]{4})(?{m}[0-9]{2})(?{d}[0-9]{2})"/>
 		<Map To="PeriodStart" Value="\{date:{DayCode.y}-{DayCode.m}-{DayCode.d}, align: 'start'\}"/>
 		<Map To="PeriodEnd" Value="\{date:{DayCode.y}-{DayCode.m}-{DayCode.d}, align: 'end'\}"/>
-	</Object>
+	</Object>-->
 
 
 	<!--
