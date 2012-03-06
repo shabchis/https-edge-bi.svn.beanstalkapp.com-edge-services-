@@ -108,21 +108,31 @@ namespace Edge.Services.SegmentMetrics.Validations
 				//Getting CubeName from Database
 				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 				//Creating MDX
-				string mdxCommandText = string.Format(@"Select
-                                {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
-                                    On Columns , 
-                                (
-	                            [Accounts Dim].[Accounts].[Account].&[{0}]
-                                )On Rows 
-                                From
-                                [{1}]
-                                WHERE
-                                ([Channels Dim].[Channels].[Channel].&[{2}]
-                                ,[Time Dim].[Time Dim].[Day].&[{3}]
-                                ) 
-                                ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
+				StringBuilder measuresPlaceHolder = new StringBuilder();
+				measuresPlaceHolder.Append("Select {{");
+				foreach (var requierdMeasure in validationRequiredMeasure)
+				{
+					measuresPlaceHolder.Append("[" + requierdMeasure.Value.DisplayName + "],");
+				}
+				
+				measuresPlaceHolder.Remove(measuresPlaceHolder.Length - 1, 1); //remove last comma character
+				measuresPlaceHolder.Append("}}");
+				measuresPlaceHolder.Append(
 
-				AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
+					string.Format(@" On Columns ,
+									(
+									[Accounts Dim].[Accounts].[Account].&[{0}]
+									)On Rows 
+									From
+									[{1}]
+									WHERE
+									([Time Dim].[Time Dim].[Day].&[{2}]
+									) 
+									", Params["AccountID"], CubeName, Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"))
+					);
+
+
+				AdomdCommand mdxCmd = new AdomdCommand(measuresPlaceHolder.ToString(), conn);
 				AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
 
 				while (mdxReader.Read())
