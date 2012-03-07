@@ -181,8 +181,6 @@ namespace Edge.Services.Facebook.GraphApi
 
 			#region AdGroupStats start new import session
 			//GetAdGroupStats
-			//facebook bug-->return same creative a few times!!! 
-			Dictionary<string, string> UsedCreatives = new Dictionary<string, string>();
 			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
 
@@ -294,7 +292,7 @@ namespace Edge.Services.Facebook.GraphApi
 						#region Creatives
 						List<string> creativeFiles = filesByType[Consts.FileTypes.Creatives];
 
-						
+						Dictionary<string, string> usedCreatives = new Dictionary<string, string>();
 						foreach (string creative in creativeFiles)
 						{
 							DeliveryFile creativeFile = Delivery.Files[creative];
@@ -310,13 +308,11 @@ namespace Edge.Services.Facebook.GraphApi
 									List<Ad> adsByCreativeID = null;
 									if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
 									{
-										//facebook bug-->return same creative a few times!!! 
-										if (!UsedCreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
+										if (!usedCreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
 										{
-											UsedCreatives.Add(adGroupCreativesReader.Current.creative_id, adGroupCreativesReader.Current.creative_id);
+											usedCreatives.Add(adGroupCreativesReader.Current.creative_id, adGroupCreativesReader.Current.creative_id);
 											adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.creative_id];
 										}
-										
 									}
 									if (adsByCreativeID != null)
 									{
@@ -384,20 +380,6 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 						}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 					}
 				}
 				session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
