@@ -8,7 +8,7 @@ using Edge.Services.SegmentMetrics;
 using Edge.Data.Objects;
 using Newtonsoft.Json;
 
-namespace Edge.Services.BackOffice.GoogleAnalytics
+namespace Edge.Services.Google.Analytics
 {
 	class ProcessorService : PipelineService
 	{

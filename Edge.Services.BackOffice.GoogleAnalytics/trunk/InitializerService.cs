@@ -6,7 +6,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Services.SegmentMetrics;
 
-namespace Edge.Services.BackOffice.GoogleAnalytics
+namespace Edge.Services.Google.Analytics
 {
 	public class InitializerService : PipelineService
 	{

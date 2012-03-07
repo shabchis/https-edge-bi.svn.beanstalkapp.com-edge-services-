@@ -14,7 +14,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Security.Policy;
 
-namespace Edge.Services.BackOffice.GoogleAnalytics
+namespace Edge.Services.Google.Analytics
 {
 	class RetrieverService : PipelineService
 	{
