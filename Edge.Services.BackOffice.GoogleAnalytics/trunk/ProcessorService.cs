@@ -15,7 +15,7 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 		Dictionary<string, double> _totalsValidation = new Dictionary<string, double>();
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
+
 			Dictionary<string, int> columns = new Dictionary<string, int>();
 			foreach (var ReportFile in Delivery.Files)
 			{
@@ -63,25 +63,18 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 						{
 							SegmentMetricsUnit MetricsUnit = new SegmentMetricsUnit();
 							StringBuilder trackerBuilder = new StringBuilder();
-							string[] trackerFieldsArray = this.Delivery.Parameters["TrackerFields"].ToString().Split(',');
-							for (int i = 0; i < trackerFieldsArray.Length; i++)
-							{
-								if (i == trackerFieldsArray.Length - 1)
-									trackerBuilder.Append(reportReader.Current["array"][columns[trackerFieldsArray[i]]]);
-								else
-									trackerBuilder.AppendFormat("{0}/",reportReader.Current["array"][columns[trackerFieldsArray[i]]]);
-							}
-							MetricsUnit.Segments[Segment.TrackerSegment] = new SegmentValue() { Value = trackerBuilder.ToString() };
-							//TODO:!!!
-							//MetricsUnit.Segments["ga:country"]=new SegmentValue() { Value=Current["array"][columns[segmentFieldsArray[i]]]
+							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, reportReader.Current["array"][columns["ga:adDestinationUrl"]]);
+							if (tracker != null)
+								MetricsUnit.Segments[Segment.TrackerSegment] = tracker;
+
 							foreach (var measure in session.Measures.Values)
 							{
-								if (string.IsNullOrEmpty(measure.SourceName)&& measure.Account != null)
-                                    throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
+								if (string.IsNullOrEmpty(measure.SourceName) && measure.Account != null)
+									throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
 
-								if (measure.Account != null)								
-									MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);			
-								
+								if (measure.Account != null)
+									MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
+
 							}
 							Dictionary<string, string> usid = new Dictionary<string, string>();
 							foreach (var segment in MetricsUnit.Segments)
@@ -95,7 +88,7 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 					}
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
 					session.EndImport();
-				}				
+				}
 			}
 
 

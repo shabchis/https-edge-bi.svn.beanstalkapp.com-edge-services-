@@ -71,9 +71,7 @@ namespace Edge.Services.BackOffice.GoogleAnalytics
 				 throw new Exception("Redirect_URI must be configured in configuration file");
 			 this.Delivery.Parameters["Redirect_URI"] = this.Instance.Configuration.Options["Redirect_URI"];
 
-			 if (!this.Instance.Configuration.Options.ContainsKey("TrackerFields"))
-				 throw new Exception("TrackerFields must be configured in configuration file");
-			 this.Delivery.Parameters["TrackerFields"] = this.Instance.Configuration.Options["TrackerFields"];
+			
 			
 
 
