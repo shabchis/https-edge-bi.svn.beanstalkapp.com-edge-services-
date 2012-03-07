@@ -16,23 +16,6 @@ namespace Edge.Services.SegmentMetrics
 {
 	public class SegmentMetricsImportManager : DeliveryImportManager
 	{
-
-		private SqlConnection _sqlConnection;
-		public ImportManagerOptions Options { get; private set; }
-		public Dictionary<string, Measure> Measures { get; private set; }
-		public Dictionary<Segment, SegmentValue> Segments { get; private set; }
-
-		public SegmentMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null)
-			: base(serviceInstanceID)
-		{
-			options = options ?? new ImportManagerOptions();
-			options.SqlOltpConnectionString = options.SqlOltpConnectionString ?? AppSettings.GetConnectionString(this, Consts.ConnectionStrings.Oltp);
-			options.SqlPrepareCommand = options.SqlPrepareCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlPrepareCommand, throwException: false);
-			options.SqlCommitCommand = options.SqlCommitCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlCommitCommand, throwException: false);
-			options.SqlRollbackCommand = options.SqlRollbackCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlRollbackCommand, throwException: false);
-			this.Options = options;
-		}
-
 		#region Table structure
 		/*=========================*/
 		private static class Tables
@@ -57,6 +40,34 @@ namespace Edge.Services.SegmentMetrics
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);
 			}
 		}
+		/*=========================*/
+		#endregion
+
+		#region Fields
+		/*=========================*/
+
+		private SqlConnection _sqlConnection;
+		public ImportManagerOptions Options { get; private set; }
+		public Dictionary<string, Measure> Measures { get; private set; }
+		public Dictionary<Segment, SegmentValue> Segments { get; private set; }
+
+		/*=========================*/
+		#endregion
+
+		#region Constructors
+		/*=========================*/
+
+		public SegmentMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null)
+			: base(serviceInstanceID)
+		{
+			options = options ?? new ImportManagerOptions();
+			options.SqlOltpConnectionString = options.SqlOltpConnectionString ?? AppSettings.GetConnectionString(this, Consts.ConnectionStrings.Oltp);
+			options.SqlPrepareCommand = options.SqlPrepareCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlPrepareCommand, throwException: false);
+			options.SqlCommitCommand = options.SqlCommitCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlCommitCommand, throwException: false);
+			options.SqlRollbackCommand = options.SqlRollbackCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlRollbackCommand, throwException: false);
+			this.Options = options;
+		}
+
 		/*=========================*/
 		#endregion
 
