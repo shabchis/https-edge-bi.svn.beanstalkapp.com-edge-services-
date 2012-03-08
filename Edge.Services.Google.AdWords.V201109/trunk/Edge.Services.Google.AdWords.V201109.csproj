@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdwordsUtill.cs" />
+    <Compile Include="AutomaticPlacementProcessorService.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
     <Compile Include="ProcessorService.cs" />
@@ -81,6 +82,10 @@
     <ProjectReference Include="..\Edge.Services.AdMetrics\Edge.Services.AdMetrics.csproj">
       <Project>{36B6740D-938E-4994-9A0D-2DCB94D032B6}</Project>
       <Name>Edge.Services.AdMetrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Edge.Services.TargetingMetrics\Edge.Services.TargetingMetrics.csproj">
+      <Project>{30163455-B1DC-4B1E-9B22-96E37ADE15B9}</Project>
+      <Name>Edge.Services.TargetingMetrics</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
