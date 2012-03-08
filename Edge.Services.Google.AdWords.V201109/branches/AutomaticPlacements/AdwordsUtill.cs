@@ -243,9 +243,7 @@ namespace Edge.Services.Google.AdWords
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = {"Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
-																			 "CriteriaParameters", "Domain","AdNetworkType1","AdNetworkType2","AverageCpc",
-																			 "AverageCpm","ConversionsManyPerClick","Conversions","CostPerConversion","Ctr","IsAutoOptimized",
-																			 "TotalConvValue","ViewThroughConversions","ConversionValue"
+																			 "Domain","ConversionsManyPerClick","Conversions"
 																		 };
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };
 		static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id","CriteriaDestinationUrl","ConversionsManyPerClick", "ConversionCategoryName" };

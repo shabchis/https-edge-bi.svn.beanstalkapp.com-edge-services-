@@ -390,47 +390,48 @@ namespace Edge.Services.Google.AdWords
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-		private static class Const
-		{
-			public const string RequiredHeader = "Keyword ID";
-			public const string EOF = "Total";
+	
 
-			public const string KeywordIdFieldName = "Keyword ID";
-			public const string KeywordFieldName = "Keyword";
-			public const string AvgPosition = "Avg. position";
 
-			public const string ConversionManyPerClick = "Conv. (many-per-click)";
-			public const string ConversionOnePerClick = "Conv. (1-per-click)";
-			//public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
-			public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
-			public const string ConversionTrackingPurpose = "Conversion tracking purpose";
+	}
+	public static class Const
+	{
+		public const string RequiredHeader = "Keyword ID";
+		public const string EOF = "Total";
 
-			public const string AdGroupIdFieldName = "Ad group ID";
-			public const string AdGroupFieldName = "Ad group";
+		public const string KeywordIdFieldName = "Keyword ID";
+		public const string KeywordFieldName = "Keyword";
+		public const string AvgPosition = "Avg. position";
 
-			public const string CampaignIdFieldName = "Campaign ID";
-			public const string CampaignFieldName = "Campaign";
+		public const string ConversionManyPerClick = "Conv. (many-per-click)";
+		public const string ConversionOnePerClick = "Conv. (1-per-click)";
+		//public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
+		public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
+		public const string ConversionTrackingPurpose = "Conversion tracking purpose";
 
-			public const string QualityScoreFieldName = "Quality score";
-			public const string MatchTypeFieldName = "Match type";
-			public const string PlacementFieldName = "Placement";
+		public const string AdGroupIdFieldName = "Ad group ID";
+		public const string AdGroupFieldName = "Ad group";
 
-			public const string AdIDFieldName = "Ad ID";
-			public const string AdTypeFieldName = "Ad type";
-			public const string AdFieldName = "Ad";
-			public const string DisplayURLFieldName = "Display URL";
-			public const string DestUrlFieldName = "Destination URL";
+		public const string CampaignIdFieldName = "Campaign ID";
+		public const string CampaignFieldName = "Campaign";
 
-			public const string NetworkFieldName = "Network";
-			public const string GoogleSearchNetwork = "Search Network";
-			public const string SystemSearchNetwork = "Search Only";
-			public const string GoogleDisplayNetwork = "Display Network";
-			public const string SystemDisplayNetwork = "Content Only";
+		public const string QualityScoreFieldName = "Quality score";
+		public const string MatchTypeFieldName = "Match type";
+		public const string PlacementFieldName = "Placement";
 
-			public const string AutoDisplayNetworkName = "Total - content targeting";
+		public const string AdIDFieldName = "Ad ID";
+		public const string AdTypeFieldName = "Ad type";
+		public const string AdFieldName = "Ad";
+		public const string DisplayURLFieldName = "Display URL";
+		public const string DestUrlFieldName = "Destination URL";
 
-		}
+		public const string NetworkFieldName = "Network";
+		public const string GoogleSearchNetwork = "Search Network";
+		public const string SystemSearchNetwork = "Search Only";
+		public const string GoogleDisplayNetwork = "Display Network";
+		public const string SystemDisplayNetwork = "Content Only";
 
+		public const string AutoDisplayNetworkName = "Total - content targeting";
 
 	}
 }

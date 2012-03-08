@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdwordsUtill.cs" />
+    <Compile Include="AutomaticPlacementProcessorService.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
     <Compile Include="ProcessorService.cs" />
