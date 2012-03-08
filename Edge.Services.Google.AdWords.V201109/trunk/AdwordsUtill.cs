@@ -249,6 +249,7 @@ namespace Edge.Services.Google.AdWords
 																		 };
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };
 		static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id","CriteriaDestinationUrl","ConversionsManyPerClick", "ConversionCategoryName" };
+		static string[] SEARCH_QUERY_PERFORMANCE_REPORT_FIELDS = { "CreativeId", "KeywordId", "MatchType", "DestinationUrl", "Cost", "Clicks", "Impressions" };
 																		 
 
 
@@ -275,6 +276,9 @@ namespace Edge.Services.Google.AdWords
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
 				}
+			},
+			{GA.v201109.ReportDefinitionReportType.SEARCH_QUERY_PERFORMANCE_REPORT,  
+				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,SEARCH_QUERY_PERFORMANCE_REPORT_FIELDS}}
 			}
 		};
 	}
