@@ -39,7 +39,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 				command.Remove(command.Length - 1, 1); //remove last comma character
 				command.Append(" from ");
 				command.Append(comparisonTable);
-				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID and [Account_ID_SRC] = @OriginalID");
+				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID ");
 
 				SqlCommand sqlCommand = DataManager.CreateCommand(command.ToString());
 				sqlCommand.Connection = sqlCon;
@@ -48,13 +48,15 @@ namespace Edge.Services.SegmentMetrics.Validations
 				SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
 				SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
 				SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
-				SqlParameter originalIdParam = new SqlParameter("@OriginalID", System.Data.SqlDbType.NVarChar);
+			
 
 				accountIdParam.Value = delivery.Account.ID;
 				daycodeParam.Value = dayCode;
+				channelIdParam.Value = delivery.Channel.ID;
 
 				sqlCommand.Parameters.Add(accountIdParam);
 				sqlCommand.Parameters.Add(daycodeParam);
+				sqlCommand.Parameters.Add(channelIdParam);
 
 				//Getting Totals form DB
 				using (SqlDataReader _reader = sqlCommand.ExecuteReader())
