@@ -39,7 +39,10 @@ namespace Edge.Services.SegmentMetrics.Validations
 				command.Remove(command.Length - 1, 1); //remove last comma character
 				command.Append(" from ");
 				command.Append(comparisonTable);
-				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID ");
+				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode ");
+				
+				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
+				command.Append("and IsNull(Channel_ID,-1) = @Channel_ID ");
 
 				SqlCommand sqlCommand = DataManager.CreateCommand(command.ToString());
 				sqlCommand.Connection = sqlCon;
@@ -47,15 +50,21 @@ namespace Edge.Services.SegmentMetrics.Validations
 				//SQL Parameters
 				SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
 				SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
+
+				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
 			
 
 				accountIdParam.Value = delivery.Account.ID;
 				daycodeParam.Value = dayCode;
+				
+				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				channelIdParam.Value = delivery.Channel.ID;
 
 				sqlCommand.Parameters.Add(accountIdParam);
 				sqlCommand.Parameters.Add(daycodeParam);
+
+				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				sqlCommand.Parameters.Add(channelIdParam);
 
 				//Getting Totals form DB
