@@ -21,7 +21,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 				Dictionary<string, Measure> measurs = Measure.GetMeasures(delivery.Account, delivery.Channel, sqlCon, MeasureOptions.IsBackOffice, MeasureOptionsOperator.And);
 				string dayCode = delivery.TargetPeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
 				Dictionary<string, double> diff = new Dictionary<string, double>();
-				Dictionary<string,Measure> validationRequiredMeasure = new Dictionary<string,Measure>();
+				Dictionary<string, Measure> validationRequiredMeasure = new Dictionary<string, Measure>();
 
 				//creating command
 				StringBuilder command = new StringBuilder();
@@ -31,8 +31,8 @@ namespace Edge.Services.SegmentMetrics.Validations
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
-						validationRequiredMeasure.Add(measure.Value.SourceName,measure.Value);
-						command.Append(string.Format("SUM({0}) as {1}", measure.Value.OltpName, measure.Value.SourceName));
+						validationRequiredMeasure.Add(measure.Value.SourceName, measure.Value);
+						command.Append(string.Format("SUM({0}) as [{1}]", measure.Value.OltpName, measure.Value.SourceName));
 						command.Append(",");
 					}
 				}
@@ -40,7 +40,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 				command.Append(" from ");
 				command.Append(comparisonTable);
 				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode ");
-				
+
 				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				command.Append("and IsNull(Channel_ID,-1) = @Channel_ID ");
 
@@ -53,11 +53,11 @@ namespace Edge.Services.SegmentMetrics.Validations
 
 				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
-			
+
 
 				accountIdParam.Value = delivery.Account.ID;
 				daycodeParam.Value = dayCode;
-				
+
 				//Shay: In comment due to Workaround for bo channel issue 11.03.2012
 				channelIdParam.Value = delivery.Channel.ID;
 
@@ -77,6 +77,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 					{
 						while (_reader.Read())
 						{
+							//Data Exists in DB
 							if (!_reader[0].Equals(DBNull.Value))
 							{
 								foreach (var measureItem in validationRequiredMeasure)
@@ -87,14 +88,14 @@ namespace Edge.Services.SegmentMetrics.Validations
 							}
 
 							#region Scenario : data exists in delivery and not in DB
-							else
+							else // No Data in DB
 							{
 								double sum = 0;
 								foreach (var measure in validationRequiredMeasure)
 								{
-										sum += deliveryTotals[measure.Value.SourceName];
+									sum += deliveryTotals[measure.Value.SourceName];
 								}
-								if (sum > 0)
+								if (sum != 0) //Totals in Delivery aren't empty
 									return new ValidationResult()
 									{
 										ResultType = ValidationResultType.Error,
@@ -105,10 +106,26 @@ namespace Edge.Services.SegmentMetrics.Validations
 										ChannelID = delivery.Channel.ID,
 										CheckType = this.Instance.Configuration.Name
 									};
+							#endregion
+								#region Scenario: TotalSUM in Delivery and Total Sum in DB are empty
+
+								else  //Totals in Delivery are empty
+									return new ValidationResult()
+									{
+										ResultType = ValidationResultType.Information,
+										AccountID = delivery.Account.ID,
+										DeliveryID = delivery.DeliveryID,
+										TargetPeriodStart = delivery.TargetPeriodStart,
+										TargetPeriodEnd = delivery.TargetPeriodEnd,
+										Message = "validation Success: ** NOTE: NO DATA IN BOTH DELIVERY AND DB !!! - Account ID: " + delivery.Account.ID,
+										ChannelID = delivery.Channel.ID,
+										CheckType = this.Instance.Configuration.Name
+									};
+								#endregion
 
 							}
 
-							#endregion
+								
 
 							foreach (var item in diff)
 							{
