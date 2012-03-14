@@ -7,6 +7,7 @@ using Edge.Data.Pipeline;
 using Edge.Services.SegmentMetrics;
 using Edge.Data.Objects;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Edge.Services.Google.Analytics
 {
@@ -31,7 +32,7 @@ namespace Edge.Services.Google.Analytics
 						colIndex++;
 					}
 
-					    ///sssss
+					///sssss
 				}
 
 				using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
@@ -63,7 +64,24 @@ namespace Edge.Services.Google.Analytics
 						{
 							SegmentMetricsUnit MetricsUnit = new SegmentMetricsUnit();
 							StringBuilder trackerBuilder = new StringBuilder();
-							SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, reportReader.Current["array"][columns["ga:adDestinationUrl"]]);
+							SegmentValue tracker;
+							string meduim = reportReader.Current["array"][columns["ga:medium"]];
+							string source = reportReader.Current["array"][columns["ga:source"]];
+							string content=null;
+							if (reportReader.Current["array"][columns["ga:adDestinationUrl"]] == "(not set)")							
+								 content= reportReader.Current["array"][columns["ga:adContent"]];
+							else
+							{
+								string destUrl=reportReader.Current["array"][columns["ga:adDestinationUrl"]];
+								
+								Regex regex=new Regex(@"(?<=[\?|&]utm_content=)\w+\b",RegexOptions.IgnoreCase);
+								if (regex.IsMatch(destUrl))
+								content= regex.Match(destUrl).Value;
+								else 
+									throw new System.Configuration.ConfigurationErrorsException("utm_content not defind in the url");
+								tracker = new SegmentValue() { Value = string.Format("{0}_{1}_{2}", source, meduim,content) };								
+							}
+								tracker = new SegmentValue() { Value = string.Format("{0}_{1}_{2}", source, meduim, content) };
 							if (tracker != null)
 								MetricsUnit.Segments[Segment.TrackerSegment] = tracker;
 

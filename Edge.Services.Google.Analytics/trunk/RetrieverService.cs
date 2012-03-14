@@ -42,7 +42,7 @@ namespace Edge.Services.Google.Analytics
 				// exist
 				foreach (var file in Delivery.Files)
 				{
-					string urlEncoded = System.Web.HttpUtility.UrlDecode(string.Format("{0}%26access_token={1}", file.SourceUrl, oAuth2.access_token));
+					string urlEncoded = string.Format(file.SourceUrl, Uri.EscapeUriString(oAuth2.access_token));
 					HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(urlEncoded);
 					request.Headers.Add("Accept-Encoding", "gzip");
 					request.UserAgent="winrar(gzip)";
