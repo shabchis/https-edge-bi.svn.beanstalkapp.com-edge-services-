@@ -38,6 +38,7 @@ namespace Edge.Services.Google.Analytics
 				using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
 				{
 					session.BeginImport(this.Delivery);
+					Dictionary<string, SegmentMetricsUnit> data = new Dictionary<string, SegmentMetricsUnit>();
 					//get totals
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.totalsForAllResults.*");
 					using (reportReader)
@@ -59,31 +60,26 @@ namespace Edge.Services.Google.Analytics
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.rows[*].*");
 					using (reportReader)
 					{
-
+						
 						while (reportReader.Read())
 						{
-							SegmentMetricsUnit MetricsUnit = new SegmentMetricsUnit();
-							StringBuilder trackerBuilder = new StringBuilder();
+							SegmentMetricsUnit metricsUnit;							
 							SegmentValue tracker;
-							string meduim = reportReader.Current["array"][columns["ga:medium"]];
-							string source = reportReader.Current["array"][columns["ga:source"]];
-							string content=null;
-							if (reportReader.Current["array"][columns["ga:adDestinationUrl"]] == "(not set)")							
-								 content= reportReader.Current["array"][columns["ga:adContent"]];
-							else
+							string destUrl=reportReader.Current["array"][columns["ga:adDestinationUrl"]];
+							string content=reportReader.Current["array"][columns["ga:adContent"]];
+							tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, destUrl, "adDestinationUrl");
+							if (tracker == null && destUrl != "(not set)")
+								Edge.Core.Utilities.Log.Write(string.Format("utm_content not defiend in desturl: {0}", destUrl), Core.Utilities.LogMessageType.Warning);
+							if (tracker==null)
+								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, content, "adContent");
+							if (tracker == null)
 							{
-								string destUrl=reportReader.Current["array"][columns["ga:adDestinationUrl"]];
-								
-								Regex regex=new Regex(@"(?<=[\?|&]utm_content=)\w+\b",RegexOptions.IgnoreCase);
-								if (regex.IsMatch(destUrl))
-								content= regex.Match(destUrl).Value;
-								else 
-									throw new System.Configuration.ConfigurationErrorsException("utm_content not defind in the url");
-								tracker = new SegmentValue() { Value = string.Format("{0}_{1}_{2}", source, meduim,content) };								
+								throw new PlatformNotSupportedException(string.Format("No Segment defined on adDestinationUrl fieled: {0}\n and not on  adContent field {1}\n please check the file to see specific line",destUrl, content));
 							}
-								tracker = new SegmentValue() { Value = string.Format("{0}_{1}_{2}", source, meduim, content) };
-							if (tracker != null)
-								MetricsUnit.Segments[Segment.TrackerSegment] = tracker;
+							if (!data.ContainsKey(tracker.Value))
+								data.Add(tracker.Value, new SegmentMetricsUnit());
+							metricsUnit = data[tracker.Value];
+							metricsUnit.Segments[Segment.TrackerSegment] = tracker;
 
 							foreach (var measure in session.Measures.Values)
 							{
@@ -91,19 +87,30 @@ namespace Edge.Services.Google.Analytics
 									throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
 
 								if (measure.Account != null)
-									MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
+								{
+									if (!metricsUnit.MeasureValues.ContainsKey(session.Measures[measure.Name]))
+										metricsUnit.MeasureValues.Add(session.Measures[measure.Name], 0);
+									metricsUnit.MeasureValues[session.Measures[measure.Name]] += Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
+								}
+								
+							}
+							
+							metricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+							metricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
-							}
-							Dictionary<string, string> usid = new Dictionary<string, string>();
-							foreach (var segment in MetricsUnit.Segments)
-							{
-								usid.Add(segment.Key.Name, segment.Value.Value);
-							}
-							MetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-							MetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-							session.ImportMetrics(MetricsUnit, JsonConvert.SerializeObject(usid));
+							
 						}
 					}
+					foreach (SegmentMetricsUnit metricsUnit in data.Values)
+					{
+						Dictionary<string, string> usid = new Dictionary<string, string>();
+						foreach (var segment in metricsUnit.Segments)
+						{
+							usid.Add(segment.Key.Name, segment.Value.Value);
+						}
+						session.ImportMetrics(metricsUnit, JsonConvert.SerializeObject(usid));
+					}
+					
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
 					session.EndImport();
 				}
