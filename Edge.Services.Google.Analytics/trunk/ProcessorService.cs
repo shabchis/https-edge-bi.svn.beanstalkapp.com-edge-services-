@@ -69,8 +69,11 @@ namespace Edge.Services.Google.Analytics
 							string content=reportReader.Current["array"][columns["ga:adContent"]];
 							tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, destUrl, "adDestinationUrl");
 							if (tracker == null && destUrl != "(not set)")
+							{
+								tracker = new SegmentValue() { Value = "0" };
 								Edge.Core.Utilities.Log.Write(string.Format("utm_content not defiend in desturl: {0}", destUrl), Core.Utilities.LogMessageType.Warning);
-							if (tracker==null)
+							}
+							else if (tracker==null)
 								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, content, "adContent");
 							if (tracker == null)
 							{
