@@ -60,24 +60,29 @@ namespace Edge.Services.Google.Analytics
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.rows[*].*");
 					using (reportReader)
 					{
-						
+
 						while (reportReader.Read())
 						{
-							SegmentMetricsUnit metricsUnit;							
-							SegmentValue tracker;
-							string destUrl=reportReader.Current["array"][columns["ga:adDestinationUrl"]];
-							string content=reportReader.Current["array"][columns["ga:adContent"]];
-							tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, destUrl, "adDestinationUrl");
-							if (tracker == null && destUrl != "(not set)")
+							SegmentMetricsUnit metricsUnit;
+							SegmentValue tracker=null;
+							int i = 1;
+							string trackerField = null;
+							while (Instance.Configuration.Options.ContainsKey(string.Format("SegmentField{0}", i)))
 							{
-								tracker = new SegmentValue() { Value = "0" };
-								Edge.Core.Utilities.Log.Write(string.Format("utm_content not defiend in desturl: {0}", destUrl), Core.Utilities.LogMessageType.Warning);
+
+								trackerField = Instance.Configuration.Options[string.Format("SegmentField{0}", i)];
+								string value = reportReader.Current["array"][columns[trackerField]];
+
+								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, value, trackerField);								
+								if (tracker != null)
+									break;
+								i++;
+
+
 							}
-							else if (tracker==null)
-								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, content, "adContent");
 							if (tracker == null)
 							{
-								throw new PlatformNotSupportedException(string.Format("No Segment defined on adDestinationUrl fieled: {0}\n and not on  adContent field {1}\n please check the file to see specific line",destUrl, content));
+								tracker = new SegmentValue() { Value = "0" };
 							}
 							if (!data.ContainsKey(tracker.Value))
 								data.Add(tracker.Value, new SegmentMetricsUnit());
@@ -95,13 +100,13 @@ namespace Edge.Services.Google.Analytics
 										metricsUnit.MeasureValues.Add(session.Measures[measure.Name], 0);
 									metricsUnit.MeasureValues[session.Measures[measure.Name]] += Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
 								}
-								
+
 							}
-							
+
 							metricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
 							metricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
-							
+
 						}
 					}
 					foreach (SegmentMetricsUnit metricsUnit in data.Values)
@@ -113,7 +118,7 @@ namespace Edge.Services.Google.Analytics
 						}
 						session.ImportMetrics(metricsUnit, JsonConvert.SerializeObject(usid));
 					}
-					
+
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
 					session.EndImport();
 				}
