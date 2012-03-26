@@ -53,8 +53,8 @@ namespace Edge.Services.AdMetrics
 			public class AdTarget
 			{
 				public static ColumnDef AdUsid = new ColumnDef("AdUsid", size: 100, nullable: false);
+				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 100);
-				public static ColumnDef TargetType = new ColumnDef("TargetType", type: SqlDbType.Int);
 				public static ColumnDef DestinationUrl = new ColumnDef("DestinationUrl", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
 				public static ColumnDef ExtraFieldX = new ColumnDef("ExtraField{0}", type: SqlDbType.NVarChar, copies: 6, size: 4000);
@@ -63,7 +63,8 @@ namespace Edge.Services.AdMetrics
 			public class AdSegment
 			{
 				public static ColumnDef AdUsid = new ColumnDef("AdUsid", size: 100, nullable: false);
-				public static ColumnDef SegmentType = new ColumnDef("SegmentType", type: SqlDbType.Int, nullable: false);
+				public static ColumnDef SegmentID = new ColumnDef("SegmentID", type: SqlDbType.Int, nullable: false);
+				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 4000);
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
@@ -84,8 +85,8 @@ namespace Edge.Services.AdMetrics
 			{
 				public static ColumnDef MetricsUsid = new ColumnDef("MetricsUsid", size: 32, type: SqlDbType.Char, nullable: false);
 				public static ColumnDef AdUsid = new ColumnDef("AdUsid", size: 100, nullable: false);
+				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 100);
-				public static ColumnDef TargetType = new ColumnDef("TargetType", type: SqlDbType.Int);
 				public static ColumnDef DestinationUrl = new ColumnDef("DestinationUrl", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
 				public static ColumnDef ExtraFieldX = new ColumnDef("ExtraField{0}", type: SqlDbType.NVarChar, copies: 6, size: 4000);
@@ -145,9 +146,9 @@ namespace Edge.Services.AdMetrics
 				var row = new Dictionary<ColumnDef, object>()
 				{
 					{ Tables.AdTarget.AdUsid, adUsid },
+					{ Tables.AdTarget.TypeID, target.TypeID },
 					{ Tables.AdTarget.OriginalID, target.OriginalID },
-					{ Tables.AdTarget.DestinationUrl, target.DestinationUrl },
-					{ Tables.AdTarget.TargetType, target.TypeID }
+					{ Tables.AdTarget.DestinationUrl, target.DestinationUrl }
 				};
 
 				foreach (KeyValuePair<MappedObjectField, object> fixedField in target.GetFieldValues())
@@ -180,21 +181,22 @@ namespace Edge.Services.AdMetrics
 			}
 
 			// AdSegment
-			foreach (Segment segment in ad.Segments)
+			foreach (var segment in ad.Segments)
 			{
 				var row = new Dictionary<ColumnDef, object>()
 				{
 					{ Tables.AdSegment.AdUsid, adUsid },
-					{ Tables.AdSegment.SegmentType, segment.TypeID },
-					{ Tables.AdSegment.OriginalID, segment.OriginalID },
-					{ Tables.AdSegment.Value, segment.Value }
+					{ Tables.AdSegment.SegmentID, segment.Key.ID },
+					{ Tables.AdSegment.TypeID, segment.Value.TypeID },
+					{ Tables.AdSegment.OriginalID, segment.Value.OriginalID },
+					{ Tables.AdSegment.Value, segment.Value.Value }
 					
 				};
 
-				foreach (KeyValuePair<MappedObjectField, object> fixedField in segment.GetFieldValues())
+				foreach (KeyValuePair<MappedObjectField, object> fixedField in segment.Value.GetFieldValues())
 					row[new ColumnDef(Tables.AdSegment.FieldX, fixedField.Key.ColumnIndex)] = fixedField.Value;
 
-				foreach (KeyValuePair<ExtraField, object> extraField in segment.ExtraFields)
+				foreach (KeyValuePair<ExtraField, object> extraField in segment.Value.ExtraFields)
 					row[new ColumnDef(Tables.AdSegment.ExtraFieldX, extraField.Key.ColumnIndex)] = extraField.Value;
 
 				Bulk<Tables.AdSegment>().SubmitRow(row);
@@ -202,7 +204,7 @@ namespace Edge.Services.AdMetrics
 		}
 
 
-		public void ImportMetrics(AdMetricsUnit metrics)
+		public override void ImportMetrics(AdMetricsUnit metrics)
 		{
 			EnsureBeginImport();
 
@@ -234,8 +236,8 @@ namespace Edge.Services.AdMetrics
 				{
 					{ Tables.MetricsDimensionTarget.MetricsUsid, metricsUsid },
 					{ Tables.MetricsDimensionTarget.AdUsid, adUsid },
+					{ Tables.MetricsDimensionTarget.TypeID, target.TypeID },
 					{ Tables.MetricsDimensionTarget.OriginalID, target.OriginalID },
-					{ Tables.MetricsDimensionTarget.TargetType, target.TypeID },
 					{ Tables.MetricsDimensionTarget.DestinationUrl, target.DestinationUrl }
 				};
 
@@ -265,15 +267,15 @@ namespace Edge.Services.AdMetrics
 			get { return OptionsOperator.Not; }
 		}
 
-		//protected override SegmentOptions SegmentOptions
-		//{
-		//    get { throw new NotImplementedException(); }
-		//}
+		protected override SegmentOptions SegmentOptions
+		{
+			get { return SegmentOptions.All; }
+		}
 
-		//protected override OptionsOperator SegmentOptionsOperator
-		//{
-		//    get { throw new NotImplementedException(); }
-		//}
+		protected override OptionsOperator SegmentOptionsOperator
+		{
+			get { return OptionsOperator.And; }
+		}
 
 		protected override Type MetricsTableDefinition
 		{
