@@ -11,6 +11,7 @@ using Edge.Core.Utilities;
 using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Common.Importing;
+using Edge.Data.Objects.Reflection;
 
 namespace Edge.Services.SegmentMetrics
 {
@@ -34,7 +35,8 @@ namespace Edge.Services.SegmentMetrics
 			public class MetricsDimensionSegment
 			{
 				public static ColumnDef MetricsUsid = new ColumnDef("MetricsUsid", size: 32, type: SqlDbType.Char, nullable: false);
-				public static ColumnDef SegmentType = new ColumnDef("SegmentType", type: SqlDbType.Int, nullable: false);
+				public static ColumnDef SegmentID = new ColumnDef("SegmentID", type: SqlDbType.Int, nullable: false);
+				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 4000);
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
@@ -44,7 +46,7 @@ namespace Edge.Services.SegmentMetrics
 			public class MetricsDimensionTarget
 			{
 				public static ColumnDef MetricsUsid = new ColumnDef("MetricsUsid", size: 32, type: SqlDbType.Char, nullable: false);
-				public static ColumnDef TargetType = new ColumnDef("TargetType", type: SqlDbType.Int);
+				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 100);
 				public static ColumnDef DestinationUrl = new ColumnDef("DestinationUrl", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
@@ -79,8 +81,45 @@ namespace Edge.Services.SegmentMetrics
 			}
 			Bulk<Tables.Metrics>().SubmitRow(metricsRow);
 
-			foreach (Segment segment in metrics.SegmentDimensions)
+			// MetricsDimensionSegment
+			foreach (var segment in metrics.SegmentDimensions)
 			{
+				var row = new Dictionary<ColumnDef, object>()
+				{
+					{ Tables.MetricsDimensionSegment.MetricsUsid, metrics.Usid },
+					{ Tables.MetricsDimensionSegment.SegmentID, segment.Key.ID},
+					{ Tables.MetricsDimensionSegment.TypeID, segment.Value.TypeID },
+					{ Tables.MetricsDimensionSegment.OriginalID, segment.Value.OriginalID },
+					{ Tables.MetricsDimensionSegment.Value, segment.Value.Value }
+				};
+
+				foreach (KeyValuePair<MappedObjectField, object> fixedField in segment.Value.GetFieldValues())
+					row[new ColumnDef(Tables.MetricsDimensionTarget.FieldX, fixedField.Key.ColumnIndex)] = fixedField.Value;
+
+				foreach (KeyValuePair<ExtraField, object> customField in segment.Value.ExtraFields)
+					row[new ColumnDef(Tables.MetricsDimensionTarget.ExtraFieldX, customField.Key.ColumnIndex)] = customField.Value;
+
+				Bulk<Tables.MetricsDimensionSegment>().SubmitRow(row);
+			}
+
+			// MetricsDimensionTarget
+			foreach (Target target in metrics.TargetDimensions)
+			{
+				var row = new Dictionary<ColumnDef, object>()
+				{
+					{ Tables.MetricsDimensionTarget.MetricsUsid, metrics.Usid },
+					{ Tables.MetricsDimensionTarget.TypeID, target.TypeID },
+					{ Tables.MetricsDimensionTarget.OriginalID, target.OriginalID },
+					{ Tables.MetricsDimensionTarget.DestinationUrl, target.DestinationUrl }
+				};
+
+				foreach (KeyValuePair<MappedObjectField, object> fixedField in target.GetFieldValues())
+					row[new ColumnDef(Tables.MetricsDimensionTarget.FieldX, fixedField.Key.ColumnIndex)] = fixedField.Value;
+
+				foreach (KeyValuePair<ExtraField, object> customField in target.ExtraFields)
+					row[new ColumnDef(Tables.MetricsDimensionTarget.ExtraFieldX, customField.Key.ColumnIndex)] = customField.Value;
+
+				Bulk<Tables.MetricsDimensionTarget>().SubmitRow(row);
 			}
 		}
 
