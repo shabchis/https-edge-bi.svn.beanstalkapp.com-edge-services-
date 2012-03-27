@@ -51,135 +51,136 @@ namespace Edge.Services.Google.AdWords
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
-			#region Getting Keywords Data
-			Dictionary<string, double> _totals = new Dictionary<string, double>();
-			DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
-			string[] requiredHeaders = new string[1];
-			requiredHeaders[0] = Const.RequiredHeader;
-			var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-			_keywordsReader.MatchExactColumns = false;
-			Dictionary<string, KeywordTarget> _keywordsData = new Dictionary<string, KeywordTarget>();
-
-			using (_keywordsReader)
-			{
-				while (_keywordsReader.Read())
-				{
-					if (_keywordsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
-						break;
-					KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
-					{
-						KeywordId = Convert.ToInt64(_keywordsReader.Current[Const.KeywordIdFieldName]),
-						AdgroupId = Convert.ToInt64(_keywordsReader.Current[Const.AdGroupIdFieldName]),
-						CampaignId = Convert.ToInt64(_keywordsReader.Current[Const.CampaignIdFieldName])
-
-					};
-					KeywordTarget keyword = new KeywordTarget()
-					{
-						OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
-						Keyword = _keywordsReader.Current[Const.KeywordFieldName]
-
-					};
-
-					keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
-					string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
-					keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
-
-					//Setting Tracker for Keyword
-					if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
-					{
-						keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
-						SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, keyword.DestinationUrl);
-						if (tracker != null)
-							keyword.Segments[Segment.TrackerSegment] = tracker;
-					}
-					_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
-				}
-			}
-			#endregion
-
-			Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
-
-			#region Getting Placements Data
-
-
-			DeliveryFile _PlacementsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]];
-			var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-			using (_PlacementsReader)
-			{
-				while (_PlacementsReader.Read())
-				{
-					if (_PlacementsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
-						break;
-					KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
-					{
-						KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.KeywordIdFieldName]),
-						AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
-						CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
-					};
-					PlacementTarget placement = new PlacementTarget()
-					{
-						OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
-						Placement = _PlacementsReader.Current[Const.PlacementFieldName],
-						PlacementType = PlacementType.Managed
-					};
-					//Setting Tracker for placment
-					if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
-					{
-						placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
-						SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, placement.DestinationUrl);
-						if (tracker != null)
-							placement.Segments[Segment.TrackerSegment] = tracker;
-					}
-					_placementsData.Add(placementPrimaryKey.ToString(), placement);
-				}
-			}
-			#endregion
-
-
-			#region Getting Conversions Data
-			//Get Ads Conversion ( for ex. signup , purchase )
-
-			DeliveryFile _conversionFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"];
-			var _conversionsReader = new CsvDynamicReader(_conversionFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-			Dictionary<string, Dictionary<string, long>> importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
-
-			using (_conversionsReader)
-			{
-				while (_conversionsReader.Read())
-				{
-					if (_conversionsReader.Current[Const.AdIDFieldName] == Const.EOF) // if end of report
-						break;
-					string conversionKey = String.Format("{0}#{1}", _conversionsReader.Current[Const.AdIDFieldName], _conversionsReader.Current[Const.KeywordIdFieldName]);
-					Dictionary<string, long> conversionDic = new Dictionary<string, long>();
-
-					if (!importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
-					{
-						//ADD conversionKey to importedAdsWithConv
-						//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
-						Dictionary<string, long> conversion = new Dictionary<string, long>();
-						conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
-						importedAdsWithConv.Add(conversionKey, conversion);
-					}
-					else // if Key exists
-					{
-						// if current add already has current conversion type than add value to the current type
-						if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])))
-							conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
-						// else create new conversion type and add the value
-						else
-							conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]);
-					}
-				}
-			}
-			#endregion
-
-			#region Getting Ads Data
-
-			DeliveryFile _adPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
-			var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-			Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 			{
+				#region Getting Keywords Data
+				Dictionary<string, double> _totals = new Dictionary<string, double>();
+				DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
+				string[] requiredHeaders = new string[1];
+				requiredHeaders[0] = Const.AdPreRequiredHeader;
+				var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				_keywordsReader.MatchExactColumns = false;
+				Dictionary<string, KeywordTarget> _keywordsData = new Dictionary<string, KeywordTarget>();
+
+				using (_keywordsReader)
+				{
+					while (_keywordsReader.Read())
+					{
+						if (_keywordsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+							break;
+						KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
+						{
+							KeywordId = Convert.ToInt64(_keywordsReader.Current[Const.KeywordIdFieldName]),
+							AdgroupId = Convert.ToInt64(_keywordsReader.Current[Const.AdGroupIdFieldName]),
+							CampaignId = Convert.ToInt64(_keywordsReader.Current[Const.CampaignIdFieldName])
+
+						};
+						KeywordTarget keyword = new KeywordTarget()
+						{
+							OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
+							Keyword = _keywordsReader.Current[Const.KeywordFieldName]
+
+						};
+
+						keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
+						string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
+						keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
+
+						//Setting Tracker for Keyword
+						if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
+						{
+							keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
+							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], keyword.DestinationUrl);
+							if (tracker != null)
+								keyword.Segments.Add(tracker);
+						}
+						_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
+					}
+				}
+				#endregion
+
+				Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
+
+				#region Getting Placements Data
+
+
+				DeliveryFile _PlacementsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT]];
+				var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				using (_PlacementsReader)
+				{
+					while (_PlacementsReader.Read())
+					{
+						if (_PlacementsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+							break;
+						KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
+						{
+							KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.KeywordIdFieldName]),
+							AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
+							CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
+						};
+						PlacementTarget placement = new PlacementTarget()
+						{
+							OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
+							Placement = _PlacementsReader.Current[Const.PlacementFieldName],
+							PlacementType = PlacementType.Managed
+						};
+						//Setting Tracker for placment
+						if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
+						{
+							placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
+							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], placement.DestinationUrl);
+							if (tracker != null)
+								placement.Segments.Add(tracker);
+						}
+						_placementsData.Add(placementPrimaryKey.ToString(), placement);
+					}
+				}
+				#endregion
+
+
+				#region Getting Conversions Data
+				//Get Ads Conversion ( for ex. signup , purchase )
+
+				DeliveryFile _conversionFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"];
+				var _conversionsReader = new CsvDynamicReader(_conversionFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				Dictionary<string, Dictionary<string, long>> importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
+
+				using (_conversionsReader)
+				{
+					while (_conversionsReader.Read())
+					{
+						if (_conversionsReader.Current[Const.AdIDFieldName] == Const.EOF) // if end of report
+							break;
+						string conversionKey = String.Format("{0}#{1}", _conversionsReader.Current[Const.AdIDFieldName], _conversionsReader.Current[Const.KeywordIdFieldName]);
+						Dictionary<string, long> conversionDic = new Dictionary<string, long>();
+
+						if (!importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
+						{
+							//ADD conversionKey to importedAdsWithConv
+							//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
+							Dictionary<string, long> conversion = new Dictionary<string, long>();
+							conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
+							importedAdsWithConv.Add(conversionKey, conversion);
+						}
+						else // if Key exists
+						{
+							// if current add already has current conversion type than add value to the current type
+							if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])))
+								conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
+							// else create new conversion type and add the value
+							else
+								conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]);
+						}
+					}
+				}
+				#endregion
+
+				#region Getting Ads Data
+
+				DeliveryFile _adPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
+				var _adsReader = new CsvDynamicReader(_adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
+
 				//session.Begin(false);
 				session.BeginImport(this.Delivery);
 
@@ -223,6 +224,8 @@ namespace Edge.Services.Google.AdWords
 						{
 							ad = new Ad();
 							ad.OriginalID = adId;
+							ad.Channel = new Channel() { ID = 1 };
+							ad.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
 
 							//Ad Type
 							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
@@ -233,17 +236,16 @@ namespace Edge.Services.Google.AdWords
 							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
 							{
 								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
-								SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, _adsReader.Current[Const.DestUrlFieldName]);
+								SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
 								if (tracker != null)
-									ad.Segments[Segment.TrackerSegment] = tracker;
+									ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
 							}
 
-							ad.Campaign = new Campaign()
+							ad.Segments[session.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
-								Channel = new Channel() { ID = 1 },
-								Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] }
+
 							};
 
 							//Image Type > Create Image
@@ -276,8 +278,9 @@ namespace Edge.Services.Google.AdWords
 							}
 
 							//Insert Adgroup 
-							ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
+							ad.Segments[session.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
 							{
+								Campaign = (Campaign)ad.Segments[session.SegmentTypes[Segment.Common.Campaign]],
 								Value = _adsReader.Current[Const.AdGroupFieldName],
 								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName]
 							};
@@ -324,8 +327,8 @@ namespace Edge.Services.Google.AdWords
 								kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
 							}
 							//INSERTING KEYWORD INTO METRICS
-							adMetricsUnit.TargetMatches = new List<Target>();
-							adMetricsUnit.TargetMatches.Add(kwd);
+							adMetricsUnit.TargetDimensions = new List<Target>();
+							adMetricsUnit.TargetDimensions.Add(kwd);
 						}
 						else
 						{
@@ -341,8 +344,8 @@ namespace Edge.Services.Google.AdWords
 								placement.Placement = Const.AutoDisplayNetworkName;
 							}
 							//INSERTING KEYWORD INTO METRICS
-							adMetricsUnit.TargetMatches = new List<Target>();
-							adMetricsUnit.TargetMatches.Add(placement);
+							adMetricsUnit.TargetDimensions = new List<Target>();
+							adMetricsUnit.TargetDimensions.Add(placement);
 						}
 
 						//INSERTING METRICS DATA
@@ -383,20 +386,21 @@ namespace Edge.Services.Google.AdWords
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 					session.EndImport();
 				}
-
+				#endregion
 			}
-			#endregion
+				
 
 			return Core.Services.ServiceOutcome.Success;
 		}
 
-	
+
 
 
 	}
 	public static class Const
 	{
-		public const string RequiredHeader = "Keyword ID";
+		public const string AdPreRequiredHeader = "Keyword ID";
+		public const string AutoPlacRequiredHeader = "Campaign ID";
 		public const string EOF = "Total";
 
 		public const string KeywordIdFieldName = "Keyword ID";
@@ -432,6 +436,8 @@ namespace Edge.Services.Google.AdWords
 		public const string SystemDisplayNetwork = "Content Only";
 
 		public const string AutoDisplayNetworkName = "Total - content targeting";
+
+		public const string DomainFieldName = "Domain";
 
 	}
 }
