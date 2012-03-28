@@ -44,12 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="%28examples%29.cs" />
     <Compile Include="Importing\AdMetricsImportManager.cs" />
-    <Compile Include="Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\CommitService.cs" />
-    <Compile Include="Services\ProcessorService.cs" />
     <Compile Include="Services\RollbackService.cs" />
   </ItemGroup>
   <ItemGroup>
