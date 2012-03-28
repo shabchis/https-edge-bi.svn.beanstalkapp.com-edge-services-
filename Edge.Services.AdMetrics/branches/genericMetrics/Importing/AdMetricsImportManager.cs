@@ -25,7 +25,7 @@ namespace Edge.Services.AdMetrics
 		#region Table structure
 		/*=========================*/
 
-		private static class Tables
+		public static class Tables
 		{
 			public class Ad
 			{
@@ -100,6 +100,10 @@ namespace Edge.Services.AdMetrics
 		public AdMetricsImportManager(long serviceInstanceID, ImportManagerOptions options = null)
 			: base(serviceInstanceID, options)
 		{
+			this.MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice;
+			this.MeasureOptionsOperator = OptionsOperator.Not;
+			this.SegmentOptions = Data.Objects.SegmentOptions.All;
+			this.SegmentOptionsOperator = OptionsOperator.And;
 		}
 
 		public Func<Ad, long> OnAdUsidRequired = null;
@@ -257,25 +261,6 @@ namespace Edge.Services.AdMetrics
 			get { return "AD"; }
 		}
 
-		protected override MeasureOptions MeasureOptions
-		{
-			get { return MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice; }
-		}
-
-		protected override OptionsOperator MeasureOptionsOperator
-		{
-			get { return OptionsOperator.Not; }
-		}
-
-		protected override SegmentOptions SegmentOptions
-		{
-			get { return SegmentOptions.All; }
-		}
-
-		protected override OptionsOperator SegmentOptionsOperator
-		{
-			get { return OptionsOperator.And; }
-		}
 
 		protected override Type MetricsTableDefinition
 		{
