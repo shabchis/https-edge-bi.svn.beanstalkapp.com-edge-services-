@@ -19,7 +19,7 @@ namespace Edge.Services.SegmentMetrics
 	{
 		#region Table structure
 		/*=========================*/
-		private static class Tables
+		public static class Tables
 		{
 			public class Metrics
 			{
@@ -126,26 +126,6 @@ namespace Edge.Services.SegmentMetrics
 		protected override string TablePrefixType
 		{
 			get { return "GEN"; }
-		}
-
-		protected override MeasureOptions MeasureOptions
-		{
-			get { throw new NotImplementedException(); }
-		}
-
-		protected override OptionsOperator MeasureOptionsOperator
-		{
-			get { throw new NotImplementedException(); }
-		}
-
-		protected override SegmentOptions SegmentOptions
-		{
-			get { throw new NotImplementedException(); }
-		}
-
-		protected override OptionsOperator SegmentOptionsOperator
-		{
-			get { throw new NotImplementedException(); }
 		}
 
 		protected override Type MetricsTableDefinition
