@@ -12,8 +12,8 @@
 		</Map>
 
 		<Map To="DestinationUrl" Field="destUrl"/>
-		<Map To='Segments[{GetSegment("Adgroup")}].Value' Field="Adgroup"/>
-		<Map To='Segments[{GetSegment("Tracker")}]' Field="destUrl" Value='{ExtractAutoSegment("Tracker", destUrl)}' />
+		<Map To='Segments[{GetSegment("Adgroup")}]' Field="{new SegmentValue(Adgroup)}"/>
+		<Map To='Segments[{GetSegment("Tracker")}]' Field="destUrl" Value='{GetAutoSegmentValue("Tracker", destUrl)}' />
 			
 		<Map To='Creatives[]::TextCreative'>
 			<Map To="TextType" Value="Title"/>
