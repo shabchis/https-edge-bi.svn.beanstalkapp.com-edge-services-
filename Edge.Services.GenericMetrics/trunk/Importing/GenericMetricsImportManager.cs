@@ -66,7 +66,7 @@ namespace Edge.Services.SegmentMetrics
 			// Metrics
 			var metricsRow = new Dictionary<ColumnDef, object>()
 			{
-				{Tables.Metrics.MetricsUsid, metrics.Usid},
+				{Tables.Metrics.MetricsUsid, metrics.Usid.ToString("N")},
 				{Tables.Metrics.TargetPeriodStart, metrics.PeriodStart},
 				{Tables.Metrics.TargetPeriodEnd, metrics.PeriodEnd},
 				{Tables.Metrics.Account_ID, metrics.Account.ID},
@@ -86,7 +86,7 @@ namespace Edge.Services.SegmentMetrics
 			{
 				var row = new Dictionary<ColumnDef, object>()
 				{
-					{ Tables.MetricsDimensionSegment.MetricsUsid, metrics.Usid },
+					{ Tables.MetricsDimensionSegment.MetricsUsid, metrics.Usid.ToString("N") },
 					{ Tables.MetricsDimensionSegment.SegmentID, segment.Key.ID},
 					{ Tables.MetricsDimensionSegment.TypeID, segment.Value.TypeID },
 					{ Tables.MetricsDimensionSegment.OriginalID, segment.Value.OriginalID },
@@ -107,7 +107,7 @@ namespace Edge.Services.SegmentMetrics
 			{
 				var row = new Dictionary<ColumnDef, object>()
 				{
-					{ Tables.MetricsDimensionTarget.MetricsUsid, metrics.Usid },
+					{ Tables.MetricsDimensionTarget.MetricsUsid, metrics.Usid.ToString("N") },
 					{ Tables.MetricsDimensionTarget.TypeID, target.TypeID },
 					{ Tables.MetricsDimensionTarget.OriginalID, target.OriginalID },
 					{ Tables.MetricsDimensionTarget.DestinationUrl, target.DestinationUrl }
