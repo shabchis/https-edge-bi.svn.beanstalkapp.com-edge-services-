@@ -242,7 +242,7 @@ namespace Edge.Services.Google.AdWords
 
 		static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
 
-		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = {"Clicks", "Cost", "Impressions", "CampaignId","CampaignName", "AdGroupId","AdGroupName",
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "CampaignId","CampaignName", "AdGroupId","AdGroupName","Clicks", "Cost", "Impressions",
 																			 "Domain","ConversionsManyPerClick","Conversions"
 																		 };
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };

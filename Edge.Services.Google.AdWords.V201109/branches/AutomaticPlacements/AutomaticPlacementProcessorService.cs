@@ -14,16 +14,32 @@ namespace Edge.Services.Google.AdWords
 	{
 		static Dictionary<string, string> GoogleMeasuresDic;
 
+		public AutomaticPlacementProcessorService()
+		{
+			GoogleMeasuresDic = new Dictionary<string, string>()
+			{
+				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
+				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
+			};
+		}
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
 			string[] requiredHeaders = new string[] {Const.AutoPlacRequiredHeader};
 
 			//Open Auto Plac file
-			DeliveryFile _autoPlacFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
+			DeliveryFile _autoPlacFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]];
 			var _autoPlacReader = new CsvDynamicReader(_autoPlacFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 
-			using (var session = new GenericMetricsImportManager(this.Instance.InstanceID))
+			using (var session = new GenericMetricsImportManager(this.Instance.InstanceID)
+			{
+				
+				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
+				MeasureOptionsOperator = OptionsOperator.Not,
+				SegmentOptions = Data.Objects.SegmentOptions.All,
+				SegmentOptionsOperator = OptionsOperator.And
+			})
 			{
 				Dictionary<string, double> _totals = new Dictionary<string, double>();
 
@@ -47,7 +63,7 @@ namespace Edge.Services.Google.AdWords
 						#region Setting Totals
 						/*==================================================================================================================*/
 						// If end of file
-						if (_autoPlacReader.Current[Const.AdIDFieldName] == Const.EOF)
+						if (_autoPlacReader.Current[Const.CampaignIdFieldName] == Const.EOF)
 						{
 							//Setting totals for validation from totals line in adowrds file
 							foreach (KeyValuePair<string, Measure> measure in session.Measures)
@@ -72,12 +88,15 @@ namespace Edge.Services.Google.AdWords
 						autoPlacMetricsUnit.Channel = new Channel() { ID = 1 };
 						autoPlacMetricsUnit.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_autoPlacFile.Parameters["AdwordsClientID"] };
 
+						autoPlacMetricsUnit.SegmentDimensions = new Dictionary<Segment, SegmentObject>();
+
 						//ADDING CAMPAIGN
 						Campaign campaign = new Campaign()
 						{
 							OriginalID = _autoPlacReader.Current[Const.CampaignIdFieldName],
 							Name = _autoPlacReader.Current[Const.CampaignFieldName]
 						};
+
 						autoPlacMetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.Campaign], campaign);
 
 						//ADDING ADGROUP
@@ -90,13 +109,16 @@ namespace Edge.Services.Google.AdWords
 						autoPlacMetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.AdGroup], adgroup);
 
 						//INSERTING METRICS DATA
-						autoPlacMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(_autoPlacReader.Current.Clicks);
-						autoPlacMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_autoPlacReader.Current.Cost)) / 1000000;
-						autoPlacMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_autoPlacReader.Current.Impressions);
-						autoPlacMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClick]);
-						autoPlacMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClick]);
+						autoPlacMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
+						
+						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Clicks], Convert.ToInt64(_autoPlacReader.Current.Clicks));
+						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Cost], (Convert.ToDouble(_autoPlacReader.Current.Cost)) / 1000000);
+						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Impressions], Convert.ToInt64(_autoPlacReader.Current.Impressions));
+						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClick]));
+						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClick]));
 
 						//CREATING PLACEMENT
+						autoPlacMetricsUnit.TargetDimensions = new List<Target>();
 						PlacementTarget placement = new PlacementTarget()
 						{
 							Placement = _autoPlacReader.Current[Const.DomainFieldName],
