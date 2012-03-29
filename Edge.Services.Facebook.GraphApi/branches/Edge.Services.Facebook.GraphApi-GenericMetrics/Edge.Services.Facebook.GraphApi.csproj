@@ -30,6 +30,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Seperia.Facebook.UpdateCampaignStatus|AnyCPU'">
+    <OutputPath>bin\Seperia.Facebook.UpdateCampaignStatus\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\(third party)\Json.net\Newtonsoft.Json.dll</HintPath>
