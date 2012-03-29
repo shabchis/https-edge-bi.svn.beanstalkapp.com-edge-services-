@@ -74,7 +74,9 @@ namespace Edge.Services.Microsoft.AdCenter
             using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
             {
                 session.BeginImport(this.Delivery);
-              
+
+			
+
                 // create the ad report reader
                 requiredHeaders = new string[1];
                 requiredHeaders[0] = WS.AdPerformanceReportColumn.AdId.ToString();
@@ -95,18 +97,21 @@ namespace Edge.Services.Microsoft.AdCenter
                         string accountNameColVal = adReportReader.Current[WS.AdPerformanceReportColumn.AccountName.ToString()];//end of file
                         if (accountNameColVal.Trim() == string.Empty || accountNameColVal.Trim() == endOfFileMicrosoftCorporation.Trim())
                             break;
-                        Ad ad = CreateAd(adReportReader.Current);
-
-                        ad.Campaign = _campaignsCache[ad.Campaign.Name];
-
-                        // Adgroup
-                        ad.Segments[Segment.AdGroupSegment] = new SegmentValue()
-                        {
-                            Value = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupName.ToString()],
-                            OriginalID = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupId.ToString()]
-                        };
-
-                        //Ad Type
+                        Ad ad = CreateAd(adReportReader.Current,session);
+						
+						//ADDING CAMPAIGN
+						ad.Segments.Add(session.SegmentTypes[Segment.Common.Campaign],
+							_campaignsCache[adReportReader.Current[WS.AdPerformanceReportColumn.CampaignName.ToString()]]);
+                       
+                        //CREATING Adgroup
+						AdGroup adGroup = new AdGroup()
+						{
+							Value = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupName.ToString()],
+							OriginalID = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupId.ToString()]
+						};
+						ad.Segments.Add(session.SegmentTypes[Segment.Common.AdGroup], adGroup);
+                       
+                        //CRAETING AD TYPE
                         string adTypeKey = Convert.ToString(adReportReader.Current[WS.AdPerformanceReportColumn.AdType.ToString()]);
                         ad.ExtraFields[AdType] = AdCenterAdTypeDic[adTypeKey];
                         
@@ -167,8 +172,7 @@ namespace Edge.Services.Microsoft.AdCenter
                         _totals[Measure.Common.Clicks] += unit.MeasureValues[session.Measures[Measure.Common.Clicks]];
                         _totals[Measure.Common.Cost] += unit.MeasureValues[session.Measures[Measure.Common.Cost]];
                         _totals[Measure.Common.Impressions] += unit.MeasureValues[session.Measures[Measure.Common.Impressions]];
-
-
+						
                     }
 
 					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
@@ -187,15 +191,15 @@ namespace Edge.Services.Microsoft.AdCenter
 		{
 			Campaign campaign = new Campaign()
 			{
-				Account = new Account() { ID = this.Delivery.Account.ID, OriginalID = this.Delivery.Account.OriginalID },
 				OriginalID = values[WS.CampaignPerformanceReportColumn.CampaignId.ToString()],
 				Name = values[WS.CampaignPerformanceReportColumn.CampaignName.ToString()],
-				Channel = new Channel() { ID = this.Delivery.Channel.ID }
 			};
 			string status = values[WS.CampaignPerformanceReportColumn.Status.ToString()];
+
+			#region Status
 			//switch (status)
 			//{
-					
+
 			//    case "Active":
 			//    case "Submitted":
 			//        campaign.Status = CampaignStatus.Active;
@@ -212,19 +216,16 @@ namespace Edge.Services.Microsoft.AdCenter
 			//        break;
 
 			//}
+			#endregion
+			
 			return campaign;
 		}
 
-        private Ad CreateAd(dynamic values)
+        private Ad CreateAd(dynamic values,AdMetricsImportManager session)
 		{
 			Ad ad = new Ad()
 			{
 				OriginalID = values[WS.AdPerformanceReportColumn.AdId.ToString()],
-				Campaign = new Campaign()
-				{
-					
-					Name = values[WS.AdPerformanceReportColumn.CampaignName.ToString()]
-				},
 				Creatives = new List<Creative>()
 				{
 					new TextCreative(){ TextType = TextCreativeType.Title, Text = values[WS.AdPerformanceReportColumn.AdTitle.ToString()] },
@@ -233,63 +234,60 @@ namespace Edge.Services.Microsoft.AdCenter
 					
 				},
 				DestinationUrl=values[WS.AdPerformanceReportColumn.DestinationUrl.ToString()],
-				
+
+				Account = new Account() { ID = this.Delivery.Account.ID, OriginalID = this.Delivery.Account.OriginalID },
+				Channel = new Channel() { ID = this.Delivery.Channel.ID }
 			};
-			SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+			SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], ad.DestinationUrl);
 			if (tracker != null)
-				ad.Segments[Segment.TrackerSegment] = tracker;
+				ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
 			return ad;
 		}
 
 		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdMetricsImportManager session)
 		{
-			//if (String.IsNullOrWhiteSpace(timePeriodColumn))
-			//    throw new ArgumentNullException("timePeriodColumn");
-           
-          
+			var metricsUnit = new AdMetricsUnit();
 
-			var unit = new AdMetricsUnit();
-
-			unit.Ad = _adCache[Convert.ToInt64(values[WS.KeywordPerformanceReportColumn.AdId.ToString()])];
-			unit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
-			unit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-			unit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-			unit.MeasureValues[session.Measures[Measure.Common.Clicks]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
-			unit.MeasureValues[session.Measures[Measure.Common.Cost]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
-            unit.MeasureValues[session.Measures[Measure.Common.Impressions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
+			metricsUnit.Ad = _adCache[Convert.ToInt64(values[WS.KeywordPerformanceReportColumn.AdId.ToString()])];
+			metricsUnit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
+			metricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
+			metricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] =double.Parse( values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
+            metricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
 
 			
-			unit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] =double.Parse( values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
-			unit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] =double.Parse( values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
 			
-			unit.TargetMatches = new List<Target>();
-			KeywordTarget target = new KeywordTarget();
-			target.DestinationUrl = values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()];
-			target.Keyword = values[WS.KeywordPerformanceReportColumn.Keyword.ToString()];
+
+			metricsUnit.TargetDimensions = new List<Target>();
+
+			//CREATING KEYWORD TARGET
+			KeywordTarget kwdTarget = new KeywordTarget();
+			kwdTarget.DestinationUrl = values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()];
+			kwdTarget.Keyword = values[WS.KeywordPerformanceReportColumn.Keyword.ToString()];
 			string macthType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
 			switch (macthType)
 			{
 				case "Exact":
-					target.MatchType = KeywordMatchType.Exact;
+					kwdTarget.MatchType = KeywordMatchType.Exact;
 					break;
 				case "Broad":
-					target.MatchType = KeywordMatchType.Broad;
+					kwdTarget.MatchType = KeywordMatchType.Broad;
 					break;
 				case "Phrase":
-					target.MatchType = KeywordMatchType.Phrase;
+					kwdTarget.MatchType = KeywordMatchType.Phrase;
 					break;
 				default:
-					target.MatchType = KeywordMatchType.Unidentified;
+					kwdTarget.MatchType = KeywordMatchType.Unidentified;
 					break;
 
 			}
-			target.OriginalID = values[WS.KeywordPerformanceReportColumn.KeywordId.ToString()];
+			kwdTarget.OriginalID = values[WS.KeywordPerformanceReportColumn.KeywordId.ToString()];
+			metricsUnit.TargetDimensions.Add(kwdTarget);
 
-			unit.TargetMatches.Add(target);
-
-           
-
-			return unit;
+			return metricsUnit;
 		}
 	}
 
