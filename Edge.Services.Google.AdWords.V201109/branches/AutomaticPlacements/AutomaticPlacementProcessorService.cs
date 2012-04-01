@@ -6,7 +6,7 @@ using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201109;
 
 using System.IO;
-using Edge.Services.SegmentMetrics;
+using Edge.Services.GenericMetrics;
 
 namespace Edge.Services.Google.AdWords
 {
