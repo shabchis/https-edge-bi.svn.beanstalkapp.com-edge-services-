@@ -13,7 +13,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Common.Importing;
 using Edge.Data.Objects.Reflection;
 
-namespace Edge.Services.SegmentMetrics
+namespace Edge.Services.GenericMetrics
 {
 	public class GenericMetricsImportManager : MetricsImportManager<GenericMetricsUnit>
 	{

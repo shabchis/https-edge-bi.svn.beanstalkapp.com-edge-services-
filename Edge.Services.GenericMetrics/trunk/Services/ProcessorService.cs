@@ -5,18 +5,16 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using Edge.Services.SegmentMetrics;
 using Newtonsoft.Json;
 
-namespace Edge.Services.SegmentMetrics.Services
+namespace Edge.Services.GenericMetrics.Services
 {
-	/*
+	
     public class ProcessorService : PipelineService
     {
 
         protected override Core.Services.ServiceOutcome DoPipelineWork()
         {
-
             foreach (var ReportFile in Delivery.Files)
             {
                 bool isAttribute = Boolean.Parse(ReportFile.Parameters["Bo.IsAttribute"].ToString());
@@ -24,7 +22,7 @@ namespace Edge.Services.SegmentMetrics.Services
                     (ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
                 Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
 
-                using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
+                using (var session = new GenericMetricsImportManager(this.Instance.InstanceID))
                 {
                     session.BeginImport(this.Delivery);
                     #region For Validation
@@ -34,12 +32,10 @@ namespace Edge.Services.SegmentMetrics.Services
                         {
                             if (!totalsValidation.ContainsKey(measure.SourceName))
                                 totalsValidation.Add(measure.SourceName, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
-
                         }
-
-
                     }
                     #endregion
+
                     using (ReportReader)
                     {
                         dynamic readerHelper;
@@ -51,22 +47,26 @@ namespace Edge.Services.SegmentMetrics.Services
                                 readerHelper = ReportReader.Current.Attributes;
                             else
                                 readerHelper = ReportReader.Current;
-                            SegmentMetricsUnit MetricsUnit = new SegmentMetricsUnit();
-                            //TODO: Validations
-                            MetricsUnit.Segments[SegmentType.TrackerSegment] = new Segment() { Value = readerHelper[ReportFile.Parameters["Bo.TrackerIDField"].ToString()] };
-                            foreach (var measure in session.Measures.Values)
+							GenericMetricsUnit MetricsUnit = new GenericMetricsUnit();
+                            
+							//Getting Tracker
+							SegmentObject tracker = new SegmentObject()
+							{
+								Value = readerHelper[ReportFile.Parameters["Bo.TrackerIDField"].ToString()]
+							};
+							MetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.Tracker], tracker);
+
+						    
+							//Getting Measures
+							foreach (var measure in session.Measures.Values)
                             {
                                 if (string.IsNullOrEmpty(measure.SourceName)&& measure.Account != null)
                                     throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
 
                                 if (measure.Account != null)
                                 {
-
                                     if (!string.IsNullOrEmpty(readerHelper[measure.SourceName]))                                   
                                         MetricsUnit.MeasureValues[session.Measures[measure.Name]] = Convert.ToDouble(readerHelper[measure.SourceName]);
-
-                                    
-                                  
 
                                     if (totalsValidation.ContainsKey(measure.SourceName))
                                     {
@@ -79,14 +79,16 @@ namespace Edge.Services.SegmentMetrics.Services
 
                             //Create Usid
                             Dictionary<string, string> usid = new Dictionary<string, string>();
-                            foreach (var segment in MetricsUnit.Segments)
+                            foreach (var segment in MetricsUnit.SegmentDimensions)
                             {
                                 usid.Add(segment.Key.Name, segment.Value.Value);
                             }
 
                             MetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
                             MetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
-                            session.ImportMetrics(MetricsUnit, JsonConvert.SerializeObject(usid));
+
+							session.ImportMetrics(MetricsUnit);
+                            //session.ImportMetrics(MetricsUnit, JsonConvert.SerializeObject(usid));
                         }
                     }
                     session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, totalsValidation);
@@ -96,5 +98,5 @@ namespace Edge.Services.SegmentMetrics.Services
             return Core.Services.ServiceOutcome.Success;
         }
     }
-	*/
+	
 }

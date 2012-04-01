@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline.Services;
-using Edge.Services.SegmentMetrics;
 using Edge.Data.Pipeline.Common.Importing;
 using Edge.Data.Pipeline;
 
-namespace Edge.Services.SegmentMetrics.Services
+namespace Edge.Services.GenericMetrics.Services
 {
 	/*
 	class CommitService : PipelineService
