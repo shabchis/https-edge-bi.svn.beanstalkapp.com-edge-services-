@@ -51,7 +51,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 				command.Remove(command.Length - 1, 1); //remove last comma character
 				command.Append(" from ");
 				command.Append(OltpTable);
-				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID and [Account_ID_SRC] = @OriginalID");
+				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID");
 
 				SqlCommand sqlCommand = new SqlCommand(command.ToString());
 
