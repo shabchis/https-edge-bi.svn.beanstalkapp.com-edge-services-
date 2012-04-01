@@ -53,11 +53,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 				command.Append(OltpTable);
 				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID and [Account_ID_SRC] = @OriginalID");
 
-
-				SqlCommand sqlCommand = new SqlCommand(
-				   "SELECT SUM(cost),sum(imps),sum(clicks) from " + OltpTable +
-				   " where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID"
-				   );
+				SqlCommand sqlCommand = new SqlCommand(command.ToString());
 
 				SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
 				SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
