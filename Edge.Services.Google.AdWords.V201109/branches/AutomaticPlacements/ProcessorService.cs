@@ -92,7 +92,7 @@ namespace Edge.Services.Google.AdWords
 							keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
 							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], keyword.DestinationUrl);
 							if (tracker != null)
-								keyword.Segments.Add(tracker);
+								keyword.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
 						}
 						_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
 					}
@@ -130,7 +130,7 @@ namespace Edge.Services.Google.AdWords
 							placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
 							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], placement.DestinationUrl);
 							if (tracker != null)
-								placement.Segments.Add(tracker);
+								placement.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
 						}
 						_placementsData.Add(placementPrimaryKey.ToString(), placement);
 					}
