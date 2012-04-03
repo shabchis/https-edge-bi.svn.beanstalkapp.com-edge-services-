@@ -8,14 +8,14 @@ using Edge.Data.Pipeline;
 
 namespace Edge.Services.GenericMetrics.Services
 {
-	/*
+	
 	class CommitService : PipelineService
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			string validationThreshold = Instance.Configuration.Options[Consts.AppSettings.CommitValidationTheshold];
 
-			SegmentMetricsImportManager importManager = new SegmentMetricsImportManager(this.Instance.InstanceID,new Data.Pipeline.Common.Importing.ImportManagerOptions()
+			GenericMetricsImportManager importManager = new GenericMetricsImportManager(this.Instance.InstanceID,new Data.Pipeline.Common.Importing.ImportManagerOptions()
 			{
 				SqlPrepareCommand = Instance.Configuration.Options[Consts.AppSettings.SqlPrepareCommand],
 				SqlCommitCommand = Instance.Configuration.Options[Consts.AppSettings.SqlCommitCommand],
@@ -25,14 +25,14 @@ namespace Edge.Services.GenericMetrics.Services
 			ReportProgress(0.1);
 
 
-			// ----------------
-			// TICKETS
+			 //----------------
+			 //TICKETS
 
 			// Only check tickets, don't check conflicts
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Ignore, getBehaviorFromConfiguration: false);
 			ReportProgress(0.2);
 
-			// ----------------
+			//----------------
 			// PREPARE
 			importManager.Prepare(new Delivery[] { this.Delivery });
 			ReportProgress(0.6);
@@ -58,12 +58,12 @@ namespace Edge.Services.GenericMetrics.Services
 			while (!success);
 
 
-			///////////////////////////////////////////////////
+			///////////////////////////////////////////////
 
 
 			return Core.Services.ServiceOutcome.Success;
 
 		}
 	}
-	*/
+	
 }
