@@ -13,6 +13,7 @@ namespace Edge.Services.Google.AdWords
 	class AutomaticPlacementProcessorService : PipelineService
 	{
 		static Dictionary<string, string> GoogleMeasuresDic;
+		static Dictionary<string, ObjectStatus> ObjectStatusDic;
 
 		public AutomaticPlacementProcessorService()
 		{
@@ -20,6 +21,13 @@ namespace Edge.Services.Google.AdWords
 			{
 				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
 				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
+			};
+
+			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
+			{
+				{"PAUSED",ObjectStatus.Active},
+				{"DELETED",ObjectStatus.Deleted},
+				{"ACTIVE",ObjectStatus.Paused}
 			};
 		}
 
@@ -94,7 +102,8 @@ namespace Edge.Services.Google.AdWords
 						Campaign campaign = new Campaign()
 						{
 							OriginalID = _autoPlacReader.Current[Const.CampaignIdFieldName],
-							Name = _autoPlacReader.Current[Const.CampaignFieldName]
+							Name = _autoPlacReader.Current[Const.CampaignFieldName],
+							Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatus]).ToUpper()]
 						};
 
 						autoPlacMetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.Campaign], campaign);

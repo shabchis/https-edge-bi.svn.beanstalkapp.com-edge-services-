@@ -349,12 +349,13 @@ namespace Edge.Services.Google.AdWords
 						}
 
 						//INSERTING METRICS DATA
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(_adsReader.Current.Clicks);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(_adsReader.Current.Impressions);
-						adMetricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = Convert.ToDouble(_adsReader.Current[Const.AvgPosition]);
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]);
-						adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]]] = Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]);
+						adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
+						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
+						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Cost], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
+						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPosition]));
+						adMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]));
+						adMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]));
 
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
@@ -418,6 +419,7 @@ namespace Edge.Services.Google.AdWords
 
 		public const string CampaignIdFieldName = "Campaign ID";
 		public const string CampaignFieldName = "Campaign";
+		public const string CampaignStatus = "Campaign state";
 
 		public const string QualityScoreFieldName = "Quality score";
 		public const string MatchTypeFieldName = "Match type";
