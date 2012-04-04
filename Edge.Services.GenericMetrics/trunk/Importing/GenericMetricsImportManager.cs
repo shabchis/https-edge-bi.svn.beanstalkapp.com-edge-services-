@@ -38,6 +38,7 @@ namespace Edge.Services.GenericMetrics
 				public static ColumnDef SegmentID = new ColumnDef("SegmentID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 4000);
+				public static ColumnDef Status = new ColumnDef("Status", type: SqlDbType.Int);
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
 				public static ColumnDef ExtraFieldX = new ColumnDef("ExtraField{0}", type: SqlDbType.NVarChar, copies: 6, size: 4000);
@@ -48,6 +49,7 @@ namespace Edge.Services.GenericMetrics
 				public static ColumnDef MetricsUsid = new ColumnDef("MetricsUsid", size: 32, type: SqlDbType.Char, nullable: false);
 				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 100);
+				public static ColumnDef Status = new ColumnDef("Status", type: SqlDbType.Int);
 				public static ColumnDef DestinationUrl = new ColumnDef("DestinationUrl", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
 				public static ColumnDef ExtraFieldX = new ColumnDef("ExtraField{0}", type: SqlDbType.NVarChar, copies: 6, size: 4000);
@@ -90,6 +92,7 @@ namespace Edge.Services.GenericMetrics
 					{ Tables.MetricsDimensionSegment.SegmentID, segment.Key.ID},
 					{ Tables.MetricsDimensionSegment.TypeID, segment.Value.TypeID },
 					{ Tables.MetricsDimensionSegment.OriginalID, segment.Value.OriginalID },
+					{ Tables.MetricsDimensionSegment.Status, segment.Value.Status },
 					{ Tables.MetricsDimensionSegment.Value, segment.Value.Value }
 				};
 
@@ -110,6 +113,7 @@ namespace Edge.Services.GenericMetrics
 					{ Tables.MetricsDimensionTarget.MetricsUsid, metrics.Usid.ToString("N") },
 					{ Tables.MetricsDimensionTarget.TypeID, target.TypeID },
 					{ Tables.MetricsDimensionTarget.OriginalID, target.OriginalID },
+					{ Tables.MetricsDimensionTarget.Status, target.Status },
 					{ Tables.MetricsDimensionTarget.DestinationUrl, target.DestinationUrl }
 				};
 
