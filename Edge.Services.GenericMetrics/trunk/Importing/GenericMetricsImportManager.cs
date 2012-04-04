@@ -38,7 +38,7 @@ namespace Edge.Services.GenericMetrics
 				public static ColumnDef SegmentID = new ColumnDef("SegmentID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef TypeID = new ColumnDef("TypeID", type: SqlDbType.Int, nullable: false);
 				public static ColumnDef OriginalID = new ColumnDef("OriginalID", size: 4000);
-				public static ColumnDef Status = new ColumnDef("Status", type: SqlDbType.Int);
+				public static ColumnDef Status = new ColumnDef("Status", type: SqlDbType.Int, nullable:true);
 				public static ColumnDef Value = new ColumnDef("Value", size: 4000);
 				public static ColumnDef FieldX = new ColumnDef("Field{0}", type: SqlDbType.NVarChar, size: 4000, copies: 4);
 				public static ColumnDef ExtraFieldX = new ColumnDef("ExtraField{0}", type: SqlDbType.NVarChar, copies: 6, size: 4000);
