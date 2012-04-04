@@ -92,7 +92,7 @@ namespace Edge.Services.GenericMetrics
 					{ Tables.MetricsDimensionSegment.SegmentID, segment.Key.ID},
 					{ Tables.MetricsDimensionSegment.TypeID, segment.Value.TypeID },
 					{ Tables.MetricsDimensionSegment.OriginalID, segment.Value.OriginalID },
-					{ Tables.MetricsDimensionSegment.Status, segment.Value.Status },
+					{ Tables.MetricsDimensionSegment.Status, segment.Value.Status == ObjectStatus.Unknown ? (object)DBNull.Value :  segment.Value.Status},
 					{ Tables.MetricsDimensionSegment.Value, segment.Value.Value }
 				};
 
@@ -113,7 +113,7 @@ namespace Edge.Services.GenericMetrics
 					{ Tables.MetricsDimensionTarget.MetricsUsid, metrics.Usid.ToString("N") },
 					{ Tables.MetricsDimensionTarget.TypeID, target.TypeID },
 					{ Tables.MetricsDimensionTarget.OriginalID, target.OriginalID },
-					{ Tables.MetricsDimensionTarget.Status, target.Status },
+					{ Tables.MetricsDimensionTarget.Status, target.Status == ObjectStatus.Unknown ? (object)DBNull.Value :  target.Status },
 					{ Tables.MetricsDimensionTarget.DestinationUrl, target.DestinationUrl }
 				};
 
