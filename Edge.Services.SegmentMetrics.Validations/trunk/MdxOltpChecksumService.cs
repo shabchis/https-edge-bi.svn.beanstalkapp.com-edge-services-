@@ -99,7 +99,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 			AdomdConnection conn = new AdomdConnection(admobConnection);
 			try
 			{
-				conn.Open();
+			conn.Open();
 
 				//Getting CubeName from Database
 				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
@@ -108,6 +108,18 @@ namespace Edge.Services.SegmentMetrics.Validations
 				measuresPlaceHolder.Append("Select {{");
 				foreach (var requierdMeasure in validationRequiredMeasure)
 				{
+					if (string.IsNullOrEmpty(requierdMeasure.Value.DisplayName))
+						return new ValidationResult()
+						{
+							ResultType = ValidationResultType.Error,
+							AccountID = Convert.ToInt32(Params["AccountID"]),
+							Message = string.Format("Measure Display Name cannot be NULL or Empty (Check Measure #{0})",requierdMeasure.Value.ID),
+							TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
+							TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
+							ChannelID = Convert.ToInt32(Params["ChannelID"]),
+							CheckType = this.Instance.Configuration.Name
+						};
+
 					measuresPlaceHolder.Append("[" + requierdMeasure.Value.DisplayName + "],");
 				}
 				
