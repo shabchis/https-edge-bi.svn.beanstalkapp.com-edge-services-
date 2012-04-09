@@ -13,13 +13,13 @@ namespace Edge.Services.GenericMetrics.Services
 	{
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			string validationThreshold = Instance.Configuration.Options[Consts.AppSettings.CommitValidationTheshold];
+			string validationThreshold = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.CommitValidationTheshold];
 
 			GenericMetricsImportManager importManager = new GenericMetricsImportManager(this.Instance.InstanceID,new Data.Pipeline.Common.Importing.ImportManagerOptions()
 			{
-				SqlPrepareCommand = Instance.Configuration.Options[Consts.AppSettings.SqlPrepareCommand],
-				SqlCommitCommand = Instance.Configuration.Options[Consts.AppSettings.SqlCommitCommand],
-				SqlRollbackCommand = Instance.Configuration.Options[Consts.AppSettings.SqlRollbackCommand],
+				SqlPrepareCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlPrepareCommand],
+				SqlCommitCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlCommitCommand],
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand],
 				CommitValidationThreshold = validationThreshold == null ? 0.01 : double.Parse(validationThreshold)
 			});
 			ReportProgress(0.1);
