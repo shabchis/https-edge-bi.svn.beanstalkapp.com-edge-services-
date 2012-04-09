@@ -25,9 +25,9 @@ namespace Edge.Services.Google.AdWords
 
 			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
 			{
-				{"PAUSED",ObjectStatus.Active},
+				{"PAUSED",ObjectStatus.Paused},
 				{"DELETED",ObjectStatus.Deleted},
-				{"ACTIVE",ObjectStatus.Paused}
+				{"ACTIVE",ObjectStatus.Active}
 			};
 		}
 
