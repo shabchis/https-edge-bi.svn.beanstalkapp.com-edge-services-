@@ -22,7 +22,13 @@ namespace Edge.Services.GenericMetrics.Services
                     (ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
                 Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
 
-                using (var session = new GenericMetricsImportManager(this.Instance.InstanceID))
+				using (var session = new GenericMetricsImportManager(this.Instance.InstanceID)
+				{
+					MeasureOptions = MeasureOptions.IsBackOffice,
+					MeasureOptionsOperator = OptionsOperator.And,
+					SegmentOptions = Data.Objects.SegmentOptions.All,
+					SegmentOptionsOperator = OptionsOperator.And
+				})
                 {
                     session.BeginImport(this.Delivery);
                     #region For Validation
@@ -47,13 +53,32 @@ namespace Edge.Services.GenericMetrics.Services
                                 readerHelper = ReportReader.Current.Attributes;
                             else
                                 readerHelper = ReportReader.Current;
+							
+							//Setting MetricsUnit
 							GenericMetricsUnit MetricsUnit = new GenericMetricsUnit();
-                            
+							MetricsUnit.SegmentDimensions = new Dictionary<Segment, SegmentObject>();
+							
+							//Ask Doron about not having targets 
+							MetricsUnit.TargetDimensions = new List<Target>();
+
+							MetricsUnit.MeasureValues = new Dictionary<Measure, double>();
+
+							MetricsUnit.Account = new Account()
+							{
+								ID = this.Delivery.Account.ID
+							};
+
+							MetricsUnit.Channel = new Channel()
+							{
+								ID = -1
+							};
+
 							//Getting Tracker
 							SegmentObject tracker = new SegmentObject()
 							{
 								Value = readerHelper[ReportFile.Parameters["Bo.TrackerIDField"].ToString()]
 							};
+							
 							MetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.Tracker], tracker);
 
 						    

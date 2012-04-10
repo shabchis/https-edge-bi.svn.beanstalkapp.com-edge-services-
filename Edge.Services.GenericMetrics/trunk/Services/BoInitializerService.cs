@@ -7,7 +7,7 @@ using Edge.Data.Pipeline.Services;
 
 namespace Edge.Services.GenericMetrics.Services
 {
-    class InitializerService : PipelineService
+    class BoInitializerService : PipelineService
     {
         protected override Core.Services.ServiceOutcome DoPipelineWork()
         {

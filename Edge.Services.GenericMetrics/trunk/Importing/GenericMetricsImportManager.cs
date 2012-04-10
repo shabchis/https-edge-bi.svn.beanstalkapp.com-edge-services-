@@ -72,7 +72,7 @@ namespace Edge.Services.GenericMetrics
 				{Tables.Metrics.TargetPeriodStart, metrics.PeriodStart},
 				{Tables.Metrics.TargetPeriodEnd, metrics.PeriodEnd},
 				{Tables.Metrics.Account_ID, metrics.Account.ID},
-				{Tables.Metrics.Account_OriginalID, metrics.Account.OriginalID},
+				{Tables.Metrics.Account_OriginalID, metrics.Account.OriginalID == null ? (object)DBNull.Value : metrics.Account.OriginalID },
 				{Tables.Metrics.Channel_ID, metrics.Channel.ID}
 			};
 
