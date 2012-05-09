@@ -5,7 +5,8 @@ using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201109;
 using System.IO;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -90,9 +91,9 @@ namespace Edge.Services.Google.AdWords
 						if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
 						{
 							keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
-							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], keyword.DestinationUrl);
-							if (tracker != null)
-								keyword.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
+							//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], keyword.DestinationUrl);
+							//if (tracker != null)
+							//    keyword.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
 						}
 						_keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
 					}
@@ -128,9 +129,9 @@ namespace Edge.Services.Google.AdWords
 						if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
 						{
 							placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
-							SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], placement.DestinationUrl);
-							if (tracker != null)
-								placement.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
+							//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], placement.DestinationUrl);
+							//if (tracker != null)
+							//    placement.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
 						}
 						_placementsData.Add(placementPrimaryKey.ToString(), placement);
 					}
@@ -236,9 +237,9 @@ namespace Edge.Services.Google.AdWords
 							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
 							{
 								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
-								SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
-								if (tracker != null)
-									ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
+								//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
+								//if (tracker != null)
+								//    ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
 							}
 
 							ad.Segments[session.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
@@ -384,7 +385,7 @@ namespace Edge.Services.Google.AdWords
 						};
 						session.ImportMetrics(adMetricsUnit);
 					}
-					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+					session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 					session.EndImport();
 				}
 				#endregion

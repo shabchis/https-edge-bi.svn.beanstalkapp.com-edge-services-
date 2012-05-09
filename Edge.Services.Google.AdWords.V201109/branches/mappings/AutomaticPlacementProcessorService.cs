@@ -4,9 +4,11 @@ using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201109;
+using Edge.Data.Pipeline.Metrics;
 
 using System.IO;
-using Edge.Services.GenericMetrics;
+using Edge.Data.Pipeline.Metrics.GenericMetrics;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -40,14 +42,14 @@ namespace Edge.Services.Google.AdWords
 			DeliveryFile _autoPlacFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]];
 			var _autoPlacReader = new CsvDynamicReader(_autoPlacFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 
-			using (var session = new GenericMetricsImportManager(this.Instance.InstanceID)
+			using (var session = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
 				
 				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
 				MeasureOptionsOperator = OptionsOperator.Not,
 				SegmentOptions = Data.Objects.SegmentOptions.All,
 				SegmentOptionsOperator = OptionsOperator.And
-			})
+			}))
 			{
 				Dictionary<string, double> _totals = new Dictionary<string, double>();
 
@@ -143,7 +145,7 @@ namespace Edge.Services.Google.AdWords
 					}
 				}
 
-				session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+				session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 				session.EndImport();
 				
 			}

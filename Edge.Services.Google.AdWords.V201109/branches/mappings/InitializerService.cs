@@ -6,11 +6,13 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using GA = Google.Api.Ads.AdWords.v201109;
 using Edge.Core.Services;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
 using Edge.Core.Configuration;
 using Google.Api.Ads.AdWords.v201109;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util.Reports;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -40,9 +42,9 @@ namespace Edge.Services.Google.AdWords
 
 
 			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
+				SqlRollbackCommand = Instance.Configuration.Options[Consts.AppSettings.SqlRollbackCommand]
 			});
 
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
