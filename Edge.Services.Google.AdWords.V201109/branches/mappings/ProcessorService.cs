@@ -7,6 +7,8 @@ using GA = Google.Api.Ads.AdWords.v201109;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
+using Edge.Data.Pipeline.Metrics.GenericMetrics;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -52,7 +54,15 @@ namespace Edge.Services.Google.AdWords
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
-			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+			using (var session = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
+			{
+
+				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
+				MeasureOptionsOperator = OptionsOperator.Not,
+				SegmentOptions = Data.Objects.SegmentOptions.All,
+				SegmentOptionsOperator = OptionsOperator.And
+			}))
 			{
 				#region Getting Keywords Data
 				Dictionary<string, double> _totals = new Dictionary<string, double>();
