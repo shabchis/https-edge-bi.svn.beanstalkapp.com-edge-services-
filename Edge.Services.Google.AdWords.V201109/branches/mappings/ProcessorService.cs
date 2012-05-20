@@ -7,12 +7,13 @@ using GA = Google.Api.Ads.AdWords.v201109;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
+using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.AdWords
 {
-	class ProcessorService : PipelineService
+	class ProcessorService : MetricsProcessorServiceBase
 	{
 		//ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
 
@@ -49,13 +50,21 @@ namespace Edge.Services.Google.AdWords
 			};
 		}
 
+		public new AdMetricsImportManager ImportManager
+		{
+			get { return (AdMetricsImportManager)base.ImportManager; }
+			set { base.ImportManager = value; }
+		}
+
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
 
 			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
-			using (var session = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
+
+			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
 
 				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
@@ -193,9 +202,9 @@ namespace Edge.Services.Google.AdWords
 				Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 
 				//session.Begin(false);
-				session.BeginImport(this.Delivery);
+				this.ImportManager.BeginImport(this.Delivery);
 
-				foreach (KeyValuePair<string, Measure> measure in session.Measures)
+				foreach (KeyValuePair<string, Measure> measure in this.ImportManager.Measures)
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
@@ -206,13 +215,16 @@ namespace Edge.Services.Google.AdWords
 
 				using (_adsReader)
 				{
+					this.Mappings.OnFieldRequired = field => _adsReader.Current[field];
+
 					while (_adsReader.Read())
 					{
+						
 
 						// Adding totals line for validation (checksum)
 						if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
 						{
-							foreach (KeyValuePair<string, Measure> measure in session.Measures)
+							foreach (KeyValuePair<string, Measure> measure in this.ImportManager.Measures)
 							{
 								if (!measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 									continue;
@@ -247,12 +259,14 @@ namespace Edge.Services.Google.AdWords
 							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
 							{
 								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
+								
+								this.Mappings.Objects[typeof(Ad)].Apply(ad);
 								//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
 								//if (tracker != null)
 								//    ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
 							}
 
-							ad.Segments[session.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
+							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
@@ -289,9 +303,9 @@ namespace Edge.Services.Google.AdWords
 							}
 
 							//Insert Adgroup 
-							ad.Segments[session.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
 							{
-								Campaign = (Campaign)ad.Segments[session.SegmentTypes[Segment.Common.Campaign]],
+								Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
 								Value = _adsReader.Current[Const.AdGroupFieldName],
 								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName]
 							};
@@ -307,7 +321,7 @@ namespace Edge.Services.Google.AdWords
 							ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
-							session.ImportAd(ad);
+							this.ImportManager.ImportAd(ad);
 						}
 						else ad = importedAds[adId];
 						adMetricsUnit.Ad = ad;
@@ -361,12 +375,12 @@ namespace Edge.Services.Google.AdWords
 
 						//INSERTING METRICS DATA
 						adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
-						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
-						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Cost], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
-						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
-						adMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPosition]));
-						adMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]));
-						adMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPosition]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]));
 
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
@@ -380,7 +394,7 @@ namespace Edge.Services.Google.AdWords
 								{
 									//if (adMetricsUnit.MeasureValues.ContainsKey(session.Measures[GoogleMeasuresDic[pair.Key]]))
 									//{
-									adMetricsUnit.MeasureValues[session.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
+									adMetricsUnit.MeasureValues[this.ImportManager.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
 									//}
 								}
 							}
@@ -393,10 +407,10 @@ namespace Edge.Services.Google.AdWords
 						{
 							Code = Convert.ToString(_adsReader.Current.Currency)
 						};
-						session.ImportMetrics(adMetricsUnit);
+						this.ImportManager.ImportMetrics(adMetricsUnit);
 					}
-					session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
-					session.EndImport();
+					this.ImportManager.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+					this.ImportManager.EndImport();
 				}
 				#endregion
 			}
