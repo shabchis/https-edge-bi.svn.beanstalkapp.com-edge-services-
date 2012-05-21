@@ -320,7 +320,7 @@ namespace Edge.Services.Facebook.GraphApi
 										{
 
 											ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-
+										
 											if (!string.IsNullOrEmpty(ad.DestinationUrl))
 											{
 												SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
@@ -329,41 +329,59 @@ namespace Edge.Services.Facebook.GraphApi
 											}
 
 											ad.Creatives = new List<Creative>();
-											ad.Creatives.Add(new ImageCreative()
+											switch ((string)adGroupCreativesReader.Current.type)
 											{
-												ImageUrl = adGroupCreativesReader.Current.image_url,
-												OriginalID = adGroupCreativesReader.Current.creative_id
+												case "9":
+													{
+														TextCreative sponserStory = new TextCreative()
+														{
+															OriginalID = adGroupCreativesReader.Current.creative_id,
+															TextType = TextCreativeType.Title,
+															Text = "Sponsored Story"
 
-												//Name = adGroupCreativesReader.Current.name
+														};
+														ad.Creatives.Add(sponserStory);
+														break;
 
-											});
-											ad.Creatives.Add(new TextCreative()
-											{
-												OriginalID = adGroupCreativesReader.Current.creative_id,
-												TextType = TextCreativeType.Body,
-												Text = adGroupCreativesReader.Current.body
-												//Name = adGroupCreativesReader.Current.name
+													}
+												default:
+												case "1":
+													{
+														ImageCreative ic=new ImageCreative()
+														{
+															ImageUrl = adGroupCreativesReader.Current.image_url,
+															OriginalID = adGroupCreativesReader.Current.creative_id
+
+															//Name = adGroupCreativesReader.Current.name
+
+														};
+														if (!string.IsNullOrEmpty( ic.ImageUrl))
+														ad.Creatives.Add(ic);
+														TextCreative bc=new TextCreative()														
+														{
+															OriginalID = adGroupCreativesReader.Current.creative_id,
+															TextType = TextCreativeType.Body,
+															Text = adGroupCreativesReader.Current.body
+															//Name = adGroupCreativesReader.Current.name
 
 
-											});
-											ad.Creatives.Add(new TextCreative()
-											{
+														};
+														if (!string.IsNullOrEmpty(bc.Text))
+														ad.Creatives.Add(bc);				
 
-												OriginalID = adGroupCreativesReader.Current.creative_id,
-												TextType = TextCreativeType.DisplayUrl,
-												Text = adGroupCreativesReader.Current.preview_url
-												//Name = adGroupCreativesReader.Current.name
-
-											});
-											ad.Creatives.Add(new TextCreative()
-											{
-
-												OriginalID = adGroupCreativesReader.Current.creative_id,
-												TextType = TextCreativeType.Title,
-												Text = adGroupCreativesReader.Current.title
-												//Name = adGroupCreativesReader.Current.name
-
-											});
+														//bug creative type =9 story like
+														TextCreative tc = new TextCreative()
+														{
+															OriginalID = adGroupCreativesReader.Current.creative_id,
+															TextType = TextCreativeType.Title,
+															Text = adGroupCreativesReader.Current.title
+														};
+														if (!string.IsNullOrEmpty(bc.Text))
+															ad.Creatives.Add(tc);
+														break;
+													}
+												
+										}
 
 
 
