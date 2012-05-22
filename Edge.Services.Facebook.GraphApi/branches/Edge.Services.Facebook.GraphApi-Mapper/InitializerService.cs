@@ -6,7 +6,9 @@ using Edge.Data.Pipeline.Services;
 using System.Dynamic;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Facebook.GraphApi
 {
@@ -27,9 +29,9 @@ namespace Edge.Services.Facebook.GraphApi
 				this.TargetPeriod.ToAbsolute()));
 
 			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
 			});
 
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)

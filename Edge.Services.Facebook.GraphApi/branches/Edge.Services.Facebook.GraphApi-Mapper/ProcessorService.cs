@@ -6,12 +6,15 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Objects;
 using Edge.Core.Utilities;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
+using Edge.Data.Pipeline.Metrics.Services;
+using Edge.Data.Pipeline.Common.Importing;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
 
 namespace Edge.Services.Facebook.GraphApi
 {
 
-	public class ProcessorService : PipelineService
+	public class ProcessorService : MetricsProcessorServiceBase
 	{
 		static class MeasureNames
 		{
@@ -50,21 +53,10 @@ namespace Edge.Services.Facebook.GraphApi
 
 						Campaign camp = new Campaign()
 						{
-
 							Name = campaignsReader.Current.name,
 							OriginalID = Convert.ToString(campaignsReader.Current.campaign_id),
-
-							Channel = new Channel()
-							{
-								ID = 6
-							},
-							Account = new Account()
-							{
-								ID = this.Delivery.Account.ID,
-								OriginalID = this.Delivery.Account.OriginalID.ToString()
-							}
-
 						};
+
 						long campaignStatus = long.Parse(campaignsReader.Current.campaign_status);
 						switch (campaignStatus)
 						{
@@ -94,17 +86,27 @@ namespace Edge.Services.Facebook.GraphApi
 
 				var adGroupsReader = new JsonDynamicReader(FileManager.Open(adGroups.Location), "$.data[*].*");
 
-
-
-
 				using (adGroupsReader)
 				{
 					while (adGroupsReader.Read())
 					{
 						Ad ad = new Ad();
 						ad.OriginalID = Convert.ToString(adGroupsReader.Current.ad_id);
-						ad.Campaign = campaignsData[Convert.ToString(adGroupsReader.Current.campaign_id)];
+						ad.Segments = new Dictionary<Segment, SegmentObject>();
+						ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = campaignsData[Convert.ToString(adGroupsReader.Current.campaign_id)];
+						
 						ad.Name = adGroupsReader.Current.name;
+
+						ad.Channel = new Channel()
+						{
+							ID = 6
+						};
+
+						ad.Account = new Account()
+						{
+							ID = this.Delivery.Account.ID,
+							OriginalID = this.Delivery.Account.OriginalID.ToString()
+						};
 
 
 						if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
@@ -116,18 +118,23 @@ namespace Edge.Services.Facebook.GraphApi
 							else
 								delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
 
-							ad.Segments[Segment.AdGroupSegment] = new SegmentValue();
-
-							ad.Segments[Segment.AdGroupSegment].Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0];
-							ad.Segments[Segment.AdGroupSegment].OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID) :
-							(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Campaign.OriginalID + ad.Campaign.Account.ID);
-
+							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+							{
+								Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
+								Value =  delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
+								OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID) :
+															(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID)
+							};
 						}
 						else
 						{
-							ad.Segments[Segment.AdGroupSegment] = new SegmentValue();
-							ad.Segments[Segment.AdGroupSegment].Value = ad.Name;
-							ad.Segments[Segment.AdGroupSegment].OriginalID = ad.Name + ad.Campaign.OriginalID + ad.Campaign.Account.ID;
+							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+							{
+								Value = ad.Name,
+								OriginalID = ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID
+							
+							};
+						
 						}
 						// adgroup targeting
 						string age_min = string.Empty;
@@ -181,13 +188,20 @@ namespace Edge.Services.Facebook.GraphApi
 
 			#region AdGroupStats start new import session
 			//GetAdGroupStats
-			using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
 
-				session.BeginImport(this.Delivery);
+				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
+				MeasureOptionsOperator = OptionsOperator.Not,
+				SegmentOptions = Data.Objects.SegmentOptions.All,
+				SegmentOptionsOperator = OptionsOperator.And
+			}))
+			{
+
+				this.ImportManager.BeginImport(this.Delivery);
 				#region for validation
 
-				foreach (var measure in session.Measures)
+				foreach (var measure in this.ImportManager.Measures)
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
@@ -195,11 +209,7 @@ namespace Edge.Services.Facebook.GraphApi
 							_totalsValidation.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
 
 					}
-
-
 				}
-
-
 
 				#endregion
 
@@ -208,19 +218,16 @@ namespace Edge.Services.Facebook.GraphApi
 					List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
 					foreach (var adGroupStat in adGroupStatsFiles)
 					{
-
 						DeliveryFile adGroupStats = this.Delivery.Files[adGroupStat];
 
 						var adGroupStatsReader = new JsonDynamicReader(adGroupStats.OpenContents(), "$.data[*].*");
-
-
-
 
 						using (adGroupStatsReader)
 						{
 							while (adGroupStatsReader.Read())
 							{
 								AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+								adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
 								Ad tempAd;
 								if (adGroupStatsReader.Current.adgroup_id != null)
 								{
@@ -232,33 +239,31 @@ namespace Edge.Services.Facebook.GraphApi
 										adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
 
 										// Common and Facebook specific meausures
+
+										/* Sets totals for validations */
 										if (_totalsValidation.ContainsKey(Measure.Common.Clicks))
 											_totalsValidation[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
-										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = Convert.ToInt64(adGroupStatsReader.Current.clicks);
-										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueClicks]] = Convert.ToInt64(adGroupStatsReader.Current.unique_clicks);
 										if (_totalsValidation.ContainsKey(Measure.Common.Impressions))
 											_totalsValidation[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
-										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = Convert.ToInt64(adGroupStatsReader.Current.impressions);
-										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.UniqueImpressions]] = Convert.ToInt64(adGroupStatsReader.Current.unique_impressions);
 										if (_totalsValidation.ContainsKey(Measure.Common.Cost))
 											_totalsValidation[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
-										adMetricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = Convert.ToDouble(Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d);
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.SocialCost], Convert.ToDouble(adGroupStatsReader.Current.social_spent) / 100d);
 										
-										
-										
-										//adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], double.Parse(adGroupStatsReader.Current.actions));
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Actions], 0);
-										adMetricsUnit.MeasureValues.Add(session.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
+										/* Sets measures values */
 
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(adGroupStatsReader.Current.clicks));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.UniqueClicks], Convert.ToInt64(adGroupStatsReader.Current.unique_clicks));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(adGroupStatsReader.Current.impressions));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.UniqueImpressions], Convert.ToInt64(adGroupStatsReader.Current.unique_impressions));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], Convert.ToDouble(Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialImpressions], double.Parse(adGroupStatsReader.Current.social_impressions));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialUniqueImpressions], double.Parse(adGroupStatsReader.Current.social_unique_impressions));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialClicks], double.Parse(adGroupStatsReader.Current.social_clicks));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialUniqueClicks], double.Parse(adGroupStatsReader.Current.social_unique_clicks));
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialCost], Convert.ToDouble(adGroupStatsReader.Current.social_spent) / 100d);
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Actions], 0);
+										adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
 
-										adMetricsUnit.TargetMatches = new List<Target>();
-
-										session.ImportMetrics(adMetricsUnit);
+										this.ImportManager.ImportMetrics(adMetricsUnit);
 									}
 									else
 									{
@@ -323,9 +328,13 @@ namespace Edge.Services.Facebook.GraphApi
 										
 											if (!string.IsNullOrEmpty(ad.DestinationUrl))
 											{
-												SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-												if (tracker != null)
-													ad.Segments[Segment.TrackerSegment] = tracker;
+												/*Sets Tracker*/
+
+												this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+												//SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
+												//if (tracker != null)
+												//    ad.Segments[Segment.TrackerSegment] = tracker;
 											}
 
 											ad.Creatives = new List<Creative>();
@@ -385,7 +394,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 
-											session.ImportAd(ad);
+											this.ImportManager.(ad);
 										}
 									}
 
@@ -400,8 +409,8 @@ namespace Edge.Services.Facebook.GraphApi
 						}
 					}
 				}
-				session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
-				session.EndImport();
+				this.ImportManager.HistoryEntryParameters.Add(Edge.Data.Pipeline.Metrics.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
+				this.ImportManager.EndImport();
 				if (!string.IsNullOrEmpty(warningsStr.ToString()))
 					Log.Write(warningsStr.ToString(), LogMessageType.Warning);
 			}
