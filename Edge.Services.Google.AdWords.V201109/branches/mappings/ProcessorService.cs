@@ -21,6 +21,7 @@ namespace Edge.Services.Google.AdWords
 		static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
 		static Dictionary<string, int> GoogleAdTypeDic;
 		static Dictionary<string, string> GoogleMeasuresDic;
+		static Dictionary<string, ObjectStatus> ObjectStatusDic;
 
 		public ProcessorService()
 		{
@@ -47,6 +48,13 @@ namespace Edge.Services.Google.AdWords
 				{"Default","Default"},
 				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
 				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
+			};
+			
+			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
+			{
+				{"PAUSED",ObjectStatus.Paused},
+				{"DELETED",ObjectStatus.Deleted},
+				{"ACTIVE",ObjectStatus.Active}
 			};
 		}
 
@@ -259,7 +267,6 @@ namespace Edge.Services.Google.AdWords
 							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
 							{
 								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
-								
 								this.Mappings.Objects[typeof(Ad)].Apply(ad);
 								//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
 								//if (tracker != null)
@@ -270,6 +277,7 @@ namespace Edge.Services.Google.AdWords
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
+								Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatus]).ToUpper()]
 
 							};
 
