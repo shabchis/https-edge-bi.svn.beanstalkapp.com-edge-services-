@@ -277,7 +277,7 @@ namespace Edge.Services.Google.AdWords
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
-								Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatus]).ToUpper()]
+								Status = ObjectStatusDic[((string)_adsReader.Current[Const.CampaignStatus]).ToUpper()]
 
 							};
 
