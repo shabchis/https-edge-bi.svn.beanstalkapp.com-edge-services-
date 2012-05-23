@@ -36,7 +36,7 @@ namespace Edge.Services.Google.AdWords
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
-				this.TargetPeriod.ToAbsolute(),
+				this.TimePeriod.ToAbsolute(),
 				this.Instance.Configuration.Options["Adwords.ReportType"].ToString()
 				));
 
@@ -54,7 +54,7 @@ namespace Edge.Services.Google.AdWords
 			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.TargetPeriod = this.TimePeriod;
 			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
 			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 

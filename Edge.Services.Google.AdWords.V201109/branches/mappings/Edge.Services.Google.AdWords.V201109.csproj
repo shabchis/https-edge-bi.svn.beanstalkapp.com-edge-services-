@@ -34,8 +34,7 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.AdWords.V201109, Version=13.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Google.AdWords.V201109">
       <HintPath>..\..\(third party)\GoogleAdwords\Google.AdWords.V201109.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -75,11 +74,11 @@
       <Project>{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}</Project>
       <Name>Edge.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Framework\Edge.Data.Pipeline.Metrics\trunk\Edge.Data.Pipeline.Metrics.csproj">
+    <ProjectReference Include="..\..\Framework\Edge.Data.Pipeline.Metrics\Edge.Data.Pipeline.Metrics.csproj">
       <Project>{16440453-3AC6-48DA-A424-E87CE8DE09CF}</Project>
       <Name>Edge.Data.Pipeline.Metrics</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Framework\Edge.Data.Pipeline\Edge.Data.Pipeline.csproj">
+    <ProjectReference Include="..\..\Framework\Edge.Data.Pipeline-branch-mappings\Edge.Data.Pipeline.csproj">
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
     </ProjectReference>
