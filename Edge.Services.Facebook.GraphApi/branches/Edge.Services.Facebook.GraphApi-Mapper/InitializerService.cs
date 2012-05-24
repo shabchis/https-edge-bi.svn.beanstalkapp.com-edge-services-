@@ -23,10 +23,14 @@ namespace Edge.Services.Facebook.GraphApi
 			this.Delivery = this.NewDelivery();
 
 			// This is for finding conflicting services
-			this.Delivery.Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
-				this.Instance.AccountID,
-				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
-				this.TargetPeriod.ToAbsolute()));
+			this.Delivery.Outputs.Add(new DeliveryOutput()
+			{
+				Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
+					this.Instance.AccountID,
+					this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
+					this.TimePeriod.ToAbsolute()))
+			});
+			
 
 			// Create an import manager that will handle rollback, if necessary
 			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -45,15 +49,15 @@ namespace Edge.Services.Facebook.GraphApi
 				ID = this.Instance.AccountID,
 				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
 			};
-			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 			this.Delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = 6
 			};
 
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
 
-			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
