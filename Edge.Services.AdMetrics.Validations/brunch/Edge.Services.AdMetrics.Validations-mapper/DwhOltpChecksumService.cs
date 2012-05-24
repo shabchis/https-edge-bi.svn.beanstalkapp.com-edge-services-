@@ -5,14 +5,15 @@ using System.Text;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Data.Pipeline.Services;
-using Edge.Data.Pipeline.Services.Common.Validation;
+using Edge.Data.Pipeline.Metrics.Checksums;
+using Edge.Data.Pipeline;
 
 namespace Edge.Services.AdMetrics.Validations
 {
     class DwhOltpChecksumService : DbDbChecksumBaseService
     {
-        protected override Data.Pipeline.Services.ValidationResult Compare(string OltpTable,string DwhTabel, Dictionary<string, string> Params)
-        {
+		protected override ValidationResult DeliveryDbCompare(DeliveryOutput deliveryOutput, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
+		{
 
             Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
             Dictionary<string, double> dwhTotals = new Dictionary<string, double>();
