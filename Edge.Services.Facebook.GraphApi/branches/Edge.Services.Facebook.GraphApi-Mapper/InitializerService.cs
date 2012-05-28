@@ -20,8 +20,7 @@ namespace Edge.Services.Facebook.GraphApi
 			#region Init General
 			// ...............................
 			// SETUP
-			this.Delivery = this.NewDelivery();
-
+			this.Delivery = NewDelivery();
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
@@ -29,7 +28,10 @@ namespace Edge.Services.Facebook.GraphApi
 					this.Instance.AccountID,
 					this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
 					this.TimePeriod.ToAbsolute()))
+					
 			});
+			
+
 			
 
 			// Create an import manager that will handle rollback, if necessary
@@ -86,8 +88,8 @@ namespace Edge.Services.Facebook.GraphApi
 			#region adgroupstats
 
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
-			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TargetPeriod.Start.ToDateTime()));
-			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TargetPeriod.End.ToDateTime()));
+			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
+			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);

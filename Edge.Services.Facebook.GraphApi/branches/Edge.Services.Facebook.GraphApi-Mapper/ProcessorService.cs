@@ -37,11 +37,12 @@ namespace Edge.Services.Facebook.GraphApi
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			Dictionary<Consts.FileTypes, List<string>> filesByType = (Dictionary<Consts.FileTypes, List<string>>)Delivery.Parameters["FilesByType"];
-			StringBuilder warningsStr = new StringBuilder();
-			Dictionary<string, double> _totalsValidation = new Dictionary<string, double>();
+			StringBuilder warningsStr = new StringBuilder();			
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
 			Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
+			DeliveryOutput currentOutput = Delivery.Outputs.First();
+			currentOutput.CheckSum = new Dictionary<string, double>();
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
 
@@ -88,7 +89,8 @@ namespace Edge.Services.Facebook.GraphApi
 						}
 						campaignsData.Add(camp.OriginalID, camp);
 					}
-					campaigns.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
+
+					
 				}
 			}
 			#endregion
@@ -197,7 +199,7 @@ namespace Edge.Services.Facebook.GraphApi
 						}
 						ads.Add(ad.OriginalID, ad);
 					}
-					adGroups.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
+					
 				}
 			}
 			#endregion
@@ -214,8 +216,8 @@ namespace Edge.Services.Facebook.GraphApi
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
-						if (!_totalsValidation.ContainsKey(measure.Key))
-							_totalsValidation.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
+						if (!currentOutput.CheckSum.ContainsKey(measure.Key))
+							currentOutput.CheckSum.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
 
 					}
 				}
@@ -244,18 +246,18 @@ namespace Edge.Services.Facebook.GraphApi
 									{
 										adMetricsUnit.Ad = tempAd;
 
-										adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-										adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+										adMetricsUnit.PeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+										adMetricsUnit.PeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 										// Common and Facebook specific meausures
 
 										/* Sets totals for validations */
-										if (_totalsValidation.ContainsKey(Measure.Common.Clicks))
-											_totalsValidation[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
-										if (_totalsValidation.ContainsKey(Measure.Common.Impressions))
-											_totalsValidation[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
-										if (_totalsValidation.ContainsKey(Measure.Common.Cost))
-											_totalsValidation[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
+										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Clicks))
+											currentOutput.CheckSum[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
+										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Impressions))
+											currentOutput.CheckSum[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
+										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Cost))
+											currentOutput.CheckSum[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
 										
 										/* Sets measures values */
 
@@ -288,7 +290,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 							}
 
-							adGroupStats.History.Add(DeliveryOperation.Imported, Instance.InstanceID); //TODO: HISTORY WHEN?PROCCESED IS AFTER DATABASE'?
+							
 							this.ReportProgress(0.4);
 						}
 
@@ -411,7 +413,7 @@ namespace Edge.Services.Facebook.GraphApi
 									//TODO: REPORT PROGRESS 2	 ReportProgress(PROGRESS)
 								}
 
-								creativeFile.History.Add(DeliveryOperation.Imported, Instance.InstanceID);
+								
 							}
 						#endregion
 
@@ -419,7 +421,7 @@ namespace Edge.Services.Facebook.GraphApi
 						}
 					}
 				}
-				this.ImportManager.HistoryEntryParameters.Add(Edge.Data.Pipeline.Metrics.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
+				currentOutput.Status = DeliveryOutputStatus.Imported;
 				this.ImportManager.EndImport();
 				if (!string.IsNullOrEmpty(warningsStr.ToString()))
 					Log.Write(warningsStr.ToString(), LogMessageType.Warning);
