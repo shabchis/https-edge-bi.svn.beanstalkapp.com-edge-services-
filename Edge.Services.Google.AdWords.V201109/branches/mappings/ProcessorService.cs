@@ -10,6 +10,7 @@ using Edge.Data.Pipeline.Metrics;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
+using System.Linq;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -22,6 +23,7 @@ namespace Edge.Services.Google.AdWords
 		static Dictionary<string, int> GoogleAdTypeDic;
 		static Dictionary<string, string> GoogleMeasuresDic;
 		static Dictionary<string, ObjectStatus> ObjectStatusDic;
+	
 
 		public ProcessorService()
 		{
@@ -69,7 +71,6 @@ namespace Edge.Services.Google.AdWords
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-
 			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -211,6 +212,8 @@ namespace Edge.Services.Google.AdWords
 
 				//session.Begin(false);
 				this.ImportManager.BeginImport(this.Delivery);
+
+				DeliveryOutput currentOutput = Delivery.Outputs.First();
 
 				foreach (KeyValuePair<string, Measure> measure in this.ImportManager.Measures)
 				{
@@ -408,8 +411,8 @@ namespace Edge.Services.Google.AdWords
 							}
 						}
 
-						adMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-						adMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+						adMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+						adMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 						adMetricsUnit.Currency = new Currency
 						{
@@ -417,7 +420,9 @@ namespace Edge.Services.Google.AdWords
 						};
 						this.ImportManager.ImportMetrics(adMetricsUnit);
 					}
-					this.ImportManager.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+
+					currentOutput.Checksum = _totals;
+					//this.ImportManager.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 					this.ImportManager.EndImport();
 				}
 				#endregion

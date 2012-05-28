@@ -5,7 +5,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201109;
 using Edge.Data.Pipeline.Metrics;
-
+using System.Linq;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
@@ -138,14 +138,14 @@ namespace Edge.Services.Google.AdWords
 						autoPlacMetricsUnit.TargetDimensions.Add(placement);
 
 						//SETTING TIME PERIOD
-						autoPlacMetricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-						autoPlacMetricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+						autoPlacMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+						autoPlacMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 						session.ImportMetrics(autoPlacMetricsUnit);
 					}
 				}
-
-				session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
+				this.Delivery.Outputs.First().Checksum = _totals;
+				//session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
 				session.EndImport();
 				
 			}
