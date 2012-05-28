@@ -27,7 +27,9 @@ namespace Edge.Services.Facebook.GraphApi
 				Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
 					this.Instance.AccountID,
 					this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
-					this.TimePeriod.ToAbsolute()))
+					this.Delivery.TimePeriodDefinition.ToAbsolute())),
+					TimePeriodStart=Delivery.TimePeriodStart,
+					TimePeriodEnd=Delivery.TimePeriodEnd
 					
 			});
 			

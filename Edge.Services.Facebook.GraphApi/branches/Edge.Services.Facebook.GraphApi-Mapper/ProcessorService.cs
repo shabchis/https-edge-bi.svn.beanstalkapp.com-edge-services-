@@ -42,7 +42,7 @@ namespace Edge.Services.Facebook.GraphApi
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
 			Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
 			DeliveryOutput currentOutput = Delivery.Outputs.First();
-			currentOutput.CheckSum = new Dictionary<string, double>();
+			currentOutput.Checksum = new Dictionary<string, double>();
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
 
@@ -216,8 +216,8 @@ namespace Edge.Services.Facebook.GraphApi
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
-						if (!currentOutput.CheckSum.ContainsKey(measure.Key))
-							currentOutput.CheckSum.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
+						if (!currentOutput.Checksum.ContainsKey(measure.Key))
+							currentOutput.Checksum.Add(measure.Key, 0); //TODO : SHOULD BE NULL BUT SINCE CAN'T ADD NULLABLE ...TEMP
 
 					}
 				}
@@ -238,6 +238,7 @@ namespace Edge.Services.Facebook.GraphApi
 							while (adGroupStatsReader.Read())
 							{
 								AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+								adMetricsUnit.Output = currentOutput;
 								adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
 								Ad tempAd;
 								if (adGroupStatsReader.Current.adgroup_id != null)
@@ -246,18 +247,18 @@ namespace Edge.Services.Facebook.GraphApi
 									{
 										adMetricsUnit.Ad = tempAd;
 
-										adMetricsUnit.PeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
-										adMetricsUnit.PeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
+										//adMetricsUnit.PeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+										//adMetricsUnit.PeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 										// Common and Facebook specific meausures
 
 										/* Sets totals for validations */
-										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Clicks))
-											currentOutput.CheckSum[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
-										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Impressions))
-											currentOutput.CheckSum[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
-										if (currentOutput.CheckSum.ContainsKey(Measure.Common.Cost))
-											currentOutput.CheckSum[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
+										if (currentOutput.Checksum.ContainsKey(Measure.Common.Clicks))
+											currentOutput.Checksum[Measure.Common.Clicks] += Convert.ToDouble(adGroupStatsReader.Current.clicks);
+										if (currentOutput.Checksum.ContainsKey(Measure.Common.Impressions))
+											currentOutput.Checksum[Measure.Common.Impressions] += Convert.ToDouble(adGroupStatsReader.Current.impressions);
+										if (currentOutput.Checksum.ContainsKey(Measure.Common.Cost))
+											currentOutput.Checksum[Measure.Common.Cost] += Convert.ToDouble(adGroupStatsReader.Current.spent) / 100d;
 										
 										/* Sets measures values */
 
