@@ -32,18 +32,6 @@ namespace Edge.Services.Facebook.GraphApi
 					TimePeriodEnd=Delivery.TimePeriodEnd
 					
 			});
-			
-
-			
-
-			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
-			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
-			});
-
-			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			// ...............................
 
@@ -59,7 +47,18 @@ namespace Edge.Services.Facebook.GraphApi
 				ID = 6
 			};
 
+			
+
 			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			// Create an import manager that will handle rollback, if necessary
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
