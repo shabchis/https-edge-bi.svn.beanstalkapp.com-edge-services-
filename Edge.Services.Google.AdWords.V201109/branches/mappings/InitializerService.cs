@@ -43,7 +43,13 @@ namespace Edge.Services.Google.AdWords
 				))
 			}
 			);
-			
+
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
+				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
+			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 
 			// Create an import manager that will handle rollback, if necessary
@@ -54,14 +60,6 @@ namespace Edge.Services.Google.AdWords
 
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
-			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
-				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");
-			this.Delivery.TimePeriodDefinition = this.TimePeriod;
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
-			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
 
