@@ -32,9 +32,7 @@ namespace Edge.Services.Facebook.GraphApi
 					TimePeriodEnd=Delivery.TimePeriodEnd
 					
 			});
-
-			// ...............................
-
+			
 			// Now that we have a new delivery, start adding values
 			this.Delivery.Account = new Data.Objects.Account()
 			{
