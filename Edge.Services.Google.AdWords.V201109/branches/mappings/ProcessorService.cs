@@ -5,12 +5,12 @@ using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using GA = Google.Api.Ads.AdWords.v201109;
 using System.IO;
+using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
-using Edge.Data.Pipeline.Metrics.Services;
-using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
 using System.Linq;
+
 
 namespace Edge.Services.Google.AdWords
 {
