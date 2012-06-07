@@ -40,7 +40,12 @@ namespace Edge.Services.Google.AdWords
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
 				this.TimePeriod.ToAbsolute(),
 				this.Instance.Configuration.Options["Adwords.ReportType"].ToString()
-				))
+
+				)),
+				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] },
+				Channel=new Data.Objects.Channel(){ ID = 1 },
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd
 			}
 			);
 

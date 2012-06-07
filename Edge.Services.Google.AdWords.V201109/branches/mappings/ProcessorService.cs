@@ -23,6 +23,7 @@ namespace Edge.Services.Google.AdWords
 		static Dictionary<string, int> GoogleAdTypeDic;
 		static Dictionary<string, string> GoogleMeasuresDic;
 		static Dictionary<string, ObjectStatus> ObjectStatusDic;
+		
 	
 
 		public ProcessorService()
@@ -71,6 +72,7 @@ namespace Edge.Services.Google.AdWords
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
+			
 			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -251,6 +253,7 @@ namespace Edge.Services.Google.AdWords
 						}
 
 						AdMetricsUnit adMetricsUnit = new AdMetricsUnit();
+						adMetricsUnit.Output = currentOutput;
 						Ad ad;
 
 						string adId = _adsReader.Current[Const.AdIDFieldName];
@@ -411,8 +414,9 @@ namespace Edge.Services.Google.AdWords
 							}
 						}
 
-						adMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
-						adMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
+						//**************Came from output*************
+						//adMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+						//adMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 						adMetricsUnit.Currency = new Currency
 						{
