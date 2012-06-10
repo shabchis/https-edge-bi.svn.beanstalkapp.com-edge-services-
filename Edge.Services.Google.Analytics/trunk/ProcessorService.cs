@@ -4,19 +4,29 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
-using Edge.Services.SegmentMetrics;
 using Edge.Data.Objects;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Edge.Data.Pipeline.Metrics.GenericMetrics;
+using Edge.Data.Pipeline.Metrics.Services;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.Analytics
 {
-	class ProcessorService : PipelineService
+	class ProcessorService : MetricsProcessorServiceBase
 	{
-		Dictionary<string, double> _totalsValidation = new Dictionary<string, double>();
+		DeliveryOutput currentOutput;
+		public new GenericMetricsImportManager ImportManager
+		{
+			get { return (GenericMetricsImportManager)base.ImportManager; }
+			set { base.ImportManager = value; }
+		}
+		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-
+			
+			currentOutput = this.Delivery.Outputs.First();
+			currentOutput.Checksum = new Dictionary<string, double>();
 			Dictionary<string, int> columns = new Dictionary<string, int>();
 			foreach (var ReportFile in Delivery.Files)
 			{
@@ -35,10 +45,17 @@ namespace Edge.Services.Google.Analytics
 					///sssss
 				}
 
-				using (var session = new SegmentMetricsImportManager(this.Instance.InstanceID))
+				using (this.ImportManager = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 				{
-					session.BeginImport(this.Delivery);
-					Dictionary<string, SegmentMetricsUnit> data = new Dictionary<string, SegmentMetricsUnit>();
+					MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
+					MeasureOptionsOperator = OptionsOperator.Not,
+					SegmentOptions = Data.Objects.SegmentOptions.All,
+					SegmentOptionsOperator = OptionsOperator.And
+				}))
+				{
+					this.ImportManager.BeginImport(this.Delivery);
+					
+					Dictionary<string, GenericMetricsUnit> data = new Dictionary<string, GenericMetricsUnit>();
 					//get totals
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.totalsForAllResults.*");
 					using (reportReader)
@@ -47,11 +64,11 @@ namespace Edge.Services.Google.Analytics
 						while (reportReader.Read())
 						{
 
-							foreach (var measure in session.Measures)
+							foreach (var measure in ImportManager.Measures)
 							{
 
 								if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
-									_totalsValidation.Add(measure.Value.SourceName, Convert.ToDouble(reportReader.Current[measure.Value.SourceName]));
+									 currentOutput.Checksum.Add(measure.Value.SourceName, Convert.ToDouble(reportReader.Current[measure.Value.SourceName]));
 							}
 						}
 					}
@@ -63,8 +80,10 @@ namespace Edge.Services.Google.Analytics
 
 						while (reportReader.Read())
 						{
-							SegmentMetricsUnit metricsUnit;
-							SegmentValue tracker=null;
+							GenericMetricsUnit metricsUnit;
+							SegmentObject tracker=null;
+							Segment segment;
+							ImportManager.SegmentTypes.TryGetValue(Segment.Common.Tracker,out segment);
 							int i = 1;
 							string trackerField = null;
 							while (Instance.Configuration.Options.ContainsKey(string.Format("SegmentField{0}", i)))
@@ -73,6 +92,7 @@ namespace Edge.Services.Google.Analytics
 								trackerField = Instance.Configuration.Options[string.Format("SegmentField{0}", i)];
 								string value = reportReader.Current["array"][columns[trackerField]];
 
+								tracker = this.Mappings.Objects[typeof(Ad)].Apply(ad);
 								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, value, trackerField);								
 								if (tracker != null)
 									break;
@@ -82,45 +102,47 @@ namespace Edge.Services.Google.Analytics
 							}
 							if (tracker == null)
 							{
-								tracker = new SegmentValue() { Value = "0" };
+								tracker = new SegmentObject() { Value = "0" };
 							}
 							if (!data.ContainsKey(tracker.Value))
-								data.Add(tracker.Value, new SegmentMetricsUnit());
+								data.Add(tracker.Value, new GenericMetricsUnit());
 							metricsUnit = data[tracker.Value];
-							metricsUnit.Segments[Segment.TrackerSegment] = tracker;
+							metricsUnit.SegmentDimensions[segment] = tracker;
 
-							foreach (var measure in session.Measures.Values)
+							foreach (var measure in ImportManager.Measures.Values)
 							{
 								if (string.IsNullOrEmpty(measure.SourceName) && measure.Account != null)
 									throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
 
 								if (measure.Account != null)
 								{
-									if (!metricsUnit.MeasureValues.ContainsKey(session.Measures[measure.Name]))
-										metricsUnit.MeasureValues.Add(session.Measures[measure.Name], 0);
-									metricsUnit.MeasureValues[session.Measures[measure.Name]] += Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
+									if (!metricsUnit.MeasureValues.ContainsKey(ImportManager.Measures[measure.Name]))
+										metricsUnit.MeasureValues.Add(ImportManager.Measures[measure.Name], 0);
+									metricsUnit.MeasureValues[ImportManager.Measures[measure.Name]] += Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
 								}
 
 							}
-
-							metricsUnit.PeriodStart = this.Delivery.TargetPeriod.Start.ToDateTime();
-							metricsUnit.PeriodEnd = this.Delivery.TargetPeriod.End.ToDateTime();
+							metricsUnit.Output = currentOutput;
+							metricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
+							metricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
 
 						}
 					}
-					foreach (SegmentMetricsUnit metricsUnit in data.Values)
+					foreach (GenericMetricsUnit metricsUnit in data.Values)
 					{
 						Dictionary<string, string> usid = new Dictionary<string, string>();
-						foreach (var segment in metricsUnit.Segments)
+						foreach (var segment in metricsUnit.SegmentDimensions)
 						{
 							usid.Add(segment.Key.Name, segment.Value.Value);
 						}
-						session.ImportMetrics(metricsUnit, JsonConvert.SerializeObject(usid));
+
+						//this.ImportManager.ImportMetrics(metricsUnit, JsonConvert.SerializeObject(usid));
+						this.ImportManager.ImportMetrics(metricsUnit);
 					}
 
-					session.HistoryEntryParameters.Add(Edge.Data.Pipeline.Common.Importing.Consts.DeliveryHistoryParameters.ChecksumTotals, _totalsValidation);
-					session.EndImport();
+
+					ImportManager.EndImport();
 				}
 			}
 
