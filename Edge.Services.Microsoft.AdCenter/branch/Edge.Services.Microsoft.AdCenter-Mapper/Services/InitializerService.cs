@@ -10,7 +10,8 @@ using Edge.Data.Objects;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using WS = Edge.Services.Microsoft.AdCenter.AdCenter.Reporting;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Microsoft.AdCenter
 {
@@ -23,17 +24,43 @@ namespace Edge.Services.Microsoft.AdCenter
 			// ...............................
 			// SETUP
 			this.Delivery = this.NewDelivery();
+			this.Delivery.Account = new Data.Objects.Account()
+			{
+				ID = this.Instance.AccountID,
+				OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString()
+			};
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+			this.Delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = 14
+			};
 
-			// This is for finding conflicting services
-			this.Delivery.Signature =Delivery.CreateSignature( String.Format("Microsoft-AdCenter-[{0}]-[{1}]-[{2}]",
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
+				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");
+			// Copy some options as delivery parameters
+			
+
+			this.Delivery.Outputs.Add(new DeliveryOutput()
+			{
+				Signature = Delivery.CreateSignature( String.Format("Microsoft-AdCenter-[{0}]-[{1}]-[{2}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString(),
-				this.TargetPeriod.ToAbsolute()));
+				this.TimePeriod.ToAbsolute()
+				)),
+
+				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"] },
+				Channel = new Data.Objects.Channel() { ID = 14 },
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd
+			}
+			);
 
 			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
 			});
 
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
@@ -42,23 +69,6 @@ namespace Edge.Services.Microsoft.AdCenter
 			// ...............................
 
 			// Now that we have a new delivery, start adding values
-			this.Delivery.Account = new Data.Objects.Account()
-			{
-				ID = this.Instance.AccountID,
-				OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString()
-			};
-			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Channel = new Data.Objects.Channel()
-			{
-				ID = 14
-			};
-
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
-
-			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
-				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-			// Copy some options as delivery parameters
-			
 			
 			this.ReportProgress(0.2);
 			#endregion

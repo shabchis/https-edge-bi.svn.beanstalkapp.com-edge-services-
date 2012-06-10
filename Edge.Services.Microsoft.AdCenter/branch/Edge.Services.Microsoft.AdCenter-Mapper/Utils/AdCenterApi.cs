@@ -34,7 +34,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReturnOnlyCompleteData = false,
 				ReportName = String.Format("CampainPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.ReportAggregation.Daily,
-				Time = ConvertToReportTime(_service.TargetPeriod),
+				Time = ConvertToReportTime(_service.TimePeriod),
 				Columns = columns,
 				Scope = new WS.AccountThroughCampaignReportScope() { AccountIds = _accountOriginalIDs }
 			};
@@ -53,7 +53,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReturnOnlyCompleteData = false,
 				ReportName = String.Format("KeywordPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.ReportAggregation.Daily,
-				Time = ConvertToReportTime(_service.TargetPeriod),
+				Time = ConvertToReportTime(_service.TimePeriod),
 				Columns = columns,
 				Scope = new WS.AccountThroughAdGroupReportScope() { AccountIds = _accountOriginalIDs }
 			};
@@ -71,7 +71,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				ReturnOnlyCompleteData = false,
 				ReportName = String.Format("AdPerformance (delivery: {0})", _service.Delivery.DeliveryID),
 				Aggregation = WS.NonHourlyReportAggregation.Daily,
-				Time = ConvertToReportTime(_service.TargetPeriod),
+				Time = ConvertToReportTime(_service.TimePeriod),
 				Columns = columns,				
 				Scope = new WS.AccountThroughAdGroupReportScope() { AccountIds = _accountOriginalIDs }
 			};
