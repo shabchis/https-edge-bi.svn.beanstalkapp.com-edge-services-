@@ -129,6 +129,7 @@ namespace Edge.Services.Microsoft.AdCenter
 						AdGroup adGroup = new AdGroup()
 						{
 							Value = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupName.ToString()],
+							Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
 							OriginalID = adReportReader.Current[WS.AdPerformanceReportColumn.AdGroupId.ToString()]
 						};
 						ad.Segments.Add(ImportManager.SegmentTypes[Segment.Common.AdGroup], adGroup);
