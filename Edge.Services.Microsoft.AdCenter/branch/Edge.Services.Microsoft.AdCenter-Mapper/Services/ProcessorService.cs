@@ -16,6 +16,7 @@ namespace Edge.Services.Microsoft.AdCenter
 {
 	public class ProcessorService : MetricsProcessorServiceBase
 	{
+        DeliveryOutput currentOutput;
 		public const string endOfFileMicrosoftCorporation = "©2011 Microsoft Corporation. All rights reserved. ";
 		static class MeasureNames
 		{
@@ -49,7 +50,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			DeliveryOutput currentOutput = Delivery.Outputs.First();
+			currentOutput = Delivery.Outputs.First();
 			currentOutput.Checksum=new Dictionary<string,double>();
 			// TODO: add checks for delivery state
 			string[] requiredHeaders;
@@ -268,7 +269,8 @@ namespace Edge.Services.Microsoft.AdCenter
 		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdMetricsImportManager session)
 		{
 			var metricsUnit = new AdMetricsUnit();
-
+            metricsUnit.Output = currentOutput;
+            metricsUnit.MeasureValues = new Dictionary<Measure, double>();
 			metricsUnit.Ad = _adCache[Convert.ToInt64(values[WS.KeywordPerformanceReportColumn.AdId.ToString()])];
 			metricsUnit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
 			metricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
