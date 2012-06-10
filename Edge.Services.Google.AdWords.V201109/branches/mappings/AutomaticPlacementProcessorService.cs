@@ -9,10 +9,12 @@ using System.Linq;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
+using Edge.Data.Pipeline.Metrics.Services;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
 
 namespace Edge.Services.Google.AdWords
 {
-	class AutomaticPlacementProcessorService : PipelineService
+	class AutomaticPlacementProcessorService : MetricsProcessorServiceBase
 	{
 		static Dictionary<string, string> GoogleMeasuresDic;
 		static Dictionary<string, ObjectStatus> ObjectStatusDic;
@@ -33,18 +35,24 @@ namespace Edge.Services.Google.AdWords
 			};
 		}
 
+		public new GenericMetricsImportManager ImportManager
+		{
+			get { return (GenericMetricsImportManager)base.ImportManager; }
+			set { base.ImportManager = value; }
+		}
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 
 			string[] requiredHeaders = new string[] {Const.AutoPlacRequiredHeader};
+			DeliveryOutput currentOutput = Delivery.Outputs.First();
 
 			//Open Auto Plac file
 			DeliveryFile _autoPlacFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT]];
 			var _autoPlacReader = new CsvDynamicReader(_autoPlacFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 
-			using (var session = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
+			using (this.ImportManager = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
-				
 				MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
 				MeasureOptionsOperator = OptionsOperator.Not,
 				SegmentOptions = Data.Objects.SegmentOptions.All,
@@ -53,10 +61,10 @@ namespace Edge.Services.Google.AdWords
 			{
 				Dictionary<string, double> _totals = new Dictionary<string, double>();
 
-				session.BeginImport(this.Delivery);
+				this.ImportManager.BeginImport(this.Delivery);
 
 				//Intializing totals for validation
-				foreach (KeyValuePair<string, Measure> measure in session.Measures)
+				foreach (KeyValuePair<string, Measure> measure in this.ImportManager.Measures)
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
@@ -67,16 +75,17 @@ namespace Edge.Services.Google.AdWords
 
 				using (_autoPlacReader)
 				{
+					this.Mappings.OnFieldRequired = field => _autoPlacReader.Current[field];
+
 					while (_autoPlacReader.Read())
 					{
-
 						#region Setting Totals
 						/*==================================================================================================================*/
 						// If end of file
 						if (_autoPlacReader.Current[Const.CampaignIdFieldName] == Const.EOF)
 						{
 							//Setting totals for validation from totals line in adowrds file
-							foreach (KeyValuePair<string, Measure> measure in session.Measures)
+							foreach (KeyValuePair<string, Measure> measure in this.ImportManager.Measures)
 							{
 								if (!measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 									continue;
@@ -94,7 +103,8 @@ namespace Edge.Services.Google.AdWords
 						#endregion
 
 						GenericMetricsUnit autoPlacMetricsUnit = new GenericMetricsUnit();
-						
+						autoPlacMetricsUnit.Output = currentOutput;
+
 						autoPlacMetricsUnit.Channel = new Channel() { ID = 1 };
 						autoPlacMetricsUnit.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_autoPlacFile.Parameters["AdwordsClientID"] };
 
@@ -108,7 +118,7 @@ namespace Edge.Services.Google.AdWords
 							Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatus]).ToUpper()]
 						};
 
-						autoPlacMetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.Campaign], campaign);
+						autoPlacMetricsUnit.SegmentDimensions.Add(this.ImportManager.SegmentTypes[Segment.Common.Campaign], campaign);
 
 						//ADDING ADGROUP
 						AdGroup adgroup = new AdGroup()
@@ -117,16 +127,16 @@ namespace Edge.Services.Google.AdWords
 							Value = _autoPlacReader.Current[Const.AdGroupFieldName],
 							OriginalID = _autoPlacReader.Current[Const.AdGroupIdFieldName]
 						};
-						autoPlacMetricsUnit.SegmentDimensions.Add(session.SegmentTypes[Segment.Common.AdGroup], adgroup);
+						autoPlacMetricsUnit.SegmentDimensions.Add(this.ImportManager.SegmentTypes[Segment.Common.AdGroup], adgroup);
 
 						//INSERTING METRICS DATA
 						autoPlacMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
 						
-						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Clicks], Convert.ToInt64(_autoPlacReader.Current.Clicks));
-						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Cost], (Convert.ToDouble(_autoPlacReader.Current.Cost)) / 1000000);
-						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[Measure.Common.Impressions], Convert.ToInt64(_autoPlacReader.Current.Impressions));
-						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClick]));
-						autoPlacMetricsUnit.MeasureValues.Add(session.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClick]));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_autoPlacReader.Current.Clicks));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], (Convert.ToDouble(_autoPlacReader.Current.Cost)) / 1000000);
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_autoPlacReader.Current.Impressions));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClick]));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClick]));
 
 						//CREATING PLACEMENT
 						autoPlacMetricsUnit.TargetDimensions = new List<Target>();
@@ -141,12 +151,12 @@ namespace Edge.Services.Google.AdWords
 						autoPlacMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
 						autoPlacMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
 
-						session.ImportMetrics(autoPlacMetricsUnit);
+						this.ImportManager.ImportMetrics(autoPlacMetricsUnit);
 					}
 				}
+
 				this.Delivery.Outputs.First().Checksum = _totals;
-				//session.HistoryEntryParameters.Add(Consts.DeliveryHistoryParameters.ChecksumTotals, _totals);
-				session.EndImport();
+				this.ImportManager.EndImport();
 				
 			}
 
