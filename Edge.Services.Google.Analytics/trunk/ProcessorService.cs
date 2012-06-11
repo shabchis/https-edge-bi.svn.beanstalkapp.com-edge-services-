@@ -7,6 +7,7 @@ using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Edge.Data.Pipeline.Mapping;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Common.Importing;
@@ -16,15 +17,22 @@ namespace Edge.Services.Google.Analytics
 	class ProcessorService : MetricsProcessorServiceBase
 	{
 		DeliveryOutput currentOutput;
+		bool _isChecksum = false;
+
 		public new GenericMetricsImportManager ImportManager
 		{
 			get { return (GenericMetricsImportManager)base.ImportManager; }
 			set { base.ImportManager = value; }
 		}
+
+		protected override void OnInitMappings()
+		{
+			this.Mappings.ExternalMethods.Add("IsChecksum", new Func<bool>(() => _isChecksum));
+		}
 		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			
+			MappingContainer metricsUnitMapping = this.Mappings.Objects[typeof(GenericMetricsUnit)];
 			currentOutput = this.Delivery.Outputs.First();
 			currentOutput.Checksum = new Dictionary<string, double>();
 			Dictionary<string, int> columns = new Dictionary<string, int>();
@@ -56,91 +64,66 @@ namespace Edge.Services.Google.Analytics
 					this.ImportManager.BeginImport(this.Delivery);
 					
 					Dictionary<string, GenericMetricsUnit> data = new Dictionary<string, GenericMetricsUnit>();
-					//get totals
+					
+					// Checksums
+					_isChecksum = true;
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.totalsForAllResults.*");
 					using (reportReader)
 					{
-
-						while (reportReader.Read())
+						this.Mappings.OnFieldRequired = field => reportReader.Current[field];
+						if (reportReader.Read())
 						{
+							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
+							metricsUnitMapping.Apply(checksumUnit);
 
-							foreach (var measure in ImportManager.Measures)
+							foreach (Measure measure in ImportManager.Measures.Values)
 							{
-
-								if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
-									 currentOutput.Checksum.Add(measure.Value.SourceName, Convert.ToDouble(reportReader.Current[measure.Value.SourceName]));
+								if (measure.Options.HasFlag(MeasureOptions.ValidationRequired))
+									 currentOutput.Checksum.Add(measure.Name, checksumUnit.MeasureValues[measure]);
 							}
 						}
 					}
+					_isChecksum = false;
 
 					//Get Valuees
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.rows[*].*");
 					using (reportReader)
 					{
+						this.Mappings.OnFieldRequired = field => reportReader.Current["array"][field];
 
 						while (reportReader.Read())
 						{
-							GenericMetricsUnit metricsUnit;
-							SegmentObject tracker=null;
-							Segment segment;
-							ImportManager.SegmentTypes.TryGetValue(Segment.Common.Tracker,out segment);
-							int i = 1;
-							string trackerField = null;
-							while (Instance.Configuration.Options.ContainsKey(string.Format("SegmentField{0}", i)))
+							GenericMetricsUnit tempUnit = new GenericMetricsUnit();
+							metricsUnitMapping.Apply(tempUnit);
+
+							SegmentObject tracker = tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]];
+							GenericMetricsUnit existingUnit = null;
+
+							// check if we already found a metrics unit with the same tracker
+							if (!data.TryGetValue(tracker.Value, out existingUnit))
 							{
-
-								trackerField = Instance.Configuration.Options[string.Format("SegmentField{0}", i)];
-								string value = reportReader.Current["array"][columns[trackerField]];
-
-								tracker = this.Mappings.Objects[typeof(Ad)].Apply(ad);
-								tracker = AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, value, trackerField);								
-								if (tracker != null)
-									break;
-								i++;
-
-
+								tempUnit.Output = currentOutput;
+								data.Add(tracker.Value, tempUnit);
 							}
-							if (tracker == null)
+							else
 							{
-								tracker = new SegmentObject() { Value = "0" };
-							}
-							if (!data.ContainsKey(tracker.Value))
-								data.Add(tracker.Value, new GenericMetricsUnit());
-							metricsUnit = data[tracker.Value];
-							metricsUnit.SegmentDimensions[segment] = tracker;
-
-							foreach (var measure in ImportManager.Measures.Values)
-							{
-								if (string.IsNullOrEmpty(measure.SourceName) && measure.Account != null)
-									throw new Exception(string.Format("Undifined Source Name in DB for measure {0} ", measure.Name));
-
-								if (measure.Account != null)
+								// if tracker already exists, merge with existing values
+								foreach (Measure measure in ImportManager.Measures.Values)
 								{
-									if (!metricsUnit.MeasureValues.ContainsKey(ImportManager.Measures[measure.Name]))
-										metricsUnit.MeasureValues.Add(ImportManager.Measures[measure.Name], 0);
-									metricsUnit.MeasureValues[ImportManager.Measures[measure.Name]] += Convert.ToDouble(reportReader.Current["array"][columns[measure.SourceName]]);
+									if (!measure.Options.HasFlag(MeasureOptions.IsBackOffice))
+										continue;
+
+									existingUnit.MeasureValues[measure] += tempUnit.MeasureValues[measure];
 								}
-
 							}
-							metricsUnit.Output = currentOutput;
-							metricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
-							metricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
-
-
 						}
 					}
+
+					// Import all unique units per tracker
 					foreach (GenericMetricsUnit metricsUnit in data.Values)
 					{
-						Dictionary<string, string> usid = new Dictionary<string, string>();
-						foreach (var segment in metricsUnit.SegmentDimensions)
-						{
-							usid.Add(segment.Key.Name, segment.Value.Value);
-						}
-
-						//this.ImportManager.ImportMetrics(metricsUnit, JsonConvert.SerializeObject(usid));
 						this.ImportManager.ImportMetrics(metricsUnit);
 					}
-
 
 					ImportManager.EndImport();
 				}

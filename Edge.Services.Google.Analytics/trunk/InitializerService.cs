@@ -29,6 +29,10 @@ namespace Edge.Services.Google.Analytics
 			   ID = -1
 		   };
 
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
@@ -53,9 +57,7 @@ namespace Edge.Services.Google.Analytics
 
 			// Now that we have a new delivery, start adding values
 
-			this.Delivery.TimePeriodDefinition = this.TimePeriod;
-
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+		
 
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
