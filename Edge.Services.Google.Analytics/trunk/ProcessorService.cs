@@ -27,7 +27,8 @@ namespace Edge.Services.Google.Analytics
 
 		protected override void OnInitMappings()
 		{
-			this.Mappings.ExternalMethods.Add("IsChecksum", new Func<bool>(() => _isChecksum));
+			this.Mappings.ExternalMethods.Add("IsChecksum", new Func<bool>(() =>
+				_isChecksum));
 		}
 		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
@@ -55,8 +56,8 @@ namespace Edge.Services.Google.Analytics
 
 				using (this.ImportManager = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 				{
-					MeasureOptions = MeasureOptions.IsTarget | MeasureOptions.IsCalculated | MeasureOptions.IsBackOffice,
-					MeasureOptionsOperator = OptionsOperator.Not,
+					MeasureOptions = MeasureOptions.IsBackOffice,
+					MeasureOptionsOperator = OptionsOperator.Or,
 					SegmentOptions = Data.Objects.SegmentOptions.All,
 					SegmentOptionsOperator = OptionsOperator.And
 				}))
@@ -76,10 +77,10 @@ namespace Edge.Services.Google.Analytics
 							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
 							metricsUnitMapping.Apply(checksumUnit);
 
-							foreach (Measure measure in ImportManager.Measures.Values)
+							foreach (var m in checksumUnit.MeasureValues)
 							{
-								if (measure.Options.HasFlag(MeasureOptions.ValidationRequired))
-									 currentOutput.Checksum.Add(measure.Name, checksumUnit.MeasureValues[measure]);
+								if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
+									 currentOutput.Checksum.Add(m.Key.Name, m.Value);
 							}
 						}
 					}
@@ -89,7 +90,7 @@ namespace Edge.Services.Google.Analytics
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.rows[*].*");
 					using (reportReader)
 					{
-						this.Mappings.OnFieldRequired = field => reportReader.Current["array"][field];
+						this.Mappings.OnFieldRequired = field => reportReader.Current["array"][columns[field]];
 
 						while (reportReader.Read())
 						{
@@ -102,18 +103,18 @@ namespace Edge.Services.Google.Analytics
 							// check if we already found a metrics unit with the same tracker
 							if (!data.TryGetValue(tracker.Value, out existingUnit))
 							{
-								tempUnit.Output = currentOutput;
+								tempUnit.Output = currentOutput;								
 								data.Add(tracker.Value, tempUnit);
 							}
 							else
 							{
 								// if tracker already exists, merge with existing values
-								foreach (Measure measure in ImportManager.Measures.Values)
+								foreach (var m in tempUnit.MeasureValues)
 								{
-									if (!measure.Options.HasFlag(MeasureOptions.IsBackOffice))
+									if (!m.Key.Options.HasFlag(MeasureOptions.IsBackOffice))
 										continue;
 
-									existingUnit.MeasureValues[measure] += tempUnit.MeasureValues[measure];
+									existingUnit.MeasureValues[m.Key] += m.Value;
 								}
 							}
 						}

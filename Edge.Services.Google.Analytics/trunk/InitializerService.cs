@@ -40,7 +40,10 @@ namespace Edge.Services.Google.Analytics
 			  this.Instance.AccountID,
 			  this.TimePeriod.ToAbsolute())),
 				Account = Delivery.Account,
-				Channel = Delivery.Channel
+				Channel = Delivery.Channel,
+				TimePeriodStart=Delivery.TimePeriodStart,
+				TimePeriodEnd=Delivery.TimePeriodEnd
+
 
 			});
 
