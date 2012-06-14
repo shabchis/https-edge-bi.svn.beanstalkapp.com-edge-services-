@@ -6,7 +6,9 @@ using Edge.Data.Pipeline.Services;
 using System.Dynamic;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Facebook.GraphApi
 {
@@ -18,40 +20,45 @@ namespace Edge.Services.Facebook.GraphApi
 			#region Init General
 			// ...............................
 			// SETUP
-			this.Delivery = this.NewDelivery();
-
+			this.Delivery = NewDelivery();
 			// This is for finding conflicting services
-			this.Delivery.Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
-				this.Instance.AccountID,
-				this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
-				this.TargetPeriod.ToAbsolute()));
-
-			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
+			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
+				Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
+					this.Instance.AccountID,
+					this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
+					this.Delivery.TimePeriodDefinition.ToAbsolute())),
+					TimePeriodStart=Delivery.TimePeriodStart,
+					TimePeriodEnd=Delivery.TimePeriodEnd
+					
 			});
-
-			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-			// ...............................
-
+			
 			// Now that we have a new delivery, start adding values
 			this.Delivery.Account = new Data.Objects.Account()
 			{
 				ID = this.Instance.AccountID,
 				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
 			};
-			this.Delivery.TargetPeriod = this.TargetPeriod;
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 			this.Delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = 6
 			};
 
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			
 
-			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			// Create an import manager that will handle rollback, if necessary
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 			// Copy some options as delivery parameters
 			var configOptionsToCopyToDelivery = new string[] {
@@ -80,8 +87,8 @@ namespace Edge.Services.Facebook.GraphApi
 			#region adgroupstats
 
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
-			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TargetPeriod.Start.ToDateTime()));
-			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TargetPeriod.End.ToDateTime()));
+			methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
+			methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);

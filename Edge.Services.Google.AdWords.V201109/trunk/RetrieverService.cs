@@ -46,8 +46,8 @@ namespace Edge.Services.Google.AdWords
 
 			//Sets Date Range and time period
 			_dateRange = ReportDefinitionDateRangeType.CUSTOM_DATE;
-			string startDate = this.TargetPeriod.Start.ToDateTime().ToString("yyyyMMdd");
-			string endDate = this.TargetPeriod.End.ToDateTime().ToString("yyyyMMdd");
+			string startDate = this.TimePeriod.Start.ToDateTime().ToString("yyyyMMdd");
+			string endDate = this.TimePeriod.End.ToDateTime().ToString("yyyyMMdd");
 			_waitHandle = new AutoResetEvent(false);
 
 

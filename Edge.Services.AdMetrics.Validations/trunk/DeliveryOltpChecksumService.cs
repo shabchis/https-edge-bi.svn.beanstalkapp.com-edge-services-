@@ -8,19 +8,20 @@ using Edge.Data.Objects;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
-using Edge.Data.Pipeline.Services.Common.Validation;
+using Edge.Data.Pipeline.Metrics.Checksums;
+
 
 namespace Edge.Services.AdMetrics.Validations
 {
 
     public class DeliveryOltpChecksumService : DeliveryDBChecksumBaseService
     {
-        protected override ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
+		protected override ValidationResult DeliveryDbCompare(DeliveryOutput deliveryOutput, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
         {
             double costDif = 0;
             double impsDif = 0;
             double clicksDif = 0;
-            string dayCode = delivery.TargetPeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
+			string dayCode = deliveryOutput.TimePeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
 
             using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, DbConnectionStringName)))
             {
@@ -37,10 +38,10 @@ namespace Edge.Services.AdMetrics.Validations
                 SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
                 SqlParameter originalIdParam = new SqlParameter("@OriginalID", System.Data.SqlDbType.NVarChar);
 
-                accountIdParam.Value = delivery.Account.ID;
-                daycodeParam.Value = dayCode;
-                channelIdParam.Value = delivery.Channel.ID;
-                originalIdParam.Value = delivery.Account.OriginalID;
+				accountIdParam.Value = deliveryOutput.Account.ID;
+				daycodeParam.Value = dayCode;
+				channelIdParam.Value = deliveryOutput.Channel.ID;
+				originalIdParam.Value = deliveryOutput.Account.OriginalID;
 
                 sqlCommand.Parameters.Add(accountIdParam);
                 sqlCommand.Parameters.Add(daycodeParam);
@@ -71,11 +72,11 @@ namespace Edge.Services.AdMetrics.Validations
                                 return new ValidationResult()
                                 {
                                     ResultType = ValidationResultType.Error,
-                                    AccountID = delivery.Account.ID,
-                                    TargetPeriodStart = delivery.TargetPeriodStart,
-                                    TargetPeriodEnd = delivery.TargetPeriodEnd,
-                                    Message = "Data exists in delivery but not in DB for Account Original ID: " + delivery.Account.OriginalID,
-                                    ChannelID = delivery.Channel.ID,
+									AccountID = deliveryOutput.Account.ID,
+									TargetPeriodStart = deliveryOutput.TimePeriodStart,
+									TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
+									Message = "Data exists in delivery but not in DB for Account Original ID: " + deliveryOutput.Account.OriginalID,
+									ChannelID = deliveryOutput.Channel.ID,
                                     CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
@@ -90,12 +91,12 @@ namespace Edge.Services.AdMetrics.Validations
                                 return new ValidationResult()
                                 {
                                     ResultType = ValidationResultType.Error,
-                                    AccountID = delivery.Account.ID,
-                                    DeliveryID = delivery.DeliveryID,
-                                    TargetPeriodStart = delivery.TargetPeriodStart,
-                                    TargetPeriodEnd = delivery.TargetPeriodEnd,
+									AccountID = deliveryOutput.Account.ID,
+									DeliveryID = deliveryOutput.Delivery.DeliveryID,
+									TargetPeriodStart = deliveryOutput.TimePeriodStart,
+									TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
                                     Message = "validation Error - differences has been found - Account Original ID: " + delivery.Account.OriginalID,
-                                    ChannelID = delivery.Channel.ID,
+									ChannelID = deliveryOutput.Channel.ID,
                                     CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
@@ -105,12 +106,12 @@ namespace Edge.Services.AdMetrics.Validations
                                 return new ValidationResult()
                                 {
                                     ResultType = ValidationResultType.Information,
-                                    AccountID = delivery.Account.ID,
-                                    DeliveryID = delivery.DeliveryID,
-                                    TargetPeriodStart = delivery.TargetPeriodStart,
-                                    TargetPeriodEnd = delivery.TargetPeriodEnd,
-                                    Message = "validation Success - Account Original ID: " + delivery.Account.OriginalID,
-                                    ChannelID = delivery.Channel.ID,
+									AccountID = deliveryOutput.Account.ID,
+									DeliveryID = deliveryOutput.Delivery.DeliveryID,
+									TargetPeriodStart = deliveryOutput.TimePeriodStart,
+									TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
+									Message = "validation Success - Account Original ID: " + deliveryOutput.Account.OriginalID,
+									ChannelID = deliveryOutput.Channel.ID,
                                     CheckType = this.Instance.Configuration.Name
                                 };
                             #endregion
@@ -124,12 +125,12 @@ namespace Edge.Services.AdMetrics.Validations
                         return new ValidationResult()
                         {
                             ResultType = ValidationResultType.Error,
-                            AccountID = delivery.Account.ID,
-                            DeliveryID = delivery.DeliveryID,
-                            TargetPeriodStart = delivery.TargetPeriodStart,
-                            TargetPeriodEnd = delivery.TargetPeriodEnd,
-                            Message = "Cannot Read Data from DB connection closed - Account Original ID: " + delivery.Account.OriginalID,
-                            ChannelID = delivery.Channel.ID,
+							AccountID = deliveryOutput.Account.ID,
+							DeliveryID = deliveryOutput.Delivery.DeliveryID,
+							TargetPeriodStart = deliveryOutput.TimePeriodStart,
+							TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
+							Message = "Cannot Read Data from DB connection closed - Account Original ID: " + deliveryOutput.Account.OriginalID,
+							ChannelID = deliveryOutput.Channel.ID,
                             CheckType = this.Instance.Configuration.Name
                         };
                 }
@@ -137,12 +138,12 @@ namespace Edge.Services.AdMetrics.Validations
                 return new ValidationResult()
                 {
                     ResultType = ValidationResultType.Error,
-                    AccountID = delivery.Account.ID,
-                    DeliveryID = delivery.DeliveryID,
-                    TargetPeriodStart = delivery.TargetPeriodStart,
-                    TargetPeriodEnd = delivery.TargetPeriodEnd,
-                    Message = "Could not find check scenario - Account Original ID: " + delivery.Account.OriginalID,
-                    ChannelID = delivery.Channel.ID,
+					AccountID = deliveryOutput.Account.ID,
+					DeliveryID = deliveryOutput.Delivery.DeliveryID,
+					TargetPeriodStart = deliveryOutput.TimePeriodStart,
+					TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
+					Message = "Could not find check scenario - Account Original ID: " + deliveryOutput.Account.OriginalID,
+					ChannelID = deliveryOutput.Channel.ID,
                     CheckType = this.Instance.Configuration.Name
                 };
 

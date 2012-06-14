@@ -6,11 +6,13 @@ using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using GA = Google.Api.Ads.AdWords.v201109;
 using Edge.Core.Services;
-using Edge.Services.AdMetrics;
+using Edge.Data.Pipeline.Metrics.AdMetrics;
+using Edge.Data.Pipeline.Metrics;
 using Edge.Core.Configuration;
 using Google.Api.Ads.AdWords.v201109;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util.Reports;
+using Edge.Data.Pipeline.Common.Importing;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -30,29 +32,39 @@ namespace Edge.Services.Google.AdWords
 				throw new Exception("Missing Configuration Param , Adwords.ClientID");
 
 			//checking for conflicts 
-			this.Delivery.Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
+			this.Delivery.Outputs.Add(new DeliveryOutput()
+			{
+				Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
-				this.TargetPeriod.ToAbsolute()));
+				this.TimePeriod.ToAbsolute(),
+				this.Instance.Configuration.Options["Adwords.ReportType"].ToString()
+
+				)),
+				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] },
+				Channel=new Data.Objects.Channel(){ ID = 1 },
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd
+			}
+			);
+
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
+				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
+			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 
 			// Create an import manager that will handle rollback, if necessary
-			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
+			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
+				SqlRollbackCommand = Instance.Configuration.Options[Consts.AppSettings.SqlRollbackCommand]
 			});
 
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
-			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
-				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-			this.Delivery.TargetPeriod = this.TargetPeriod;
-			this.Delivery.Account = new Edge.Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] };
-			this.Delivery.Channel = new Data.Objects.Channel() { ID = 1 };
 
 			#region Must Have Params
 
