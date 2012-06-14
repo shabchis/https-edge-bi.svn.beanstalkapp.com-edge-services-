@@ -53,7 +53,7 @@ namespace Edge.Services.BackOffice.EasyForex
 			batch.Wait();
 
 			// Add a retrieved history entry for the entire delivery
-			this.Delivery.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+			
 			this.Delivery.Save();
 
 			return ServiceOutcome.Success;
@@ -62,7 +62,7 @@ namespace Edge.Services.BackOffice.EasyForex
 		void download_Ended(object sender, EventArgs e)
 		{
 			// Add a retrieved history entry to every file
-			((DeliveryFileDownloadOperation)sender).DeliveryFile.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
+			//((DeliveryFileDownloadOperation)sender).DeliveryFile.History.Add(DeliveryOperation.Retrieved, this.Instance.InstanceID);
 		}
 	}
 }

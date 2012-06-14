@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
-using Edge.Services.SegmentMetrics;
 using Edge.Core.Services;
+using Edge.Data.Pipeline.Metrics.GenericMetrics;
 
 namespace Edge.Services.BackOffice.EasyForex
 {
@@ -18,47 +18,53 @@ namespace Edge.Services.BackOffice.EasyForex
 			// SETUP
 			this.Delivery = this.NewDelivery();
 
-			// This is for finding conflicting services
-			this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]", this.Instance.AccountID, this.TargetPeriod.ToAbsolute()));
-
-            /*
-			// Create an import manager that will handle rollback, if necessary
-			SegmentMetricsImportManager importManager = new SegmentMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
-			{
-				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
-			});
-
-			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-			// ...............................
-            */
-			// Now that we have a new delivery, start adding values
 			this.Delivery.Account = new Data.Objects.Account()
 			{
 				ID = this.Instance.AccountID,
+
 			};
-			this.Delivery.TargetPeriod = this.TargetPeriod;
 			this.Delivery.Channel = new Data.Objects.Channel()
 			{
 				ID = -1
 			};
 
-			this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 
-			if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-            
+
+			this.Delivery.Outputs.Add(new DeliveryOutput()
+			{
+				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
+			  this.Instance.AccountID,
+			  this.TimePeriod.ToAbsolute())),
+				Account = Delivery.Account,
+				Channel = Delivery.Channel,
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd
+
+
+			});
+
+			// Create an import manager that will handle rollback, if necessary
+			var importManager = new GenericMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.MetricsImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+          
+          
+			
             this.ReportProgress(0.2);
 			#endregion
 
            //Create File
 
             DeliveryFile _file = new DeliveryFile()
-            {
-                Account = this.Delivery.Account,
-                Name = "EasyForexBackOffice",
-                
+            {               
+                Name = "EasyForexBackOffice",                
             };
 
 			_file.SourceUrl = Instance.Configuration.Options["SourceUrl"];// "https://classic.easy-forex.com/BackOffice/API/Marketing.asmx";
@@ -80,8 +86,8 @@ namespace Edge.Services.BackOffice.EasyForex
                  Delivery.Parameters["SoapMethod"].ToString(),
                  Delivery.Parameters["StartGid"].ToString(),
                  Delivery.Parameters["EndGid"].ToString(),
-                 this.Delivery.TargetPeriodStart.ToString("yyyy-MM-ddTHH:mm:ss"),
-                 this.Delivery.TargetPeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+                 this.Delivery.TimePeriodStart.ToString("yyyy-MM-ddTHH:mm:ss"),
+                 this.Delivery.TimePeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
                  );
            
             #region Soap 1.2
