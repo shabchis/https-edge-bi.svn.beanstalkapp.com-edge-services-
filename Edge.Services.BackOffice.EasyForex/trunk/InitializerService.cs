@@ -54,8 +54,8 @@ namespace Edge.Services.BackOffice.EasyForex
 				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
 			});
 
-          
-          
+
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 			
             this.ReportProgress(0.2);
 			#endregion
