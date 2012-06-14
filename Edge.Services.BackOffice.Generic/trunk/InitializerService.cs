@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using Edge.Services.SegmentMetrics;
+using Edge.Data.Pipeline.Metrics.GenericMetrics;
+
 
 
 namespace Edge.Services.BackOffice.Generic
@@ -18,18 +19,46 @@ namespace Edge.Services.BackOffice.Generic
             #region Init General
             // ...............................
             // SETUP
-            this.Delivery = this.NewDelivery();
+			this.Delivery = this.NewDelivery();
 
-            // This is for finding conflicting services
-            this.Delivery.Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
-                this.Instance.AccountID,
-                this.TargetPeriod.ToAbsolute()));
+			this.Delivery.Account = new Data.Objects.Account()
+			{
+				ID = this.Instance.AccountID,
 
-            // Create an import manager that will handle rollback, if necessary
-            var importManager = new SegmentMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.ImportManagerOptions()
-            {
-                SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Common.Importing.Consts.AppSettings.SqlRollbackCommand]
-            });
+			};
+			this.Delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = -1
+			};
+
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+
+			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+
+			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
+				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
+
+			this.Delivery.Outputs.Add(new DeliveryOutput()
+			{
+				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
+			  this.Instance.AccountID,
+			  this.TimePeriod.ToAbsolute())),
+				Account = Delivery.Account,
+				Channel = Delivery.Channel,
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd
+
+
+			});
+
+			// Create an import manager that will handle rollback, if necessary
+			var importManager = new GenericMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.MetricsImportManagerOptions()
+			{
+				SqlRollbackCommand = Instance.Configuration.Options[Edge.Data.Pipeline.Metrics.Consts.AppSettings.SqlRollbackCommand]
+			});
+
+			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
             // Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
             this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
@@ -37,21 +66,11 @@ namespace Edge.Services.BackOffice.Generic
             // ...............................
 
             // Now that we have a new delivery, start adding values
-            this.Delivery.Account = new Data.Objects.Account()
-            {
-                ID = this.Instance.AccountID,
+          
 
-            };
-            this.Delivery.TargetPeriod = this.TargetPeriod;
-            this.Delivery.Channel = new Data.Objects.Channel()
-            {
-                ID = -1
-            };
+            
 
-            this.Delivery.TargetLocationDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
-
-            if (string.IsNullOrEmpty(this.Delivery.TargetLocationDirectory))
-                throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
+         
 
             if (string.IsNullOrEmpty(this.Instance.Configuration.Options[BoConfigurationOptions.BaseServiceAddress]))
                 throw new Exception("base url must be configured!");
@@ -73,19 +92,19 @@ namespace Edge.Services.BackOffice.Generic
             #region DeliveryFile
             Dictionary<string, string> UrlParams = new Dictionary<string, string>();
             DeliveryFile boFile = new DeliveryFile();
-			DateTime start=TargetPeriod.Start.ToDateTime();
-			DateTime end = TargetPeriod.End.ToDateTime();
+			DateTime start=TimePeriod.Start.ToDateTime();
+			DateTime end = TimePeriod.End.ToDateTime();
             boFile.Parameters[BoConfigurationOptions.BO_XPath_Trackers] = Instance.Configuration.Options[BoConfigurationOptions.BO_XPath_Trackers];
             boFile.Name = BoConfigurationOptions.BoFileName;
 			if (utcOffset != 0)
 			{
-				start.AddHours(utcOffset);
-				end.AddHours(utcOffset);				
+				start=start.AddHours(utcOffset);
+				end = end.AddHours(utcOffset);				
 			}
 			if (timeZone != 0)
 			{
-				start.AddHours(-timeZone);
-				end.AddHours(-timeZone);
+				start = start.AddHours(-timeZone);
+				end = end.AddHours(-timeZone);
 			}
 
 
@@ -106,22 +125,6 @@ namespace Edge.Services.BackOffice.Generic
             return Core.Services.ServiceOutcome.Success;
         }
 
-		//private string CreateUrl(Dictionary<string, string> UrlParams, string baseAddress)
-		//{
-		//    StringBuilder fullAddress = new StringBuilder();
-		//    fullAddress.Append(baseAddress);
-		//    fullAddress.Append("?");
-		//    foreach (KeyValuePair<string, string> param in UrlParams)
-		//    {
-		//        fullAddress.Append(param.Key);
-		//        fullAddress.Append("=");
-		//        fullAddress.Append(param.Value);
-		//        fullAddress.Append("&");
-		//    }
-
-
-		//    return fullAddress.ToString();
-		//}
 
        
 
