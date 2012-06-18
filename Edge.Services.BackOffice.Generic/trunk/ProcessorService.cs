@@ -64,7 +64,7 @@ namespace Edge.Services.BackOffice.Generic
 
 							this.Mappings.OnFieldRequired = field => readerHelper[field];
 							GenericMetricsUnit genericMetricsUnit = new GenericMetricsUnit();
-							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit))
+							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
 								throw new Exception("Mappings object not contains object genericMetricsUnit");
 							metricsUnitMapping.Apply(genericMetricsUnit);
 
