@@ -30,7 +30,7 @@ namespace Edge.Services.Google.Analytics
 			this.Mappings.ExternalMethods.Add("IsChecksum", new Func<bool>(() =>
 				_isChecksum));
 		}
-		
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
 			MappingContainer metricsUnitMapping = this.Mappings.Objects[typeof(GenericMetricsUnit)];
@@ -63,9 +63,9 @@ namespace Edge.Services.Google.Analytics
 				}))
 				{
 					this.ImportManager.BeginImport(this.Delivery);
-					
+
 					Dictionary<string, GenericMetricsUnit> data = new Dictionary<string, GenericMetricsUnit>();
-					
+
 					// Checksums
 					_isChecksum = true;
 					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.totalsForAllResults.*");
@@ -75,12 +75,14 @@ namespace Edge.Services.Google.Analytics
 						if (reportReader.Read())
 						{
 							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
+							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
+								throw new Exception("Mappings object not contains object genericMetricsUnit");
 							metricsUnitMapping.Apply(checksumUnit);
 
 							foreach (var m in checksumUnit.MeasureValues)
 							{
 								if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
-									 currentOutput.Checksum.Add(m.Key.Name, m.Value);
+									currentOutput.Checksum.Add(m.Key.Name, m.Value);
 							}
 						}
 					}
@@ -95,6 +97,8 @@ namespace Edge.Services.Google.Analytics
 						while (reportReader.Read())
 						{
 							GenericMetricsUnit tempUnit = new GenericMetricsUnit();
+							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
+								throw new Exception("Mappings object not contains object genericMetricsUnit");
 							metricsUnitMapping.Apply(tempUnit);
 
 							SegmentObject tracker = tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]];
@@ -103,7 +107,7 @@ namespace Edge.Services.Google.Analytics
 							// check if we already found a metrics unit with the same tracker
 							if (!data.TryGetValue(tracker.Value, out existingUnit))
 							{
-								tempUnit.Output = currentOutput;								
+								tempUnit.Output = currentOutput;
 								data.Add(tracker.Value, tempUnit);
 							}
 							else
