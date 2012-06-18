@@ -23,8 +23,8 @@ namespace Edge.Services.Google.AdWords
 		static Dictionary<string, int> GoogleAdTypeDic;
 		static Dictionary<string, string> GoogleMeasuresDic;
 		static Dictionary<string, ObjectStatus> ObjectStatusDic;
-		
-	
+
+
 
 		public ProcessorService()
 		{
@@ -52,7 +52,7 @@ namespace Edge.Services.Google.AdWords
 				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
 				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
 			};
-			
+
 			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
 			{
 				{"PAUSED",ObjectStatus.Paused},
@@ -72,7 +72,7 @@ namespace Edge.Services.Google.AdWords
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-			
+
 			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
 
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -232,7 +232,7 @@ namespace Edge.Services.Google.AdWords
 
 					while (_adsReader.Read())
 					{
-						
+
 
 						// Adding totals line for validation (checksum)
 						if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
@@ -273,7 +273,9 @@ namespace Edge.Services.Google.AdWords
 							if (!String.IsNullOrWhiteSpace(_adsReader.Current[Const.DestUrlFieldName]))
 							{
 								ad.DestinationUrl = _adsReader.Current[Const.DestUrlFieldName];
-								this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+								if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+									this.Mappings.Objects[typeof(Ad)].Apply(ad);
 								//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], _adsReader.Current[Const.DestUrlFieldName]);
 								//if (tracker != null)
 								//    ad.Segments[session.SegmentTypes[Segment.Common.Tracker]] = tracker;
@@ -431,7 +433,7 @@ namespace Edge.Services.Google.AdWords
 				}
 				#endregion
 			}
-				
+
 
 			return Core.Services.ServiceOutcome.Success;
 		}
