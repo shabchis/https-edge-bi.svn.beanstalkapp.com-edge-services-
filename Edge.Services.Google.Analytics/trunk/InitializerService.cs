@@ -31,7 +31,7 @@ namespace Edge.Services.Google.Analytics
 
 			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
 
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()

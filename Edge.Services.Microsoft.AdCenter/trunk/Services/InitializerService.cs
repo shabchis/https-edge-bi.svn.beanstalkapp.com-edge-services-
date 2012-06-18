@@ -35,7 +35,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				ID = 14
 			};
 
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Edge.Data.Pipeline.Services.Const.DeliveryServiceConfigurationOptions.FileDirectory];
 
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");

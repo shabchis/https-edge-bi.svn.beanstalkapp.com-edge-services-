@@ -34,7 +34,7 @@ namespace Edge.Services.Google.AdWords
 			//checking for conflicts 
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TargetPeriod
+				Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TimePeriod
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 				this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
@@ -49,7 +49,7 @@ namespace Edge.Services.Google.AdWords
 			}
 			);
 
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Edge.Data.Pipeline.Services.Const.DeliveryServiceConfigurationOptions.FileDirectory];
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery FileDirectory must be configured in configuration file (DeliveryFilesDir)");
 			this.Delivery.TimePeriodDefinition = this.TimePeriod;

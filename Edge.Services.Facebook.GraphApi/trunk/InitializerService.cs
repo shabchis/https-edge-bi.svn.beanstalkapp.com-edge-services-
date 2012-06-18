@@ -47,7 +47,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 			
 
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
 
 			// Create an import manager that will handle rollback, if necessary
 			AdMetricsImportManager importManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
