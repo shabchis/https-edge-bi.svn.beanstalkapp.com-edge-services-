@@ -75,7 +75,7 @@ namespace Edge.Services.Google.Analytics
 						if (reportReader.Read())
 						{
 							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
-							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
+							if (!this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
 								throw new Exception("Mappings object not contains object genericMetricsUnit");
 							metricsUnitMapping.Apply(checksumUnit);
 
