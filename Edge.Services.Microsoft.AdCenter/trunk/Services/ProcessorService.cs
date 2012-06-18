@@ -16,7 +16,7 @@ namespace Edge.Services.Microsoft.AdCenter
 {
 	public class ProcessorService : MetricsProcessorServiceBase
 	{
-        DeliveryOutput currentOutput;
+		DeliveryOutput currentOutput;
 		public const string endOfFileMicrosoftCorporation = "©2011 Microsoft Corporation. All rights reserved. ";
 		static class MeasureNames
 		{
@@ -26,7 +26,7 @@ namespace Edge.Services.Microsoft.AdCenter
 		static Dictionary<string, int> AdCenterAdTypeDic;
 		Dictionary<string, Campaign> _campaignsCache;
 		Dictionary<long, Ad> _adCache;
-	
+
 		public new AdMetricsImportManager ImportManager
 		{
 			get { return (AdMetricsImportManager)base.ImportManager; }
@@ -51,7 +51,7 @@ namespace Edge.Services.Microsoft.AdCenter
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			currentOutput = Delivery.Outputs.First();
-			currentOutput.Checksum=new Dictionary<string,double>();
+			currentOutput.Checksum = new Dictionary<string, double>();
 			// TODO: add checks for delivery state
 			string[] requiredHeaders;
 			requiredHeaders = new string[1];
@@ -118,13 +118,16 @@ namespace Edge.Services.Microsoft.AdCenter
 							break;
 
 						Ad ad = CreateAd(adReportReader.Current, ImportManager);
-						this.Mappings.Objects[typeof(Ad)].Apply(ad);
 						
+						//TRACKER
+						if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+							this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
 						//ADDING CAMPAIGN
 						ad.Segments[this.ImportManager.
-							SegmentTypes[Segment.Common.Campaign]] =_campaignsCache[adReportReader.Current[WS.AdPerformanceReportColumn.CampaignName.ToString()]];
+							SegmentTypes[Segment.Common.Campaign]] = _campaignsCache[adReportReader.Current[WS.AdPerformanceReportColumn.CampaignName.ToString()]];
 
-						
+
 
 						//CREATING Adgroup
 						AdGroup adGroup = new AdGroup()
@@ -148,7 +151,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 				}
 				this.ReportProgress(0.7);
-				
+
 			#endregion
 
 				// ...............................................................
@@ -169,7 +172,7 @@ namespace Edge.Services.Microsoft.AdCenter
 					keywordReport.OpenContents(subLocation: keywordReportSubFiles[0], archiveType: ArchiveType.Zip),
 					requiredHeaders);
 
-				
+
 				//Added by Shay for validation 
 				foreach (KeyValuePair<string, Measure> measure in ImportManager.Measures)
 				{
@@ -199,7 +202,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 					}
 
-				
+
 					ImportManager.EndImport();
 
 					ReportProgress(1);
@@ -262,15 +265,15 @@ namespace Edge.Services.Microsoft.AdCenter
 				Account = new Account() { ID = this.Delivery.Account.ID, OriginalID = this.Delivery.Account.OriginalID },
 				Channel = new Channel() { ID = this.Delivery.Channel.ID }
 			};
-			
+
 			return ad;
 		}
 
 		private AdMetricsUnit CreateMetrics(dynamic values, string timePeriodColumn, AdMetricsImportManager session)
 		{
 			var metricsUnit = new AdMetricsUnit();
-            metricsUnit.Output = currentOutput;
-            metricsUnit.MeasureValues = new Dictionary<Measure, double>();
+			metricsUnit.Output = currentOutput;
+			metricsUnit.MeasureValues = new Dictionary<Measure, double>();
 			metricsUnit.Ad = _adCache[Convert.ToInt64(values[WS.KeywordPerformanceReportColumn.AdId.ToString()])];
 			metricsUnit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
 			metricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
