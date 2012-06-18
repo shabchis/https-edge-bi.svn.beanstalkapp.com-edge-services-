@@ -26,7 +26,9 @@ namespace Edge.Services.BackOffice.Generic
 
         protected override Core.Services.ServiceOutcome DoPipelineWork()
         {
-			MappingContainer metricsUnitMapping = this.Mappings.Objects[typeof(GenericMetricsUnit)];
+			MappingContainer metricsUnitMapping;
+			if (!this.Mappings.Objects.TryGetValue(typeof(GenericMetricsUnit), out metricsUnitMapping))
+				throw new MappingConfigurationException("Missing mapping definition for GenericMetricsUnit.");
 			currentOutput = this.Delivery.Outputs.First();
 			currentOutput.Checksum = new Dictionary<string, double>();
 
@@ -64,8 +66,7 @@ namespace Edge.Services.BackOffice.Generic
 
 							this.Mappings.OnFieldRequired = field => readerHelper[field];
 							GenericMetricsUnit genericMetricsUnit = new GenericMetricsUnit();
-							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
-								throw new Exception("Mappings object not contains object genericMetricsUnit");
+							
 							metricsUnitMapping.Apply(genericMetricsUnit);
 
 							foreach (var m in genericMetricsUnit.MeasureValues)
