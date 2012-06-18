@@ -30,7 +30,7 @@ namespace Edge.Services.BackOffice.EasyForex
 
 			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 
-			this.Delivery.FileDirectory = Instance.Configuration.Options["DeliveryFilesDir"];
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
 
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
