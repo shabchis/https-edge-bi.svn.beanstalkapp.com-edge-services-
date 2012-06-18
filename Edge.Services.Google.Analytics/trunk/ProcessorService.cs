@@ -76,7 +76,7 @@ namespace Edge.Services.Google.Analytics
 						{
 							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
 							if (!this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
-								throw new Exception("Mappings object not contains object genericMetricsUnit");
+								throw new Exception("Mappings for GenericMetricsUnit are required.");
 							metricsUnitMapping.Apply(checksumUnit);
 
 							foreach (var m in checksumUnit.MeasureValues)
