@@ -33,7 +33,9 @@ namespace Edge.Services.Google.Analytics
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			MappingContainer metricsUnitMapping = this.Mappings.Objects[typeof(GenericMetricsUnit)];
+			MappingContainer metricsUnitMapping;
+			if (!this.Mappings.Objects.TryGetValue(typeof(GenericMetricsUnit), out metricsUnitMapping))
+				throw new MappingConfigurationException("Missing mapping definition for GenericMetricsUnit.");
 			currentOutput = this.Delivery.Outputs.First();
 			currentOutput.Checksum = new Dictionary<string, double>();
 			Dictionary<string, int> columns = new Dictionary<string, int>();
@@ -75,8 +77,6 @@ namespace Edge.Services.Google.Analytics
 						if (reportReader.Read())
 						{
 							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
-							if (!this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
-								throw new Exception("Mappings for GenericMetricsUnit are required.");
 							metricsUnitMapping.Apply(checksumUnit);
 
 							foreach (var m in checksumUnit.MeasureValues)
@@ -97,8 +97,6 @@ namespace Edge.Services.Google.Analytics
 						while (reportReader.Read())
 						{
 							GenericMetricsUnit tempUnit = new GenericMetricsUnit();
-							if (this.Mappings.Objects.ContainsKey(typeof(GenericMetricsUnit)))
-								throw new Exception("Mappings object not contains object genericMetricsUnit");
 							metricsUnitMapping.Apply(tempUnit);
 
 							SegmentObject tracker = tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]];
