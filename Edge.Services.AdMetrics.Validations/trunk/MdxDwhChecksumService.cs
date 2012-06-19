@@ -7,7 +7,8 @@ using System.Data;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Data.Pipeline.Services;
-using Edge.Data.Pipeline.Services.Common.Validation;
+using Edge.Data.Pipeline.Metrics.Checksums;
+
 
 namespace Edge.Services.AdMetrics.Validations
 {
