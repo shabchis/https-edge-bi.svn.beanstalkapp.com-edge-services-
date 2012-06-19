@@ -31,15 +31,20 @@ namespace Edge.Services.Google.AdWords
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["Adwords.ClientID"]))
 				throw new Exception("Missing Configuration Param , Adwords.ClientID");
 
+			
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["SubChannelName"]))
+				throw new Exception("Missing Configuration Param , SubChannelName");
+			
+
 			//checking for conflicts 
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature(String.Format("GoogleAdwordsSearch-[{0}]-[{1}]-[{2}]-[{3}]",//-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TimePeriod
+				Signature = Delivery.CreateSignature(String.Format("{4}-[{0}]-[{1}]-[{2}]-[{3}]",//-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TimePeriod
 					this.Instance.AccountID,
 					this.Instance.Configuration.Options["Adwords.MccEmail"].ToString(),
 					this.Instance.Configuration.Options["Adwords.ClientID"].ToString(),
-					this.TimePeriod.ToAbsolute()//,
-					//this.Instance.Configuration.Options["Adwords.ReportType"].ToString()
+					this.TimePeriod.ToAbsolute(),
+					this.Instance.Configuration.Options["SubChannelName"].ToString()
 				)),
 				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["Adwords.ClientID"] },
 				Channel=new Data.Objects.Channel(){ ID = 1 },
