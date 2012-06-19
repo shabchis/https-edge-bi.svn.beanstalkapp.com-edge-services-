@@ -29,7 +29,9 @@ namespace Edge.Services.Facebook.GraphApi
 					this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString(),
 					this.Delivery.TimePeriodDefinition.ToAbsolute())),
 					TimePeriodStart=Delivery.TimePeriodStart,
-					TimePeriodEnd=Delivery.TimePeriodEnd
+					TimePeriodEnd=Delivery.TimePeriodEnd,
+					Account=this.Delivery.Account,
+					Channel=this.Delivery.Channel
 					
 			});
 			
