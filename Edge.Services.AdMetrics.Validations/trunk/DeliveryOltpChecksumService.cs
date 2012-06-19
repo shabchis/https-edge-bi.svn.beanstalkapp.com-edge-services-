@@ -95,7 +95,7 @@ namespace Edge.Services.AdMetrics.Validations
 									DeliveryID = deliveryOutput.Delivery.DeliveryID,
 									TargetPeriodStart = deliveryOutput.TimePeriodStart,
 									TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
-                                    Message = "validation Error - differences has been found - Account Original ID: " + delivery.Account.OriginalID,
+									Message = "validation Error - differences has been found - Account Original ID: " + deliveryOutput.Account.OriginalID,
 									ChannelID = deliveryOutput.Channel.ID,
                                     CheckType = this.Instance.Configuration.Name
                                 };

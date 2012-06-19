@@ -12,7 +12,7 @@ namespace Edge.Services.AdMetrics.Validations
 {
     class DwhOltpChecksumService : DbDbChecksumBaseService
     {
-		protected override ValidationResult DeliveryDbCompare(DeliveryOutput deliveryOutput, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
+		protected override Data.Pipeline.Services.ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params)
 		{
 
             Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
@@ -28,7 +28,7 @@ namespace Edge.Services.AdMetrics.Validations
                 sqlCon.Open();
 
                 SqlCommand sqlCommand = new SqlCommand(
-                   "SELECT SUM(cost),sum(imps),sum(clicks) from " + OltpTable +
+				   "SELECT SUM(cost),sum(imps),sum(clicks) from " + SourceTable +
                    " where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID"
                    );
 
@@ -75,7 +75,7 @@ namespace Edge.Services.AdMetrics.Validations
                 sqlCon.Open();
 
                 SqlCommand sqlCommand = new SqlCommand(
-                   "SELECT SUM(cost),sum(Impressions),sum(clicks) from " + DwhTabel +
+				   "SELECT SUM(cost),sum(Impressions),sum(clicks) from " + TargetTabel +
                    " where account_id = @Account_ID and Day_ID = @Daycode and Channel_ID = @Channel_ID"
                    );
 
