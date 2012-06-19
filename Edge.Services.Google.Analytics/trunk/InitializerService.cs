@@ -40,17 +40,30 @@ namespace Edge.Services.Google.Analytics
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]-[{2}]",
+			    Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
 			  this.Instance.AccountID,
-			  this.TimePeriod.ToAbsolute(),
-			  profileID)),
-				Account = Delivery.Account,
-				Channel = Delivery.Channel,
-				TimePeriodStart=Delivery.TimePeriodStart,
-				TimePeriodEnd=Delivery.TimePeriodEnd
+			  this.TimePeriod.ToAbsolute())),
+			    Account = Delivery.Account,
+			    Channel = Delivery.Channel,
+			    TimePeriodStart=Delivery.TimePeriodStart,
+			    TimePeriodEnd=Delivery.TimePeriodEnd
+				});
 
 
-			});
+			//**************in case amir will want to run two profiles
+			//this.Delivery.Outputs.Add(new DeliveryOutput()
+			//{
+			//    Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]-[{2}]",
+			//  this.Instance.AccountID,
+			//  this.TimePeriod.ToAbsolute(),
+			//  profileID)),
+			//    Account = Delivery.Account,
+			//    Channel = Delivery.Channel,
+			//    TimePeriodStart=Delivery.TimePeriodStart,
+			//    TimePeriodEnd=Delivery.TimePeriodEnd
+
+
+			//});
 
 			// Create an import manager that will handle rollback, if necessary
 			var importManager = new GenericMetricsImportManager(this.Instance.InstanceID, new Edge.Data.Pipeline.Common.Importing.MetricsImportManagerOptions()
