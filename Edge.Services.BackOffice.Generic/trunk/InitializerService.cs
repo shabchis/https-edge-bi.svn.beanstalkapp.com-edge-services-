@@ -59,13 +59,6 @@ namespace Edge.Services.BackOffice.Generic
 
 			// Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-            // Apply the delivery (will use ConflictBehavior configuration option to abort or rollback if any conflicts occur)
-            this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
-
-            // ...............................
-
-            // Now that we have a new delivery, start adding values
           
 
             
