@@ -5,6 +5,7 @@ using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
+using System.Text.RegularExpressions;
 
 namespace Edge.Services.Google.Analytics
 {
@@ -32,13 +33,17 @@ namespace Edge.Services.Google.Analytics
 			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 
 			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
-
+			serviceAddress = Instance.Configuration.Options["ServiceAddress"];
+			Match m=Regex.Match(serviceAddress,@"\bids=(?<profileID>[^&]+)",RegexOptions.IgnoreCase);
+			Group g=m.Groups["profileID"];
+			string profileID=g.Value;
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
+				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]-[{2}]",
 			  this.Instance.AccountID,
-			  this.TimePeriod.ToAbsolute())),
+			  this.TimePeriod.ToAbsolute(),
+			  profileID)),
 				Account = Delivery.Account,
 				Channel = Delivery.Channel,
 				TimePeriodStart=Delivery.TimePeriodStart,
@@ -109,16 +114,18 @@ namespace Edge.Services.Google.Analytics
 
 			DeliveryFile file = new DeliveryFile();
 			file.Name = "GoalsByCountryAndPagePath.GZIP";
-			//if (utcOffset != 0)
-			//{
-			//    start.AddHours(utcOffset);
-			//    end.AddHours(utcOffset);
-			//}
-			//if (timeZone != 0)
-			//{
-			//    start.AddHours(-timeZone);
-			//    end.AddHours(-timeZone);
-			//}
+			DateTime start = TimePeriod.Start.ToDateTime();
+			DateTime end = TimePeriod.End.ToDateTime();
+			if (utcOffset != 0)
+			{
+				start=start.AddHours(utcOffset);
+				end=end.AddHours(utcOffset);
+			}
+			if (timeZone != 0)
+			{
+				start=start.AddHours(-timeZone);
+				end=end.AddHours(-timeZone);
+			}
 			file.SourceUrl = string.Format(serviceAddress, this.Delivery.TimePeriodDefinition.Start.ToDateTime(), this.Delivery.TimePeriodDefinition.End.ToDateTime());
 
 
