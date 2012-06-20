@@ -22,6 +22,18 @@ namespace Edge.Services.Facebook.GraphApi
 			// SETUP
 			this.Delivery = NewDelivery();
 			// This is for finding conflicting services
+			this.Delivery.Account = new Data.Objects.Account()
+			{
+				ID = this.Instance.AccountID,
+				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
+			};
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
+			this.Delivery.Channel = new Data.Objects.Channel()
+			{
+				ID = 6
+			};
+
+
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
 				Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
@@ -36,16 +48,7 @@ namespace Edge.Services.Facebook.GraphApi
 			});
 			
 			// Now that we have a new delivery, start adding values
-			this.Delivery.Account = new Data.Objects.Account()
-			{
-				ID = this.Instance.AccountID,
-				OriginalID = this.Instance.Configuration.Options[FacebookConfigurationOptions.Account_ID].ToString()
-			};
-			this.Delivery.TimePeriodDefinition = this.TimePeriod;
-			this.Delivery.Channel = new Data.Objects.Channel()
-			{
-				ID = 6
-			};
+			
 
 			
 
