@@ -9,81 +9,124 @@ using Edge.Core.Configuration;
 using Edge.Data.Pipeline.Services;
 using System.Configuration;
 using Edge.Data.Pipeline.Metrics.Checksums;
+using Edgeobjects = Edge.Data.Objects;
+using Edge.Core.Data;
+using Edge.Data.Pipeline.Metrics;
 
 namespace Edge.Services.AdMetrics.Validations
 {
-    class MdxOltpChecksumService : DbDbChecksumBaseService
-    {
+	class MdxOltpChecksumService : DbDbChecksumBaseService
+	{
 
-        protected override Data.Pipeline.Services.ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params)
-        {
+		protected override Data.Pipeline.Services.ValidationResult Compare(string SourceTable, string TargetTabel, Dictionary<string, string> Params)
+		{
+			//{"AccountID",account},
+			//               {"ChannelID",channel},
+			//               {"Date",fromDate.ToString()}
+			Edgeobjects.Account account = new Edgeobjects.Account() { ID = int.Parse(Params["AccountID"]) };
+			Edgeobjects.Channel channel = new Edgeobjects.Channel() { ID = int.Parse(Params["ChannelID"]) };
+			Dictionary<string, Diffrence> diffs = new Dictionary<string, Diffrence>();
+			Dictionary<string, Edgeobjects.Measure> measures;
+			string checksumThreshold = Instance.Configuration.Options[Consts.ConfigurationOptions.ChecksumTheshold];
+			double allowedChecksumThreshold = checksumThreshold == null ? 0.01 : double.Parse(checksumThreshold);
+			
+			Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
+			Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
 
-            Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
-            Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
+			string dayCode = Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd");
 
-            string dayCode = Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd");
+			#region Getting measuers from oltp
 
-            #region Getting measuers from oltp
+			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
+			{
+				StringBuilder sqlBuilder = new StringBuilder(); ;
+				measures = Edgeobjects.Measure.GetMeasures(account, channel, sqlCon, Edgeobjects.MeasureOptions.IsTarget | Edgeobjects.MeasureOptions.IsCalculated | Edgeobjects.MeasureOptions.IsBackOffice, Edgeobjects.OptionsOperator.Not);
+				foreach (var measure in measures)
+				{
+					if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+						sqlBuilder.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Value.OltpName, sqlBuilder.Length > 0 ? ", " : null);
 
-            using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
-            {
-                sqlCon.Open();
+				}
+				sqlBuilder.Insert(0, "SELECT \n");
+				sqlBuilder.AppendFormat(" FROM {0}\n ", SourceTable);
+				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int");
+				sqlCon.Open();
 
-                SqlCommand sqlCommand = new SqlCommand(
-                   "SELECT SUM(cost),sum(imps),sum(clicks) from " + SourceTable +
-                   " where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID"
-                   );
+				SqlCommand sqlCommand = DataManager.CreateCommand(sqlBuilder.ToString(), CommandType.Text);
+				sqlCommand.Parameters["@accountID"].Value = account.ID;
+				sqlCommand.Parameters["@daycode"].Value = dayCode; ;
+				sqlCommand.Parameters["@Channel_ID"].Value = channel.ID;
+				//SqlCommand sqlCommand = new SqlCommand(
+				//   "SELECT SUM(cost),sum(imps),sum(clicks) from " + SourceTable +
+				//   " where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID"
+				//   );
 
-                SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
-                SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
-                SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
+				//SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
+				//SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
+				//SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
 
-                accountIdParam.Value = Params["AccountID"];
-                daycodeParam.Value = dayCode;
-                channelIdParam.Value = Params["ChannelID"];
+				//accountIdParam.Value = Params["AccountID"];
+				//daycodeParam.Value = dayCode;
+				//channelIdParam.Value = Params["ChannelID"];
 
-                sqlCommand.Parameters.Add(accountIdParam);
-                sqlCommand.Parameters.Add(daycodeParam);
-                sqlCommand.Parameters.Add(channelIdParam);
+				//sqlCommand.Parameters.Add(accountIdParam);
+				//sqlCommand.Parameters.Add(daycodeParam);
+				//sqlCommand.Parameters.Add(channelIdParam);
 
-                sqlCommand.Connection = sqlCon;
+				sqlCommand.Connection = sqlCon;
 
-                using (var _reader = sqlCommand.ExecuteReader())
-                {
-                    progress += 0.5 * (1 - progress);
-                    this.ReportProgress(progress);
+				using (var _reader = sqlCommand.ExecuteReader())
+				{
+					progress += 0.5 * (1 - progress);
+					this.ReportProgress(progress);
 
-                    if (!_reader.IsClosed)
-                    {
-                        while (_reader.Read())
-                        {
-                            if (!_reader[0].Equals(DBNull.Value))
-                            {
-                                oltpTotals.Add("Cost", Convert.ToDouble(_reader[0]));
-                                oltpTotals.Add("Imps", Convert.ToDouble(_reader[1]));
-                                oltpTotals.Add("Clicks", Convert.ToDouble(_reader[2]));
-                            }
-                        }
+					if (!_reader.IsClosed)
+					{
+						if (_reader.Read())
+						{
+							foreach (var measure in measures)
+							{
+								Diffrence difference = new Diffrence();
+								if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+								{
+									if (!_reader[measure.Value.OltpName].Equals(DBNull.Value))
+									{
+										oltpTotals.Add(measure.Value.Name,_reader.Get<double>(measure.Value.OltpName));
+										
+									}
+								}
+							}
+							//if (!_reader[0].Equals(DBNull.Value))
+							//{
+							//    oltpTotals.Add("Cost", Convert.ToDouble(_reader[0]));
+							//    oltpTotals.Add("Imps", Convert.ToDouble(_reader[1]));
+							//    oltpTotals.Add("Clicks", Convert.ToDouble(_reader[2]));
+							//}
+						}
 
-                    }
+					}
 
-                }
-            }
-            #endregion
+				}
+			}
+			#endregion
 
-            #region Getting measures from Analysis server (MDX)
+			#region Getting measures from Analysis server (MDX)
 
 			string admobConnection = this.Instance.Configuration.Options["AdmobConnection"];
 			AdomdConnection conn = new AdomdConnection(admobConnection);
-            try
-            {
-                conn.Open();
+			try
+			{
+				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+				StringBuilder mdxBuilder = new StringBuilder();
+				mdxBuilder.Append("{{ ");
+				foreach (var measure in measures)
+				{
+					if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+						mdxBuilder.AppendFormat("[Measures.[{0}],", measure.Value.DisplayName);
 
-                //TO DO : Get Cube Name from DB
-                string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
-
-                string mdxCommandText = string.Format(@"Select
-                                {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
+				}
+				mdxBuilder.Remove(mdxBuilder.Length - 1, 1); //remove the last ','
+				mdxBuilder.AppendFormat(@"}}
                                     On Columns , 
                                 (
 	                            [Accounts Dim].[Accounts].[Account].&[{0}]
@@ -94,39 +137,73 @@ namespace Edge.Services.AdMetrics.Validations
                                 ([Channels Dim].[Channels].[Channel].&[{2}]
                                 ,[Time Dim].[Time Dim].[Day].&[{3}]
                                 ) 
-                                ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
-
-                AdomdCommand mdxCmd = new AdomdCommand(mdxCommandText, conn);
-                AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection);
-
-                while (mdxReader.Read())
-                {
-                    mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
-                    mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
-                    mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
-                }
-                mdxReader.Close();
-            #endregion
-
-                return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
-            }
-            catch ( Exception e )
-            {
-                return new ValidationResult()
-                {
-                    ResultType = ValidationResultType.Error,
-                    AccountID = Convert.ToInt32(Params["AccountID"]),
-                    Message = e.Message,
-                    TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
-                    TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
-                    ChannelID = Convert.ToInt32(Params["ChannelID"]),
-                    CheckType = this.Instance.Configuration.Name
-                };
-            }
+                                ", account.ID, CubeName, channel.ID, Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 
 
-        }
+				conn.Open();
 
-       
-    }
+				//TO DO : Get Cube Name from DB
+
+
+				//                string mdxCommandText = string.Format(@"Select
+				//                                {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
+				//                                    On Columns , 
+				//                                (
+				//	                            [Accounts Dim].[Accounts].[Account].&[{0}]
+				//                                )On Rows 
+				//                                From
+				//                                [{1}]
+				//                                WHERE
+				//                                ([Channels Dim].[Channels].[Channel].&[{2}]
+				//                                ,[Time Dim].[Time Dim].[Day].&[{3}]
+				//                                ) 
+				//                                ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
+
+				AdomdCommand mdxCmd = new AdomdCommand(mdxBuilder.ToString(), conn);
+				
+				using (AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection))
+				{
+
+					if (mdxReader.Read())
+					{
+						foreach (var measure in measures)
+						{
+							if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+							{
+								mdxTotals.Add(measure.Value.Name,Convert.ToDouble(mdxReader[measure.Value.DisplayName]));
+								
+
+
+							}
+
+						}
+						//mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
+						//mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
+						//mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
+					}
+					mdxReader.Close(); 
+				}
+			#endregion
+
+				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
+			}
+			catch (Exception e)
+			{
+				return new ValidationResult()
+				{
+					ResultType = ValidationResultType.Error,
+					AccountID = Convert.ToInt32(Params["AccountID"]),
+					Message = e.Message,
+					TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
+					TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
+					ChannelID = Convert.ToInt32(Params["ChannelID"]),
+					CheckType = this.Instance.Configuration.Name
+				};
+			}
+
+
+		}
+
+
+	}
 }
