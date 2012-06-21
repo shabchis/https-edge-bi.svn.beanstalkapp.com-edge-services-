@@ -12,6 +12,7 @@ using Edge.Data.Pipeline.Metrics.Checksums;
 using Edgeobjects = Edge.Data.Objects;
 using Edge.Core.Data;
 using Edge.Data.Pipeline.Metrics;
+using Edge.Core.Utilities;
 
 namespace Edge.Services.AdMetrics.Validations
 {
@@ -29,7 +30,7 @@ namespace Edge.Services.AdMetrics.Validations
 			Dictionary<string, Edgeobjects.Measure> measures;
 			string checksumThreshold = Instance.Configuration.Options[Consts.ConfigurationOptions.ChecksumTheshold];
 			double allowedChecksumThreshold = checksumThreshold == null ? 0.01 : double.Parse(checksumThreshold);
-			
+
 			Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
 			Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
 
@@ -51,13 +52,13 @@ namespace Edge.Services.AdMetrics.Validations
 				sqlBuilder.Insert(0, "SELECT \n");
 				sqlBuilder.AppendFormat(" FROM {0}\n ", SourceTable);
 				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int");
-				
+
 
 				SqlCommand sqlCommand = DataManager.CreateCommand(sqlBuilder.ToString(), CommandType.Text);
 				sqlCommand.Parameters["@accountID"].Value = account.ID;
 				sqlCommand.Parameters["@daycode"].Value = dayCode; ;
 				sqlCommand.Parameters["@Channel_ID"].Value = channel.ID;
-				
+
 				sqlCommand.Connection = sqlCon;
 
 				using (var _reader = sqlCommand.ExecuteReader())
@@ -76,8 +77,8 @@ namespace Edge.Services.AdMetrics.Validations
 								{
 									if (!_reader[measure.Value.OltpName].Equals(DBNull.Value))
 									{
-										oltpTotals.Add(measure.Value.Name, Convert.ToDouble( _reader[measure.Value.OltpName]));
-										
+										oltpTotals.Add(measure.Value.Name, Convert.ToDouble(_reader[measure.Value.OltpName]));
+
 									}
 								}
 							}
@@ -127,53 +128,50 @@ namespace Edge.Services.AdMetrics.Validations
 
 				conn.Open();
 
-				//TO DO : Get Cube Name from DB
 
-
-				//                string mdxCommandText = string.Format(@"Select
-				//                                {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}}
-				//                                    On Columns , 
-				//                                (
-				//	                            [Accounts Dim].[Accounts].[Account].&[{0}]
-				//                                )On Rows 
-				//                                From
-				//                                [{1}]
-				//                                WHERE
-				//                                ([Channels Dim].[Channels].[Channel].&[{2}]
-				//                                ,[Time Dim].[Time Dim].[Day].&[{3}]
-				//                                ) 
-				//                                ", Params["AccountID"], CubeName, Params["ChannelID"], Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 
 				AdomdCommand mdxCmd = new AdomdCommand(mdxBuilder.ToString(), conn);
-				
+
 				using (AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection))
 				{
+					if (!mdxReader.IsClosed)
+					{
 
-					if (mdxReader.Read())
+						if (mdxReader.Read())
+						{
+							foreach (var measure in measures)
+							{
+								if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+								{
+									mdxTotals.Add(measure.Value.Name, mdxReader[string.Format("[Measures].[{0}]", measure.Value.DisplayName)] == DBNull.Value ? 0 : Convert.ToDouble(mdxReader[string.Format("[Measures].[{0}]", measure.Value.DisplayName)]));
+								}
+
+							}
+
+						}
+					}
+					else
 					{
 						foreach (var measure in measures)
 						{
 							if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
 							{
-								mdxTotals.Add(measure.Value.Name,Convert.ToDouble(mdxReader[measure.Value.DisplayName]));
-								
-
-
+								mdxTotals.Add(measure.Value.Name, 0);
 							}
-
 						}
-						//mdxTotals.Add("Imps", Convert.ToDouble(mdxReader[2]));
-						//mdxTotals.Add("Clicks", Convert.ToDouble(mdxReader[3]));
-						//mdxTotals.Add("Cost", Convert.ToDouble(mdxReader[4]));
+						
 					}
-					mdxReader.Close(); 
+					
 				}
+				Log.Write("finish analysis", LogMessageType.Debug);
 			#endregion
 
 				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
+
 			}
 			catch (Exception e)
 			{
+				Log.Write("exception", e, LogMessageType.Error);
 				return new ValidationResult()
 				{
 					ResultType = ValidationResultType.Error,
