@@ -107,12 +107,12 @@ namespace Edge.Services.AdMetrics.Validations
 				foreach (var measure in measures)
 				{
 					if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
-						mdxBuilder.AppendFormat("[Measures.[{0}],", measure.Value.DisplayName);
+						mdxBuilder.AppendFormat("[Measures].[{0}],", measure.Value.DisplayName);
 
 				}
 				mdxBuilder.Remove(mdxBuilder.Length - 1, 1); //remove the last ','
-				mdxBuilder.AppendFormat(@"}}
-                                    On Columns , 
+				mdxBuilder.Append("}}\n");
+				mdxBuilder.AppendFormat(@"On Columns , 
                                 (
 	                            [Accounts Dim].[Accounts].[Account].&[{0}]
                                 )On Rows 
