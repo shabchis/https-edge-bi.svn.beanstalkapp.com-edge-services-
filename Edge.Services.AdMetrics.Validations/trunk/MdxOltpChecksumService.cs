@@ -51,7 +51,7 @@ namespace Edge.Services.AdMetrics.Validations
 				sqlBuilder.Insert(0, "SELECT \n");
 				sqlBuilder.AppendFormat(" FROM {0}\n ", SourceTable);
 				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int");
-				sqlCon.Open();
+				
 
 				SqlCommand sqlCommand = DataManager.CreateCommand(sqlBuilder.ToString(), CommandType.Text);
 				sqlCommand.Parameters["@accountID"].Value = account.ID;
