@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Edge.Data.Pipeline.Services.Common.Validation;
+
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Data.Objects;
 using Microsoft.AnalysisServices.AdomdClient;
 using System.Data;
 using Edge.Data.Pipeline.Services;
+using Edge.Data.Pipeline.Metrics.Checksums;
 
-namespace Edge.Services.SegmentMetrics.Validations
+namespace Edge.Services.GenericMetrics.Validations
 {
 	class MdxOltpChecksumService : DbDbChecksumBaseService
 	{
@@ -29,7 +30,7 @@ namespace Edge.Services.SegmentMetrics.Validations
 			{
 				sqlCon.Open();
 				Dictionary<string, Edge.Data.Objects.Measure> measurs = Edge.Data.Objects.Measure.GetMeasures(new Account() { ID = Convert.ToInt32(Params["AccountID"]) },
-					new Channel() { ID = Convert.ToInt32(Params["ChannelID"]) }, sqlCon, MeasureOptions.IsBackOffice, MeasureOptionsOperator.And);
+					new Channel() { ID = Convert.ToInt32(Params["ChannelID"]) }, sqlCon, MeasureOptions.IsBackOffice, OptionsOperator.And);
 				
 				string dayCode = Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd");
 				Dictionary<string, double> diff = new Dictionary<string, double>();

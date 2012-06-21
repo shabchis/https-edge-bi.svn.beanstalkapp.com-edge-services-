@@ -2,27 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Edge.Data.Pipeline.Services.Common.Validation;
 using Edge.Data.Pipeline.Services;
 using System.Data.SqlClient;
 using Edge.Data.Pipeline;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
 using Edge.Data.Objects;
+using Edge.Data.Pipeline.Metrics.Checksums;
+
 
 namespace Edge.Services.SegmentMetrics.Validations
 {
 	class DeliveryDwhCheckSumService : DeliveryDBChecksumBaseService
 	{
-		protected override ValidationResult DeliveryDbCompare(Delivery delivery, Dictionary<string, double> deliveryTotals, string DbConnectionStringName, string comparisonTable)
+		
+		protected override ValidationResult DeliveryDbCompare(DeliveryOutput output, Dictionary<string, double> deliveryTotals, string DbConnectionStringName, string comparisonTable)
 		{
 
 
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, DbConnectionStringName)))
 			{
 				sqlCon.Open();
-				Dictionary<string, Measure> measurs = Measure.GetMeasures(delivery.Account, delivery.Channel, sqlCon, MeasureOptions.IsBackOffice, MeasureOptionsOperator.And);
-				string dayCode = delivery.TargetPeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
+				Dictionary<string, Measure> measurs = Measure.GetMeasures(output.Account, output.Channel, sqlCon, MeasureOptions.IsBackOffice, OptionsOperator.And);
+				string dayCode = output.TimePeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
 				Dictionary<string, double> diff = new Dictionary<string, double>();
 				Dictionary<string, Measure> validationRequiredMeasure = new Dictionary<string, Measure>();
 
@@ -56,9 +58,9 @@ namespace Edge.Services.SegmentMetrics.Validations
 				SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
 				SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
 
-				accountIdParam.Value = delivery.Account.ID;
+				accountIdParam.Value = output.Account.ID;
 				daycodeParam.Value = dayCode;
-				channelIdParam.Value = delivery.Channel.ID;
+				channelIdParam.Value = output.Channel.ID;
 
 				sqlCommand.Parameters.Add(accountIdParam);
 				sqlCommand.Parameters.Add(daycodeParam);
@@ -99,11 +101,11 @@ namespace Edge.Services.SegmentMetrics.Validations
 									return new ValidationResult()
 									{
 										ResultType = ValidationResultType.Error,
-										AccountID = delivery.Account.ID,
-										TargetPeriodStart = delivery.TargetPeriodStart,
-										TargetPeriodEnd = delivery.TargetPeriodEnd,
-										Message = "Data exists in delivery but not in DB for Account ID: " + delivery.Account.ID,
-										ChannelID = delivery.Channel.ID,
+										AccountID = output.Account.ID,
+										TargetPeriodStart = output.TimePeriodStart,
+										TargetPeriodEnd = output.TimePeriodEnd,
+										Message = "Data exists in delivery but not in DB for Account ID: " + output.Account.ID,
+										ChannelID = output.Channel.ID,
 										CheckType = this.Instance.Configuration.Name
 									};
 
@@ -118,12 +120,12 @@ namespace Edge.Services.SegmentMetrics.Validations
 									return new ValidationResult()
 									{
 										ResultType = ValidationResultType.Error,
-										AccountID = delivery.Account.ID,
-										DeliveryID = delivery.DeliveryID,
-										TargetPeriodStart = delivery.TargetPeriodStart,
-										TargetPeriodEnd = delivery.TargetPeriodEnd,
-										Message = "validation Error - differences has been found - Account  ID: " + delivery.Account.ID,
-										ChannelID = delivery.Channel.ID,
+										AccountID = output.Account.ID,
+										DeliveryID = output.DeliveryID,
+										TargetPeriodStart = output.TimePeriodStart,
+										TargetPeriodEnd = output.TimePeriodEnd,
+										Message = "validation Error - differences has been found - Account  ID: " + output.Account.ID,
+										ChannelID = output.Channel.ID,
 										CheckType = this.Instance.Configuration.Name
 									};
 								#endregion
@@ -132,12 +134,12 @@ namespace Edge.Services.SegmentMetrics.Validations
 									return new ValidationResult()
 									{
 										ResultType = ValidationResultType.Information,
-										AccountID = delivery.Account.ID,
-										DeliveryID = delivery.DeliveryID,
-										TargetPeriodStart = delivery.TargetPeriodStart,
-										TargetPeriodEnd = delivery.TargetPeriodEnd,
-										Message = "validation Success - Account ID: " + delivery.Account.ID,
-										ChannelID = delivery.Channel.ID,
+										AccountID = output.Account.ID,
+										DeliveryID = output.DeliveryID,
+										TargetPeriodStart = output.TimePeriodStart,
+										TargetPeriodEnd = output.TimePeriodEnd,
+										Message = "validation Success - Account ID: " + output.Account.ID,
+										ChannelID = output.Channel.ID,
 										CheckType = this.Instance.Configuration.Name
 									};
 								#endregion
@@ -151,12 +153,12 @@ namespace Edge.Services.SegmentMetrics.Validations
 						return new ValidationResult()
 						{
 							ResultType = ValidationResultType.Error,
-							AccountID = delivery.Account.ID,
-							DeliveryID = delivery.DeliveryID,
-							TargetPeriodStart = delivery.TargetPeriodStart,
-							TargetPeriodEnd = delivery.TargetPeriodEnd,
-							Message = "Cannot Read Data from DB connection closed - Account Original ID: " + delivery.Account.OriginalID,
-							ChannelID = delivery.Channel.ID,
+							AccountID = output.Account.ID,
+							DeliveryID = output.DeliveryID,
+							TargetPeriodStart = output.TimePeriodStart,
+							TargetPeriodEnd = output.TimePeriodEnd,
+							Message = "Cannot Read Data from DB connection closed - Account Original ID: " + output.Account.OriginalID,
+							ChannelID = output.Channel.ID,
 							CheckType = this.Instance.Configuration.Name
 						};
 				}
@@ -164,16 +166,18 @@ namespace Edge.Services.SegmentMetrics.Validations
 				return new ValidationResult()
 				{
 					ResultType = ValidationResultType.Error,
-					AccountID = delivery.Account.ID,
-					DeliveryID = delivery.DeliveryID,
-					TargetPeriodStart = delivery.TargetPeriodStart,
-					TargetPeriodEnd = delivery.TargetPeriodEnd,
-					Message = "Could not find check scenario - Account Original ID: " + delivery.Account.OriginalID,
-					ChannelID = delivery.Channel.ID,
+					AccountID = output.Account.ID,
+					DeliveryID = output.DeliveryID,
+					TargetPeriodStart = output.TimePeriodStart,
+					TargetPeriodEnd = output.TimePeriodEnd,
+					Message = "Could not find check scenario - Account Original ID: " + output.Account.OriginalID,
+					ChannelID = output.Channel.ID,
 					CheckType = this.Instance.Configuration.Name
 				};
 
 			}
 		}
+
+		
 	}
 }
