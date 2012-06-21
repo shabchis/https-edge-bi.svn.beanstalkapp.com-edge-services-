@@ -76,7 +76,7 @@ namespace Edge.Services.AdMetrics.Validations
 								{
 									if (!_reader[measure.Value.OltpName].Equals(DBNull.Value))
 									{
-										oltpTotals.Add(measure.Value.Name,_reader.Get<double>(measure.Value.OltpName));
+										oltpTotals.Add(measure.Value.Name, Convert.ToDouble( _reader[measure.Value.OltpName]));
 										
 									}
 								}
@@ -103,7 +103,7 @@ namespace Edge.Services.AdMetrics.Validations
 			{
 				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
 				StringBuilder mdxBuilder = new StringBuilder();
-				mdxBuilder.Append("{{ ");
+				mdxBuilder.Append("SELECT {{ ");
 				foreach (var measure in measures)
 				{
 					if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))

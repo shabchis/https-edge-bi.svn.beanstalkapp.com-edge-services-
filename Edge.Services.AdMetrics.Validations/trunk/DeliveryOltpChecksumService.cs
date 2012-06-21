@@ -44,6 +44,8 @@ namespace Edge.Services.AdMetrics.Validations
 				sqlCommand.Parameters["@accountID"].Value = deliveryOutput.Account.ID;
 				sqlCommand.Parameters["@daycode"].Value = dayCode;;
 				sqlCommand.Parameters["@Channel_ID"].Value = deliveryOutput.Channel.ID;
+
+				///*******Work around*******************////////
 				sqlCommand.Parameters["@OriginalID"].Value=deliveryOutput.Account.OriginalID;
 				sqlCommand.Connection = sqlCon;
 
