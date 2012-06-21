@@ -57,23 +57,7 @@ namespace Edge.Services.AdMetrics.Validations
 				sqlCommand.Parameters["@accountID"].Value = account.ID;
 				sqlCommand.Parameters["@daycode"].Value = dayCode; ;
 				sqlCommand.Parameters["@Channel_ID"].Value = channel.ID;
-				//SqlCommand sqlCommand = new SqlCommand(
-				//   "SELECT SUM(cost),sum(imps),sum(clicks) from " + SourceTable +
-				//   " where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID"
-				//   );
-
-				//SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
-				//SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
-				//SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
-
-				//accountIdParam.Value = Params["AccountID"];
-				//daycodeParam.Value = dayCode;
-				//channelIdParam.Value = Params["ChannelID"];
-
-				//sqlCommand.Parameters.Add(accountIdParam);
-				//sqlCommand.Parameters.Add(daycodeParam);
-				//sqlCommand.Parameters.Add(channelIdParam);
-
+				
 				sqlCommand.Connection = sqlCon;
 
 				using (var _reader = sqlCommand.ExecuteReader())
