@@ -15,7 +15,8 @@ namespace Edge.Services.AdMetrics.Validations
 	{
 		protected sealed override ServiceOutcome DoWork() 
 		{
-			foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))
+			//foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))
+			foreach (string checkInstance in GetChecksumServicesInstaceIdList(4141, 4145))
 			{
 				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(Convert.ToInt64(checkInstance));
 				if (results[ValidationResultType.Error.ToString()].Count > 0)
@@ -101,8 +102,11 @@ namespace Edge.Services.AdMetrics.Validations
 					{
 						while (_reader.Read())
 						{
-							ValidationResult result = (ValidationResult)JsonConvert.DeserializeObject(_reader[0].ToString(), typeof(ValidationResult));
-							results[result.ResultType.ToString()].Add(result);
+							if (_reader[0].ToString().StartsWith("{\"ResultType\""))
+							{
+								ValidationResult result = (ValidationResult)JsonConvert.DeserializeObject(_reader[0].ToString(), typeof(ValidationResult));
+								results[result.ResultType.ToString()].Add(result);
+							}
 						}
 					}
 				}

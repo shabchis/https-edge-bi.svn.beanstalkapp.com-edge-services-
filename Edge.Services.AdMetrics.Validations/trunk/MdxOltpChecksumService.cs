@@ -81,13 +81,7 @@ namespace Edge.Services.AdMetrics.Validations
 
 									}
 								}
-							}
-							//if (!_reader[0].Equals(DBNull.Value))
-							//{
-							//    oltpTotals.Add("Cost", Convert.ToDouble(_reader[0]));
-							//    oltpTotals.Add("Imps", Convert.ToDouble(_reader[1]));
-							//    oltpTotals.Add("Clicks", Convert.ToDouble(_reader[2]));
-							//}
+							}							
 						}
 
 					}
@@ -124,14 +118,8 @@ namespace Edge.Services.AdMetrics.Validations
                                 ,[Time Dim].[Time Dim].[Day].&[{3}]
                                 ) 
                                 ", account.ID, CubeName, channel.ID, Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
-
-
 				conn.Open();
-
-
-
 				AdomdCommand mdxCmd = new AdomdCommand(mdxBuilder.ToString(), conn);
-
 				using (AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection))
 				{
 					if (!mdxReader.IsClosed)
@@ -145,7 +133,6 @@ namespace Edge.Services.AdMetrics.Validations
 								{
 									mdxTotals.Add(measure.Value.Name, mdxReader[string.Format("[Measures].[{0}]", measure.Value.DisplayName)] == DBNull.Value ? 0 : Convert.ToDouble(mdxReader[string.Format("[Measures].[{0}]", measure.Value.DisplayName)]));
 								}
-
 							}
 
 						}
@@ -163,7 +150,7 @@ namespace Edge.Services.AdMetrics.Validations
 					}
 					
 				}
-				Log.Write("finish analysis", LogMessageType.Debug);
+				
 			#endregion
 
 				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
