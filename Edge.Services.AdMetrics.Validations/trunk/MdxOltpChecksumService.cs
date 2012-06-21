@@ -39,6 +39,7 @@ namespace Edge.Services.AdMetrics.Validations
 
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
 			{
+				sqlCon.Open();
 				StringBuilder sqlBuilder = new StringBuilder(); ;
 				measures = Edgeobjects.Measure.GetMeasures(account, channel, sqlCon, Edgeobjects.MeasureOptions.IsTarget | Edgeobjects.MeasureOptions.IsCalculated | Edgeobjects.MeasureOptions.IsBackOffice, Edgeobjects.OptionsOperator.Not);
 				foreach (var measure in measures)

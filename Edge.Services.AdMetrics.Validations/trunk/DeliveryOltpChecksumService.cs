@@ -19,17 +19,12 @@ namespace Edge.Services.AdMetrics.Validations
 	{
 		protected override ValidationResult DeliveryDbCompare(DeliveryOutput deliveryOutput, Dictionary<string, double> totals, string DbConnectionStringName, string comparisonTable)
 		{
-			double costDif = 0;
-			double impsDif = 0;
-			double clicksDif = 0;
+			
 			string dayCode = deliveryOutput.TimePeriodStart.ToString("yyyyMMdd"); // Delivery Per Day = > TargetPeriod.Start = daycode
 			Dictionary<string, Diffrence> diffs = new Dictionary<string, Diffrence>();
 			string checksumThreshold = Instance.Configuration.Options[Consts.ConfigurationOptions.ChecksumTheshold];
 			double allowedChecksumThreshold = checksumThreshold == null ? 0.01 : double.Parse(checksumThreshold);
 			ValidationResult result;
-
-
-
 
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, DbConnectionStringName)))
 			{
@@ -41,44 +36,19 @@ namespace Edge.Services.AdMetrics.Validations
 				{
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 						sqlBuilder.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Value.OltpName, sqlBuilder.Length > 0 ? ", " : null);
-
 				}
 				sqlBuilder.Insert(0, "SELECT \n");
 				sqlBuilder.AppendFormat(" FROM {0}\n ",comparisonTable);
 				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int \nand Account_ID_SRC=@OriginalID:nvarchar");
-
-
 				SqlCommand sqlCommand = DataManager.CreateCommand(sqlBuilder.ToString());
-				// "SELECT SUM(cost),sum(imps),sum(clicks) from " + comparisonTable +
-				//" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID" +
-				//" and [Account_ID_SRC] = @OriginalID"
-				//);
-
 				sqlCommand.Parameters["@accountID"].Value = deliveryOutput.Account.ID;
 				sqlCommand.Parameters["@daycode"].Value = dayCode;;
 				sqlCommand.Parameters["@Channel_ID"].Value = deliveryOutput.Channel.ID;
 				sqlCommand.Parameters["@OriginalID"].Value=deliveryOutput.Account.OriginalID;
-				//SqlParameter accountIdParam = new SqlParameter("@Account_ID", System.Data.SqlDbType.Int);
-				//SqlParameter daycodeParam = new SqlParameter("@Daycode", System.Data.SqlDbType.Int);
-				//SqlParameter channelIdParam = new SqlParameter("@Channel_ID", System.Data.SqlDbType.Int);
-				//SqlParameter originalIdParam = new SqlParameter("@OriginalID", System.Data.SqlDbType.NVarChar);
-
-				//accountIdParam.Value = deliveryOutput.Account.ID;
-				//daycodeParam.Value = dayCode;
-				//channelIdParam.Value = deliveryOutput.Channel.ID;
-				//originalIdParam.Value = deliveryOutput.Account.OriginalID;
-
-				//sqlCommand.Parameters.Add(accountIdParam);
-				//sqlCommand.Parameters.Add(daycodeParam);
-				//sqlCommand.Parameters.Add(channelIdParam);
-				//sqlCommand.Parameters.Add(originalIdParam);
-
 				sqlCommand.Connection = sqlCon;
 
 				using (var _reader = sqlCommand.ExecuteReader())
 				{
-
-
 					if (!_reader.IsClosed)
 					{
 						if (_reader.Read())
@@ -117,45 +87,7 @@ namespace Edge.Services.AdMetrics.Validations
 										difference.diff = 0;
 										diffs[measure.Value.Name] = difference;
 									}
-									#endregion
-
-
-
-
-
-									//#region Scenario: Found differences
-
-									//if ((costDif != 0 && (costDif / totals["Cost"] > ALLOWED_DIFF)) ||
-									//(clicksDif != 0 && (clicksDif / totals["Clicks"] > ALLOWED_DIFF)) ||
-									//(impsDif != 0 && (impsDif / totals["Impressions"] > ALLOWED_DIFF)))
-
-									//    return new ValidationResult()
-									//    {
-									//        ResultType = ValidationResultType.Error,
-									//        AccountID = deliveryOutput.Account.ID,
-									//        DeliveryID = deliveryOutput.Delivery.DeliveryID,
-									//        TargetPeriodStart = deliveryOutput.TimePeriodStart,
-									//        TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
-									//        Message = "validation Error - differences has been found - Account Original ID: " + deliveryOutput.Account.OriginalID,
-									//        ChannelID = deliveryOutput.Channel.ID,
-									//        CheckType = this.Instance.Configuration.Name
-									//    };
-									//#endregion
-
-									//#region Scenario: Differences were not found
-									//else
-									//    return new ValidationResult()
-									//    {
-									//        ResultType = ValidationResultType.Information,
-									//        AccountID = deliveryOutput.Account.ID,
-									//        DeliveryID = deliveryOutput.Delivery.DeliveryID,
-									//        TargetPeriodStart = deliveryOutput.TimePeriodStart,
-									//        TargetPeriodEnd = deliveryOutput.TimePeriodEnd,
-									//        Message = "validation Success - Account Original ID: " + deliveryOutput.Account.OriginalID,
-									//        ChannelID = deliveryOutput.Channel.ID,
-									//        CheckType = this.Instance.Configuration.Name
-									//    };
-									//#endregion
+									#endregion								
 								}
 							}
 							StringBuilder errors = new StringBuilder();
@@ -178,7 +110,6 @@ namespace Edge.Services.AdMetrics.Validations
 									Message = errors.ToString(),
 									ChannelID = deliveryOutput.Channel.ID,
 									CheckType = this.Instance.Configuration.Name
-
 								};
 							}
 							else
@@ -194,13 +125,8 @@ namespace Edge.Services.AdMetrics.Validations
 											ChannelID = deliveryOutput.Channel.ID,
 											CheckType = this.Instance.Configuration.Name
 										};
-
 							}
-
-
-
 						}
-
 					}
 
 					// If reader is closed
@@ -229,7 +155,6 @@ namespace Edge.Services.AdMetrics.Validations
 					ChannelID = deliveryOutput.Channel.ID,
 					CheckType = this.Instance.Configuration.Name
 				};
-
 			}
 			return result;
 		}

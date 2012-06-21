@@ -41,7 +41,7 @@ namespace Edge.Services.AdMetrics.Validations
 			{
 				Smtp.SetCc(this.Instance.Configuration.Options["CC"].ToString());
 			}
-
+			
 			Smtp.Send(topic+" Data Error:", msg.ToString(), highPriority: true);
 
 		}
