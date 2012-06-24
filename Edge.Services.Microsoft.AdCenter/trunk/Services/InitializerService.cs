@@ -27,7 +27,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			this.Delivery.Account = new Data.Objects.Account()
 			{
 				ID = this.Instance.AccountID,
-				OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString()
+				OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerAccountID,"].ToString()
 			};
 			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 			this.Delivery.Channel = new Data.Objects.Channel()
@@ -44,9 +44,10 @@ namespace Edge.Services.Microsoft.AdCenter
 
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature( String.Format("Microsoft-AdCenter-[{0}]-[{1}]-[{2}]",
+				Signature = Delivery.CreateSignature( String.Format("Microsoft-AdCenter-[{0}]-[{1}]-[{2}]-[{3}]",
 				this.Instance.AccountID,
 				this.Instance.Configuration.Options["AdCenter.CustomerID"].ToString(),
+				this.Instance.Configuration.Options["AdCenter.CustomerAccountID,"].ToString(),
 				this.TimePeriod.ToAbsolute()
 				)),
 
