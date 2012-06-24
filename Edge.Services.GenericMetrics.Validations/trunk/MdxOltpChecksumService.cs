@@ -45,7 +45,7 @@ namespace Edge.Services.GenericMetrics.Validations
 					if (measure.Value.Options.HasFlag(MeasureOptions.ValidationRequired))
 					{
 						validationRequiredMeasure.Add(measure.Value.SourceName, measure.Value);
-						command.Append(string.Format("SUM({0}) as {1}", measure.Value.OltpName, measure.Value.SourceName));
+						command.Append(string.Format("SUM({0}) as {1}", measure.Value.OltpName, measure.Value.OltpName));
 						command.Append(",");
 					}
 				}
@@ -83,7 +83,7 @@ namespace Edge.Services.GenericMetrics.Validations
 							{
 								foreach (var measureItem in validationRequiredMeasure)
 								{
-									oltpTotals.Add(measureItem.Value.SourceName, Convert.ToDouble(_reader[measureItem.Value.SourceName]));
+									oltpTotals.Add(measureItem.Value.OltpName, Convert.ToDouble(_reader[measureItem.Value.OltpName]));
 								}
 							}
 						}
