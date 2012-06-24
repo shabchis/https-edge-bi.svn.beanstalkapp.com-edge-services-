@@ -148,7 +148,7 @@ namespace Edge.Services.GenericMetrics.Validations
 				{
 					foreach (var measureItem in validationRequiredMeasure)
 					{
-						mdxTotals.Add(measureItem.Value.SourceName, Convert.ToDouble(mdxReader[measureItem.Value.SourceName]));
+						mdxTotals.Add(measureItem.Value.Name,mdxReader[string.Format("[Measures].[{0}]", measureItem.Value.DisplayName)] == DBNull.Value ? 0 : Convert.ToDouble(mdxReader[string.Format("[Measures].[{0}]", measureItem.Value.DisplayName)]));
 					}
 
 				}
