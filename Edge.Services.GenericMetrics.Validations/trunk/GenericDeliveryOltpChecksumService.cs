@@ -99,7 +99,7 @@ namespace Edge.Services.GenericMetrics.Validations
 								double sum = 0;
 								foreach (var measure in validationRequiredMeasure)
 								{
-									sum += deliveryTotals[measure.Value.SourceName];
+									sum += deliveryTotals[measure.Value.Name];
 								}
 								if (sum != 0) //Totals in Delivery aren't empty
 									return new ValidationResult()
