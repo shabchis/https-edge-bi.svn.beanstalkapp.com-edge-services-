@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
-    <StartProgram>D:\Edge\Codebase\2.9\Utilities\Edge.Applications.TempScheduler\bin\Debug\Edge.Applications.TempScheduler.exe</StartProgram>
+    <StartProgram>D:\Edge\EDGE-MERGE\utilities\Edge.Applications.TempScheduler (2.9)\trunk\bin\Debug\scheduler-291.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <StartAction>Program</StartAction>
