@@ -81,7 +81,7 @@ namespace Edge.Services.AdMetrics.Validations
 
 									}
 								}
-							}							
+							}
 						}
 
 					}
@@ -89,6 +89,8 @@ namespace Edge.Services.AdMetrics.Validations
 				}
 			}
 			#endregion
+			//bool boool=true;
+			//return Debug(Params, measures, oltpTotals, mdxTotals, boool);
 
 			#region Getting measures from Analysis server (MDX)
 
@@ -151,7 +153,8 @@ namespace Edge.Services.AdMetrics.Validations
 					
 				}
 				
-			#endregion
+			
+
 
 				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
 
@@ -171,7 +174,53 @@ namespace Edge.Services.AdMetrics.Validations
 				};
 			}
 
+			#endregion
+		}
 
+		private ValidationResult Debug(Dictionary<string, string> Params, Dictionary<string, Edgeobjects.Measure> measures, Dictionary<string, double> oltpTotals, Dictionary<string, double> mdxTotals, bool boool)
+		{
+			try
+			{
+
+				if (boool)
+				{
+					foreach (var measure in measures)
+					{
+						if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+							mdxTotals.Add(measure.Value.Name, 9999);
+
+					}
+				}
+				else
+				{
+					foreach (var measure in measures)
+					{
+						if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
+							mdxTotals.Add(measure.Value.Name, 0);
+
+					}
+
+				}
+				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
+
+
+
+			}
+			catch (Exception e)
+			{
+
+				Log.Write("exception", e, LogMessageType.Error);
+				return new ValidationResult()
+				{
+					ResultType = ValidationResultType.Error,
+					AccountID = Convert.ToInt32(Params["AccountID"]),
+					Message = e.Message,
+					TargetPeriodStart = Convert.ToDateTime(Params["Date"]),
+					TargetPeriodEnd = Convert.ToDateTime(Params["Date"]),
+					ChannelID = Convert.ToInt32(Params["ChannelID"]),
+					CheckType = this.Instance.Configuration.Name
+				};
+			}
 		}
 
 
