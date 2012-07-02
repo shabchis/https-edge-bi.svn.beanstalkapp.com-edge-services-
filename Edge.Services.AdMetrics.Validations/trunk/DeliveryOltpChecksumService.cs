@@ -70,7 +70,7 @@ namespace Edge.Services.AdMetrics.Validations
 									#region Scenario : data exists in delivery and not in DB
 									else if (totals[measure.Value.Name] > 0)
 									{
-										result = new ValidationResult()
+										return  new ValidationResult()
 										{
 											ResultType = ValidationResultType.Error,
 											AccountID = deliveryOutput.Account.ID,

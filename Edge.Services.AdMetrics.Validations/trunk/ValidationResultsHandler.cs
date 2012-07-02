@@ -15,8 +15,7 @@ namespace Edge.Services.AdMetrics.Validations
 	{
 		protected sealed override ServiceOutcome DoWork() 
 		{
-			//foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))
-			foreach (string checkInstance in GetChecksumServicesInstaceIdList(4141, 4145))
+			foreach (string checkInstance in GetChecksumServicesInstaceIdList(this.Instance.ParentInstance.InstanceID,this.Instance.InstanceID))			
 			{
 				Dictionary<string, List<ValidationResult>> results = GetResultsByInstanceId(Convert.ToInt64(checkInstance));
 				if (results[ValidationResultType.Error.ToString()].Count > 0)
