@@ -18,6 +18,8 @@ namespace Edge.Services.GenericMetrics.Validations
 
 		protected override Data.Pipeline.Services.ValidationResult Compare(string OltpTable, string DwhTabel, Dictionary<string, string> Params)
 		{
+			try
+			{
 
 			Dictionary<string, double> oltpTotals = new Dictionary<string, double>();
 			Dictionary<string, double> mdxTotals = new Dictionary<string, double>();
@@ -83,7 +85,7 @@ namespace Edge.Services.GenericMetrics.Validations
 							{
 								foreach (var measureItem in validationRequiredMeasure)
 								{
-									oltpTotals.Add(measureItem.Value.Name, Convert.ToDouble(_reader[measureItem.Value.OltpName]));
+									oltpTotals.Add(measureItem.Value.Name,_reader[measureItem.Value.OltpName]==DBNull.Value ? 0 : Convert.ToDouble(_reader[measureItem.Value.OltpName]));
 								}
 							}
 						}
@@ -98,8 +100,7 @@ namespace Edge.Services.GenericMetrics.Validations
 
 			string admobConnection = this.Instance.Configuration.Options["AdmobConnection"];
 			AdomdConnection conn = new AdomdConnection(admobConnection);
-			try
-			{
+			
 			conn.Open();
 
 				//Getting CubeName from Database
