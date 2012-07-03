@@ -52,7 +52,7 @@ namespace Edge.Services.GenericMetrics.Validations
 				command.Remove(command.Length - 1, 1); //remove last comma character
 				command.Append(" from ");
 				command.Append(OltpTable);
-				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and Channel_ID = @Channel_ID");
+				command.Append(" where account_id = @Account_ID and Day_Code = @Daycode and IsNull(Channel_ID,-1) = @Channel_ID");
 
 				SqlCommand sqlCommand = new SqlCommand(command.ToString());
 
@@ -83,7 +83,7 @@ namespace Edge.Services.GenericMetrics.Validations
 							{
 								foreach (var measureItem in validationRequiredMeasure)
 								{
-									oltpTotals.Add(measureItem.Value.OltpName, Convert.ToDouble(_reader[measureItem.Value.OltpName]));
+									oltpTotals.Add(measureItem.Value.Name, Convert.ToDouble(_reader[measureItem.Value.OltpName]));
 								}
 							}
 						}
