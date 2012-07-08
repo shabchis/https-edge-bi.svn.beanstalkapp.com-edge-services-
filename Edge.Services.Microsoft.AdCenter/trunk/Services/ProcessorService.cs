@@ -278,13 +278,13 @@ namespace Edge.Services.Microsoft.AdCenter
 			metricsUnit.Currency = new Currency() { Code = values[WS.KeywordPerformanceReportColumn.CurrencyCode.ToString()] };
 			metricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
 			metricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
-			metricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
-			metricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
-			metricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.Clicks]] = double.Parse(string.IsNullOrEmpty(values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]) ? 0 : values[WS.KeywordPerformanceReportColumn.Clicks.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.Cost]] = double.Parse(string.IsNullOrEmpty(values[WS.KeywordPerformanceReportColumn.Spend.ToString()]) ? 0 : values[WS.KeywordPerformanceReportColumn.Spend.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.Impressions]] = double.Parse(string.IsNullOrEmpty(values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]) ? 0 : values[WS.KeywordPerformanceReportColumn.Impressions.ToString()]);
 
 
-			metricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = double.Parse(values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
-			metricsUnit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[Measure.Common.AveragePosition]] = double.Parse(string.IsNullOrEmpty(values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]) ? 0 : values[WS.KeywordPerformanceReportColumn.AveragePosition.ToString()]);
+			metricsUnit.MeasureValues[session.Measures[MeasureNames.AdCenterConversions]] = double.Parse(string.IsNullOrEmpty(values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]) ? 0 : values[WS.KeywordPerformanceReportColumn.Conversions.ToString()]);
 
 
 			metricsUnit.TargetDimensions = new List<Target>();
