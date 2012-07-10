@@ -8,24 +8,30 @@ using Edge.Core.Configuration;
 using System.Net;
 using System.IO;
 using Edge.Core.Services;
+using System.Data.SqlClient;
+using Edge.Core.Data;
+using Edge.Core.Utilities;
 
 
 
 
 namespace Edge.Services.Facebook.GraphApi
 {
-	public class UpdateCampaignStatus : PipelineService
+	public class UpdateCampaignStatus : Service
 	{
 		string _urlAuth;
 		string _redirectUri;
 		string _apiKey;
 		string _appSecret;
-		protected override Core.Services.ServiceOutcome DoPipelineWork()
+		
+		protected override ServiceOutcome DoWork()
 		{
+			HttpWebRequest request;
+			WebResponse response;
 			#region Init
 
 			Dictionary<int, FacbookAccountParams> facbookAccountParams = new Dictionary<int, FacbookAccountParams>();
-
+			StringBuilder strAccounts = new StringBuilder();
 			_urlAuth = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AuthenticationUrl];
 			_redirectUri = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_RedirectUri];
 			_apiKey = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_ApiKey];
@@ -43,42 +49,49 @@ namespace Edge.Services.Facebook.GraphApi
 							SessionSecret = service.Options[FacebookConfigurationOptions.Auth_SessionSecret],
 							SessionKey = service.Options[FacebookConfigurationOptions.Auth_SessionKey]
 						});
-
+						strAccounts.AppendFormat("{0},", account.ID);
 					}
-
 				}
-
-
+			}
+			if (strAccounts.Length == 0)
+			{
+				Log.Write("No account runing facebook found", LogMessageType.Information);
+				return ServiceOutcome.Success;
+			}
+			else //remove last ','
+			{
+				strAccounts.Remove(strAccounts.Length - 1, 1);
 			}
 
-			
 
-			
-			
+
+
+
+
 			if (string.IsNullOrEmpty(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]))
 				throw new Exception("facebook base url must be configured!");
 
 
 
 			this.ReportProgress(0.2);
-			Delivery.Save();
+			
 			#endregion
 
 			#region Authentication
-			foreach (var param in facbookAccountParams)
+			foreach (KeyValuePair<int,FacbookAccountParams> param in facbookAccountParams)
 			{
 				_urlAuth = string.Format(string.Format(_urlAuth, _apiKey,
 						_redirectUri,
 						_appSecret,
-						param.Value.SessionSecret);
+						param.Value.SessionSecret));
 
-				HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(_urlAuth);
-				WebResponse response = request.GetResponse();
+				request = (HttpWebRequest)HttpWebRequest.Create(_urlAuth);
+				response = request.GetResponse();
 
 				using (StreamReader stream = new StreamReader(response.GetResponseStream()))
 				{
 					param.Value.AccessToken = stream.ReadToEnd();
-				} 
+				}
 			}
 
 
@@ -95,7 +108,7 @@ namespace Edge.Services.Facebook.GraphApi
 				today = 7;
 
 
-			Dictionary<long, int> statusByCampaignID = new Dictionary<long, int>();
+			Dictionary<int, Dictionary<long, int>> statusByCampaignID = new Dictionary<int, Dictionary<long, int>>();
 
 
 
@@ -105,16 +118,15 @@ namespace Edge.Services.Facebook.GraphApi
 			{
 				connection.Open();
 
-				SqlCommand sqlCommand = DataManager.CreateCommand(string.Format(@"SELECT distinct T2.campaignid,T0.Hour{0} 
+				SqlCommand sqlCommand = DataManager.CreateCommand(string.Format(@"SELECT distinct T0.Account_ID, T2.campaignid,T0.Hour{0} 
 																				FROM Campaigns_Scheduling T0
 																				INNER JOIN User_GUI_Account T1 ON T0.Account_ID=T1.Account_ID
 																				INNER JOIN UserProcess_GUI_PaidCampaign T2 ON T0.Campaign_GK=T2.Campaign_GK
-																				WHERE T0.Day=@Day:Int AND T0.Account_ID=@Account_ID:Int 
-																				AND (T0.Hour{0} =1 OR T0.Hour{0}=2) AND
-																				T2.Channel_ID=@Channel_ID:Int AND T1.Status!=0 AND T2.campStatus<>3 AND T2.ScheduleEnabled=1", hourOfDay.ToString().PadLeft(2, '0')));
+																				WHERE T0.Day=@Day:Int AND T0.Account_ID ({0}) 
+																				AND (T0.Hour{1} =1 OR T0.Hour{2}=2) AND
+																				T2.Channel_ID=6 AND T1.Status!=0 AND T2.campStatus<>3 AND T2.ScheduleEnabled=1 
+																				ORDER BY T0.Account_ID", strAccounts.ToString(), hourOfDay.ToString().PadLeft(2, '0')));
 				sqlCommand.Parameters["@Day"].Value = today;
-				sqlCommand.Parameters["@Account_ID"].Value = this.Instance.AccountID;
-				sqlCommand.Parameters["@Channel_ID"].Value = Delivery.Channel.ID;
 				sqlCommand.Connection = connection;
 
 
@@ -122,44 +134,53 @@ namespace Edge.Services.Facebook.GraphApi
 				{
 					while (sqlDataReader.Read())
 					{
-						long campaign_ID = Convert.ToInt64(sqlDataReader[0]);
-						int campaign_status = Convert.ToInt32(sqlDataReader[1]);
-						statusByCampaignID.Add(campaign_ID, campaign_status);
+						int account_id = Convert.ToInt32(sqlDataReader["Account_ID"]);
+						long campaign_ID = Convert.ToInt64(sqlDataReader["campaignid"]);
+						int campaign_status = Convert.ToInt32(sqlDataReader[string.Format("Hour{0}", hourOfDay.ToString().PadLeft(2, '0'))]);
+						if (!statusByCampaignID.ContainsKey(account_id))
+							statusByCampaignID.Add(account_id, new Dictionary<long, int>());
+						statusByCampaignID[account_id][campaign_ID] = campaign_status;
 					}
 				}
 			}
 
 
 			StringBuilder errorBuilder = new StringBuilder();
-			foreach (KeyValuePair<long, int> item in statusByCampaignID)
+			foreach (KeyValuePair<int, Dictionary<long, int>> byAccount in statusByCampaignID)
 			{
-				request = (HttpWebRequest)HttpWebRequest.Create(string.Format(@"https://graph.facebook.com/{0}?campaign_status={1}&{2}", item.Key, item.Value, Delivery.Parameters["AccessToken"].ToString()));
-				request.Method = "POST";
-				string strResponse;
-				try
+
+				string accessToken = facbookAccountParams[byAccount.Key].AccessToken;
+
+				foreach (var byCampaign in statusByCampaignID[byAccount.Key])
 				{
-					response = request.GetResponse();
-
-					using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+					request = (HttpWebRequest)HttpWebRequest.Create(string.Format(@"https://graph.facebook.com/{0}?campaign_status={1}&{2}", byCampaign.Key, byCampaign.Value, accessToken));
+					request.Method = "POST";
+					string strResponse;
+					try
 					{
-						strResponse = stream.ReadToEnd();
+						response = request.GetResponse();
+
+						using (StreamReader stream = new StreamReader(response.GetResponseStream()))
+						{
+							strResponse = stream.ReadToEnd();
+
+						}
+						if (strResponse != "true")
+						{
+							outcome = ServiceOutcome.Failure;
+							errorBuilder.Append(strResponse);
+						}
 
 					}
-					if (strResponse != "true")
+					catch (WebException ex)
 					{
-						outcome = ServiceOutcome.Failure;
-						errorBuilder.Append(strResponse);
-					}
+						using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
+						{
+							strResponse = reader.ReadToEnd();
+							errorBuilder.AppendFormat("Account {0} -{1}",byAccount.Key,strResponse);
+						}
 
-				}
-				catch (WebException ex)
-				{
-					using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
-					{
-						strResponse = reader.ReadToEnd();
-						errorBuilder.Append(strResponse);
-					}
-
+					} 
 				}
 
 			}
@@ -188,7 +209,7 @@ namespace Edge.Services.Facebook.GraphApi
 		public string body { get; set; }
 
 	}
-	public struct FacbookAccountParams
+	public class FacbookAccountParams
 	{
 
 		public string FacebookAccountID { get; set; }
