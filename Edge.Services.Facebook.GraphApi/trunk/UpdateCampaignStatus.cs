@@ -118,12 +118,12 @@ namespace Edge.Services.Facebook.GraphApi
 			{
 				connection.Open();
 
-				SqlCommand sqlCommand = DataManager.CreateCommand(string.Format(@"SELECT distinct T0.Account_ID, T2.campaignid,T0.Hour{0} 
+				SqlCommand sqlCommand = DataManager.CreateCommand(string.Format(@"SELECT distinct T0.Account_ID, T2.campaignid,T0.Hour{1} 
 																				FROM Campaigns_Scheduling T0
 																				INNER JOIN User_GUI_Account T1 ON T0.Account_ID=T1.Account_ID
 																				INNER JOIN UserProcess_GUI_PaidCampaign T2 ON T0.Campaign_GK=T2.Campaign_GK
-																				WHERE T0.Day=@Day:Int AND T0.Account_ID ({0}) 
-																				AND (T0.Hour{1} =1 OR T0.Hour{2}=2) AND
+																				WHERE T0.Day=@Day:Int AND T0.Account_ID IN ({0}) 
+																				AND (T0.Hour{1} =1 OR T0.Hour{1}=2) AND
 																				T2.Channel_ID=6 AND T1.Status!=0 AND T2.campStatus<>3 AND T2.ScheduleEnabled=1 
 																				ORDER BY T0.Account_ID", strAccounts.ToString(), hourOfDay.ToString().PadLeft(2, '0')));
 				sqlCommand.Parameters["@Day"].Value = today;
