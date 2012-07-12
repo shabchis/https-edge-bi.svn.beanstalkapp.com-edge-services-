@@ -37,7 +37,7 @@ namespace Edge.Services.BackOffice.Generic
                 bool isAttribute = Boolean.Parse(ReportFile.Parameters["Bo.IsAttribute"].ToString());
                 var ReportReader = new XmlDynamicReader
                     (ReportFile.OpenContents(), ReportFile.Parameters["Bo.Xpath"].ToString());
-                Dictionary<string, double> totalsValidation = new Dictionary<string, double>();
+               
 
 
 
@@ -50,7 +50,14 @@ namespace Edge.Services.BackOffice.Generic
 				}))
 				{
 					ImportManager.BeginImport(this.Delivery);
-					
+					//checksum init
+					foreach (var m in ImportManager.Measures.Values)
+					{
+						if (m.Options.HasFlag(MeasureOptions.ValidationRequired))
+							currentOutput.Checksum[m.Name] = 0;
+							
+								
+					}
                     using (ReportReader)
                     {
                         dynamic readerHelper;
