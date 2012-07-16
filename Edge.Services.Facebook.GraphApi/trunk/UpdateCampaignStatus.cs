@@ -184,6 +184,8 @@ namespace Edge.Services.Facebook.GraphApi
 							outcome = ServiceOutcome.Failure;
 							Edge.Core.Utilities.Log.Write(string.Format("Account {0} failed:{1}", byAccount.Key, strResponse),null,LogMessageType.Error,byAccount.Key);
 						}
+						else
+							Edge.Core.Utilities.Log.Write(string.Format("Account- {0} with campaign-{1} updated successfuly with value {2} for day num{3}", byAccount.Key, byCampaign.Key, byCampaign.Value, today), null, LogMessageType.Error, byAccount.Key);
 
 					}
 					catch (WebException ex)
