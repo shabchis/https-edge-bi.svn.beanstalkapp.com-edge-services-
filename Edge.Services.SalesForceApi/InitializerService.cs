@@ -19,7 +19,9 @@ namespace Edge.Services.SalesForceApi
 			// ...............................
 			// SETUP
 			this.Delivery = this.NewDelivery();
+			this.Delivery.TimePeriodDefinition = this.TimePeriod;
 
+			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
 			this.Delivery.Account = new Data.Objects.Account()
 			{
 				ID = this.Instance.AccountID,
@@ -54,9 +56,7 @@ namespace Edge.Services.SalesForceApi
 				throw new Exception("Redirect_URI must be configured in configuration file");
 			this.Delivery.Parameters["Redirect_URI"] = this.Instance.Configuration.Options["Redirect_URI"];//http://localhost:8080/RestTest/oauth/_callback
 
-			this.Delivery.TimePeriodDefinition = this.TimePeriod;
-
-			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
+			
 
 			#region two profiles
 			//serviceAddress = Instance.Configuration.Options["ServiceAddress"];

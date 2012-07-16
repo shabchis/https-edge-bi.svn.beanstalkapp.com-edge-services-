@@ -13,6 +13,8 @@ using System.Threading;
 using Newtonsoft.Json;
 using System.IO;
 using System.Security.Policy;
+using Newtonsoft.Json.Converters;
+
 
 namespace Edge.Services.SalesForceApi
 {
@@ -27,14 +29,14 @@ namespace Edge.Services.SalesForceApi
 				mutex.WaitOne();
 				#region Authentication
 				//get access token + refresh token from db (if exist)
-				Token tokenResponse = Token.Get(Delivery.Account.OriginalID);
+				Token tokenResponse = Token.Get(Delivery.Parameters["SalesForceClientID"].ToString());
 				//if not exist
 				if (string.IsNullOrEmpty(tokenResponse.access_token) || (string.IsNullOrEmpty(tokenResponse.refresh_token)))
 					tokenResponse = GetAccessTokenParamsFromSalesForce();
 
 
 				//check if access_token is not expired
-				if (tokenResponse.issued_at.Add((TimeSpan.Parse(AppSettings.Get(tokenResponse,"TimeOutInMin")))) < DateTime.Now)
+				if (tokenResponse.UpdateTime.Add((TimeSpan.Parse(AppSettings.Get(tokenResponse,"TimeOut")))) < DateTime.Now)
 					tokenResponse = RefreshToken(tokenResponse.refresh_token);
 
 
@@ -93,7 +95,7 @@ namespace Edge.Services.SalesForceApi
 			Token tokenResponse;
 			tokenResponse = (Token)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Token));
 			tokenResponse.refresh_token = refreshToken;
-			tokenResponse.Save(Delivery.Account.OriginalID);
+			tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString());
 			return tokenResponse;
 		}
 
@@ -102,12 +104,13 @@ namespace Edge.Services.SalesForceApi
 			HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(Delivery.Parameters["AuthenticationUrl"].ToString());
 			myRequest.Method = "POST";
 			myRequest.ContentType = "application/x-www-form-urlencoded";
-
+			
+		
 			using (StreamWriter writer = new StreamWriter(myRequest.GetRequestStream()))
 			{
-				writer.Write(string.Format("code={0}&client_id={1}&client_secret={2}&redirect_uri={3}&grant_type=authorization_code",
+				writer.Write(string.Format("code={0}&grant_type=authorization_code&client_id={1}&client_secret={2}&redirect_uri={3}",
 					Delivery.Parameters["ConsentCode"],
-					Delivery.Parameters["ClientID"],
+					Delivery.Parameters["SalesForceClientID"],
 					Delivery.Parameters["ClientSecret"],
 					Delivery.Parameters["Redirect_URI"]));
 			}
@@ -129,16 +132,13 @@ namespace Edge.Services.SalesForceApi
 			}
 			
 			Stream responseBody = myResponse.GetResponseStream();
-
-			Encoding encode = System.Text.Encoding.GetEncoding("utf-8");
-
-
-			StreamReader readStream = new StreamReader(responseBody, encode);
-			Token oAuth2 = (Token)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Token));
-			
-			oAuth2.Save(Delivery.Account.OriginalID);
+			Encoding encode = System.Text.Encoding.GetEncoding("utf-8");			
+			StreamReader readStream = new StreamReader(responseBody, encode);			
+			Token token = JsonConvert.DeserializeObject<Token>(readStream.ReadToEnd());
+			token.UpdateTime = DateTime.Now;
+			token.Save(this.Delivery.Parameters["SalesForceClientID"].ToString());
 			//return string itself (easier to work with)
-			return oAuth2;
+			return token;
 		}
 
 
@@ -152,7 +152,8 @@ namespace Edge.Services.SalesForceApi
 	public class Token
 	{
 		public string id { get; set; }
-		public DateTime issued_at { get; set; }
+		public string issued_at { get; set; }
+		public DateTime UpdateTime { get; set; }
 		public string refresh_token { get; set; }
 		public string instance_url { get; set; }
 		public string signature { get; set; }
@@ -177,6 +178,7 @@ namespace Edge.Services.SalesForceApi
 					command.Parameters["@RefreshToken"].Value = this.refresh_token;
 					command.Parameters["@Signature"].Value=this.signature;
 					command.Parameters["@Issued_at"].Value = this.issued_at;
+					command.Parameters["@UpdateTime"].Value = this.UpdateTime;
 					
 					command.ExecuteNonQuery();
 
@@ -200,16 +202,14 @@ namespace Edge.Services.SalesForceApi
 						if (reader.HasRows)
 						{
 							reader.Read();
+							tokenResponse.UpdateTime = DateTime.Now;
 							tokenResponse.ClientID = clientID;
 							tokenResponse.id=reader["Id"].ToString();
 							tokenResponse.access_token = reader["AccessToken"].ToString();
-							tokenResponse.issued_at =Convert.ToDateTime(reader["Issued_at"]);
+							tokenResponse.issued_at = reader["Issued_at"].ToString();
 							tokenResponse.instance_url = reader["Instance_url"].ToString();
 							tokenResponse.signature = reader["Signature"].ToString();
-							tokenResponse.refresh_token = reader["RefreshToken"].ToString();
-							
-							
-							
+							tokenResponse.refresh_token = reader["RefreshToken"].ToString();							
 						}
 					}
 				}
