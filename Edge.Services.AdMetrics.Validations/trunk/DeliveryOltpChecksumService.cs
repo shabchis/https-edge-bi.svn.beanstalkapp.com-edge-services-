@@ -102,7 +102,7 @@ namespace Edge.Services.AdMetrics.Validations
 							}
 							if (errors.Length > 0)
 							{
-								result = new ValidationResult()
+								return new ValidationResult()
 								{
 									ResultType = ValidationResultType.Error,
 									AccountID = deliveryOutput.Account.ID,

@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Google.AdWords.V201109">
+      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.AdWords.V201109.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.AnalysisServices.AdomdClient, Version=10.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\(third party)\ADOMD\Microsoft.AnalysisServices.AdomdClient.dll</HintPath>
@@ -70,10 +73,6 @@
     <ProjectReference Include="..\..\..\edge-framework\Edge.Data.Pipeline\trunk\Edge.Data.Pipeline.csproj">
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Edge.Services.Google.AdWords.V201109\trunk\Edge.Services.Google.AdWords.V201109.csproj">
-      <Project>{DFC1976B-10A9-4E74-8C61-48FA5732766E}</Project>
-      <Name>Edge.Services.Google.AdWords.V201109</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
