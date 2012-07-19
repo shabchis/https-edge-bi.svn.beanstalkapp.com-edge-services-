@@ -17,19 +17,36 @@ namespace Edge.Services.SalesForceApi
 	class ProcessorService : MetricsProcessorServiceBase
 	{
 		DeliveryOutput currentOutput;
-		bool _isChecksum = false;
+
 
 		public new GenericMetricsImportManager ImportManager
 		{
 			get { return (GenericMetricsImportManager)base.ImportManager; }
 			set { base.ImportManager = value; }
 		}
-
 		protected override void OnInitMappings()
 		{
-			this.Mappings.ExternalMethods.Add("IsChecksum", new Func<bool>(() =>
-				_isChecksum));
+			this.Mappings.ExternalMethods.Add("Test", new Func<object, int>(Test));
 		}
+		protected int Test(object d)
+		{
+			int result = 0;
+			DateTime date;
+			string dd = System.Convert.ToString(d);
+			if (!string.IsNullOrEmpty(dd))
+			{
+				date = System.Convert.ToDateTime(dd);
+				if (date.Date == Delivery.TimePeriodStart.Date)
+					result = 1;
+
+			}
+			return result;
+
+
+
+		}
+
+
 
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
@@ -41,20 +58,6 @@ namespace Edge.Services.SalesForceApi
 			Dictionary<string, int> columns = new Dictionary<string, int>();
 			foreach (var ReportFile in Delivery.Files)
 			{
-
-				//Get Columns
-				var reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.columnHeaders[*].*");
-				using (reportReader)
-				{
-					int colIndex = 0;
-					while (reportReader.Read())
-					{
-						columns.Add(reportReader.Current.name, colIndex);
-						colIndex++;
-					}
-
-					///sssss
-				}
 
 				using (this.ImportManager = new GenericMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 				{
@@ -68,31 +71,14 @@ namespace Edge.Services.SalesForceApi
 
 					Dictionary<string, GenericMetricsUnit> data = new Dictionary<string, GenericMetricsUnit>();
 
-					// Checksums
-					_isChecksum = true;
-					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.totalsForAllResults.*");
+
+
+
+					//Get Valuees
+					JsonDynamicReader reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.records[*].*");
 					using (reportReader)
 					{
 						this.Mappings.OnFieldRequired = field => reportReader.Current[field];
-						if (reportReader.Read())
-						{
-							GenericMetricsUnit checksumUnit = new GenericMetricsUnit();
-							metricsUnitMapping.Apply(checksumUnit);
-
-							foreach (var m in checksumUnit.MeasureValues)
-							{
-								if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
-									currentOutput.Checksum.Add(m.Key.Name, m.Value);
-							}
-						}
-					}
-					_isChecksum = false;
-
-					//Get Valuees
-					reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.Gzip), "$.rows[*].*");
-					using (reportReader)
-					{
-						this.Mappings.OnFieldRequired = field => reportReader.Current["array"][columns[field]];
 
 						while (reportReader.Read())
 						{
