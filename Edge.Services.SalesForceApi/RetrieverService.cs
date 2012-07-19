@@ -44,13 +44,11 @@ namespace Edge.Services.SalesForceApi
 				// exist
 				foreach (var file in Delivery.Files)
 				{
-					file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}", tokenResponse.instance_url,file.Parameters["Query"]);
-					
-					//string urlEncoded = string.Format(file.SourceUrl, Uri.EscapeUriString(tokenResponse.access_token));
+					//TODO: SHOULD BE GENERIC TO MATCH EVERY QUERY- I DIDN'T KNOW HOW TO DO Regular Expression
+					string query=string.Format(file.Parameters["Query"].ToString(),Delivery.TimePeriodStart);
+					file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}",tokenResponse.instance_url, query);					
 					HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
 					request.Headers.Add("Authorization: OAuth " + tokenResponse.access_token);
-					
-
 					FileDownloadOperation fileDownloadOperation = file.Download(request);
 					batch.Add(fileDownloadOperation);
 				}
@@ -79,7 +77,7 @@ namespace Edge.Services.SalesForceApi
 			{
 				writer.Write(string.Format("refresh_token={0}&client_id={1}&client_secret={2}&grant_type=refresh_token",
 					refreshToken,
-					Delivery.Parameters["ClientID"],
+					Delivery.Parameters["SalesForceClientID"],
 					Delivery.Parameters["ClientSecret"]));
 			}
 
@@ -95,6 +93,7 @@ namespace Edge.Services.SalesForceApi
 			Token tokenResponse;
 			tokenResponse = (Token)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Token));
 			tokenResponse.refresh_token = refreshToken;
+			tokenResponse.UpdateTime = DateTime.Now;
 			tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString());
 			return tokenResponse;
 		}
@@ -178,7 +177,7 @@ namespace Edge.Services.SalesForceApi
 					command.Parameters["@RefreshToken"].Value = this.refresh_token;
 					command.Parameters["@Signature"].Value=this.signature;
 					command.Parameters["@Issued_at"].Value = this.issued_at;
-					command.Parameters["@UpdateTime"].Value = this.UpdateTime;
+					command.Parameters["@UpdateTime"].Value = DateTime.Now;
 					
 					command.ExecuteNonQuery();
 
@@ -202,7 +201,7 @@ namespace Edge.Services.SalesForceApi
 						if (reader.HasRows)
 						{
 							reader.Read();
-							tokenResponse.UpdateTime = DateTime.Now;
+							tokenResponse.UpdateTime = Convert.ToDateTime(reader["UpdateTime"]);
 							tokenResponse.ClientID = clientID;
 							tokenResponse.id=reader["Id"].ToString();
 							tokenResponse.access_token = reader["AccessToken"].ToString();
