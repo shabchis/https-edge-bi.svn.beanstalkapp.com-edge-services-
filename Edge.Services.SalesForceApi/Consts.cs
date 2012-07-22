@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Edge.Services.SalesForceApi
+namespace Edge.Services.SalesForce
 {
 	public static class BoConfigurationOptions
 	{

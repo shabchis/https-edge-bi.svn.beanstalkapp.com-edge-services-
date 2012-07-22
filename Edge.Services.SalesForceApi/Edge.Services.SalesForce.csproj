@@ -8,8 +8,8 @@
     <ProjectGuid>{C4C1D909-D765-42AD-8FA8-F51A3D93457D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Edge.Services.SalesForceApi</RootNamespace>
-    <AssemblyName>Edge.Services.SalesForceApi</AssemblyName>
+    <RootNamespace>Edge.Services.SalesForce</RootNamespace>
+    <AssemblyName>Edge.Services.SalesForce</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -75,19 +75,19 @@
   <ItemGroup>
     <Content Include="Readme.txt" />
   </ItemGroup>
-	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
-	<Target Name="BeforeCompile">
-		<SvnVersion LocalPath=".">
-			<Output TaskParameter="Revision" PropertyName="SvnRevision" />
-		</SvnVersion>
-		<FormatVersion Version="2.9.1.%2a" Revision="$(SvnRevision)">
-			<Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
-		</FormatVersion>
-	</Target>
-	<PropertyGroup>
-		<PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
-		<PostBuildEvent>
-		</PostBuildEvent>
-	</PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+  <Target Name="BeforeCompile">
+    <SvnVersion LocalPath=".">
+      <Output TaskParameter="Revision" PropertyName="SvnRevision" />
+    </SvnVersion>
+    <FormatVersion Version="2.9.1.%2a" Revision="$(SvnRevision)">
+      <Output TaskParameter="OutputVersion" PropertyName="ApplicationVersion" />
+    </FormatVersion>
+  </Target>
+  <PropertyGroup>
+    <PreBuildEvent>subwcrev.exe "$(ProjectDir)." "$(ProjectDir)Properties\AssemblyInfo.cs.template" "$(ProjectDir)Properties\AssemblyInfo.cs"</PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
 </Project>

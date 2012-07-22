@@ -12,7 +12,7 @@ using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Common.Importing;
 
-namespace Edge.Services.SalesForceApi
+namespace Edge.Services.SalesForce
 {
 	class ProcessorService : MetricsProcessorServiceBase
 	{

@@ -7,7 +7,7 @@ using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using System.Text.RegularExpressions;
 
-namespace Edge.Services.SalesForceApi
+namespace Edge.Services.SalesForce
 {
 	public class InitializerService : PipelineService
 	{

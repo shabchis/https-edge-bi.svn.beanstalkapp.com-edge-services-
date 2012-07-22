@@ -16,7 +16,7 @@ using System.Security.Policy;
 using Newtonsoft.Json.Converters;
 
 
-namespace Edge.Services.SalesForceApi
+namespace Edge.Services.SalesForce
 {
 	class RetrieverService : PipelineService
 	{
