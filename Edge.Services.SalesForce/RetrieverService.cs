@@ -45,8 +45,10 @@ namespace Edge.Services.SalesForce
 				foreach (var file in Delivery.Files)
 				{
 					//TODO: SHOULD BE GENERIC TO MATCH EVERY QUERY- I DIDN'T KNOW HOW TO DO Regular Expression
-					string query=string.Format(file.Parameters["Query"].ToString(),Delivery.TimePeriodStart);
+					string query = string.Format(file.Parameters["Query"].ToString(), Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day);
+					
 					file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}",tokenResponse.instance_url, query);					
+					
 					HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
 					request.Headers.Add("Authorization: OAuth " + tokenResponse.access_token);
 					FileDownloadOperation fileDownloadOperation = file.Download(request);
