@@ -12,6 +12,7 @@ using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Common.Importing;
 using Edge.Core.Utilities;
+using System.Globalization;
 
 namespace Edge.Services.SalesForce
 {
@@ -36,7 +37,7 @@ namespace Edge.Services.SalesForce
 			string dd = System.Convert.ToString(d);
 			if (!string.IsNullOrEmpty(dd))
 			{
-				date = System.Convert.ToDateTime(dd);
+				date = DateTime.Parse(dd, CultureInfo.InvariantCulture,DateTimeStyles.AdjustToUniversal);
 				if (date.Date == Delivery.TimePeriodStart.Date)
 					result = 1;
 
