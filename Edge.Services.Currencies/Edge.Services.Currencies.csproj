@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CurrencyImportManager.cs" />
+    <Compile Include="ProcessorService.cs" />
     <Compile Include="RetrieverService.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
