@@ -8,11 +8,14 @@ using System.Data;
 using System.Data.SqlClient;
 using Edge.Data.Pipeline.Metrics;
 using Edge.Core.Configuration;
+using Edge.Data.Objects;
 
 namespace Edge.Services.Currencies
 {
 	public class CurrencyImportManager: DeliveryImportManager
 	{
+
+
 
 		#region Fields
 		/*=========================*/
@@ -22,7 +25,50 @@ namespace Edge.Services.Currencies
 		/*=========================*/
 		#endregion
 
+		#region Table
+		/*=========================*/
+		private string _tablePrefix;
+
+		public static class Tables
+		{
+			public class Currency
+			{
+				public static ColumnDef RateSymbol = new ColumnDef("RateSymbol", type: SqlDbType.NVarChar, size: 100, nullable: false);
+				public static ColumnDef RateDate = new ColumnDef("RateDate", type: SqlDbType.DateTime, size: 100, nullable: false);
+				public static ColumnDef RateValue = new ColumnDef("RateValue", type: SqlDbType.Float, nullable: false);
+			}
+		}
+		protected string TablePrefixType
+		{
+			get { return "Currency"; }
+		}
+		/*=========================*/
+		#endregion
+
+		#region Misc
+		/*=========================*/
+
+		SqlConnection NewDeliveryDbConnection()
+		{
+			return new SqlConnection(AppSettings.GetConnectionString(typeof(Delivery), Delivery.Consts.ConnectionStrings.SqlStagingDatabase));
+		}
+
+		protected override void OnDispose()
+		{
+			if (_sqlConnection != null)
+				_sqlConnection.Dispose();
+		}
+
+		/*=========================*/
+		#endregion
+
+		#region Import
+		/*=========================*/
 		private Dictionary<Type, BulkObjects> _bulks;
+		protected BulkObjects Bulk<TableDef>()
+		{
+			return _bulks[typeof(TableDef)];
+		}
 
 		protected override void OnBeginImport()
 		{
@@ -43,58 +89,6 @@ namespace Edge.Services.Currencies
 				_bulks[table] = new BulkObjects(this._tablePrefix, table, _sqlConnection, bufferSize);
 			}
 
-			//// Get measures
-			//using (SqlConnection oltpConnection = new SqlConnection(this.Options.StagingConnectionString))
-			//{
-			//    oltpConnection.Open();
-
-			//    this.Measures = Measure.GetMeasures(
-			//        this.CurrentDelivery.Account,
-			//        this.CurrentDelivery.Channel,
-			//        oltpConnection,
-			//        this.Options.MeasureOptions,
-			//        this.Options.MeasureOptionsOperator
-			//        );
-
-			//    this.SegmentTypes = Segment.GetSegments(
-			//        this.CurrentDelivery.Account,
-			//        this.CurrentDelivery.Channel,
-			//        oltpConnection,
-			//        this.Options.SegmentOptions,
-			//        this.Options.SegmentOptionsOperator
-			//        );
-			//}
-
-			// Add measure columns to metrics
-			//StringBuilder measuresFieldNamesSQL = new StringBuilder(",");
-			//StringBuilder measuresNamesSQL = new StringBuilder(",");
-			//StringBuilder measuresValidationSQL = new StringBuilder();
-			//int count = 0;
-			//BulkObjects bulkMetrics = _bulks[this.MetricsTableDefinition];
-			//foreach (Measure measure in this.Measures.Values)
-			//{
-			//    bulkMetrics.AddColumn(new ColumnDef(
-			//        name: measure.Name,
-			//        type: SqlDbType.Float,
-			//        nullable: true
-			//        ));
-
-			//    measuresFieldNamesSQL.AppendFormat("[{0}]{1}", measure.OltpName, count < this.Measures.Values.Count - 1 ? "," : null);
-			//    measuresNamesSQL.AppendFormat("[{0}]{1}", measure.Name, count < this.Measures.Values.Count - 1 ? "," : null);
-
-			//    if (measure.Options.HasFlag(MeasureOptions.ValidationRequired))
-			//        measuresValidationSQL.AppendFormat("{1}SUM([{0}]) as [{0}]", measure.Name, measuresValidationSQL.Length > 0 ? ", " : null);
-
-			//    count++;
-			//}
-
-			//this.CurrentDelivery.Parameters.Add(Consts.DeliveryHistoryParameters.MeasureFieldsSql, measuresFieldNamesSQL.ToString());
-			//this.CurrentDelivery.Parameters.Add(Consts.DeliveryHistoryParameters.MeasureNamesSql, measuresNamesSQL.ToString());
-			//if (string.IsNullOrEmpty(measuresValidationSQL.ToString()))
-			//    Log.Write("No measures marked for checksum validation; there will be no validation before the final commit.", LogMessageType.Warning);
-			//else
-			//    this.CurrentDelivery.Parameters.Add(Consts.DeliveryHistoryParameters.MeasureValidateSql, measuresValidationSQL.ToString());
-
 			// Create the tables
 			StringBuilder createTableCmdText = new StringBuilder();
 			foreach (BulkObjects bulk in _bulks.Values)
@@ -111,53 +105,46 @@ namespace Edge.Services.Currencies
 				bulk.Dispose();
 			}
 		}
-
-		#region Table
-		/*=========================*/
-		private string _tablePrefix;
-
-		public static class Tables
+		public void ImportCurrency(CurrencyRate currencyRate)
 		{
-			public class Currency
+			EnsureBeginImport();
+
+			var currencyRow = new Dictionary<ColumnDef, object>()
 			{
-				public static ColumnDef RateSymbol = new ColumnDef("RateSymbol", type: SqlDbType.NVarChar, size: 100, nullable: false);
-				public static ColumnDef RateDate = new ColumnDef("RateDate", type: SqlDbType.DateTime, size: 100, nullable: false);
-				public static ColumnDef RateValue = new ColumnDef("RateValue", type: SqlDbType.Float,nullable: false);
-			}
+				{Tables.Currency.RateSymbol,currencyRate.Currency.Code},
+				{Tables.Currency.RateValue,currencyRate.RateValue},
+				{Tables.Currency.RateDate,currencyRate.RateDate}
+			};
+
+
+			Bulk<Tables.Currency>().SubmitRow(currencyRow);
+
 		}
-		protected override string TablePrefixType
+		protected void EnsureBeginImport()
 		{
-			get { return "Currency"; }
+			if (this.State != DeliveryImportManagerState.Importing)
+				throw new InvalidOperationException("BeginImport must be called before anything can be imported.");
 		}
+
 		/*=========================*/
 		#endregion
+
+		public CurrencyImportManager(long serviceInstanceID)
+			: base(serviceInstanceID)
+		{
+			
+		}
 
 		protected override void OnTransform(Delivery delivery, int pass)
 		{
 			throw new NotImplementedException();
 		}
-
 		protected override void OnStage(Delivery delivery, int pass)
 		{
 			throw new NotImplementedException();
 		}
 
-		#region Misc
-		/*=========================*/
-
-		SqlConnection NewDeliveryDbConnection()
-		{
-			return new SqlConnection(AppSettings.GetConnectionString(typeof(Delivery), Delivery.Consts.ConnectionStrings.SqlStagingDatabase));
-		}
-
-		protected override void OnDispose()
-		{
-			if (_sqlConnection != null)
-				_sqlConnection.Dispose();
-		}
-
-		/*=========================*/
-		#endregion
+		
 	}
 
 	

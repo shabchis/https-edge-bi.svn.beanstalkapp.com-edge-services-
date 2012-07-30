@@ -14,9 +14,8 @@ namespace Edge.Services.Currencies
 		
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-			throw new NotImplementedException();
-
-			//USE MAPPING CONFIGURATION FOR THIS SERVICE.
+		
+			//TO DO : USE MAPPING CONFIGURATION FOR THIS SERVICE.
 
 			foreach (DeliveryFile ReportFile in this.Delivery.Files)
 			{
@@ -30,23 +29,30 @@ namespace Edge.Services.Currencies
 
 					using (ReportReader)
 					{
-						dynamic readerHelper;
+						dynamic reader;
 
 						while (ReportReader.Read())
 						{
 							if (isAttribute)
-								readerHelper = ReportReader.Current.Attributes;
+								reader = ReportReader.Current.Attributes;
 							else
-								readerHelper = ReportReader.Current;
+								reader = ReportReader.Current;
 
 							CurrencyRate currencyUnit = new CurrencyRate();
 
+							currencyUnit.Currency.Code = Convert.ToString(reader["Symbol"]);
+							currencyUnit.RateDate = Convert.ToDateTime(reader["Date"]);
+							currencyUnit.RateValue = Convert.ToDouble(reader["Last"]);
+							currencyUnit.DateCreated = DateTime.Today;
+
+							ImportManager.ImportCurrency(currencyUnit);
 						}
 					}
 				}
 
 
 			}
+			return Core.Services.ServiceOutcome.Success;
 		}
 	}
 }
