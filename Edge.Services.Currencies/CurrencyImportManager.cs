@@ -34,7 +34,7 @@ namespace Edge.Services.Currencies
 			public class Currency
 			{
 				public static ColumnDef RateSymbol = new ColumnDef("RateSymbol", type: SqlDbType.NVarChar, size: 100, nullable: false);
-				public static ColumnDef RateDate = new ColumnDef("RateDate", type: SqlDbType.DateTime, size: 100, nullable: false);
+				public static ColumnDef RateDate = new ColumnDef("RateDate", type: SqlDbType.DateTime, nullable: false);
 				public static ColumnDef RateValue = new ColumnDef("RateValue", type: SqlDbType.Float, nullable: false);
 			}
 		}

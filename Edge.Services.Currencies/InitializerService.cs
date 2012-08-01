@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
+using Edge.Data.Objects;
 
 namespace Edge.Services.Currencies
 {
@@ -14,6 +15,10 @@ namespace Edge.Services.Currencies
         {
             this.Delivery = this.NewDelivery(); // setup delivery
             this.Delivery.FileDirectory = Instance.Configuration.Options[Edge.Data.Pipeline.Services.Const.DeliveryServiceConfigurationOptions.FileDirectory];
+			this.Delivery.Account = new Account()
+			{
+				ID = 0
+			};
 
 
             string fileName = string.Empty;

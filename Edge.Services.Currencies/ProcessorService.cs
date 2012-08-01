@@ -5,23 +5,26 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
+using System.Text.RegularExpressions;
 
 namespace Edge.Services.Currencies
 {
 	public class ProcessorService : PipelineService
 	{
-		public new CurrencyImportManager ImportManager;
-		
+		public CurrencyImportManager ImportManager;
+
 		protected override Core.Services.ServiceOutcome DoPipelineWork()
 		{
-		
+
 			//TO DO : USE MAPPING CONFIGURATION FOR THIS SERVICE.
+
+			ImportManager = new CurrencyImportManager(this.Instance.InstanceID);
 
 			foreach (DeliveryFile ReportFile in this.Delivery.Files)
 			{
 				bool isAttribute = Boolean.Parse(ReportFile.Parameters["XML.IsAttribute"].ToString());
 				var ReportReader = new XmlDynamicReader
-					(ReportFile.OpenContents(), ReportFile.Parameters["XML.Xpath"].ToString());
+					(ReportFile.OpenContents(), ReportFile.Parameters["XML.Path"].ToString());
 
 				using (ImportManager)
 				{
@@ -40,17 +43,27 @@ namespace Edge.Services.Currencies
 
 							CurrencyRate currencyUnit = new CurrencyRate();
 
-							currencyUnit.Currency.Code = Convert.ToString(reader["Symbol"]);
-							currencyUnit.RateDate = Convert.ToDateTime(reader["Date"]);
-							currencyUnit.RateValue = Convert.ToDouble(reader["Last"]);
-							currencyUnit.DateCreated = DateTime.Today;
+							//Currency Code
+							currencyUnit.Currency.Code = Regex.Replace(Convert.ToString(reader["Symbol"]), "USD", string.Empty);
+
+							//Currecy Date
+							string[] date = (reader["Date"] as string).Split('/');
+							try { currencyUnit.RateDate = new DateTime(Int32.Parse(date[2]), Int32.Parse(date[0]), Int32.Parse(date[1])); }
+							catch (Exception ex)
+							{
+								throw new Exception(String.Format("Could not parse the date parts (y = '{0}', m = '{1}', d = '{2}'.", date[2], date[0], date[1]), ex);
+							}
+
+							//Currency Rate
+							double rate = Convert.ToDouble(reader["Last"]);
+							currencyUnit.RateValue = Convert.ToDouble(rate.ToString("#0.0000"));
 
 							ImportManager.ImportCurrency(currencyUnit);
 						}
 					}
+
+					ImportManager.EndImport();
 				}
-
-
 			}
 			return Core.Services.ServiceOutcome.Success;
 		}
