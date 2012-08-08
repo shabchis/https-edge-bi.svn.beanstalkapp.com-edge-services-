@@ -104,7 +104,7 @@ namespace Edge.Services.Google.AdWords
 
 						GenericMetricsUnit autoPlacMetricsUnit = new GenericMetricsUnit();
 						autoPlacMetricsUnit.Output = currentOutput;
-
+						
 						autoPlacMetricsUnit.Channel = new Channel() { ID = 1 };
 						autoPlacMetricsUnit.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_autoPlacFile.Parameters["AdwordsClientID"] };
 
