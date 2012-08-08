@@ -62,9 +62,7 @@ namespace Edge.Services.BackOffice.Generic
                     {
                         dynamic readerHelper;
 						
-
-
-                        while (ReportReader.Read())
+						while (ReportReader.Read())
                         {
                             if (isAttribute)
                                 readerHelper = ReportReader.Current.Attributes;
