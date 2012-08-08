@@ -39,14 +39,26 @@ namespace Edge.Services.AdMetrics.Validations
 				}
 				sqlBuilder.Insert(0, "SELECT \n");
 				sqlBuilder.AppendFormat(" FROM {0}\n ",comparisonTable);
-				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int \nand Account_ID_SRC=@OriginalID:nvarchar");
+				sqlBuilder.Append("WHERE Account_ID=@accountID:int \nAND Day_Code=@daycode:int \nAND  Channel_ID=@Channel_ID:int");
+				
+				///*******Work around*******************////////
+				if (deliveryOutput.Account.OriginalID != null)
+				{
+					sqlBuilder.Append(" \nand Account_ID_SRC=@OriginalID:nvarchar");
+				}
+
 				SqlCommand sqlCommand = DataManager.CreateCommand(sqlBuilder.ToString());
 				sqlCommand.Parameters["@accountID"].Value = deliveryOutput.Account.ID;
 				sqlCommand.Parameters["@daycode"].Value = dayCode;;
 				sqlCommand.Parameters["@Channel_ID"].Value = deliveryOutput.Channel.ID;
 
 				///*******Work around*******************////////
-				sqlCommand.Parameters["@OriginalID"].Value=deliveryOutput.Account.OriginalID;
+				if (deliveryOutput.Account.OriginalID != null)
+				{
+					sqlCommand.Parameters["@OriginalID"].Value = deliveryOutput.Account.OriginalID;
+				}
+
+				
 				sqlCommand.Connection = sqlCon;
 
 				using (var _reader = sqlCommand.ExecuteReader())
