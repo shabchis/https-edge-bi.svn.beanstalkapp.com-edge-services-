@@ -90,6 +90,13 @@ namespace Edge.Services.Currencies
 			);
 			}
 
+			// Create an import manager that will handle rollback, if necessary
+			CurrencyImportManager importManager = new CurrencyImportManager(this.Instance.InstanceID);
+
+			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
+			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+
+
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}
