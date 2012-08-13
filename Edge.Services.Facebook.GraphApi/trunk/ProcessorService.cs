@@ -353,7 +353,13 @@ namespace Edge.Services.Facebook.GraphApi
 											ad.Creatives = new List<Creative>();
 											switch ((string)adGroupCreativesReader.Current.type)
 											{
+												case "8":
 												case "9":
+												case "10":
+												case "16":
+												case "17":
+												case "19":
+												case "25":													
 													{
 														TextCreative sponserStory = new TextCreative()
 														{
@@ -366,8 +372,24 @@ namespace Edge.Services.Facebook.GraphApi
 														break;
 
 													}
-												default:
+												case "27":
+													{
+														TextCreative sponserStory = new TextCreative()
+														{
+															OriginalID = adGroupCreativesReader.Current.creative_id,
+															TextType = TextCreativeType.Title,
+															Text = "Page Ads for a Page post"
+
+														};
+														ad.Creatives.Add(sponserStory);
+														break;
+													}
+												
 												case "1":
+												case "2":
+												case "3":
+												case "4":
+												case "12":
 													{
 														ImageCreative ic = new ImageCreative()
 														{
