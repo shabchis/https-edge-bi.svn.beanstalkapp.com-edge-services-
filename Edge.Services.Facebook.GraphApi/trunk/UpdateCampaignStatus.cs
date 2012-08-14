@@ -186,6 +186,7 @@ namespace Edge.Services.Facebook.GraphApi
 						}
 						catch (WebException ex)
 						{
+
 							using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
 							{
 								outcome = ServiceOutcome.Failure;
