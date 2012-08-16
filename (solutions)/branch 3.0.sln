@@ -5,7 +5,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Core", "..\..\edge-framework\Edge.Core\branches\3.0.0\Edge.Core.csproj", "{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Core", "..\..\edge-framework\Edge.Core\trunk\Edge.Core.csproj", "{AD4B53AD-B28A-4E90-9483-D2F7C8E6D436}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Core.Scheduling", "..\..\edge-framework\Edge.Core.Scheduling\branches\3.0.0\Edge.Core.Scheduling.csproj", "{E700E7AA-08B7-44C3-8889-ACB4FAF92C90}"
 EndProject
