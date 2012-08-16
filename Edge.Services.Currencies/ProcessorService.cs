@@ -30,6 +30,8 @@ namespace Edge.Services.Currencies
 				{
 					ImportManager.BeginImport(this.Delivery);
 
+					//DeliveryOutput currentOutput = Delivery.Outputs.First();
+
 					using (ReportReader)
 					{
 						dynamic reader;
@@ -42,6 +44,7 @@ namespace Edge.Services.Currencies
 								reader = ReportReader.Current;
 
 							CurrencyRate currencyUnit = new CurrencyRate();
+							
 
 							//Currency Code
 							currencyUnit.Currency.Code = Regex.Replace(Convert.ToString(reader["Symbol"]), "USD", string.Empty);
@@ -57,6 +60,23 @@ namespace Edge.Services.Currencies
 							//Currency Rate
 							double rate = Convert.ToDouble(reader["Last"]);
 							currencyUnit.RateValue = Convert.ToDouble(rate.ToString("#0.0000"));
+
+							//Output
+							Signature signature = new Signature()
+							{
+								Value = string.Format("{0}_{1}",currencyUnit.Currency.Code,currencyUnit.RateDate)
+							};
+
+							currencyUnit.Output = new DeliveryOutput()
+							{
+								OutputID = Guid.NewGuid(),
+								DateCreated = DateTime.Now,
+								DeliveryID = this.Delivery.DeliveryID,
+								Signature = signature,
+								TimePeriodStart = currencyUnit.DateCreated,
+								TimePeriodEnd = currencyUnit.DateCreated,
+							};
+							this.Delivery.Outputs.Add(currencyUnit.Output);
 
 							ImportManager.ImportCurrency(currencyUnit);
 						}

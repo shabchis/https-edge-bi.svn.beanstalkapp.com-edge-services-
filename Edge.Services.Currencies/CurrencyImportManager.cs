@@ -36,6 +36,7 @@ namespace Edge.Services.Currencies
 				public static ColumnDef RateSymbol = new ColumnDef("RateSymbol", type: SqlDbType.NVarChar, size: 100, nullable: false);
 				public static ColumnDef RateDate = new ColumnDef("RateDate", type: SqlDbType.DateTime, nullable: false);
 				public static ColumnDef RateValue = new ColumnDef("RateValue", type: SqlDbType.Float, nullable: false);
+				public static ColumnDef OutputID = new ColumnDef("OutputID", type: SqlDbType.Char,size: 32, nullable: false);
 			}
 		}
 		protected string TablePrefixType
@@ -72,7 +73,7 @@ namespace Edge.Services.Currencies
 
 		protected override void OnBeginImport()
 		{
-			this._tablePrefix = string.Format("{0}_{1}_{2}_{3}", this.TablePrefixType, this.CurrentDelivery.Account.ID, DateTime.Now.ToString("yyyMMdd_HHmmss"), this.CurrentDelivery.DeliveryID.ToString("N").ToLower());
+			this._tablePrefix = string.Format("{0}_{1}_{2}", this.TablePrefixType, DateTime.Now.ToString("yyyMMdd_HHmmss"), this.CurrentDelivery.DeliveryID.ToString("N").ToLower());
 			this.CurrentDelivery.Parameters.Add(Consts.DeliveryHistoryParameters.TablePerfix, this._tablePrefix);
 
 			int bufferSize = int.Parse(AppSettings.Get(this, Consts.AppSettings.BufferSize));
@@ -113,7 +114,8 @@ namespace Edge.Services.Currencies
 			{
 				{Tables.Currency.RateSymbol,currencyRate.Currency.Code},
 				{Tables.Currency.RateValue,currencyRate.RateValue},
-				{Tables.Currency.RateDate,currencyRate.RateDate}
+				{Tables.Currency.RateDate,currencyRate.RateDate},
+				{Tables.Currency.OutputID,currencyRate.Output.OutputID}
 			};
 
 
