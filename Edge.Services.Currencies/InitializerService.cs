@@ -75,13 +75,13 @@ namespace Edge.Services.Currencies
 
 			//Set Output
 
-			foreach (string item in this.Delivery.Parameters["CrossRateSymbols"].ToString().Split(','))
+			foreach (string crossRate in this.Delivery.Parameters["CrossRateSymbols"].ToString().Split(','))
 			{
 				this.Delivery.Outputs.Add(new DeliveryOutput()
 				{
 					Signature = Delivery.CreateSignature(String.Format("[{0}]-[{1}]",
 						this.TimePeriod.ToAbsolute(),
-						this.Delivery.Parameters["CrossRateSymbols"]
+						crossRate
 					)),
 					Account = new Data.Objects.Account() { ID = 0 },
 					TimePeriodStart = Delivery.TimePeriodStart,
@@ -91,7 +91,9 @@ namespace Edge.Services.Currencies
 			}
 
 			// Create an import manager that will handle rollback, if necessary
-			CurrencyImportManager importManager = new CurrencyImportManager(this.Instance.InstanceID);
+			CurrencyImportManager importManager = new CurrencyImportManager(this.Instance.InstanceID,null);
+			//TO DO: Add rollback
+			
 
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);

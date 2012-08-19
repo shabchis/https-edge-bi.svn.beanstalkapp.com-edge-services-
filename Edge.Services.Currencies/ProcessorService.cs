@@ -18,7 +18,7 @@ namespace Edge.Services.Currencies
 
 			//TO DO : USE MAPPING CONFIGURATION FOR THIS SERVICE.
 
-			ImportManager = new CurrencyImportManager(this.Instance.InstanceID);
+			ImportManager = new CurrencyImportManager(this.Instance.InstanceID,null);
 
 			foreach (DeliveryFile ReportFile in this.Delivery.Files)
 			{
@@ -62,17 +62,10 @@ namespace Edge.Services.Currencies
 							currencyUnit.RateValue = Convert.ToDouble(rate.ToString("#0.0000"));
 
 							//Output
-							Signature signature = new Signature()
-							{
-								Value = string.Format("{0}_{1}",currencyUnit.Currency.Code,currencyUnit.RateDate)
-							};
 
 							currencyUnit.Output = new DeliveryOutput()
 							{
-								OutputID = Guid.NewGuid(),
-								DateCreated = DateTime.Now,
-								DeliveryID = this.Delivery.DeliveryID,
-								Signature = signature,
+								Signature = string.Format("{0}_{1}", currencyUnit.Currency.Code, currencyUnit.RateDate),
 								TimePeriodStart = currencyUnit.DateCreated,
 								TimePeriodEnd = currencyUnit.DateCreated,
 							};

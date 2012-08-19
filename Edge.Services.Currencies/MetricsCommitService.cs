@@ -19,19 +19,19 @@ namespace Edge.Services.Currencies
 			// SETUP
 
 			string checksumThreshold = Instance.Configuration.Options[Consts.ConfigurationOptions.ChecksumTheshold];
-			
+
 			MetricsImportManagerOptions options = new MetricsImportManagerOptions()
 			{
 				SqlTransformCommand = Instance.Configuration.Options[Consts.AppSettings.SqlTransformCommand],
 				SqlStageCommand = Instance.Configuration.Options[Consts.AppSettings.SqlStageCommand],
 				SqlRollbackCommand = Instance.Configuration.Options[Consts.AppSettings.SqlRollbackCommand],
-				ChecksumThreshold = checksumThreshold == null ? 0.01 : double.Parse(checksumThreshold)
+				//ChecksumThreshold = checksumThreshold == null ? 0.01 : double.Parse(checksumThreshold)
 			};
 
 			string importManagerTypeName = Instance.Configuration.GetOption(Consts.ConfigurationOptions.ImportManagerType);
 			Type importManagerType = Type.GetType(importManagerTypeName);
 
-			var importManager = (CurrencyImportManager) Activator.CreateInstance(importManagerType, this.Instance.InstanceID, options);
+			var importManager = (CurrencyImportManager) Activator.CreateInstance(importManagerType, this.Instance.InstanceID,options);
 			ReportProgress(0.1);
 
 			// ----------------

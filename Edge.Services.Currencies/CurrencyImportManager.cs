@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using Edge.Data.Pipeline.Metrics;
 using Edge.Core.Configuration;
 using Edge.Data.Objects;
+using Edge.Core.Data;
 
 namespace Edge.Services.Currencies
 {
@@ -21,6 +22,7 @@ namespace Edge.Services.Currencies
 		/*=========================*/
 
 		private SqlConnection _sqlConnection;
+		public MetricsImportManagerOptions Options { get; private set; }
 
 		/*=========================*/
 		#endregion
@@ -115,7 +117,7 @@ namespace Edge.Services.Currencies
 				{Tables.Currency.RateSymbol,currencyRate.Currency.Code},
 				{Tables.Currency.RateValue,currencyRate.RateValue},
 				{Tables.Currency.RateDate,currencyRate.RateDate},
-				{Tables.Currency.OutputID,currencyRate.Output.OutputID}
+				{Tables.Currency.OutputID,currencyRate.Output.OutputID.ToString("N")}
 			};
 
 
@@ -131,10 +133,16 @@ namespace Edge.Services.Currencies
 		/*=========================*/
 		#endregion
 
-		public CurrencyImportManager(long serviceInstanceID)
+		public CurrencyImportManager(long serviceInstanceID, MetricsImportManagerOptions options)
 			: base(serviceInstanceID)
 		{
-			
+			options = options ?? new MetricsImportManagerOptions();
+			options.StagingConnectionString = options.StagingConnectionString ?? AppSettings.GetConnectionString(this, Consts.ConnectionStrings.StagingDatabase);
+			options.SqlTransformCommand = options.SqlTransformCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlTransformCommand, throwException: false);
+			options.SqlStageCommand = options.SqlStageCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlStageCommand, throwException: false);
+			options.SqlRollbackCommand = options.SqlRollbackCommand ?? AppSettings.Get(this, Consts.AppSettings.SqlRollbackCommand, throwException: false);
+
+			this.Options = options;
 		}
 
 		protected override void OnTransform(Delivery delivery, int pass)
@@ -146,6 +154,100 @@ namespace Edge.Services.Currencies
 			throw new NotImplementedException();
 		}
 
+		SqlCommand _stageCommand = null;
+		SqlTransaction _stageTransaction = null;
+
+		protected override void OnCommit(Delivery delivery, int pass)
+		{
+			string tablePerfix = delivery.Parameters[Consts.DeliveryHistoryParameters.TablePerfix].ToString();
+			string deliveryId = delivery.DeliveryID.ToString("N");
+			
+			// ...........................
+			// COMMIT data to OLTP
+
+			_stageCommand = _stageCommand ?? DataManager.CreateCommand(Options.SqlStageCommand, CommandType.StoredProcedure);
+			_stageCommand.Connection = _sqlConnection;
+			_stageCommand.Transaction = _stageTransaction;
+
+			_stageCommand.Parameters["@DeliveryTablePrefix"].Size = 4000;
+			_stageCommand.Parameters["@DeliveryTablePrefix"].Value = tablePerfix;
+			_stageCommand.Parameters["@DeliveryID"].Size = 4000;
+			_stageCommand.Parameters["@DeliveryID"].Value = deliveryId;
+			
+			_stageCommand.Parameters["@OutputIDsPerSignature"].Size = 4000;
+			_stageCommand.Parameters["@OutputIDsPerSignature"].Direction = ParameterDirection.Output;
+
+			_stageCommand.Parameters["@CommitTableName"].Size = 4000;
+			_stageCommand.Parameters["@CommitTableName"].Direction = ParameterDirection.Output;
+
+			try
+			{
+				_stageCommand.ExecuteNonQuery();
+
+				string outPutsIDsPerSignature = _stageCommand.Parameters["@OutputIDsPerSignature"].Value.ToString();
+				delivery.Parameters["CommitTableName"] = _stageCommand.Parameters["@CommitTableName"].Value.ToString();
+
+				string[] existsOutPuts;
+				if ((!string.IsNullOrEmpty(outPutsIDsPerSignature) && outPutsIDsPerSignature != "0"))
+				{
+					_stageTransaction.Rollback();
+					existsOutPuts = outPutsIDsPerSignature.Split(',');
+					List<DeliveryOutput> outputs = new List<DeliveryOutput>();
+					foreach (string existOutput in existsOutPuts)
+					{
+						DeliveryOutput o = DeliveryOutput.Get(Guid.Parse(existOutput));
+						o.Parameters[Consts.DeliveryHistoryParameters.CommitTableName] = delivery.Parameters["CommitTableName"];
+						outputs.Add(o);
+
+					}
+					throw new DeliveryConflictException(string.Format("DeliveryOutputs with the same signature are already committed in the database\n Deliveries:\n {0}:", outPutsIDsPerSignature)) { ConflictingOutputs = outputs.ToArray() };
+				}
+				else
+					//already updated by sp, this is so we don't override it
+					foreach (var output in delivery.Outputs)
+					{
+						output.Status = DeliveryOutputStatus.Staged;
+					}
+
+			}
+			finally
+			{
+				this.State = DeliveryImportManagerState.Idle;
+
+			}
+
+
+
+		}
+
+		protected override void OnBeginCommit()
+		{
+			if (String.IsNullOrWhiteSpace(this.Options.SqlStageCommand))
+				throw new ConfigurationException("Options.SqlStageCommand is empty.");
+
+			_sqlConnection = NewDeliveryDbConnection();
+			_sqlConnection.Open();
+
+			_stageTransaction = _sqlConnection.BeginTransaction("Delivery Commiting");
+		}
+
+		protected override void OnEndCommit(Exception ex)
+		{
+			if (_stageTransaction != null)
+			{
+				if (ex == null)
+					_stageTransaction.Commit();
+				else
+					_stageTransaction.Rollback();
+			}
+			this.State = DeliveryImportManagerState.Idle;
+		}
+
+		protected override void OnDisposeCommit()
+		{
+			if (_stageTransaction != null)
+				_stageTransaction.Dispose();
+		}
 		
 	}
 
