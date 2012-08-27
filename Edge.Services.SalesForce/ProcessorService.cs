@@ -110,6 +110,8 @@ namespace Edge.Services.SalesForce
 											continue;
 
 										existingUnit.MeasureValues[m.Key] += m.Value;
+										currentOutput.Checksum[m.Key.Name] += m.Value;
+
 									}
 								}
 							}
