@@ -110,8 +110,18 @@ namespace Edge.Services.SalesForce
 											continue;
 
 										existingUnit.MeasureValues[m.Key] += m.Value;
-										currentOutput.Checksum[m.Key.Name] += m.Value;
+										
 
+									}
+								}
+								foreach (var m in tempUnit.MeasureValues)
+								{
+									if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
+									{
+										if (!currentOutput.Checksum.ContainsKey(m.Key.Name))
+											currentOutput.Checksum.Add(m.Key.Name, m.Value);
+										else
+											currentOutput.Checksum[m.Key.Name] += m.Value;
 									}
 								}
 							}
