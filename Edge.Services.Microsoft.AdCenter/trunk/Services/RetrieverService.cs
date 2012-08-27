@@ -115,6 +115,7 @@ namespace Edge.Services.Microsoft.AdCenter
                     WS.CampaignPerformanceReportColumn.CampaignId,
                     WS.CampaignPerformanceReportColumn.Status,
                     WS.CampaignPerformanceReportColumn.Clicks
+					
                 );
 
             if (string.IsNullOrEmpty(campaignReportFile.SourceUrl))
@@ -156,7 +157,9 @@ namespace Edge.Services.Microsoft.AdCenter
                     WS.KeywordPerformanceReportColumn.Clicks,
                     WS.KeywordPerformanceReportColumn.Spend,
                     WS.KeywordPerformanceReportColumn.AveragePosition,
-                    WS.KeywordPerformanceReportColumn.Conversions
+                    WS.KeywordPerformanceReportColumn.Conversions,
+					WS.KeywordPerformanceReportColumn.QualityScore
+					
                 );
 
             if (string.IsNullOrEmpty(keywordReportFile.SourceUrl))
