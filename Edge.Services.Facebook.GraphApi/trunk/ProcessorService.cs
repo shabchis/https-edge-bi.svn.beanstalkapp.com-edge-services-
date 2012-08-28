@@ -424,6 +424,18 @@ namespace Edge.Services.Facebook.GraphApi
 															ad.Creatives.Add(tc);
 														break;
 													}
+												default:
+													{
+														TextCreative unknown = new TextCreative()
+														{
+															OriginalID = adGroupCreativesReader.Current.creative_id,
+															TextType = TextCreativeType.Title,
+															Text = "UnKnown creative"
+
+														};
+														ad.Creatives.Add(unknown);
+														break;
+													}
 
 											}
 
