@@ -5,6 +5,7 @@ this is how you get the constant code (test for sandbox login for production) ru
 salesforce.you will get to url contains code="the code" get "the code"
 clientid=from sales force application>setup>develop>remote access>choose api application=Consumer Key
 redirecturi= "" redirecturi
+the code is the constantcode property of theservice
 
 
 
@@ -13,6 +14,7 @@ create new api
 Setup--->devlop---->remote access--->new
 1. apllication name
 2. redirecturi http://localhost:8080/RestTest/oauth/_callback
+3. contactemail.
 
 
 
