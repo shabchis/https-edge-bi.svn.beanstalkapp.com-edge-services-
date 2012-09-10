@@ -365,9 +365,12 @@ namespace Edge.Services.Facebook.GraphApi
 														{
 															OriginalID = adGroupCreativesReader.Current.creative_id,
 															TextType = TextCreativeType.Title,
-															Text = "Sponsored Story"
+															Text = "Sponsored Story",
+														
+															
 
 														};
+														ad.DestinationUrl = "Sponsored Story";
 														ad.Creatives.Add(sponserStory);
 														break;
 
@@ -381,6 +384,7 @@ namespace Edge.Services.Facebook.GraphApi
 															Text = "Page Ads for a Page post"
 
 														};
+														ad.DestinationUrl = "Page Ads for a Page post";
 														ad.Creatives.Add(sponserStory);
 														break;
 													}
@@ -433,6 +437,7 @@ namespace Edge.Services.Facebook.GraphApi
 															Text = "UnKnown creative"
 
 														};
+														ad.DestinationUrl = "UnKnown creative";
 														ad.Creatives.Add(unknown);
 														break;
 													}
