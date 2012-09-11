@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eggplant.Entities", "..\..\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.SDK.TestHost", "..\..\edge-sdk\Applications\Edge.SDK.TestHost\Edge.SDK.TestHost.csproj", "{BC56CE2C-4C01-4DC8-8707-9393ED301A6B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Applications.PM.Suite.Scheduler", "..\..\utilities\Edge.Applications.PM.Suite.Scheduler\trunk\Edge.Applications.PM.Suite.Scheduler.csproj", "{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebubNewScheduling|Any CPU = DebubNewScheduling|Any CPU
@@ -356,6 +358,36 @@ Global
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B}.Seperia|Mixed Platforms.Build.0 = Release|x86
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B}.Seperia|x86.ActiveCfg = Release|x86
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B}.Seperia|x86.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.DebubNewScheduling|Any CPU.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.DebubNewScheduling|Mixed Platforms.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.DebubNewScheduling|Mixed Platforms.Build.0 = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.DebubNewScheduling|x86.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.DebubNewScheduling|x86.Build.0 = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Debug|x86.ActiveCfg = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Debug|x86.Build.0 = Debug|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Edge|Any CPU.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Edge|Mixed Platforms.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Edge|Mixed Platforms.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Edge|x86.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Edge|x86.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Release|Any CPU.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Release|Mixed Platforms.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Release|x86.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Release|x86.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia.Facebook.UpdateCampaignStatus|x86.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia.Facebook.UpdateCampaignStatus|x86.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia|Any CPU.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia|Mixed Platforms.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia|Mixed Platforms.Build.0 = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia|x86.ActiveCfg = Release|x86
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}.Seperia|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -370,6 +402,7 @@ Global
 		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{747BA114-2B73-4498-98DB-89D7EFC01C46} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B} = {12816A6E-5B10-4679-A152-2F8F24694123}
+		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{F392CC5C-789E-4411-BFC2-8E590ED290B5} = {617814ED-0330-4691-A5E0-743A306EF99A}
 		{AD4B53AD-B28A-4E90-9483-E2F7C8E6D436} = {2E68164D-C79F-4B93-A615-33787CCCA33F}
 	EndGlobalSection
