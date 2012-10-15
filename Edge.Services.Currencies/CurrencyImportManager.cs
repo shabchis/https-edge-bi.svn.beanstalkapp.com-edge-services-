@@ -248,6 +248,65 @@ namespace Edge.Services.Currencies
 			if (_stageTransaction != null)
 				_stageTransaction.Dispose();
 		}
+
+		#region Rollback
+		/*=========================*/
+		SqlCommand _rollbackCommand = null;
+		SqlTransaction _rollbackTransaction = null;
+
+		protected override void OnRollbackOutput(DeliveryOutput output, int pass)
+		{
+			string guid = output.OutputID.ToString("N");
+
+			_rollbackCommand = _rollbackCommand ?? DataManager.CreateCommand(this.Options.SqlRollbackCommand, CommandType.StoredProcedure);
+			_rollbackCommand.Connection = _sqlConnection;
+			_rollbackCommand.Transaction = _rollbackTransaction;
+
+			_rollbackCommand.Parameters["@DeliveryOutputID"].Value = guid;
+			_rollbackCommand.Parameters["@TableName"].Value = output.Parameters[Consts.DeliveryHistoryParameters.CommitTableName];
+
+			_rollbackCommand.ExecuteNonQuery();
+
+
+			// This is redundant (SP already does this) but to sync our objects in memory we do it here also
+			output.Status = DeliveryOutputStatus.RolledBack;
+
+		}
+
+		protected override void OnRollbackDelivery(Delivery delivery, int pass)
+		{
+			string guid = delivery.DeliveryID.ToString("N");
+
+			_rollbackCommand = _rollbackCommand ?? DataManager.CreateCommand(this.Options.SqlRollbackCommand, CommandType.StoredProcedure);
+			_rollbackCommand.Connection = _sqlConnection;
+			_rollbackCommand.Transaction = _rollbackTransaction;
+
+			_rollbackCommand.Parameters["@DeliveryID"].Value = guid;
+			_rollbackCommand.Parameters["@TableName"].Value = this.CurrentDelivery.Parameters[Consts.DeliveryHistoryParameters.CommitTableName];
+
+			_rollbackCommand.ExecuteNonQuery();
+
+			// This is redundant (SP already does this) but to sync our objects in memory we do it here also
+			foreach (DeliveryOutput output in delivery.Outputs)
+				output.Status = DeliveryOutputStatus.RolledBack;
+		}
+
+		protected override void OnEndRollback(Exception ex)
+		{
+			if (ex == null)
+				_rollbackTransaction.Commit();
+			else
+				_rollbackTransaction.Rollback();
+		}
+
+		protected override void OnDisposeRollback()
+		{
+			if (_rollbackTransaction != null)
+				_rollbackTransaction.Dispose();
+		}
+
+		/*=========================*/
+		#endregion
 		
 	}
 
