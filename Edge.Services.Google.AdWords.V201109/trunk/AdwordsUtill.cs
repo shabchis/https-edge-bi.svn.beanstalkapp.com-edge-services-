@@ -61,13 +61,31 @@ namespace Edge.Services.Google.AdWords
 
 			if (selector.fields.Contains("Impressions"))
 			{
-				//Setting Imps Fillter
+				//Set Imps Fillter
 				GA.v201109.Predicate impPredicate = new GA.v201109.Predicate();
 				impPredicate.field = "Impressions";
-				impPredicate.@operator = GA.v201109.PredicateOperator.GREATER_THAN;
+				impPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
 				impPredicate.values = new string[] { "0" };
-				selector.predicates = new GA.v201109.Predicate[] { impPredicate };
 				/*----------------------------------------------------------------*/
+
+				//Set clicks Fillter
+				GA.v201109.Predicate clicksPredicate = new GA.v201109.Predicate();
+				clicksPredicate.field = "Clicks";
+				clicksPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
+				clicksPredicate.values = new string[] { "0" };
+				
+				/*----------------------------------------------------------------*/
+
+				//Set clicks Fillter
+				GA.v201109.Predicate costPredicate = new GA.v201109.Predicate();
+				costPredicate.field = "Cost";
+				costPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
+				costPredicate.values = new string[] { "0" };
+
+				/*----------------------------------------------------------------*/
+
+				selector.predicates = new GA.v201109.Predicate[] { impPredicate, clicksPredicate };
+
 			}
 			return selector;
 
