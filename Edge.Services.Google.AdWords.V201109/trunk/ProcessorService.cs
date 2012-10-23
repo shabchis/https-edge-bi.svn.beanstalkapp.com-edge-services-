@@ -323,7 +323,8 @@ namespace Edge.Services.Google.AdWords
 							{
 								Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
 								Value = _adsReader.Current[Const.AdGroupFieldName],
-								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName]
+								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName],
+								Status = ObjectStatusDic[((string)_adsReader.Current[Const.AdGroupStatus]).ToUpper()]
 							};
 
 							//Insert Network Type Display Network / Search Network
@@ -460,6 +461,7 @@ namespace Edge.Services.Google.AdWords
 
 		public const string AdGroupIdFieldName = "Ad group ID";
 		public const string AdGroupFieldName = "Ad group";
+		public const string AdGroupStatus = "Ad group state";
 
 		public const string CampaignIdFieldName = "Campaign ID";
 		public const string CampaignFieldName = "Campaign";
