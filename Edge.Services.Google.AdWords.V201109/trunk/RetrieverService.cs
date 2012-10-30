@@ -5,7 +5,7 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using System.Net;
-using Google.Api.Ads.AdWords.v201109;
+using Google.Api.Ads.AdWords.v201209;
 using Google.Api.Ads.AdWords.Util;
 using System.Threading;
 using Edge.Core.Utilities;
@@ -76,7 +76,7 @@ namespace Edge.Services.Google.AdWords
 				foreach (DeliveryFile file in files)
 				{
 						//Creating Report Definition
-						ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate);
+					ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate, Convert.ToBoolean(this.Delivery.Parameters["includeZeroImpression"]));
 
 						//Getting AuthToken
 						(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user);

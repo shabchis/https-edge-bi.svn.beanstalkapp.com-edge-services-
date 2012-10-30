@@ -8,11 +8,12 @@ using System.Web;
 using Google.Api.Ads.Common.Util;
 using System.Xml;
 using Google.Api.Ads.Common.Lib;
-using Google.Api.Ads.AdWords.v201109;
+using Google.Api.Ads.AdWords.v201209;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
 using Edge.Core.Utilities;
+using Edge.Data.Objects;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -22,76 +23,163 @@ namespace Edge.Services.Google.AdWords
 	{
 
 
-		public const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201109";
+		public const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201209";
 
-		public static GA.v201109.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate)
+		public static GA.v201209.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate, bool filterOnImps = false)
 		{
 			//Create ReportDefintion
-			GA.v201109.ReportDefinition definition = new GA.v201109.ReportDefinition();
+			GA.v201209.ReportDefinition definition = new GA.v201209.ReportDefinition();
 
-			if (Enum.IsDefined(typeof(GA.v201109.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString()))
-				definition.reportType = (GA.v201109.ReportDefinitionReportType)Enum.Parse(typeof(GA.v201109.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString(), true);
+			if (Enum.IsDefined(typeof(GA.v201209.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString()))
+				definition.reportType = (GA.v201209.ReportDefinitionReportType)Enum.Parse(typeof(GA.v201209.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString(), true);
 
 			definition.reportName = deliveryFile.Name;
-			definition.downloadFormat = GA.v201109.DownloadFormat.GZIPPED_CSV;
-			definition.dateRangeType = GA.v201109.ReportDefinitionDateRangeType.CUSTOM_DATE;
+			definition.downloadFormat = GA.v201209.DownloadFormat.GZIPPED_CSV;
+			definition.dateRangeType = GA.v201209.ReportDefinitionDateRangeType.CUSTOM_DATE;
 
 			// Create the selector.
 			/*----------------------------------------------------------------*/
-			GA.v201109.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString());
+			GA.v201209.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString(), filterOnImps);
 
 
 			definition.selector = selector;
 			return definition;
 		}
 
-		public static GA.v201109.Selector GetNewSelector(string startDate, string endDate, GA.v201109.ReportDefinitionReportType reportType, string reportFieldsType)
+		public static GA.v201209.Selector GetNewSelector(string startDate, string endDate, GA.v201209.ReportDefinitionReportType reportType, string reportFieldsType,bool filterOnImps)
 		{
-			GA.v201109.Selector selector = new GA.v201109.Selector();
+			GA.v201209.Selector selector = new GA.v201209.Selector();
 
 			//Setting report fields
 			selector.fields = GoogleStaticReportFields.ReportNames[reportType][reportFieldsType];
 
 			//Setting Date Range
-			selector.dateRange = new GA.v201109.DateRange
+			selector.dateRange = new GA.v201209.DateRange
 			{
 				min = startDate,
 				max = endDate
 			};
+			#region predicates
+			/****************************************************************/
+			List<Predicate> predicate = new List<Predicate>();
 
-			if (selector.fields.Contains("Impressions"))
+			List<string> deletedCampaigns = GetDeletedCampaigns();
+			if (deletedCampaigns.Count > 0)
+			{
+				//Set deleted campigns filter
+				GA.v201209.Predicate camPredicate = new GA.v201209.Predicate();
+				camPredicate.field = "CampaignId";
+				camPredicate.@operator = GA.v201209.PredicateOperator.NOT_IN;
+				camPredicate.values = deletedCampaigns.ToArray<string>();
+				predicate.Add(camPredicate);
+			}
+
+
+			if (filterOnImps && selector.fields.Contains("Impressions"))
 			{
 				//Set Imps Fillter
-				GA.v201109.Predicate impPredicate = new GA.v201109.Predicate();
+				GA.v201209.Predicate impPredicate = new GA.v201209.Predicate();
 				impPredicate.field = "Impressions";
-				impPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
+				impPredicate.@operator = GA.v201209.PredicateOperator.GREATER_THAN;
 				impPredicate.values = new string[] { "0" };
 				/*----------------------------------------------------------------*/
 
 				//Set clicks Fillter
-				GA.v201109.Predicate clicksPredicate = new GA.v201109.Predicate();
-				clicksPredicate.field = "Clicks";
-				clicksPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
-				clicksPredicate.values = new string[] { "0" };
-				
+				//GA.v201209.Predicate clicksPredicate = new GA.v201209.Predicate();
+				//clicksPredicate.field = "Clicks";
+				//clicksPredicate.@operator = GA.v201209.PredicateOperator.NOT_EQUALS;
+				//clicksPredicate.values = new string[] { "0" };
+
+				///*----------------------------------------------------------------*/
+
+				////Set clicks Fillter
+				//GA.v201209.Predicate costPredicate = new GA.v201209.Predicate();
+				//costPredicate.field = "Cost";
+				//costPredicate.@operator = GA.v201209.PredicateOperator.NOT_EQUALS;
+				//costPredicate.values = new string[] { "0" };
+
 				/*----------------------------------------------------------------*/
 
-				//Set clicks Fillter
-				GA.v201109.Predicate costPredicate = new GA.v201109.Predicate();
-				costPredicate.field = "Cost";
-				costPredicate.@operator = GA.v201109.PredicateOperator.NOT_EQUALS;
-				costPredicate.values = new string[] { "0" };
-
-				/*----------------------------------------------------------------*/
-
-				selector.predicates = new GA.v201109.Predicate[] { impPredicate, clicksPredicate };
+				predicate.Add(impPredicate);
 
 			}
+			selector.predicates = predicate.ToArray<Predicate>();
+			/****************************************************************/
+
+			#endregion
+			
+
 			return selector;
 
 		}
 
-		public static string ConvertDefinitionToXml(GA.v201109.ReportDefinition definition)
+		public static List<string> GetDeletedCampaigns()
+		{
+			List<string> deletedCampaigns = new List<string>();
+
+			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "systemDB"));
+
+			try
+			{
+				using (connection)
+				{
+					string cmdTxt = " SELECT [campaignid] from [dbo].[UserProcess_GUI_PaidCampaign] WHERE [campStatus] = @status";
+					SqlCommand cmd = new SqlCommand(cmdTxt);
+					cmd.Connection = connection;
+					connection.Open();
+					SqlParameter status = new SqlParameter("@status", Convert.ToInt32(ObjectStatus.Deleted));
+					cmd.Parameters.Add(status);
+
+					using (SqlDataReader reader = cmd.ExecuteReader())
+					{
+						while (reader.Read())
+						{
+							deletedCampaigns.Add(reader[0].ToString());
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("Error while trying to get deleted campigns from table UserProcess_GUI_PaidCampaign", ex);
+			}
+
+			return deletedCampaigns;
+		}
+
+		public static List<string> GetDeletedAdgroups()
+		{
+			List<string> deletedAdgroups = new List<string>();
+
+			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "systemDB"));
+
+			try
+			{
+				using (connection)
+				{
+					string cmdTxt = "SELECT [adgroupID] from [dbo].[UserProcess_GUI_PaidAdGroup] WHERE [agStatus] = @status";
+					SqlCommand cmd = DataManager.CreateCommand(cmdTxt);
+					cmd.Connection = connection;
+					connection.Open();
+					cmd.Parameters["@status"].Value = ObjectStatus.Deleted.ToString();
+
+					using (SqlDataReader reader = cmd.ExecuteReader())
+					{
+						while (reader.Read())
+						{
+							deletedAdgroups.Add(reader[0].ToString());
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("Error while trying to deleted campigns from table UserProcess_GUI_PaidCampaign", ex);
+			}
+			return deletedAdgroups;
+		}
+
+		public static string ConvertDefinitionToXml(GA.v201209.ReportDefinition definition)
 		{
 			string xml = SerializationUtilities.SerializeAsXmlText(definition).Replace(
 				"ReportDefinition", "reportDefinition");
@@ -116,7 +204,7 @@ namespace Edge.Services.Google.AdWords
 			//Set User Password
 			(user.Config as GA.Lib.AdWordsAppConfig).Password = pass;
 
-			if (generateNew) 
+			if (generateNew)
 				auth = GetAuthFromApi(user);
 
 			return string.IsNullOrEmpty(auth) ? GetAuthFromApi(user) : auth;
@@ -207,26 +295,25 @@ namespace Edge.Services.Google.AdWords
 
 	public static class GoogleStaticReportsNamesUtill
 	{
-		public static Dictionary<GA.v201109.ReportDefinitionReportType, string> _reportNames = new Dictionary<GA.v201109.ReportDefinitionReportType, string>()
+		public static Dictionary<GA.v201209.ReportDefinitionReportType, string> _reportNames = new Dictionary<GA.v201209.ReportDefinitionReportType, string>()
 		{
-			{GA.v201109.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT, "KEYWORDS_PERF"},
-			{GA.v201109.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, "AD_PERF"},
-			{GA.v201109.ReportDefinitionReportType.URL_PERFORMANCE_REPORT, "URL_PERF"},
-			{GA.v201109.ReportDefinitionReportType.ADGROUP_PERFORMANCE_REPORT, "ADGROUP_PERF"},
-			{GA.v201109.ReportDefinitionReportType.CAMPAIGN_PERFORMANCE_REPORT, "CAMPAIGN_PERF"},
-			{GA.v201109.ReportDefinitionReportType.ACCOUNT_PERFORMANCE_REPORT, "ACCOUNT_PERF"},
-			{GA.v201109.ReportDefinitionReportType.DEMOGRAPHIC_PERFORMANCE_REPORT, "DEMOGRAPHIC_PERF"},
-			{GA.v201109.ReportDefinitionReportType.GEO_PERFORMANCE_REPORT, "GEO_PERF"},
-			{GA.v201109.ReportDefinitionReportType.SEARCH_QUERY_PERFORMANCE_REPORT, "SEARCH_QUERY_PERF"},
-			{GA.v201109.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT, "MANAGED_PLAC_PERF"},
-			{GA.v201109.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT, "AUTOMATIC_PLAC_PERF"},
-			{GA.v201109.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_KEYWORDS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_KEYWORDS_PERF"},
-			{GA.v201109.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_PLACEMENTS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_PLACEMENTS_PERF"},
-			{GA.v201109.ReportDefinitionReportType.AD_EXTENSIONS_PERFORMANCE_REPORT, "AD_EXTENSIONS_PERF"},
-			{GA.v201109.ReportDefinitionReportType.DESTINATION_URL_REPORT, "DEST_URL_REP"},
-			{GA.v201109.ReportDefinitionReportType.CREATIVE_CONVERSION_REPORT, "CREATIVE_CONV_REP"},
-			{GA.v201109.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
-			{GA.v201109.ReportDefinitionReportType.UNKNOWN, ""}
+			{GA.v201209.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT, "KEYWORDS_PERF"},
+			{GA.v201209.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, "AD_PERF"},
+			{GA.v201209.ReportDefinitionReportType.URL_PERFORMANCE_REPORT, "URL_PERF"},
+			{GA.v201209.ReportDefinitionReportType.ADGROUP_PERFORMANCE_REPORT, "ADGROUP_PERF"},
+			{GA.v201209.ReportDefinitionReportType.CAMPAIGN_PERFORMANCE_REPORT, "CAMPAIGN_PERF"},
+			{GA.v201209.ReportDefinitionReportType.ACCOUNT_PERFORMANCE_REPORT, "ACCOUNT_PERF"},
+			{GA.v201209.ReportDefinitionReportType.GEO_PERFORMANCE_REPORT, "GEO_PERF"},
+			{GA.v201209.ReportDefinitionReportType.SEARCH_QUERY_PERFORMANCE_REPORT, "SEARCH_QUERY_PERF"},
+			{GA.v201209.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT, "MANAGED_PLAC_PERF"},
+			{GA.v201209.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT, "AUTOMATIC_PLAC_PERF"},
+			{GA.v201209.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_KEYWORDS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_KEYWORDS_PERF"},
+			{GA.v201209.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_PLACEMENTS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_PLACEMENTS_PERF"},
+			{GA.v201209.ReportDefinitionReportType.AD_EXTENSIONS_PERFORMANCE_REPORT, "AD_EXTENSIONS_PERF"},
+			{GA.v201209.ReportDefinitionReportType.DESTINATION_URL_REPORT, "DEST_URL_REP"},
+			{GA.v201209.ReportDefinitionReportType.CREATIVE_CONVERSION_REPORT, "CREATIVE_CONV_REP"},
+			{GA.v201209.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
+			{GA.v201209.ReportDefinitionReportType.UNKNOWN, ""}
 		};
 
 	}
@@ -251,6 +338,10 @@ namespace Edge.Services.Google.AdWords
 		                                                   "AdNetworkType1"
 		                                               };
 
+		//static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
+		//                                                   "Status"
+		//                                               };
+
 		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
 
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
@@ -263,31 +354,31 @@ namespace Edge.Services.Google.AdWords
 		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "CampaignId","CampaignName","CampaignStatus", "AdGroupId","AdGroupName","Clicks", "Cost", "Impressions",
 																			 "Domain","ConversionsManyPerClick","Conversions"
 																		 };
-		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = {"ConversionsManyPerClick", "ConversionCategoryName" };
-		static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id","CriteriaDestinationUrl","ConversionsManyPerClick", "ConversionCategoryName" };
-																		 
+		static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "ConversionsManyPerClick", "ConversionCategoryName" };
+		static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id", "CriteriaDestinationUrl", "ConversionsManyPerClick", "ConversionCategoryName" };
+
 
 
 		#endregion Reports fields
 
-		public static Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201109.ReportDefinitionReportType, Dictionary<string, string[]>>()
+		public static Dictionary<GA.v201209.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201209.ReportDefinitionReportType, Dictionary<string, string[]>>()
 		{
-			{GA.v201109.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
+			{GA.v201209.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS}}
 			},
-			{GA.v201109.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
+			{GA.v201209.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AD_PERFORMANCE_REPORT_FIELDS} , 
 													{ReportDefinitionReportFieldsType.CONVERSION,AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION}}
 			},
-			{GA.v201109.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT, 
+			{GA.v201209.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS}}
 			},
-			{GA.v201109.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
+			{GA.v201209.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
 				}
 			},
-			{GA.v201109.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
+			{GA.v201209.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
 				}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using GA = Google.Api.Ads.AdWords.v201109;
+using GA = Google.Api.Ads.AdWords.v201209;
 using Edge.Data.Pipeline.Metrics;
 using System.Linq;
 using System.IO;
@@ -144,6 +144,7 @@ namespace Edge.Services.Google.AdWords
 						{
 							Placement = _autoPlacReader.Current[Const.DomainFieldName],
 							PlacementType = PlacementType.Automatic
+							// Add status !!!
 						};
 						autoPlacMetricsUnit.TargetDimensions.Add(placement);
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using GA = Google.Api.Ads.AdWords.v201109;
+using GA = Google.Api.Ads.AdWords.v201209;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
@@ -57,7 +57,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				{"PAUSED",ObjectStatus.Paused},
 				{"DELETED",ObjectStatus.Deleted},
-				{"ACTIVE",ObjectStatus.Active}
+				{"ACTIVE",ObjectStatus.Active},
+				{"ENABLED",ObjectStatus.Active}
 			};
 		}
 

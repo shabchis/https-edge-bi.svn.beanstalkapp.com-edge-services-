@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Edge.Services.Google.AdWords</RootNamespace>
-    <AssemblyName>Edge.Services.Google.AdWords.V201109</AssemblyName>
+    <AssemblyName>Edge.Services.Google.AdWords.V201209</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -34,8 +34,11 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.AdWords.V201109">
-      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.AdWords.V201109.dll</HintPath>
+    <Reference Include="Google.Ads.Common">
+      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.Ads.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Google.AdWords.V201209">
+      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.AdWords.V201209.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\thirdparty\Json.net\Newtonsoft.Json.dll</HintPath>
@@ -81,10 +84,6 @@
     <ProjectReference Include="..\..\..\edge-framework\Edge.Data.Pipeline\trunk\Edge.Data.Pipeline.csproj">
       <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
       <Name>Edge.Data.Pipeline</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Edge.Services.TargetingMetrics\Edge.Services.TargetingMetrics.csproj">
-      <Project>{30163455-B1DC-4B1E-9B22-96E37ADE15B9}</Project>
-      <Name>Edge.Services.TargetingMetrics</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

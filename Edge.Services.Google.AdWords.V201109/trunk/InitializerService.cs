@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using GA = Google.Api.Ads.AdWords.v201109;
+using GA = Google.Api.Ads.AdWords.v201209;
 using Edge.Core.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
 using Edge.Core.Configuration;
-using Google.Api.Ads.AdWords.v201109;
+using Google.Api.Ads.AdWords.v201209;
 using Google.Api.Ads.AdWords.Lib;
 using Google.Api.Ads.AdWords.Util.Reports;
 using Edge.Data.Pipeline.Common.Importing;
@@ -22,6 +22,8 @@ namespace Edge.Services.Google.AdWords
 		{
 			this.Delivery = this.NewDelivery(); // setup delivery
 
+
+			
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
 				throw new Exception("Missing Configuration Param , KeywordContentId");
 
