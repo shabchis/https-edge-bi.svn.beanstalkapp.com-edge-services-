@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Edge.Services.Google.AdWords</RootNamespace>
-    <AssemblyName>Edge.Services.Google.AdWords.V201209</AssemblyName>
+    <AssemblyName>Edge.Services.Google.AdWords</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
