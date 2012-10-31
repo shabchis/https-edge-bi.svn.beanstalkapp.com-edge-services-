@@ -76,7 +76,7 @@ namespace Edge.Services.Google.AdWords
 				foreach (DeliveryFile file in files)
 				{
 						//Creating Report Definition
-					ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate, Convert.ToBoolean(this.Delivery.Parameters["includeZeroImpression"]));
+					ReportDefinition definition = AdwordsUtill.CreateNewReportDefinition(file as DeliveryFile, startDate, endDate, Convert.ToBoolean(this.Delivery.Parameters["includeZeroImpression"]), Convert.ToBoolean(this.Delivery.Parameters["FilterDeleted"]));
 
 						//Getting AuthToken
 						(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user);

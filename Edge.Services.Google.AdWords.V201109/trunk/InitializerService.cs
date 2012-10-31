@@ -23,7 +23,11 @@ namespace Edge.Services.Google.AdWords
 			this.Delivery = this.NewDelivery(); // setup delivery
 
 
-			
+			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["FilterDeleted"]))
+				throw new Exception("Missing Configuration Param , FilterDeleted");
+			this.Delivery.Parameters["FilterDeleted"] = this.Instance.Configuration.Options["FilterDeleted"];
+
+
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
 				throw new Exception("Missing Configuration Param , KeywordContentId");
 

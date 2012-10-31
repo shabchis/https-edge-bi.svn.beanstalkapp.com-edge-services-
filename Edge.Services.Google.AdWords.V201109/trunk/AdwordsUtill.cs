@@ -25,7 +25,7 @@ namespace Edge.Services.Google.AdWords
 
 		public const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201209";
 
-		public static GA.v201209.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate, bool filterOnImps = false)
+		public static GA.v201209.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate, bool filterOnImps = false, bool filterDeleted = false)
 		{
 			//Create ReportDefintion
 			GA.v201209.ReportDefinition definition = new GA.v201209.ReportDefinition();
@@ -39,14 +39,14 @@ namespace Edge.Services.Google.AdWords
 
 			// Create the selector.
 			/*----------------------------------------------------------------*/
-			GA.v201209.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString(), filterOnImps);
+			GA.v201209.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString(), filterOnImps, filterDeleted);
 
 
 			definition.selector = selector;
 			return definition;
 		}
 
-		public static GA.v201209.Selector GetNewSelector(string startDate, string endDate, GA.v201209.ReportDefinitionReportType reportType, string reportFieldsType,bool filterOnImps)
+		public static GA.v201209.Selector GetNewSelector(string startDate, string endDate, GA.v201209.ReportDefinitionReportType reportType, string reportFieldsType,bool filterOnImps, bool filterDeleted)
 		{
 			GA.v201209.Selector selector = new GA.v201209.Selector();
 
@@ -63,17 +63,32 @@ namespace Edge.Services.Google.AdWords
 			/****************************************************************/
 			List<Predicate> predicate = new List<Predicate>();
 
-			List<string> deletedCampaigns = GetDeletedCampaigns();
-			if (deletedCampaigns.Count > 0)
+			if (filterDeleted)
 			{
 				//Set deleted campigns filter
-				GA.v201209.Predicate camPredicate = new GA.v201209.Predicate();
-				camPredicate.field = "CampaignId";
-				camPredicate.@operator = GA.v201209.PredicateOperator.NOT_IN;
-				camPredicate.values = deletedCampaigns.ToArray<string>();
-				predicate.Add(camPredicate);
-			}
+				List<string> deletedCampaigns = GetDeletedCampaigns();
+				if (deletedCampaigns.Count > 0)
+				{
+					GA.v201209.Predicate camPredicate = new GA.v201209.Predicate();
+					camPredicate.field = "CampaignId";
+					camPredicate.@operator = GA.v201209.PredicateOperator.NOT_IN;
+					camPredicate.values = deletedCampaigns.ToArray<string>();
+					predicate.Add(camPredicate);
+				}
 
+				//Set deleted adgroups filter
+				List<string> deletedAdgroup = GetDeletedAdgroups();
+				if (deletedAdgroup.Count > 0)
+				{
+					//Set deleted campigns filter
+					GA.v201209.Predicate AgPredicate = new GA.v201209.Predicate();
+					AgPredicate.field = "AdgroupId";
+					AgPredicate.@operator = GA.v201209.PredicateOperator.NOT_IN;
+					AgPredicate.values = deletedCampaigns.ToArray<string>();
+					predicate.Add(AgPredicate);
+				}
+			}
+			
 
 			if (filterOnImps && selector.fields.Contains("Impressions"))
 			{
