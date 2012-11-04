@@ -82,7 +82,7 @@ namespace Edge.Services.Google.AdWords
 				{
 					//Set deleted campigns filter
 					GA.v201209.Predicate AgPredicate = new GA.v201209.Predicate();
-					AgPredicate.field = "AdgroupId";
+					AgPredicate.field = "AdGroupId";
 					AgPredicate.@operator = GA.v201209.PredicateOperator.NOT_IN;
 					AgPredicate.values = deletedCampaigns.ToArray<string>();
 					predicate.Add(AgPredicate);
