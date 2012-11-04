@@ -176,6 +176,9 @@ namespace Edge.Services.Google.AdWords
 					SqlCommand cmd = DataManager.CreateCommand(cmdTxt);
 					cmd.Connection = connection;
 					connection.Open();
+					SqlParameter status = new SqlParameter("@status", Convert.ToInt32(ObjectStatus.Deleted));
+					cmd.Parameters.Add(status);
+
 					cmd.Parameters["@status"].Value = ObjectStatus.Deleted.ToString();
 
 					using (SqlDataReader reader = cmd.ExecuteReader())
@@ -189,7 +192,7 @@ namespace Edge.Services.Google.AdWords
 			}
 			catch (Exception ex)
 			{
-				throw new Exception("Error while trying to deleted campigns from table UserProcess_GUI_PaidCampaign", ex);
+				throw new Exception("Error while trying to get deleted Adgroups from table UserProcess_GUI_PaidAdGroup", ex);
 			}
 			return deletedAdgroups;
 		}
