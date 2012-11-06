@@ -51,7 +51,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				this.TimePeriod.ToAbsolute()
 				)),
 
-				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerID"] },
+				Account = new Data.Objects.Account() { ID = this.Instance.AccountID, OriginalID = this.Instance.Configuration.Options["AdCenter.CustomerAccountID"] },
 				Channel = new Data.Objects.Channel() { ID = 14 },
 				TimePeriodStart = Delivery.TimePeriodStart,
 				TimePeriodEnd = Delivery.TimePeriodEnd
