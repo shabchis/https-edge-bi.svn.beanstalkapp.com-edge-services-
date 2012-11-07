@@ -96,15 +96,34 @@ namespace Edge.Services.AdMetrics.Validations
 
 			string admobConnection = this.Instance.Configuration.Options["AdmobConnection"];
 			AdomdConnection conn = new AdomdConnection(admobConnection);
+			StringBuilder mdxBuilder = new StringBuilder();
 			try
 			{
-				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
-				StringBuilder mdxBuilder = new StringBuilder();
+				string cubeName = string.Empty;
+				bool isGDN = false;
+
+				if (!String.IsNullOrEmpty(this.Instance.Configuration.Options["GDNCubeName"]))
+					cubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+				else 
+				{
+					cubeName = this.Instance.Configuration.Options["ContentCubeName"];
+				}
+
 				mdxBuilder.Append("SELECT {{ ");
 				foreach (var measure in measures)
 				{
 					if (measure.Value.Options.HasFlag(Edgeobjects.MeasureOptions.ValidationRequired))
-						mdxBuilder.AppendFormat("[Measures].[{0}],", measure.Value.DisplayName);
+					{
+						string cubeMeasureName = string.Empty;
+						
+						//checking for GDN cube 
+						if (isGDN)
+							cubeMeasureName = string.Format("Content {0}", measure.Value.DisplayName);
+						else
+							cubeMeasureName = measure.Value.DisplayName;
+
+						mdxBuilder.AppendFormat("[Measures].[{0}],", cubeMeasureName);
+					}
 
 				}
 				mdxBuilder.Remove(mdxBuilder.Length - 1, 1); //remove the last ','
@@ -119,7 +138,7 @@ namespace Edge.Services.AdMetrics.Validations
                                 ([Channels Dim].[Channels].[Channel].&[{2}]
                                 ,[Time Dim].[Time Dim].[Day].&[{3}]
                                 ) 
-                                ", account.ID, CubeName, channel.ID, Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
+                                ", account.ID, cubeName, channel.ID, Convert.ToDateTime(Params["Date"]).ToString("yyyyMMdd"));
 				conn.Open();
 				AdomdCommand mdxCmd = new AdomdCommand(mdxBuilder.ToString(), conn);
 				using (AdomdDataReader mdxReader = mdxCmd.ExecuteReader(CommandBehavior.CloseConnection))
@@ -148,20 +167,17 @@ namespace Edge.Services.AdMetrics.Validations
 								mdxTotals.Add(measure.Value.Name, 0);
 							}
 						}
-						
-					}
-					
-				}
-				
-			
 
+					}
+
+				}
 
 				return IsEqual(Params, oltpTotals, mdxTotals, "Oltp", "Mdx");
 
 			}
 			catch (Exception e)
 			{
-				Log.Write("exception", e, LogMessageType.Error);
+				Log.Write(string.Format("exception while runing MDX - {0} ", mdxBuilder.ToString()), e, LogMessageType.Error);
 				return new ValidationResult()
 				{
 					ResultType = ValidationResultType.Error,
