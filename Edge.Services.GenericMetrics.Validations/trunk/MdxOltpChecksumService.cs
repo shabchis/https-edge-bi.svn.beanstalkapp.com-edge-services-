@@ -104,7 +104,7 @@ namespace Edge.Services.GenericMetrics.Validations
 			conn.Open();
 
 				//Getting CubeName from Database
-				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+				string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]),false);
 				//Creating MDX
 				StringBuilder measuresPlaceHolder = new StringBuilder();
 				measuresPlaceHolder.Append("Select {{");
