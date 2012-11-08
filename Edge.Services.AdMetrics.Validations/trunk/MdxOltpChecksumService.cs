@@ -101,14 +101,11 @@ namespace Edge.Services.AdMetrics.Validations
 			{
 				string cubeName = string.Empty;
 				bool isGDN = false;
-
 				if (!String.IsNullOrEmpty(this.Instance.Configuration.Options["GDNCubeName"]))
-					cubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
-				else 
-				{
-					cubeName = this.Instance.Configuration.Options["ContentCubeName"];
-				}
-
+					isGDN = Convert.ToBoolean(this.Instance.Configuration.Options["GDNCubeName"]);
+			
+				cubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]),isGDN);
+				
 				mdxBuilder.Append("SELECT {{ ");
 				foreach (var measure in measures)
 				{

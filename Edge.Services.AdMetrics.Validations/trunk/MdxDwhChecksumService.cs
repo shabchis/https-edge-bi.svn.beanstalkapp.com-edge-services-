@@ -76,7 +76,7 @@ namespace Edge.Services.AdMetrics.Validations
                 conn.Open();
 
                 //TO DO : Get Cube Name from DB
-                string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]));
+                string CubeName = GetCubeName(Convert.ToInt32(Params["AccountID"]),false);
 
                 string mdxCommandText = String.Format(@"Select
                                 {{ [Measures].[Impressions],[Measures].[Clicks],[Measures].[Cost]}} On Columns , 
