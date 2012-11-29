@@ -54,7 +54,7 @@ namespace Edge.Services.AdMetrics.Validations
 			{
 				sqlCon.Open();
 				SqlCommand sqlCommand = DataManager.CreateCommand(
-					"SELECT [InstanceID] FROM [dbo].[ServiceInstance] where [ParentInstanceID] = @ParentInstanceID and [InstanceID] != @InstanceId ");
+					"SELECT [InstanceID] FROM [dbo].[ServiceInstance] where [ParentInstanceID] = @ParentInstanceID:int and [InstanceID] != @InstanceId:int ");
 
 				sqlCommand.Parameters["@ParentInstanceID"].Value = parentInstaceId;
 				sqlCommand.Parameters["@InstanceId"].Value = currentInstanceId;
