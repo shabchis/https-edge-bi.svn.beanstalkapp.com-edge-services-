@@ -8,6 +8,7 @@ using Edge.Core.Configuration;
 using Edge.Data.Pipeline.Services;
 using Newtonsoft.Json;
 using Edge.Core.Utilities;
+using Edge.Core.Data;
 
 namespace Edge.Services.AdMetrics.Validations
 {
@@ -52,11 +53,14 @@ namespace Edge.Services.AdMetrics.Validations
 			using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString("Edge.Core.Services", "SystemDatabase")))
 			{
 				sqlCon.Open();
-				SqlCommand sqlCommand = new SqlCommand(
+				SqlCommand sqlCommand = DataManager.CreateCommand(
 					"SELECT [InstanceID] FROM [dbo].[ServiceInstance] where [ParentInstanceID] = @ParentInstanceID and [InstanceID] != @InstanceId ");
 
-				sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ParentInstanceID", Value = parentInstaceId, SqlDbType = System.Data.SqlDbType.BigInt });
-				sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@InstanceId", Value = currentInstanceId, SqlDbType = System.Data.SqlDbType.BigInt });
+				sqlCommand.Parameters["@ParentInstanceID"].Value = parentInstaceId;
+				sqlCommand.Parameters["@InstanceId"].Value = currentInstanceId;
+
+				//sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ParentInstanceID", Value = parentInstaceId, SqlDbType = System.Data.SqlDbType.BigInt });
+				//sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@InstanceId", Value = currentInstanceId, SqlDbType = System.Data.SqlDbType.BigInt });
 				sqlCommand.Connection = sqlCon;
 
 				using (var _reader = sqlCommand.ExecuteReader())
