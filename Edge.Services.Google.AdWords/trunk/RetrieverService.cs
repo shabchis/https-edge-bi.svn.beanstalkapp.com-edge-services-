@@ -17,6 +17,7 @@ using Edge.Core.Configuration;
 using Google.Api.Ads.Common.Util;
 using System.Web;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 
 namespace Edge.Services.Google.AdWords
 {
@@ -190,14 +191,17 @@ namespace Edge.Services.Google.AdWords
 				response = we.Response;
 				byte[] preview = ConvertStreamToByteArray(response.GetResponseStream(), MAX_ERROR_LENGTH);
 				string previewString = ConvertPreviewBytesToString(preview);
-
+			
 				if (!string.IsNullOrEmpty(previewString))
 				{
-					if (Regex.IsMatch(previewString, REPORT_ERROR_REGEX))
+					//BUG fix due to adwords new version changes
+					//if (Regex.IsMatch(previewString, REPORT_ERROR_REGEX))
+					if ((previewString.Contains(typeof(AuthorizationError).Name)) || (previewString.Contains(typeof(AuthenticationError).Name)))
 					{
 						ErrorMsg = previewString;
 						return false;
 					}
+					else throw new Exception(previewString);
 				}
 			}
 
