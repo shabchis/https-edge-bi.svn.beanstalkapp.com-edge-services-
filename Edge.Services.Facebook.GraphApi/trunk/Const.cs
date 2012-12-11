@@ -7,10 +7,12 @@ namespace Edge.Services.Facebook.GraphApi
 {
 	public static class FacebookConfigurationOptions
 	{
+		
 		public const string BaseServiceAddress = "Facebook.BaseServiceAdress";
 		public const string Account_ID = "Facebook.Account.ID";
 		public const string Account_Name = "Facebook.Account.Name";
 		public const string Auth_SessionKey = "Facebook.Auth.SessionKey";
+		public const string AccessToken = "Facebook.AccessToken";
 		public const string Auth_ApiKey = "Facebook.Auth.ApiKey";
 		public const string Auth_RedirectUri = "Facebook.Auth.RedirectUri";
 		public const string Auth_Permision = "Facebook.Auth.RedirectUri";

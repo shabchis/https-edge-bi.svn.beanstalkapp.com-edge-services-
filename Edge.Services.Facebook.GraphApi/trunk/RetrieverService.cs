@@ -23,22 +23,9 @@ namespace Edge.Services.Facebook.GraphApi
 
 			//Get Access token
 
-			string urlAut = string.Format(string.Format(this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AuthenticationUrl].ToString(),
-				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_ApiKey].ToString(),
-				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_RedirectUri],
-				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_AppSecret].ToString(),
-				this.Delivery.Parameters[FacebookConfigurationOptions.Auth_SessionSecret].ToString()));
-
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(urlAut);
-			WebResponse response = request.GetResponse();
-
-			using (StreamReader stream = new StreamReader(response.GetResponseStream()))
-			{
-				_accessToken = stream.ReadToEnd();
-			}			
+			_accessToken = this.Delivery.Parameters[FacebookConfigurationOptions.AccessToken].ToString();
 			
 			BatchDownloadOperation countBatch = new BatchDownloadOperation();
-
 
 			var toremove = from f in Delivery.Files
 						   where !f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length)
@@ -48,7 +35,6 @@ namespace Edge.Services.Facebook.GraphApi
 				Delivery.Files.Remove(item);
 				
 			}
-			
 			
 			foreach (DeliveryFile file in Delivery.Files)
 			{
@@ -101,9 +87,6 @@ namespace Edge.Services.Facebook.GraphApi
 				batch.Add(fileDownloadOperation);
 			}
 
-			
-
-
 			batch.Progressed += new EventHandler(batch_Progressed);
 			batch.Start();
 			batch.Wait();
@@ -129,9 +112,6 @@ namespace Edge.Services.Facebook.GraphApi
 			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
 			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
 		}
-
-
-
 		
 	}
 	public class MyType
