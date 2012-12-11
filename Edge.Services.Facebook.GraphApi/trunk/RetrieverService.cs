@@ -84,28 +84,13 @@ namespace Edge.Services.Facebook.GraphApi
 			foreach (DeliveryFile file in files.Where(fi => fi.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data)))
 			{
 				FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
-				fileDownloadOperation.ErrorAsString = true;
 				batch.Add(fileDownloadOperation);
 			}
 
 			batch.Progressed += new EventHandler(batch_Progressed);
 			batch.Start();
 			batch.Wait();
-
-			try { batch.EnsureSuccess(); }
-			catch (BatchDownloadException ex)
-			{
-				StringBuilder builder = new StringBuilder();
-				foreach (FileDownloadOperation op in batch)
-				{
-					if (op.ErrorBody != null)
-					{
-						Edge.Core.Utilities.Log.Write(op.ErrorBody, Core.Utilities.LogMessageType.Error);
-					}
-				}
-
-				throw ex;
-			}
+			batch.EnsureSuccess();
 
 			this.Delivery.Save();
 			return ServiceOutcome.Success;
