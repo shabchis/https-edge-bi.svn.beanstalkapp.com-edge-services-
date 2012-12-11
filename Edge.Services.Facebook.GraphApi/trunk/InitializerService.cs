@@ -65,19 +65,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
-			// Copy some options as delivery parameters
-			//var configOptionsToCopyToDelivery = new string[] {
-			//    FacebookConfigurationOptions.Account_ID,
-			//    FacebookConfigurationOptions.Account_Name,
-			//    FacebookConfigurationOptions.Auth_ApiKey,
-			//    FacebookConfigurationOptions.Auth_AppSecret,
-			//    FacebookConfigurationOptions.Auth_SessionKey,
-			//    FacebookConfigurationOptions.Auth_SessionSecret,
-			//    FacebookConfigurationOptions.Auth_RedirectUri,
-			//    FacebookConfigurationOptions.Auth_AuthenticationUrl
-			//};
-			//foreach (string option in configOptionsToCopyToDelivery)
-			this.Delivery.Parameters[FacebookConfigurationOptions.AccessToken] = this.Instance.Configuration.Options[FacebookConfigurationOptions.AccessToken];
+		
 			if (string.IsNullOrEmpty(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]))
 				throw new Exception("facebook base url must be configured!");
 			_baseAddress = new Uri(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]);

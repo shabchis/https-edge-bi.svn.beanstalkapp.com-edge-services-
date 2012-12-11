@@ -23,7 +23,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 			//Get Access token
 
-			_accessToken = this.Delivery.Parameters[FacebookConfigurationOptions.AccessToken].ToString();
+			_accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.AccessToken];
 			
 			BatchDownloadOperation countBatch = new BatchDownloadOperation();
 
