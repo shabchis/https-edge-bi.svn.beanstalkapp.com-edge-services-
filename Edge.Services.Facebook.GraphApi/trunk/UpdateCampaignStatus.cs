@@ -45,14 +45,8 @@ namespace Edge.Services.Facebook.GraphApi
 						ActiveServiceElement activeService = new ActiveServiceElement(service);
 						facbookAccountParams.Add(account.ID, new FacbookAccountParams()
 						{
-
 							FacebookAccountID = activeService.Options[FacebookConfigurationOptions.Account_ID],
-							SessionSecret = activeService.Options[FacebookConfigurationOptions.Auth_SessionSecret],
-							UrlAuth = activeService.Options[FacebookConfigurationOptions.Auth_AuthenticationUrl],
-							RedirectUri = activeService.Options[FacebookConfigurationOptions.Auth_RedirectUri],
-							ApiKey = activeService.Options[FacebookConfigurationOptions.Auth_ApiKey],
-							AppSecret = activeService.Options[FacebookConfigurationOptions.Auth_AppSecret]
-
+							AccessToken = activeService.Options[FacebookConfigurationOptions.AccessToken]
 						});
 						strAccounts.AppendFormat("{0},", account.ID);
 					}
@@ -126,44 +120,12 @@ namespace Edge.Services.Facebook.GraphApi
 				foreach (KeyValuePair<int, Dictionary<long, int>> byAccount in statusByCampaignID)
 				{
 
-					#region Authentication
-					string accessToken = null;
 					FacbookAccountParams param = facbookAccountParams[byAccount.Key];
-
-					param.UrlAuth = string.Format(string.Format(param.UrlAuth, param.ApiKey,
-							param.RedirectUri,
-							param.AppSecret,
-							param.SessionSecret));
-
-					request = (HttpWebRequest)HttpWebRequest.Create(param.UrlAuth);
-					try
-					{
-						response = request.GetResponse();
-						using (StreamReader stream = new StreamReader(response.GetResponseStream()))
-						{
-							accessToken = stream.ReadToEnd();
-						}
-					}
-					catch (WebException ex)
-					{
-						using (StreamReader reader = new StreamReader(ex.Response.GetResponseStream()))
-						{
-							outcome = ServiceOutcome.Failure;
-							Edge.Core.Utilities.Log.Write(string.Format("Account {0} failed during authentication -{1}", byAccount.Key, reader.ReadToEnd()), ex, LogMessageType.Error, byAccount.Key);
-						}
-
-					}
-
-
-
-
-
-					#endregion
-
+					string accessToken = param.AccessToken;
 
 					foreach (var byCampaign in statusByCampaignID[byAccount.Key])
 					{
-						request = (HttpWebRequest)HttpWebRequest.Create(string.Format(@"https://graph.facebook.com/{0}?campaign_status={1}&{2}", byCampaign.Key, byCampaign.Value, accessToken));
+						request = (HttpWebRequest)HttpWebRequest.Create(string.Format(@"https://graph.facebook.com/{0}?campaign_status={1}&access_token={2}", byCampaign.Key, byCampaign.Value, accessToken));
 						request.Method = "POST";
 						string strResponse;
 						try
@@ -223,14 +185,8 @@ namespace Edge.Services.Facebook.GraphApi
 		}
 		public class FacbookAccountParams
 		{
-
 			public string FacebookAccountID { get; set; }
-			public string SessionSecret { get; set; }
-			public string UrlAuth { get; set; }
-			public string RedirectUri { get; set; }
-			public string ApiKey { get; set; }
-			public string AppSecret { get; set; }
-
+			public string AccessToken { get; set; }
 		}
 	}
 

@@ -11,14 +11,7 @@ namespace Edge.Services.Facebook.GraphApi
 		public const string BaseServiceAddress = "Facebook.BaseServiceAdress";
 		public const string Account_ID = "Facebook.Account.ID";
 		public const string Account_Name = "Facebook.Account.Name";
-		public const string Auth_SessionKey = "Facebook.Auth.SessionKey";
 		public const string AccessToken = "Facebook.AccessToken";
-		public const string Auth_ApiKey = "Facebook.Auth.ApiKey";
-		public const string Auth_RedirectUri = "Facebook.Auth.RedirectUri";
-		public const string Auth_Permision = "Facebook.Auth.RedirectUri";
-		public const string Auth_AuthenticationUrl = "Facebook.AuthenticationUrl";
-		public const string Auth_AppSecret = "Facebook.Auth.AppSecret";
-		public const string Auth_SessionSecret = "Facebook.Auth.SessionSecret";
 		public const string Ads_XPath_GetAdGroups = "Facebook.Ads.XPath.GetAdGroups";
 		public const string Ads_XPath_GetCampaigns = "Facebook.Ads.XPath.GetCampaigns";
 		public const string Ads_XPath_GetAdGroupStats = "Facebook.Ads.XPath.GetAdGroupStats";

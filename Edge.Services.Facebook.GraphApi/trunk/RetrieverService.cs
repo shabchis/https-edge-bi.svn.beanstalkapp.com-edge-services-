@@ -104,7 +104,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 		private HttpWebRequest CreateRequest(string baseUrl, string[] extraParams = null)
 		{			
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&{1}", baseUrl, _accessToken));
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}", baseUrl, _accessToken));
 			return request;
 		}
 		void counted_Batch_Progressed(object sender, EventArgs e)
