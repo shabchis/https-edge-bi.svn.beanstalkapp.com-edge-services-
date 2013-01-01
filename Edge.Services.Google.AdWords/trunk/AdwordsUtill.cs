@@ -352,8 +352,8 @@ namespace Edge.Services.Google.AdWords
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
 		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
 		                                                   "ConversionsManyPerClick",
-		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance",
-		                                                   "AdNetworkType1","AdNetworkType2"
+		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance"
+		                                                  
 		                                               };
 
 		//static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",

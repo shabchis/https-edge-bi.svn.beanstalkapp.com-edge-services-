@@ -207,6 +207,21 @@ namespace Edge.Services.Google.AdWords
 				}
 				#endregion
 
+				//Dictionary<string, double> totalConvSum = new Dictionary<string, double>();
+				//foreach (var item in importedAdsWithConv)
+				//{
+				//    foreach (var conversionsVal in item.Value)
+				//    {
+				//        if (totalConvSum.ContainsKey(conversionsVal.Key))
+				//            totalConvSum[conversionsVal.Key] += conversionsVal.Value;
+				//        else
+				//        {
+				//            totalConvSum.Add(conversionsVal.Key, conversionsVal.Value);
+				//        }
+				//    }
+				//}
+
+
 				#region Getting Ads Data
 
 				DeliveryFile _adPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
@@ -403,17 +418,38 @@ namespace Edge.Services.Google.AdWords
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
 						Dictionary<string, long> conversionDic = new Dictionary<string, long>();
+
+						//Dictionary<string, double> totalConvSum2 = new Dictionary<string, double>();
+
 						if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
 						{
 							foreach (var pair in conversionDic)
 							{
-
 								if (GoogleMeasuresDic.ContainsKey(pair.Key))
 								{
-									//if (adMetricsUnit.MeasureValues.ContainsKey(session.Measures[GoogleMeasuresDic[pair.Key]]))
-									//{
 									adMetricsUnit.MeasureValues[this.ImportManager.Measures[GoogleMeasuresDic[pair.Key]]] = pair.Value;
+
+									//if (totalConvSum2.ContainsKey(pair.Key))
+									//    totalConvSum2[pair.Key] += pair.Value;
+									//else
+									//{
+									//    totalConvSum2.Add(pair.Key, pair.Value);
 									//}
+								}
+							}
+						}
+
+
+						
+						foreach (var item in importedAdsWithConv)
+						{
+							foreach (var conversionsVal in item.Value)
+							{
+								if (totalConvSum.ContainsKey(conversionsVal.Key))
+									totalConvSum[conversionsVal.Key] += conversionsVal.Value;
+								else
+								{
+									totalConvSum.Add(conversionsVal.Key, conversionsVal.Value);
 								}
 							}
 						}
