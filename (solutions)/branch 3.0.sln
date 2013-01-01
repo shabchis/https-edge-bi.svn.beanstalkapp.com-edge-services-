@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.UnitTests.Core.Service
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.SDK.TestEnvironment", "..\..\edge-sdk\Applications\Edge.SDK.TestEnvironment\Edge.SDK.TestEnvironment.csproj", "{3A7DC204-5332-48C4-8866-C5080065FEF0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.SDK.TestPipeline", "..\..\edge-sdk\Applications\Edge.SDK.TestPipeline\Edge.SDK.TestPipeline.csproj", "{5743C6E2-53DC-4A40-A03C-86759C27D180}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebubNewScheduling|Any CPU = DebubNewScheduling|Any CPU
@@ -630,6 +632,36 @@ Global
 		{3A7DC204-5332-48C4-8866-C5080065FEF0}.Seperia|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{3A7DC204-5332-48C4-8866-C5080065FEF0}.Seperia|Mixed Platforms.Build.0 = Release|Any CPU
 		{3A7DC204-5332-48C4-8866-C5080065FEF0}.Seperia|x86.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.DebubNewScheduling|Any CPU.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.DebubNewScheduling|Any CPU.Build.0 = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.DebubNewScheduling|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.DebubNewScheduling|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.DebubNewScheduling|x86.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Edge|Any CPU.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Edge|Any CPU.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Edge|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Edge|Mixed Platforms.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Edge|x86.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Release|x86.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia.Facebook.UpdateCampaignStatus|x86.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia|Any CPU.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia|Any CPU.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia|Mixed Platforms.Build.0 = Release|Any CPU
+		{5743C6E2-53DC-4A40-A03C-86759C27D180}.Seperia|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -646,6 +678,7 @@ Global
 		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{D95D904C-958A-41D9-B9E5-1A44FE8D300D} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{3A7DC204-5332-48C4-8866-C5080065FEF0} = {12816A6E-5B10-4679-A152-2F8F24694123}
+		{5743C6E2-53DC-4A40-A03C-86759C27D180} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{F392CC5C-789E-4411-BFC2-8E590ED290B5} = {617814ED-0330-4691-A5E0-743A306EF99A}
 		{AD4B53AD-B28A-4E90-9483-E2F7C8E6D436} = {2E68164D-C79F-4B93-A615-33787CCCA33F}
 		{3A0C7489-49E0-4771-9841-67102819E088} = {344735BD-2CC3-41C5-A9A0-D707DB0BD613}
