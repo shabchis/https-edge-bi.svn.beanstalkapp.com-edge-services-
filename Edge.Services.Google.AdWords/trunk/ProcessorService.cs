@@ -344,14 +344,14 @@ namespace Edge.Services.Google.AdWords
 							};
 
 							//Insert Network Type Display Network / Search Network
-							string networkType = Convert.ToString(_adsReader.Current[Const.NetworkFieldName]);
+							//string networkType = Convert.ToString(_adsReader.Current[Const.NetworkFieldName]);
 
-							if (networkType.Equals(Const.GoogleSearchNetwork))
-								networkType = Const.SystemSearchNetwork;
-							else if (networkType.Equals(Const.GoogleDisplayNetwork))
-								networkType = Const.SystemDisplayNetwork;
+							//if (networkType.Equals(Const.GoogleSearchNetwork))
+							//    networkType = Const.SystemSearchNetwork;
+							//else if (networkType.Equals(Const.GoogleDisplayNetwork))
+							//    networkType = Const.SystemDisplayNetwork;
 
-							ad.ExtraFields[NetworkType] = networkType;
+							//ad.ExtraFields[NetworkType] = networkType;
 
 							importedAds.Add(adId, ad);
 							this.ImportManager.ImportAd(ad);
@@ -441,19 +441,6 @@ namespace Edge.Services.Google.AdWords
 
 
 						
-						foreach (var item in importedAdsWithConv)
-						{
-							foreach (var conversionsVal in item.Value)
-							{
-								if (totalConvSum.ContainsKey(conversionsVal.Key))
-									totalConvSum[conversionsVal.Key] += conversionsVal.Value;
-								else
-								{
-									totalConvSum.Add(conversionsVal.Key, conversionsVal.Value);
-								}
-							}
-						}
-
 						//**************Came from output*************
 						//adMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
 						//adMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
