@@ -352,7 +352,7 @@ namespace Edge.Services.Google.AdWords
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
 		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionSignificance",
 		                                                   "ConversionsManyPerClick",
-		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick","ViewThroughConversions","ViewThroughConversionsSignificance"
+		                                                   "ConversionValue","TotalConvValue","ValuePerConversion","ValuePerConversionManyPerClick","ValuePerConvManyPerClick"
 		                                                  
 		                                               };
 
