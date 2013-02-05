@@ -171,6 +171,10 @@ namespace Edge.Services.Google.AdWords
 						}
 						
 					}
+
+					//Add Status Reports
+					DeliveryFile AD_Camp_Adgroups_StatusFile = new DeliveryFile();
+					AD_Camp_Adgroups_StatusFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT.ToString());
 					
 				}
 			
@@ -182,6 +186,43 @@ namespace Edge.Services.Google.AdWords
 					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
+				}
+
+				if (Boolean.Parse(this.Delivery.Parameters["IncludeStatus"].ToString())) // if AD Performance With conversion type is required 
+				{
+					//1. create file for **** Ad performance with status
+					DeliveryFile adPerformaceStatusfile = new DeliveryFile();
+					adPerformaceStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]+"_Status";
+					adPerformaceStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT.ToString());
+					adPerformaceStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
+					adPerformaceStatusfile.Parameters.Add("AdwordsClientID", clientId);
+					this.Delivery.Files.Add(adPerformaceStatusfile);
+
+					//2. create file for **** KWD performance with status
+					DeliveryFile kwdPerformaceStatusfile = new DeliveryFile();
+					kwdPerformaceStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT] + "_Status";
+					kwdPerformaceStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT.ToString());
+					kwdPerformaceStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
+					kwdPerformaceStatusfile.Parameters.Add("AdwordsClientID", clientId);
+					this.Delivery.Files.Add(kwdPerformaceStatusfile);
+
+					//3. create file for **** Managed performance with status
+					DeliveryFile ManagedGDNStatusfile = new DeliveryFile();
+					ManagedGDNStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT] + "_Status";
+					ManagedGDNStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+					ManagedGDNStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
+					ManagedGDNStatusfile.Parameters.Add("AdwordsClientID", clientId);
+					this.Delivery.Files.Add(ManagedGDNStatusfile);
+					
+					/*
+					//4. create file for **** Automatic performance with status
+					DeliveryFile AutomaticGDNStatusfile = new DeliveryFile();
+					AutomaticGDNStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT] + "_Status";
+					AutomaticGDNStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+					AutomaticGDNStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
+					AutomaticGDNStatusfile.Parameters.Add("AdwordsClientID", clientId);
+					this.Delivery.Files.Add(AutomaticGDNStatusfile);
+					*/
 				}
 
 			}

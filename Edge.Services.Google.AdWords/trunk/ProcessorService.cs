@@ -73,8 +73,13 @@ namespace Edge.Services.Google.AdWords
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-
-			//using (var session = new AdMetricsImportManager(this.Instance.InstanceID))
+			
+			//Status Members
+			Dictionary<Int64, ObjectStatus> kwd_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			Dictionary<Int64, ObjectStatus> placement_kwd_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			Dictionary<Int64, ObjectStatus> adGroup_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			Dictionary<Int64, ObjectStatus> ad_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			Dictionary<Int64, ObjectStatus> campaign_Status_Data = new Dictionary<Int64, ObjectStatus>();
 
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
 			{
@@ -85,10 +90,32 @@ namespace Edge.Services.Google.AdWords
 				SegmentOptionsOperator = OptionsOperator.And
 			}))
 			{
+
+				#region Getting Keywords Status Data
+				DeliveryFile _keyWordsStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT] + "_Status"];
+				string[] requiredHeaders = new string[1];
+				requiredHeaders[0] = Const.AdPreRequiredHeader;
+				var _keywordsStatusReader = new CsvDynamicReader(_keyWordsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				_keywordsStatusReader.MatchExactColumns = false;
+
+				using (_keywordsStatusReader)
+				{
+					while (_keywordsStatusReader.Read())
+					{
+						if (_keywordsStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+							break;
+
+						string kwdStatus = Convert.ToString(_keywordsStatusReader.Current[Const.KeywordStatusFieldName]);
+						int kwdId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
+						kwd_Status_Data.Add(kwdId, ObjectStatusDic[kwdStatus.ToUpper()]);
+					}
+				}
+				#endregion
+
+
 				#region Getting Keywords Data
 				Dictionary<string, double> _totals = new Dictionary<string, double>();
 				DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
-				string[] requiredHeaders = new string[1];
 				requiredHeaders[0] = Const.AdPreRequiredHeader;
 				var _keywordsReader = new CsvDynamicReader(_keyWordsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 				_keywordsReader.MatchExactColumns = false;
@@ -110,7 +137,8 @@ namespace Edge.Services.Google.AdWords
 						KeywordTarget keyword = new KeywordTarget()
 						{
 							OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
-							Keyword = _keywordsReader.Current[Const.KeywordFieldName]
+							Keyword = _keywordsReader.Current[Const.KeywordFieldName],
+							Status = kwd_Status_Data[keywordPrimaryKey.KeywordId]
 
 						};
 
@@ -133,6 +161,26 @@ namespace Edge.Services.Google.AdWords
 
 				Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
 
+				#region Getting Placements Status Data
+				DeliveryFile _placementsStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT] + "_Status"];
+				requiredHeaders[0] = Const.AdPreRequiredHeader;
+				var _placementsStatusReader = new CsvDynamicReader(_placementsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				_placementsStatusReader.MatchExactColumns = false;
+
+				using (_placementsStatusReader)
+				{
+					while (_placementsStatusReader.Read())
+					{
+						if (_placementsStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+							break;
+
+						string placementsStatus = Convert.ToString(_placementsStatusReader.Current[Const.PlacementStatusFieldName]);
+						int placementsId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
+						placement_kwd_Status_Data.Add(placementsId, ObjectStatusDic[placementsStatus.ToUpper()]);
+					}
+				}
+				#endregion
+
 				#region Getting Placements Data
 
 
@@ -154,16 +202,13 @@ namespace Edge.Services.Google.AdWords
 						{
 							OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
 							Placement = _PlacementsReader.Current[Const.PlacementFieldName],
-							PlacementType = PlacementType.Managed
+							PlacementType = PlacementType.Managed,
+							Status = placement_kwd_Status_Data[placementPrimaryKey.KeywordId]
 						};
 						//Setting Tracker for placment
 						if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
-						{
 							placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
-							//SegmentObject tracker = this.AutoSegments.ExtractSegmentValue(session.SegmentTypes[Segment.Common.Tracker], placement.DestinationUrl);
-							//if (tracker != null)
-							//    placement.Segments.Add(session.SegmentTypes[Segment.Common.Tracker],tracker);
-						}
+						
 						_placementsData.Add(placementPrimaryKey.ToString(), placement);
 					}
 				}
@@ -207,20 +252,37 @@ namespace Edge.Services.Google.AdWords
 				}
 				#endregion
 
-				//Dictionary<string, double> totalConvSum = new Dictionary<string, double>();
-				//foreach (var item in importedAdsWithConv)
-				//{
-				//    foreach (var conversionsVal in item.Value)
-				//    {
-				//        if (totalConvSum.ContainsKey(conversionsVal.Key))
-				//            totalConvSum[conversionsVal.Key] += conversionsVal.Value;
-				//        else
-				//        {
-				//            totalConvSum.Add(conversionsVal.Key, conversionsVal.Value);
-				//        }
-				//    }
-				//}
 
+				#region Getting Creative Status Data Ad,Adgroups,Campaign
+				DeliveryFile _creativeStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Status"];
+				requiredHeaders[0] = Const.AdPreRequiredHeader;
+				var _creativeStatusReader = new CsvDynamicReader(_placementsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				_creativeStatusReader.MatchExactColumns = false;
+
+				using (_creativeStatusReader)
+				{
+					while (_creativeStatusReader.Read())
+					{
+						if (_creativeStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+							break;
+
+						//Get Ad Status
+						string adStatus = Convert.ToString(_placementsStatusReader.Current[Const.AdStatusFieldName]);
+						int adId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdIDFieldName]);
+						ad_Status_Data.Add(adId, ObjectStatusDic[adStatus.ToUpper()]);
+
+						//Get Adgroup Status
+						string adGroupStatus = Convert.ToString(_placementsStatusReader.Current[Const.AdGroupStatus]);
+						int adGroupId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdIDFieldName]);
+						adGroup_Status_Data.Add(adGroupId, ObjectStatusDic[adGroupStatus.ToUpper()]);
+
+						//Get Campaign Status
+						string campaignStatus = Convert.ToString(_placementsStatusReader.Current[Const.PlacementStatusFieldName]);
+						int campaignId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
+						campaign_Status_Data.Add(campaignId, ObjectStatusDic[campaignStatus.ToUpper()]);
+					}
+				}
+				#endregion
 
 				#region Getting Ads Data
 
@@ -301,7 +363,7 @@ namespace Edge.Services.Google.AdWords
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
-								Status = ObjectStatusDic[((string)_adsReader.Current[Const.CampaignStatus]).ToUpper()]
+								Status = ad_Status_Data[Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])]
 
 							};
 
@@ -340,7 +402,7 @@ namespace Edge.Services.Google.AdWords
 								Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
 								Value = _adsReader.Current[Const.AdGroupFieldName],
 								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName],
-								Status = ObjectStatusDic[((string)_adsReader.Current[Const.AdGroupStatus]).ToUpper()]
+								Status = ad_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName]]
 							};
 
 							//Insert Network Type Display Network / Search Network
@@ -440,7 +502,7 @@ namespace Edge.Services.Google.AdWords
 						}
 
 
-						
+
 						//**************Came from output*************
 						//adMetricsUnit.TimePeriodStart = this.Delivery.TimePeriodDefinition.Start.ToDateTime();
 						//adMetricsUnit.TimePeriodEnd = this.Delivery.TimePeriodDefinition.End.ToDateTime();
@@ -476,6 +538,7 @@ namespace Edge.Services.Google.AdWords
 		public const string KeywordIdFieldName = "Keyword ID";
 		public const string KeywordFieldName = "Keyword";
 		public const string AvgPosition = "Avg. position";
+		public const string KeywordStatusFieldName = "Keyword state";
 
 		public const string ConversionManyPerClick = "Conv. (many-per-click)";
 		public const string ConversionOnePerClick = "Conv. (1-per-click)";
@@ -494,10 +557,13 @@ namespace Edge.Services.Google.AdWords
 		public const string QualityScoreFieldName = "Quality score";
 		public const string MatchTypeFieldName = "Match type";
 		public const string PlacementFieldName = "Placement";
+		public const string PlacementStatusFieldName = "Placement state";
+
 
 		public const string AdIDFieldName = "Ad ID";
 		public const string AdTypeFieldName = "Ad type";
 		public const string AdFieldName = "Ad";
+		public const string AdStatusFieldName = "Ad state";
 		public const string DisplayURLFieldName = "Display URL";
 		public const string DestUrlFieldName = "Destination URL";
 

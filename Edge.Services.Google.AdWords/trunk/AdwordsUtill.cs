@@ -46,7 +46,7 @@ namespace Edge.Services.Google.AdWords
 			return definition;
 		}
 
-		public static GA.v201209.Selector GetNewSelector(string startDate, string endDate, GA.v201209.ReportDefinitionReportType reportType, string reportFieldsType,bool filterOnImps, bool filterDeleted)
+		public static GA.v201209.Selector GetNewSelector(string startDate, string endDate, GA.v201209.ReportDefinitionReportType reportType, string reportFieldsType, bool filterOnImps, bool filterDeleted)
 		{
 			GA.v201209.Selector selector = new GA.v201209.Selector();
 
@@ -88,7 +88,7 @@ namespace Edge.Services.Google.AdWords
 					predicate.Add(AgPredicate);
 				}
 			}
-			
+
 
 			if (filterOnImps && selector.fields.Contains("Impressions"))
 			{
@@ -122,7 +122,7 @@ namespace Edge.Services.Google.AdWords
 			/****************************************************************/
 
 			#endregion
-			
+
 
 			return selector;
 
@@ -340,6 +340,7 @@ namespace Edge.Services.Google.AdWords
 	{
 		public static string DEFAULT = "DEFAULT";
 		public static string CONVERSION = "CONVERSION";
+		public static string STATUS = "STATUS";
 	}
 
 	public static class GoogleStaticReportFields
@@ -354,13 +355,15 @@ namespace Edge.Services.Google.AdWords
 		                                                  
 		                                               };
 
-		//static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
-		//                                                   "Status"
-		//                                               };
+		static string[] AD_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
+		                                                   "Status"
+		                                               };
 
 		static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
 
 		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
+
+		static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "KeywordText", "Status" };
 
 		static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
@@ -379,12 +382,17 @@ namespace Edge.Services.Google.AdWords
 
 		public static Dictionary<GA.v201209.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<GA.v201209.ReportDefinitionReportType, Dictionary<string, string[]>>()
 		{
+			
 			{GA.v201209.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS}}
+				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS},
+													{ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS}
+												  }
 			},
 			{GA.v201209.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AD_PERFORMANCE_REPORT_FIELDS} , 
-													{ReportDefinitionReportFieldsType.CONVERSION,AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION}}
+													{ReportDefinitionReportFieldsType.CONVERSION,AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION},
+													{ReportDefinitionReportFieldsType.STATUS,AD_PERFORMANCE_REPORT_FIELDS_STATUS},
+												  }
 			},
 			{GA.v201209.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS}}
