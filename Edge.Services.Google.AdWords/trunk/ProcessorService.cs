@@ -49,13 +49,14 @@ namespace Edge.Services.Google.AdWords
 				{"Purchase/Sale","Purchases"},
 				{"Pageview","PageViews"},
 				{"Default","Default"},
-				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
-				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
+				{Const.ConversionOnePerClickFieldName,"TotalConversionsOnePerClick"},
+				{Const.ConversionManyPerClickFieldName,"TotalConversionsManyPerClick"}
 			};
 
 			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
 			{
 				{"PAUSED",ObjectStatus.Paused},
+				{"DISABLED",ObjectStatus.Paused},
 				{"DELETED",ObjectStatus.Deleted},
 				{"ACTIVE",ObjectStatus.Active},
 				{"ENABLED",ObjectStatus.Active}
@@ -73,10 +74,10 @@ namespace Edge.Services.Google.AdWords
 		{
 			bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
 			bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-			
+
 			//Status Members
-			Dictionary<Int64, ObjectStatus> kwd_Status_Data = new Dictionary<Int64, ObjectStatus>();
-			Dictionary<Int64, ObjectStatus> placement_kwd_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			Dictionary<string, ObjectStatus> kwd_Status_Data = new Dictionary<string, ObjectStatus>();
+			Dictionary<string, ObjectStatus> placement_kwd_Status_Data = new Dictionary<string, ObjectStatus>();
 			Dictionary<Int64, ObjectStatus> adGroup_Status_Data = new Dictionary<Int64, ObjectStatus>();
 			Dictionary<Int64, ObjectStatus> ad_Status_Data = new Dictionary<Int64, ObjectStatus>();
 			Dictionary<Int64, ObjectStatus> campaign_Status_Data = new Dictionary<Int64, ObjectStatus>();
@@ -106,8 +107,15 @@ namespace Edge.Services.Google.AdWords
 							break;
 
 						string kwdStatus = Convert.ToString(_keywordsStatusReader.Current[Const.KeywordStatusFieldName]);
-						int kwdId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
-						kwd_Status_Data.Add(kwdId, ObjectStatusDic[kwdStatus.ToUpper()]);
+						Int64 kwdId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
+						KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
+						{
+							KeywordId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]),
+							AdgroupId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdGroupIdFieldName]),
+							CampaignId = Convert.ToInt64(_keywordsStatusReader.Current[Const.CampaignIdFieldName])
+
+						};
+						kwd_Status_Data.Add(keywordPrimaryKey.ToString(), ObjectStatusDic[kwdStatus.ToUpper()]);
 					}
 				}
 				#endregion
@@ -138,7 +146,7 @@ namespace Edge.Services.Google.AdWords
 						{
 							OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
 							Keyword = _keywordsReader.Current[Const.KeywordFieldName],
-							Status = kwd_Status_Data[keywordPrimaryKey.KeywordId]
+							Status = kwd_Status_Data[keywordPrimaryKey.ToString()]
 
 						};
 
@@ -175,8 +183,14 @@ namespace Edge.Services.Google.AdWords
 							break;
 
 						string placementsStatus = Convert.ToString(_placementsStatusReader.Current[Const.PlacementStatusFieldName]);
-						int placementsId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
-						placement_kwd_Status_Data.Add(placementsId, ObjectStatusDic[placementsStatus.ToUpper()]);
+						KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
+						{
+							KeywordId = Convert.ToInt64(_placementsStatusReader.Current[Const.KeywordIdFieldName]),
+							AdgroupId = Convert.ToInt64(_placementsStatusReader.Current[Const.AdGroupIdFieldName]),
+							CampaignId = Convert.ToInt64(_placementsStatusReader.Current[Const.CampaignIdFieldName])
+						};
+
+						placement_kwd_Status_Data.Add(placementPrimaryKey.ToString(), ObjectStatusDic[placementsStatus.ToUpper()]);
 					}
 				}
 				#endregion
@@ -203,12 +217,12 @@ namespace Edge.Services.Google.AdWords
 							OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
 							Placement = _PlacementsReader.Current[Const.PlacementFieldName],
 							PlacementType = PlacementType.Managed,
-							Status = placement_kwd_Status_Data[placementPrimaryKey.KeywordId]
+							Status = placement_kwd_Status_Data[placementPrimaryKey.ToString()]
 						};
 						//Setting Tracker for placment
 						if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
 							placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
-						
+
 						_placementsData.Add(placementPrimaryKey.ToString(), placement);
 					}
 				}
@@ -236,17 +250,17 @@ namespace Edge.Services.Google.AdWords
 							//ADD conversionKey to importedAdsWithConv
 							//than add conversion field to importedAdsWithConv : <conversion name , conversion value>
 							Dictionary<string, long> conversion = new Dictionary<string, long>();
-							conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
+							conversion.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurposeFieldName]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClickFieldName]));
 							importedAdsWithConv.Add(conversionKey, conversion);
 						}
 						else // if Key exists
 						{
 							// if current add already has current conversion type than add value to the current type
-							if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])))
-								conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]));
+							if (!conversionDic.ContainsKey(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurposeFieldName])))
+								conversionDic.Add(Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurposeFieldName]), Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClickFieldName]));
 							// else create new conversion type and add the value
 							else
-								conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurpose])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClick]);
+								conversionDic[Convert.ToString(_conversionsReader.Current[Const.ConversionTrackingPurposeFieldName])] += Convert.ToInt64(_conversionsReader.Current[Const.ConversionManyPerClickFieldName]);
 						}
 					}
 				}
@@ -255,31 +269,33 @@ namespace Edge.Services.Google.AdWords
 
 				#region Getting Creative Status Data Ad,Adgroups,Campaign
 				DeliveryFile _creativeStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Status"];
-				requiredHeaders[0] = Const.AdPreRequiredHeader;
-				var _creativeStatusReader = new CsvDynamicReader(_placementsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				requiredHeaders[0] = Const.AdIDFieldName;
+				var _creativeStatusReader = new CsvDynamicReader(_creativeStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 				_creativeStatusReader.MatchExactColumns = false;
 
 				using (_creativeStatusReader)
 				{
 					while (_creativeStatusReader.Read())
 					{
-						if (_creativeStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
+						if (_creativeStatusReader.Current[Const.AdIDFieldName] == Const.EOF)
 							break;
 
 						//Get Ad Status
-						string adStatus = Convert.ToString(_placementsStatusReader.Current[Const.AdStatusFieldName]);
-						int adId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdIDFieldName]);
+						string adStatus = Convert.ToString(_creativeStatusReader.Current[Const.AdStatusFieldName]);
+						Int64 adId = Convert.ToInt64(_creativeStatusReader.Current[Const.AdIDFieldName]);
 						ad_Status_Data.Add(adId, ObjectStatusDic[adStatus.ToUpper()]);
 
 						//Get Adgroup Status
-						string adGroupStatus = Convert.ToString(_placementsStatusReader.Current[Const.AdGroupStatus]);
-						int adGroupId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdIDFieldName]);
-						adGroup_Status_Data.Add(adGroupId, ObjectStatusDic[adGroupStatus.ToUpper()]);
+						string adGroupStatus = Convert.ToString(_creativeStatusReader.Current[Const.AdGroupStatusFieldName]);
+						Int64 adGroupId = Convert.ToInt64(_creativeStatusReader.Current[Const.AdGroupIdFieldName]);
+						if (!adGroup_Status_Data.ContainsKey(adGroupId))
+							adGroup_Status_Data.Add(adGroupId, ObjectStatusDic[adGroupStatus.ToUpper()]);
 
 						//Get Campaign Status
-						string campaignStatus = Convert.ToString(_placementsStatusReader.Current[Const.PlacementStatusFieldName]);
-						int campaignId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
-						campaign_Status_Data.Add(campaignId, ObjectStatusDic[campaignStatus.ToUpper()]);
+						string campaignStatus = Convert.ToString(_creativeStatusReader.Current[Const.CampaignStatusFieldName]);
+						Int64 campaignId = Convert.ToInt64(_creativeStatusReader.Current[Const.CampaignIdFieldName]);
+						if (!campaign_Status_Data.ContainsKey(campaignId))
+							campaign_Status_Data.Add(campaignId, ObjectStatusDic[campaignStatus.ToUpper()]);
 					}
 				}
 				#endregion
@@ -341,6 +357,7 @@ namespace Edge.Services.Google.AdWords
 							ad.OriginalID = adId;
 							ad.Channel = new Channel() { ID = 1 };
 							ad.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
+							ad.Status = ad_Status_Data[Convert.ToInt64(adId)];
 
 							//Ad Type
 							string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
@@ -363,7 +380,7 @@ namespace Edge.Services.Google.AdWords
 							{
 								OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
 								Name = _adsReader.Current[Const.CampaignFieldName],
-								Status = ad_Status_Data[Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])]
+								Status = campaign_Status_Data[Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])]
 
 							};
 
@@ -402,7 +419,7 @@ namespace Edge.Services.Google.AdWords
 								Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
 								Value = _adsReader.Current[Const.AdGroupFieldName],
 								OriginalID = _adsReader.Current[Const.AdGroupIdFieldName],
-								Status = ad_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName]]
+								Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
 							};
 
 							//Insert Network Type Display Network / Search Network
@@ -473,9 +490,9 @@ namespace Edge.Services.Google.AdWords
 						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
 						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
 						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
-						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPosition]));
-						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClick]));
-						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClick]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPositionFieldName]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClickFieldName]));
+						adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClickFieldName]));
 
 						//Inserting conversion values
 						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
@@ -537,22 +554,22 @@ namespace Edge.Services.Google.AdWords
 
 		public const string KeywordIdFieldName = "Keyword ID";
 		public const string KeywordFieldName = "Keyword";
-		public const string AvgPosition = "Avg. position";
+		public const string AvgPositionFieldName = "Avg. position";
 		public const string KeywordStatusFieldName = "Keyword state";
 
-		public const string ConversionManyPerClick = "Conv. (many-per-click)";
-		public const string ConversionOnePerClick = "Conv. (1-per-click)";
+		public const string ConversionManyPerClickFieldName = "Conv. (many-per-click)";
+		public const string ConversionOnePerClickFieldName = "Conv. (1-per-click)";
 		//public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
-		public const string TotalConversionsOnePerClick = "TotalConversionsOnePerClick";
-		public const string ConversionTrackingPurpose = "Conversion tracking purpose";
+		public const string TotalConversionsOnePerClickFieldName = "TotalConversionsOnePerClick";
+		public const string ConversionTrackingPurposeFieldName = "Conversion tracking purpose";
 
 		public const string AdGroupIdFieldName = "Ad group ID";
 		public const string AdGroupFieldName = "Ad group";
-		public const string AdGroupStatus = "Ad group state";
+		public const string AdGroupStatusFieldName = "Ad group state";
 
 		public const string CampaignIdFieldName = "Campaign ID";
 		public const string CampaignFieldName = "Campaign";
-		public const string CampaignStatus = "Campaign state";
+		public const string CampaignStatusFieldName = "Campaign state";
 
 		public const string QualityScoreFieldName = "Quality score";
 		public const string MatchTypeFieldName = "Match type";
@@ -568,10 +585,10 @@ namespace Edge.Services.Google.AdWords
 		public const string DestUrlFieldName = "Destination URL";
 
 		public const string NetworkFieldName = "Network";
-		public const string GoogleSearchNetwork = "Search Network";
-		public const string SystemSearchNetwork = "Search Only";
-		public const string GoogleDisplayNetwork = "Display Network";
-		public const string SystemDisplayNetwork = "Content Only";
+		public const string GoogleSearchNetworkFieldName = "Search Network";
+		public const string SystemSearchNetworkFieldName = "Search Only";
+		public const string GoogleDisplayNetworkFieldName = "Display Network";
+		public const string SystemDisplayNetworkFieldName = "Content Only";
 
 		public const string AutoDisplayNetworkName = "Total - content targeting";
 

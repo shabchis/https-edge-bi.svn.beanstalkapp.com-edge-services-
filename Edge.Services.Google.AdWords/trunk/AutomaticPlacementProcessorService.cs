@@ -23,8 +23,8 @@ namespace Edge.Services.Google.AdWords
 		{
 			GoogleMeasuresDic = new Dictionary<string, string>()
 			{
-				{Const.ConversionOnePerClick,"TotalConversionsOnePerClick"},
-				{Const.ConversionManyPerClick,"TotalConversionsManyPerClick"}
+				{Const.ConversionOnePerClickFieldName,"TotalConversionsOnePerClick"},
+				{Const.ConversionManyPerClickFieldName,"TotalConversionsManyPerClick"}
 			};
 
 			ObjectStatusDic = new Dictionary<string, ObjectStatus>()
@@ -115,7 +115,7 @@ namespace Edge.Services.Google.AdWords
 						{
 							OriginalID = _autoPlacReader.Current[Const.CampaignIdFieldName],
 							Name = _autoPlacReader.Current[Const.CampaignFieldName],
-							Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatus]).ToUpper()]
+							Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatusFieldName]).ToUpper()]
 						};
 
 						autoPlacMetricsUnit.SegmentDimensions.Add(this.ImportManager.SegmentTypes[Segment.Common.Campaign], campaign);
@@ -135,8 +135,8 @@ namespace Edge.Services.Google.AdWords
 						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_autoPlacReader.Current.Clicks));
 						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], (Convert.ToDouble(_autoPlacReader.Current.Cost)) / 1000000);
 						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_autoPlacReader.Current.Impressions));
-						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClick]));
-						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClick]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClick]));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionOnePerClickFieldName]));
+						autoPlacMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], Convert.ToDouble(_autoPlacReader.Current[Const.ConversionManyPerClickFieldName]));
 
 						//CREATING PLACEMENT
 						autoPlacMetricsUnit.TargetDimensions = new List<Target>();

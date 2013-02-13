@@ -77,6 +77,8 @@ namespace Edge.Services.Google.AdWords
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			#region Must Have Params
+			this.Delivery.Parameters["IncludeStatus"] = this.Instance.Configuration.Options["IncludeStatus"];
+
 
 			//Get MCC Paramerters
 			this.Delivery.Parameters["DeveloperToken"] = this.Instance.Configuration.Options["DeveloperToken"];
