@@ -14,6 +14,7 @@ using System.Linq;
 
 namespace Edge.Services.Google.AdWords
 {
+	/*
 	class ProcessorService : MetricsProcessorServiceBase
 	{
 		//ErrorFile _keywordErrorFile = new ErrorFile("Errors_KeywordPrimaryKey", new List<string> { "AdgroupId", "KeywordId", "CampaignId" }, @"D:\");
@@ -546,6 +547,8 @@ namespace Edge.Services.Google.AdWords
 
 
 	}
+	 */
+
 	public static class Const
 	{
 		public const string AdPreRequiredHeader = "Keyword ID";

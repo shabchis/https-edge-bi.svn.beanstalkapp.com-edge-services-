@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using GA = Google.Api.Ads.AdWords.v201209;
+using GA = Google.Api.Ads.AdWords.v201302;
 using Edge.Core.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
@@ -183,8 +183,8 @@ namespace Edge.Services.Google.AdWords
 				if (Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString())) // if AD Performance With conversion type is required 
 				{
 					DeliveryFile file = new DeliveryFile();
-					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT];
-					file.Parameters.Add("ReportType", GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+					file.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT];
+					file.Parameters.Add("ReportType", GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT.ToString());
 					file.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
 					file.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(file);
@@ -210,8 +210,8 @@ namespace Edge.Services.Google.AdWords
 
 					//3. create file for **** Managed performance with status
 					DeliveryFile ManagedGDNStatusfile = new DeliveryFile();
-					ManagedGDNStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT] + "_Status";
-					ManagedGDNStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.MANAGED_PLACEMENTS_PERFORMANCE_REPORT.ToString());
+					ManagedGDNStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT] + "_Status";
+					ManagedGDNStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT.ToString());
 					ManagedGDNStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
 					ManagedGDNStatusfile.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(ManagedGDNStatusfile);

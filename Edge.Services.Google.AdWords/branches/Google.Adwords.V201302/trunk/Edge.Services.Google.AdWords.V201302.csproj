@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{DFC1976B-10A9-4E74-8C61-48FA5732766E}</ProjectGuid>
+    <ProjectGuid>{4EAEB38D-BB85-433A-99DE-23B722316AEB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Edge.Services.Google.AdWords</RootNamespace>
@@ -34,11 +34,12 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.Ads.Common">
-      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.Ads.Common.dll</HintPath>
+    <Reference Include="Google.Ads.Common, Version=1.4.0.0, Culture=neutral, PublicKeyToken=52807268f2b614dc, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\thirdparty\GoogleAdwords\V201302\Google.Ads.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Google.AdWords.V201209">
-      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.AdWords.V201209.dll</HintPath>
+    <Reference Include="Google.AdWords.V201302">
+      <HintPath>..\..\..\thirdparty\GoogleAdwords\V201302\Google.AdWords.V201302.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\thirdparty\Json.net\Newtonsoft.Json.dll</HintPath>
@@ -59,6 +60,7 @@
   <ItemGroup>
     <Compile Include="AdwordsUtill.cs" />
     <Compile Include="AutomaticPlacementProcessorService.cs" />
+    <Compile Include="AWQL_Reports.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
     <Compile Include="ProcessorService.cs" />

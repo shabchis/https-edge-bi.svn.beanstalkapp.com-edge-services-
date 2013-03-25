@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using GA = Google.Api.Ads.AdWords.v201209;
+using GA = Google.Api.Ads.AdWords.v201302;
 using Edge.Data.Pipeline.Metrics;
 using System.Linq;
 using System.IO;
@@ -14,6 +14,7 @@ using Edge.Data.Pipeline.Metrics.AdMetrics;
 
 namespace Edge.Services.Google.AdWords
 {
+	
 	class AutomaticPlacementProcessorService : MetricsProcessorServiceBase
 	{
 		static Dictionary<string, string> GoogleMeasuresDic;
