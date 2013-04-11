@@ -60,7 +60,6 @@
   <ItemGroup>
     <Compile Include="AdwordsUtill.cs" />
     <Compile Include="AutomaticPlacementProcessorService.cs" />
-    <Compile Include="AWQL_Reports.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
     <Compile Include="ProcessorService.cs" />

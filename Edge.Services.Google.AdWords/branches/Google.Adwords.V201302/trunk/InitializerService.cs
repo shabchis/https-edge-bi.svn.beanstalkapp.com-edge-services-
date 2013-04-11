@@ -190,6 +190,7 @@ namespace Edge.Services.Google.AdWords
 					this.Delivery.Files.Add(file);
 				}
 
+                #region Status Reports 
 				if (Boolean.Parse(this.Delivery.Parameters["IncludeStatus"].ToString())) // if AD Performance With conversion type is required 
 				{
 					//1. create file for **** Ad performance with status
@@ -215,19 +216,10 @@ namespace Edge.Services.Google.AdWords
 					ManagedGDNStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
 					ManagedGDNStatusfile.Parameters.Add("AdwordsClientID", clientId);
 					this.Delivery.Files.Add(ManagedGDNStatusfile);
-					
-					/*
-					//4. create file for **** Automatic performance with status
-					DeliveryFile AutomaticGDNStatusfile = new DeliveryFile();
-					AutomaticGDNStatusfile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT] + "_Status";
-					AutomaticGDNStatusfile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT.ToString());
-					AutomaticGDNStatusfile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.STATUS);
-					AutomaticGDNStatusfile.Parameters.Add("AdwordsClientID", clientId);
-					this.Delivery.Files.Add(AutomaticGDNStatusfile);
-					*/
-				}
+                }
+                #endregion
 
-			}
+            }
 			this.Delivery.Save();
 			return Core.Services.ServiceOutcome.Success;
 		}

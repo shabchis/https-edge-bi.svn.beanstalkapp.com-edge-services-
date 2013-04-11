@@ -21,196 +21,6 @@ namespace Edge.Services.Google.AdWords
 
 	public static class AdwordsUtill
 	{
-
-
-		public const string ADHOC_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/v201302";
-
-		public static ADWORDS_V201302.ReportDefinition CreateNewReportDefinition(DeliveryFile deliveryFile, string startDate, string endDate, bool filterOnImps = false, bool filterDeleted = false)
-		{
-			//Create ReportDefintion
-			ADWORDS_V201302.ReportDefinition definition = new ADWORDS_V201302.ReportDefinition();
-
-			if (Enum.IsDefined(typeof(ADWORDS_V201302.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString()))
-				definition.reportType = (ADWORDS_V201302.ReportDefinitionReportType)Enum.Parse(typeof(ADWORDS_V201302.ReportDefinitionReportType), deliveryFile.Parameters["ReportType"].ToString(), true);
-
-			definition.reportName = deliveryFile.Name;
-			definition.downloadFormat = ADWORDS_V201302.DownloadFormat.GZIPPED_CSV;
-			definition.dateRangeType = ADWORDS_V201302.ReportDefinitionDateRangeType.CUSTOM_DATE;
-
-			// Create the selector.
-			/*----------------------------------------------------------------*/
-			ADWORDS_V201302.Selector selector = GetNewSelector(startDate, endDate, definition.reportType, deliveryFile.Parameters["ReportFieldsType"].ToString(), filterOnImps, filterDeleted);
-
-
-			definition.selector = selector;
-			return definition;
-		}
-
-		public static ADWORDS_V201302.Selector GetNewSelector(string startDate, string endDate, ADWORDS_V201302.ReportDefinitionReportType reportType, string reportFieldsType, bool filterOnImps, bool filterDeleted)
-		{
-			ADWORDS_V201302.Selector selector = new ADWORDS_V201302.Selector();
-
-			//Setting report fields
-			selector.fields = GoogleStaticReportFields.ReportNames[reportType][reportFieldsType];
-
-			//Setting Date Range
-			selector.dateRange = new ADWORDS_V201302.DateRange
-			{
-				min = startDate,
-				max = endDate
-			};
-			#region predicates
-			/****************************************************************/
-			List<ADWORDS_V201302.Predicate> predicate = new List<ADWORDS_V201302.Predicate>();
-
-			if (filterDeleted)
-			{
-				//Set deleted campigns filter
-				List<string> deletedCampaigns = GetDeletedCampaigns();
-				if (deletedCampaigns.Count > 0)
-				{
-					ADWORDS_V201302.Predicate camPredicate = new ADWORDS_V201302.Predicate();
-					camPredicate.field = "CampaignId";
-					camPredicate.@operator = ADWORDS_V201302.PredicateOperator.NOT_IN;
-					camPredicate.values = deletedCampaigns.ToArray<string>();
-					predicate.Add(camPredicate);
-				}
-
-				//Set deleted adgroups filter
-				List<string> deletedAdgroup = GetDeletedAdgroups();
-				if (deletedAdgroup.Count > 0)
-				{
-					//Set deleted campigns filter
-					ADWORDS_V201302.Predicate AgPredicate = new ADWORDS_V201302.Predicate();
-					AgPredicate.field = "AdGroupId";
-					AgPredicate.@operator = ADWORDS_V201302.PredicateOperator.NOT_IN;
-					AgPredicate.values = deletedCampaigns.ToArray<string>();
-					predicate.Add(AgPredicate);
-				}
-			}
-
-
-			if (filterOnImps && selector.fields.Contains("Impressions"))
-			{
-				//Set Imps Fillter
-				ADWORDS_V201302.Predicate impPredicate = new ADWORDS_V201302.Predicate();
-				impPredicate.field = "Impressions";
-				impPredicate.@operator = ADWORDS_V201302.PredicateOperator.GREATER_THAN;
-				impPredicate.values = new string[] { "0" };
-				/*----------------------------------------------------------------*/
-
-				//Set clicks Fillter
-				//ADWORDS_V201302.Predicate clicksPredicate = new ADWORDS_V201302.Predicate();
-				//clicksPredicate.field = "Clicks";
-				//clicksPredicate.@operator = ADWORDS_V201302.PredicateOperator.NOT_EQUALS;
-				//clicksPredicate.values = new string[] { "0" };
-
-				///*----------------------------------------------------------------*/
-
-				////Set clicks Fillter
-				//ADWORDS_V201302.Predicate costPredicate = new ADWORDS_V201302.Predicate();
-				//costPredicate.field = "Cost";
-				//costPredicate.@operator = ADWORDS_V201302.PredicateOperator.NOT_EQUALS;
-				//costPredicate.values = new string[] { "0" };
-
-				/*----------------------------------------------------------------*/
-
-				predicate.Add(impPredicate);
-
-			}
-			selector.predicates = predicate.ToArray<ADWORDS_V201302.Predicate>();
-			/****************************************************************/
-
-			#endregion
-
-
-			return selector;
-
-		}
-
-		public static List<string> GetDeletedCampaigns()
-		{
-			List<string> deletedCampaigns = new List<string>();
-
-			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "systemDB"));
-
-			try
-			{
-				using (connection)
-				{
-					string cmdTxt = " SELECT [campaignid] from [dbo].[UserProcess_GUI_PaidCampaign] WHERE [campStatus] = @status";
-					SqlCommand cmd = new SqlCommand(cmdTxt);
-					cmd.Connection = connection;
-					connection.Open();
-					SqlParameter status = new SqlParameter("@status", Convert.ToInt32(ObjectStatus.Deleted));
-					cmd.Parameters.Add(status);
-
-					using (SqlDataReader reader = cmd.ExecuteReader())
-					{
-						while (reader.Read())
-						{
-							deletedCampaigns.Add(reader[0].ToString());
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				throw new Exception("Error while trying to get deleted campigns from table UserProcess_GUI_PaidCampaign", ex);
-			}
-
-			return deletedCampaigns;
-		}
-
-		public static List<string> GetDeletedAdgroups()
-		{
-			List<string> deletedAdgroups = new List<string>();
-
-			SqlConnection connection = new SqlConnection(AppSettings.GetConnectionString(typeof(AdwordsUtill), "systemDB"));
-
-			try
-			{
-				using (connection)
-				{
-					string cmdTxt = "SELECT [adgroupID] from [dbo].[UserProcess_GUI_PaidAdGroup] WHERE [agStatus] = @status";
-					SqlCommand cmd = DataManager.CreateCommand(cmdTxt);
-					cmd.Connection = connection;
-					connection.Open();
-					SqlParameter status = new SqlParameter("@status", Convert.ToInt32(ObjectStatus.Deleted));
-					cmd.Parameters.Add(status);
-
-					cmd.Parameters["@status"].Value = ObjectStatus.Deleted.ToString();
-
-					using (SqlDataReader reader = cmd.ExecuteReader())
-					{
-						while (reader.Read())
-						{
-							deletedAdgroups.Add(reader[0].ToString());
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				throw new Exception("Error while trying to get deleted Adgroups from table UserProcess_GUI_PaidAdGroup", ex);
-			}
-			return deletedAdgroups;
-		}
-
-		public static string ConvertDefinitionToXml(ADWORDS_V201302.ReportDefinition definition)
-		{
-			string xml = SerializationUtilities.SerializeAsXmlText(definition).Replace(
-				"ReportDefinition", "reportDefinition");
-			XmlDocument doc = new XmlDocument();
-			doc.LoadXml(xml);
-			XmlNodeList xmlNodes = doc.SelectNodes("descendant::*");
-			foreach (XmlElement node in xmlNodes)
-			{
-				node.RemoveAllAttributes();
-			}
-			return doc.OuterXml;
-		}
-
 		public static string GetAuthToken(GA.Lib.AdWordsUser user, bool generateNew = false)
 		{
 
@@ -308,7 +118,6 @@ namespace Edge.Services.Google.AdWords
 
 			return auth;
 		}
-
 	}
 
 	public static class GoogleStaticReportsNamesUtill
@@ -349,38 +158,38 @@ namespace Edge.Services.Google.AdWords
 
 		#region Supported Reports fields
 
-		public static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
+		private static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
-		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions",
+		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions","DevicePreference",
 		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionsManyPerClick","ConversionValue","TotalConvValue"
 		                                                  
 		                                               };
-		public static string[] AD_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
+        private static string[] AD_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
 		                                                   "Status"
 		                                               };
-		public static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
+        private static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName" };
 
-		public static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
-		public static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "CampaignId", "Status" };
+        private static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
+        private static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "CampaignId", "Status" };
 
-		public static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
+        private static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
 												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
 
-		public static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
-		public static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "CampaignId", "AdGroupId", "Status" };
+        private static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
+        private static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "CampaignId", "AdGroupId", "Status" };
 
-		public static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "CampaignId","CampaignName","CampaignStatus", "AdGroupId","AdGroupName","Clicks", "Cost", "Impressions",
+        private static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "CampaignId","CampaignName","CampaignStatus", "AdGroupId","AdGroupName","Clicks", "Cost", "Impressions",
 																			 "Domain","ConversionsManyPerClick","Conversions"
 																		 };
-		public static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "ConversionsManyPerClick", "ConversionCategoryName" };
-		public static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id", "CriteriaDestinationUrl", "ConversionsManyPerClick", "ConversionCategoryName" };
+        private static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "ConversionsManyPerClick", "ConversionCategoryName" };
+        private static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id", "CriteriaDestinationUrl", "ConversionsManyPerClick", "ConversionCategoryName" };
 
-		public static string[] Display_Topics_Performance_Report = { "AdGroupId", "AdGroupName", "CampaignId", "CampaignName", "Clicks", "Cost", "CpcBidSource", "Criteria", "CriteriaDestinationUrl", "Date", "DestinationUrl", "Id", "Impressions", "IsNegative", "MaxCpc", "MaxCpm" };
+        private static string[] Display_Topics_Performance_Report = { "AdGroupId", "AdGroupName", "CampaignId", "CampaignName", "Clicks", "Cost", "CpcBidSource", "Criteria", "CriteriaDestinationUrl", "Date", "DestinationUrl", "Id", "Impressions", "IsNegative", "MaxCpc", "MaxCpm" };
 
 
 		#endregion Reports fields
 
-		public static Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>> ReportNames = new Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>>()
+		public static Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>> REPORTS_FIELDS = new Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>>()
 		{
 			
 			{ADWORDS_V201302.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
