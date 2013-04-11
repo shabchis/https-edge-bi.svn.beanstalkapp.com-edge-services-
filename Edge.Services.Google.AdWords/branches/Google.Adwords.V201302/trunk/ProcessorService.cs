@@ -18,23 +18,45 @@ namespace Edge.Services.Google.AdWords
     {
         static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
         static ExtraField AdType = new ExtraField() { ColumnIndex = 2, Name = "adType" };
-        static Dictionary<string, int> GoogleAdTypeDic;
+        static Dictionary<string, EdgeAdType> GoogleAdTypeDic;
         static Dictionary<string, string> GoogleMeasuresDic;
         static Dictionary<string, ObjectStatus> ObjectStatusDic;
 
+        static enum EdgeAdType
+        {
+            Text_ad = 1,
+            Flash = 2,
+            Image_ad = 3,
+            Display_ad = 4,
+            Product_listing_ad = 5,
+            Mobile_ad = 6,
+            Local_business_ad = 7,
+            Third_party_ad = 8,
+            Other = 9,
+            Mobile_text = 10,
+            Mobile_image = 11,
+            Mobile_display = 12
+
+        }
+
         public ProcessorService()
         {
-            GoogleAdTypeDic = new Dictionary<string, int>()
+            GoogleAdTypeDic = new Dictionary<string, EdgeAdType>()
 			{
-				{"Text ad",1},
-				{"Flash",2},
-				{"Image ad",3},
-				{"Display ad",4},
-				{"Product listing ad",5},
-				{"Mobile ad",6},
-				{"Local business ad",7},
-				{"Third party ad",8},
-				{"Other",9}
+				{Const.AdTypeValues.Text_ad,EdgeAdType.Text_ad},
+				{Const.AdTypeValues.Flash_ad,EdgeAdType.Flash},
+				{Const.AdTypeValues.Image_ad,EdgeAdType.Image_ad},
+				{Const.AdTypeValues.Display_ad,EdgeAdType.Display_ad},
+				{Const.AdTypeValues.Product_listing_ad,EdgeAdType.Product_listing_ad},
+				{Const.AdTypeValues.Mobile_ad,EdgeAdType.Mobile_ad},
+				{Const.AdTypeValues.Local_business_ad,EdgeAdType.Local_business_ad},
+				{Const.AdTypeValues.Third_party_ad,EdgeAdType.Third_party_ad},
+				{Const.AdTypeValues.Other,EdgeAdType.Other},
+                {Const.AdTypeValues.Mobile_text,EdgeAdType.Mobile_text},
+                {Const.AdTypeValues.Mobile_image,EdgeAdType.Mobile_image},
+                {Const.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display}
+
+
 			};
             GoogleMeasuresDic = new Dictionary<string, string>()
 			{
@@ -63,7 +85,7 @@ namespace Edge.Services.Google.AdWords
             get { return (AdMetricsImportManager)base.ImportManager; }
             set { base.ImportManager = value; }
         }
-        
+
         protected override Core.Services.ServiceOutcome DoPipelineWork()
         {
             bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
@@ -350,8 +372,16 @@ namespace Edge.Services.Google.AdWords
                             ad.Status = ad_Status_Data[Convert.ToInt64(adId)];
 
                             //Ad Type
-                            string adTypeKey = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
-                            ad.ExtraFields[AdType] = GoogleAdTypeDic[adTypeKey];
+                            string adType = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
+                            string devicePreference = Convert.ToString(_adsReader.Current[Const.AdDevicePreferenceFieldName]);
+                           
+                            //incase of mobile ad 
+                            if (devicePreference.Equals(Const.AdDevicePreferenceMobileFieldValue))
+                                adType = string.Format("Mobile {0}",Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]));
+
+                            ad.ExtraFields[AdType] = GoogleAdTypeDic[adType];
+
+                            //Creative
                             ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
 
                             ////Setting Tracker for Ad
@@ -446,7 +476,7 @@ namespace Edge.Services.Google.AdWords
                                 //Creating KWD with OriginalID , since the KWD doesnt exists in KWD report.
                                 kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
                             }
-                           
+
                             //INSERTING KEYWORD INTO METRICS
                             adMetricsUnit.TargetDimensions = new List<Target>();
                             adMetricsUnit.TargetDimensions.Add(kwd);
@@ -547,6 +577,8 @@ namespace Edge.Services.Google.AdWords
 
         public const string AdIDFieldName = "Ad ID";
         public const string AdTypeFieldName = "Ad type";
+        public const string AdDevicePreferenceFieldName = "Device Preference";
+        public const string AdDevicePreferenceMobileFieldValue = "30001";
         public const string AdFieldName = "Ad";
         public const string AdStatusFieldName = "Ad state";
         public const string DisplayURLFieldName = "Display URL";
@@ -561,6 +593,22 @@ namespace Edge.Services.Google.AdWords
         public const string AutoDisplayNetworkName = "Total - content targeting";
 
         public const string DomainFieldName = "Domain";
+
+        public static class AdTypeValues
+        {
+            public const string Text_ad = "Text ad";
+            public const string Flash_ad = "Flash";
+            public const string Image_ad = "Image ad";
+            public const string Display_ad = "Display ad";
+            public const string Product_listing_ad = "Product listing ad";
+            public const string Mobile_ad = "Mobile ad";
+            public const string Local_business_ad = "Local business ad";
+            public const string Third_party_ad = "Third party ad";
+            public const string Other = "Other";
+            public const string Mobile_text = "Mobile Text ad";
+            public const string Mobile_image = "Mobile Image ad";
+            public const string Mobile_display = "Mobile Display ad";
+        }
 
     }
 }
