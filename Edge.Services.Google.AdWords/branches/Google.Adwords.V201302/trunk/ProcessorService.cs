@@ -14,6 +14,7 @@ using System.Linq;
 
 namespace Edge.Services.Google.AdWords
 {
+    
     class ProcessorService : MetricsProcessorServiceBase
     {
         static ExtraField NetworkType = new ExtraField() { ColumnIndex = 1, Name = "NetworkType" };
@@ -22,7 +23,7 @@ namespace Edge.Services.Google.AdWords
         static Dictionary<string, string> GoogleMeasuresDic;
         static Dictionary<string, ObjectStatus> ObjectStatusDic;
 
-        static enum EdgeAdType
+        public enum EdgeAdType
         {
             Text_ad = 1,
             Flash = 2,
@@ -36,7 +37,6 @@ namespace Edge.Services.Google.AdWords
             Mobile_text = 10,
             Mobile_image = 11,
             Mobile_display = 12
-
         }
 
         public ProcessorService()
@@ -55,9 +55,8 @@ namespace Edge.Services.Google.AdWords
                 {Const.AdTypeValues.Mobile_text,EdgeAdType.Mobile_text},
                 {Const.AdTypeValues.Mobile_image,EdgeAdType.Mobile_image},
                 {Const.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display}
-
-
 			};
+
             GoogleMeasuresDic = new Dictionary<string, string>()
 			{
 				{"Lead","Leads"},
@@ -108,35 +107,9 @@ namespace Edge.Services.Google.AdWords
             }))
             {
 
-                #region Getting Keywords Status Data
-                DeliveryFile _keyWordsStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT] + "_Status"];
                 string[] requiredHeaders = new string[1];
                 requiredHeaders[0] = Const.AdPreRequiredHeader;
-                var _keywordsStatusReader = new CsvDynamicReader(_keyWordsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-                _keywordsStatusReader.MatchExactColumns = false;
-
-                using (_keywordsStatusReader)
-                {
-                    while (_keywordsStatusReader.Read())
-                    {
-                        if (_keywordsStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
-                            break;
-
-                        string kwdStatus = Convert.ToString(_keywordsStatusReader.Current[Const.KeywordStatusFieldName]);
-                        Int64 kwdId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]);
-                        KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
-                        {
-                            KeywordId = Convert.ToInt64(_keywordsStatusReader.Current[Const.KeywordIdFieldName]),
-                            AdgroupId = Convert.ToInt64(_keywordsStatusReader.Current[Const.AdGroupIdFieldName]),
-                            CampaignId = Convert.ToInt64(_keywordsStatusReader.Current[Const.CampaignIdFieldName])
-
-                        };
-                        kwd_Status_Data.Add(keywordPrimaryKey.ToString(), ObjectStatusDic[kwdStatus.ToUpper()]);
-                    }
-                }
-                #endregion
-
-
+                
                 #region Getting Keywords Data
                 Dictionary<string, double> _totals = new Dictionary<string, double>();
                 DeliveryFile _keyWordsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]];
@@ -162,7 +135,7 @@ namespace Edge.Services.Google.AdWords
                         {
                             OriginalID = _keywordsReader.Current[Const.KeywordIdFieldName],
                             Keyword = _keywordsReader.Current[Const.KeywordFieldName],
-                            Status = kwd_Status_Data[keywordPrimaryKey.ToString()]
+                            //Status = kwd_Status_Data[keywordPrimaryKey.ToString()]
 
                         };
 
@@ -181,31 +154,7 @@ namespace Edge.Services.Google.AdWords
 
                 Dictionary<string, PlacementTarget> _placementsData = new Dictionary<string, PlacementTarget>();
 
-                #region Getting Placements Status Data
-                DeliveryFile _placementsStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT] + "_Status"];
-                requiredHeaders[0] = Const.AdPreRequiredHeader;
-                var _placementsStatusReader = new CsvDynamicReader(_placementsStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-                _placementsStatusReader.MatchExactColumns = false;
-
-                using (_placementsStatusReader)
-                {
-                    while (_placementsStatusReader.Read())
-                    {
-                        if (_placementsStatusReader.Current[Const.KeywordIdFieldName] == Const.EOF)
-                            break;
-
-                        string placementsStatus = Convert.ToString(_placementsStatusReader.Current[Const.PlacementStatusFieldName]);
-                        KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
-                        {
-                            KeywordId = Convert.ToInt64(_placementsStatusReader.Current[Const.KeywordIdFieldName]),
-                            AdgroupId = Convert.ToInt64(_placementsStatusReader.Current[Const.AdGroupIdFieldName]),
-                            CampaignId = Convert.ToInt64(_placementsStatusReader.Current[Const.CampaignIdFieldName])
-                        };
-
-                        placement_kwd_Status_Data.Add(placementPrimaryKey.ToString(), ObjectStatusDic[placementsStatus.ToUpper()]);
-                    }
-                }
-                #endregion
+               
 
                 #region Getting Placements Data
 
@@ -229,7 +178,7 @@ namespace Edge.Services.Google.AdWords
                             OriginalID = _PlacementsReader.Current[Const.KeywordIdFieldName],
                             Placement = _PlacementsReader.Current[Const.PlacementFieldName],
                             PlacementType = PlacementType.Managed,
-                            Status = placement_kwd_Status_Data[placementPrimaryKey.ToString()]
+                           // Status = placement_kwd_Status_Data[placementPrimaryKey.ToString()]
                         };
                         //Setting Tracker for placment
                         if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
@@ -278,39 +227,6 @@ namespace Edge.Services.Google.AdWords
                 }
                 #endregion
 
-
-                #region Getting Creative Status Data Ad,Adgroups,Campaign
-                DeliveryFile _creativeStatusFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Status"];
-                requiredHeaders[0] = Const.AdIDFieldName;
-                var _creativeStatusReader = new CsvDynamicReader(_creativeStatusFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-                _creativeStatusReader.MatchExactColumns = false;
-
-                using (_creativeStatusReader)
-                {
-                    while (_creativeStatusReader.Read())
-                    {
-                        if (_creativeStatusReader.Current[Const.AdIDFieldName] == Const.EOF)
-                            break;
-
-                        //Get Ad Status
-                        string adStatus = Convert.ToString(_creativeStatusReader.Current[Const.AdStatusFieldName]);
-                        Int64 adId = Convert.ToInt64(_creativeStatusReader.Current[Const.AdIDFieldName]);
-                        ad_Status_Data.Add(adId, ObjectStatusDic[adStatus.ToUpper()]);
-
-                        //Get Adgroup Status
-                        string adGroupStatus = Convert.ToString(_creativeStatusReader.Current[Const.AdGroupStatusFieldName]);
-                        Int64 adGroupId = Convert.ToInt64(_creativeStatusReader.Current[Const.AdGroupIdFieldName]);
-                        if (!adGroup_Status_Data.ContainsKey(adGroupId))
-                            adGroup_Status_Data.Add(adGroupId, ObjectStatusDic[adGroupStatus.ToUpper()]);
-
-                        //Get Campaign Status
-                        string campaignStatus = Convert.ToString(_creativeStatusReader.Current[Const.CampaignStatusFieldName]);
-                        Int64 campaignId = Convert.ToInt64(_creativeStatusReader.Current[Const.CampaignIdFieldName]);
-                        if (!campaign_Status_Data.ContainsKey(campaignId))
-                            campaign_Status_Data.Add(campaignId, ObjectStatusDic[campaignStatus.ToUpper()]);
-                    }
-                }
-                #endregion
 
                 #region Getting Ads Data
 
@@ -369,17 +285,29 @@ namespace Edge.Services.Google.AdWords
                             ad.OriginalID = adId;
                             ad.Channel = new Channel() { ID = 1 };
                             ad.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
-                            ad.Status = ad_Status_Data[Convert.ToInt64(adId)];
+                           // ad.Status = ad_Status_Data[Convert.ToInt64(adId)];
 
                             //Ad Type
-                            string adType = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
-                            string devicePreference = Convert.ToString(_adsReader.Current[Const.AdDevicePreferenceFieldName]);
+                         
+                            string adTypeColumnValue = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
+                            string devicePreferenceColumnValue = Convert.ToString(_adsReader.Current[Const.AdDevicePreferenceFieldName]);
+                            string adTypeEdgeValue = GoogleAdTypeDic[adTypeColumnValue].ToString();
                            
-                            //incase of mobile ad 
-                            if (devicePreference.Equals(Const.AdDevicePreferenceMobileFieldValue))
-                                adType = string.Format("Mobile {0}",Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]));
+                            //EdgeAdType atv = (EdgeAdType)Enum.Parse(typeof(EdgeAdType), adTypeEdgeValue, true);
 
-                            ad.ExtraFields[AdType] = GoogleAdTypeDic[adType];
+                            //is mobile ad ? 
+                            if (devicePreferenceColumnValue.Equals(Const.AdDevicePreferenceMobileFieldValue))
+                            {
+                                string mobileValue = string.Format("Mobile {0}", Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]));
+
+                                //Check if this mobile value exists on dictionary
+                                if (GoogleAdTypeDic.ContainsKey(mobileValue))
+                                    adTypeEdgeValue = GoogleAdTypeDic[adTypeColumnValue].ToString();
+
+                                else adTypeEdgeValue = GoogleAdTypeDic[Const.AdTypeValues.Mobile_ad].ToString();
+                            }
+
+                            ad.ExtraFields[AdType] = (int)(EdgeAdType)Enum.Parse(typeof(EdgeAdType), adTypeEdgeValue, true); ;
 
                             //Creative
                             ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
@@ -397,7 +325,7 @@ namespace Edge.Services.Google.AdWords
                             {
                                 OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
                                 Name = _adsReader.Current[Const.CampaignFieldName],
-                                Status = campaign_Status_Data[Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])]
+                                //Status = campaign_Status_Data[Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])]
 
                             };
 
@@ -436,7 +364,7 @@ namespace Edge.Services.Google.AdWords
                                 Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
                                 Value = _adsReader.Current[Const.AdGroupFieldName],
                                 OriginalID = _adsReader.Current[Const.AdGroupIdFieldName],
-                                Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
+                               // Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
                             };
 
                             //Insert Network Type Display Network / Search Network
@@ -577,7 +505,7 @@ namespace Edge.Services.Google.AdWords
 
         public const string AdIDFieldName = "Ad ID";
         public const string AdTypeFieldName = "Ad type";
-        public const string AdDevicePreferenceFieldName = "Device Preference";
+        public const string AdDevicePreferenceFieldName = "Device preference";
         public const string AdDevicePreferenceMobileFieldValue = "30001";
         public const string AdFieldName = "Ad";
         public const string AdStatusFieldName = "Ad state";
