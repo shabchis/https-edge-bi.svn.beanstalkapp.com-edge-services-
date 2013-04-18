@@ -302,7 +302,7 @@ namespace Edge.Services.Google.AdWords
 
                                 //Check if this mobile value exists on dictionary
                                 if (GoogleAdTypeDic.ContainsKey(mobileValue))
-                                    adTypeEdgeValue = GoogleAdTypeDic[adTypeColumnValue].ToString();
+                                    adTypeEdgeValue = GoogleAdTypeDic[mobileValue].ToString();
 
                                 else adTypeEdgeValue = GoogleAdTypeDic[Const.AdTypeValues.Mobile_ad].ToString();
                             }
