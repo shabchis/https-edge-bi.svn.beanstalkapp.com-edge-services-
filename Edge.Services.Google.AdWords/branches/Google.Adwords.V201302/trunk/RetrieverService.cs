@@ -103,7 +103,7 @@ namespace Edge.Services.Google.AdWords
                     sb.Remove(sb.Length - 1, 1); // removing last ","
                     sb.Append(" FROM " + reportType.ToString());
 
-                    if (includeZeroImpression && GoogleStaticReportFields.REPORTS_FIELDS[reportType][file.Parameters["ReportFieldsType"].ToString()].Contains(""))
+                    if (!includeZeroImpression && GoogleStaticReportFields.REPORTS_FIELDS[reportType][file.Parameters["ReportFieldsType"].ToString()].Contains(""))
                         sb.Append(" WHERE Impressions > 0");
 
                     sb.Append(string.Format(" DURING {0},{1}",startDate,endDate));
