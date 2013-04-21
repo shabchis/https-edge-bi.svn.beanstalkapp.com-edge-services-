@@ -154,6 +154,7 @@ namespace Edge.Services.AdMetrics.Validations
                 using (SqlConnection sqlCon = new SqlConnection(AppSettings.GetConnectionString(this, "OltpDB")))
                 {
                     sqlCon.Open();
+                    command.Connection = sqlCon;
                     using (var reader = command.ExecuteReader())
                     {
 
