@@ -27,9 +27,9 @@
 
 		public const string QualityScoreFieldName = "Quality score";
 		public const string MatchTypeFieldName = "Match type";
+		public const string PlacementIdFieldName = "Criterion ID";
 		public const string PlacementFieldName = "Placement";
 		public const string PlacementStatusFieldName = "Placement state";
-
 
 		public const string AdIDFieldName = "Ad ID";
 		public const string AdTypeFieldName = "Ad type";
