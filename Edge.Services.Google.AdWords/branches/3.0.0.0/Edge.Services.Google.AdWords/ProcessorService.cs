@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using Edge.Core.Services;
 using Edge.Data.Pipeline.Metrics.Managers;
 using Edge.Data.Pipeline.Metrics.Misc;
@@ -36,6 +37,11 @@ namespace Edge.Services.Google.AdWords
 		static Dictionary<string, EdgeAdType> _googleAdTypeDic;
 		static Dictionary<string, string> _googleMeasuresDic;
 		static Dictionary<string, ObjectStatus> _objectStatusDic; 
+
+		private readonly Dictionary<string, Dictionary<string, long>> _importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
+		private readonly Dictionary<string, KeywordTarget> _keywordsCache = new Dictionary<string, KeywordTarget>();
+		private readonly Dictionary<string, PlacementTarget> _placementsCache = new Dictionary<string, PlacementTarget>();
+		private readonly Dictionary<string, Ad> _importedAds = new Dictionary<string, Ad>();
 		#endregion
 
 		#region Ctor
@@ -85,15 +91,15 @@ namespace Edge.Services.Google.AdWords
 		{
 			InitMappings();
 
-			bool includeConversionTypes = Boolean.Parse(Delivery.Parameters["includeConversionTypes"].ToString());
-			bool includeDisplaytData = Boolean.Parse(Delivery.Parameters["includeDisplaytData"].ToString());
+			//bool includeConversionTypes = Boolean.Parse(Delivery.Parameters["includeConversionTypes"].ToString());
+			//bool includeDisplaytData = Boolean.Parse(Delivery.Parameters["includeDisplaytData"].ToString());
 
 			//Status Members
-			var kwd_Status_Data = new Dictionary<string, ObjectStatus>();
-			var placement_kwd_Status_Data = new Dictionary<string, ObjectStatus>();
-			var adGroup_Status_Data = new Dictionary<Int64, ObjectStatus>();
-			var ad_Status_Data = new Dictionary<Int64, ObjectStatus>();
-			var campaign_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			//var kwd_Status_Data = new Dictionary<string, ObjectStatus>();
+			//var placement_kwd_Status_Data = new Dictionary<string, ObjectStatus>();
+			//var adGroup_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			//var ad_Status_Data = new Dictionary<Int64, ObjectStatus>();
+			//var campaign_Status_Data = new Dictionary<Int64, ObjectStatus>();
 
 			using (ImportManager = new MetricsDeliveryManager(InstanceID, EdgeTypes, new MetricsDeliveryManagerOptions()))
 			//{
@@ -110,124 +116,30 @@ namespace Edge.Services.Google.AdWords
 				var totals = new Dictionary<string, double>();
 
 				// Getting Keywords Data
-				var keywordsCache = LoadKeywords(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]], requiredHeaders);
+				LoadKeywords(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]], requiredHeaders);
 
 				// Getting Placements Data
-				var placementsCache = LoadPlacements(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT]], requiredHeaders);
+				LoadPlacements(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT]], requiredHeaders);
 
 				// Getting Conversions Data ( for ex. signup , purchase )
-				var importedAdsWithConv = LoadConversions(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"], requiredHeaders);
+				LoadConversions(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"], requiredHeaders);
 
 				#region Getting Ads Data
 
 				var adPerformanceFile = Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
 				var adsReader = new CsvDynamicReader(adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-				var importedAds = new Dictionary<string, Ad>();
-
 				var currentOutput = Delivery.Outputs.First();
+				Mappings.OnFieldRequired = field => adsReader.Current[field];
+				_importedAds.Clear();
 
 				using (adsReader)
 				{
-					Mappings.OnFieldRequired = field => adsReader.Current[field];
-					
 					while (adsReader.Read() && adsReader.Current[AdWordsConst.AdIDFieldName] != AdWordsConst.EOF)
 					{
-						string adId = adsReader.Current[AdWordsConst.AdIDFieldName];
-						
-						Ad ad;
-						if (importedAds.ContainsKey(adId))
-						{
-							ad = importedAds[adId];
-						}
-						else
-						{
-							ad = CreateNewAd(adsReader);
-							importedAds.Add(adId, ad);
-						}
-						
-						var metricsUnit = new MetricsUnit 
-						{
-							GetEdgeField = GetEdgeField, 
-							Ad = ad, Output = currentOutput,
-							Channel = GetChannel("Google"),
-							Account = GetAccount("Bbinary"),
-							TimePeriodStart = Delivery.TimePeriodStart,
-							TimePeriodEnd = Delivery.TimePeriodEnd
-						};
+						var metricUnit = CreateMetricsUnit(adsReader);
+						metricUnit.Output = currentOutput;
 
-						// get keyword by key from keyword or placement dictionary
-						var key = new KeywordPrimaryKey
-							{
-								AdgroupId = Convert.ToInt64(adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
-								KeywordId = Convert.ToInt64(adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-								CampaignId = Convert.ToInt64(adsReader.Current[AdWordsConst.CampaignIdFieldName])
-							};
-
-						if (key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"]) && keywordsCache.ContainsKey(key.ToString()))
-						{
-							// Check if keyword exists in keywords cache (keywords report), if not - create new by ID
-							var kwd = keywordsCache.ContainsKey(key.ToString()) ? keywordsCache[key.ToString()] :
-									  new KeywordTarget
-										  {
-											  Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
-											  MatchType = KeywordMatchType.Unidentified,
-											  EdgeType = GetEdgeType("KeywordTarget"),
-											  TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, adsReader.Current[AdWordsConst.KeywordIdFieldName])
-										  };
-
-							// add keyword as a target to metrics
-							metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
-								{
-									Target = kwd, 
-									EdgeType = GetEdgeType("TargetMatch"),
-									TK = kwd.TK
-								});
-						}
-						else
-						{
-							var placement = placementsCache.ContainsKey(key.ToString()) ? placementsCache[key.ToString()] :
-									  new PlacementTarget
-										  {
-											  Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
-											  PlacementType = PlacementType.Automatic,
-											  EdgeType = GetEdgeType("PlacementTarget"),
-											  TK = String.Format("{0}_{1}", PlacementType.Automatic, adsReader.Current[AdWordsConst.KeywordIdFieldName])
-										  };
-
-							// add placement as a target to metrics
-							metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
-								{
-									Target = placement, 
-									EdgeType = GetEdgeType("TargetMatch"),
-									TK = placement.TK
-								});
-						}
-
-						// metrics measures
-						metricsUnit.MeasureValues = new Dictionary<Measure, double>();
-						metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(adsReader.Current.Clicks));
-						metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToInt64(adsReader.Current.Cost) / 1000000);
-						metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToDouble(adsReader.Current[AdWordsConst.AvgPositionFieldName]));
-						metricsUnit.MeasureValues.Add(GetMeasure("AveragePosition"), Convert.ToInt64(adsReader.Current.Clicks));
-						metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionOnePerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionOnePerClickFieldName]));
-						metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionManyPerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]));
-
-						// Inserting conversion values
-						string conversionKey = String.Format("{0}#{1}", ad.OriginalID, adsReader.Current[AdWordsConst.KeywordIdFieldName]);
-						if (importedAdsWithConv.ContainsKey(conversionKey))
-						{
-							var conversionDic = importedAdsWithConv[conversionKey];
-							foreach (var pair in conversionDic.Where(pair => _googleMeasuresDic.ContainsKey(pair.Key)))
-							{
-								metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[pair.Key]), pair.Value);
-							}
-						}
-
-						// currency
-						metricsUnit.Currency = new Currency { Code = Convert.ToString(adsReader.Current.Currency) };
-
-						// import metrics
-						ImportManager.ImportMetrics(metricsUnit);
+						ImportManager.ImportMetrics(metricUnit);
 					}
 
 					currentOutput.Checksum = totals;
@@ -240,61 +152,31 @@ namespace Edge.Services.Google.AdWords
 
 		protected override MetricsUnit GetSampleMetrics()
 		{
-			var metricsUnit = new MetricsUnit
-				{
-					GetEdgeField = GetEdgeField,
-					Channel = GetChannel("Google"),
-					Account = GetAccount("Bbinary")
-				};
 			var headers = new[] { AdWordsConst.AdPreRequiredHeader };
 			
 			// load sample keywords
 			var file = new DeliveryFile {Location = Configuration.Parameters.Get<string>("KeywordSampleFile")};
-			var keywords = LoadKeywords(file, headers, FileCompression.None);
+			LoadKeywords(file, headers, FileCompression.None);
 			
 			// load ad
 			using (var adsReader = new CsvDynamicReader(Configuration.Parameters.Get<string>("AdSampleFile"), headers))
 			{
 				if (adsReader.Read())
 				{
-					metricsUnit.Ad = CreateNewAd(adsReader);
-
-					// attach keyword
-					var keywordKey = new KeywordPrimaryKey
-					{
-						AdgroupId = Convert.ToInt64(adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
-						KeywordId = Convert.ToInt64(adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-						CampaignId = Convert.ToInt64(adsReader.Current[AdWordsConst.CampaignIdFieldName])
-					};
-
-					if (keywords.ContainsKey(keywordKey.ToString()))
-					{
-						metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch { Target = keywords[keywordKey.ToString()], EdgeType = GetEdgeType("TargetMatch") });
-					}
-
-					// metrics measures
-					metricsUnit.MeasureValues = new Dictionary<Measure, double>();
-					metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(adsReader.Current.Clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToInt64(adsReader.Current.Cost) / 1000000);
-					metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToDouble(adsReader.Current[AdWordsConst.AvgPositionFieldName]));
-					metricsUnit.MeasureValues.Add(GetMeasure("AveragePosition"), Convert.ToInt64(adsReader.Current.Clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionOnePerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionOnePerClickFieldName]));
-					metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionManyPerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]));
-
-					metricsUnit.Currency = new Currency { Code = Convert.ToString(adsReader.Current.Currency) };
+					return CreateMetricsUnit(adsReader);
 				}
 			}
-			return metricsUnit;
+			throw new ConfigurationErrorsException(String.Format("Failed to read sample metrics from file: {0}", Configuration.Parameters.Get<string>("AdSampleFile")));
 		}
 		#endregion
 
 		#region Private Methods
-		private Dictionary<string, KeywordTarget> LoadKeywords(DeliveryFile file, string[] headers, FileCompression compression = FileCompression.Gzip)
+		private void LoadKeywords(DeliveryFile file, string[] headers, FileCompression compression = FileCompression.Gzip)
 		{
 			if (file == null)
 				throw new ArgumentException("Keywords delivery file does not exist");
 
-			var keywordsCache = new Dictionary<string, KeywordTarget>();
+			_keywordsCache.Clear();
 			using (var keywordsReader = new CsvDynamicReader(file.OpenContents(compression: compression), headers))
 			{
 				keywordsReader.MatchExactColumns = false;
@@ -322,18 +204,17 @@ namespace Edge.Services.Google.AdWords
 					keyword.Fields.Add(GetExtraField("QualityScore"), keywordsReader.Current[AdWordsConst.QualityScoreFieldName]);
 					keyword.Fields.Add(GetExtraField("DestinationUrl"), keywordsReader.Current[AdWordsConst.DestUrlFieldName]);
 
-					keywordsCache.Add(keywordPrimaryKey.ToString(), keyword);
+					_keywordsCache.Add(keywordPrimaryKey.ToString(), keyword);
 				}
 			}
-			return keywordsCache;
 		}
 
-		private Dictionary<string, PlacementTarget> LoadPlacements(DeliveryFile file, string[] headers)
+		private void LoadPlacements(DeliveryFile file, string[] headers)
 		{
 			if (file == null)
 				throw new ArgumentException("Placement delivery file does not exist");
 
-			var placementsCache = new Dictionary<string, PlacementTarget>();
+			_placementsCache.Clear();
 			using (var placementsReader = new CsvDynamicReader(file.OpenContents(compression: FileCompression.Gzip), headers))
 			{
 				while (placementsReader.Read())
@@ -358,21 +239,20 @@ namespace Edge.Services.Google.AdWords
 					placement.Fields.Add(GetExtraField("OriginalID"), placementsReader.Current[AdWordsConst.KeywordIdFieldName]);
 					placement.Fields.Add(GetExtraField("DestinationUrl"), placementsReader.Current[AdWordsConst.DestUrlFieldName]);
 					
-					placementsCache.Add(placementPrimaryKey.ToString(), placement);
+					_placementsCache.Add(placementPrimaryKey.ToString(), placement);
 				}
 			}
-			return placementsCache;
 		}
 
-		private Dictionary<string, Dictionary<string, long>> LoadConversions(DeliveryFile file, string[] headers)
+		private void LoadConversions(DeliveryFile file, string[] headers)
 		{
 			// TODO - throw exception if file does not exists
 			//if (file == null)
 			//	throw new ArgumentException("Ad conversions delivery file does not exist");
 
-			var importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
-			if (file == null) return importedAdsWithConv;
+			if (file == null) return;
 
+			_importedAdsWithConv.Clear();
 			using (var conversionsReader = new CsvDynamicReader(file.OpenContents(compression: FileCompression.Gzip), headers))
 			{
 				while (conversionsReader.Read())
@@ -383,41 +263,42 @@ namespace Edge.Services.Google.AdWords
 					var trackingPurpose = Convert.ToString(conversionsReader.Current[AdWordsConst.ConversionTrackingPurposeFieldName]);
 					var manyPerClick = Convert.ToInt64(conversionsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]);
 
-					if (!importedAdsWithConv.ContainsKey(conversionKey))
+					if (!_importedAdsWithConv.ContainsKey(conversionKey))
 					{
 						// add new conversion key with new dictionary of tracking purpose and clicks
-						importedAdsWithConv.Add(conversionKey, new Dictionary<string, long> { { trackingPurpose, manyPerClick } });
+						_importedAdsWithConv.Add(conversionKey, new Dictionary<string, long> { { trackingPurpose, manyPerClick } });
 					}
 					else // if conversion key exists
 					{
-						if (importedAdsWithConv[conversionKey].ContainsKey(trackingPurpose))
+						if (_importedAdsWithConv[conversionKey].ContainsKey(trackingPurpose))
 						{
 							// if purpose exists --> sum to existing value
-							importedAdsWithConv[conversionKey][trackingPurpose] += manyPerClick;
+							_importedAdsWithConv[conversionKey][trackingPurpose] += manyPerClick;
 						}
 						else
 						{
 							// create new entry for new tracking purpose
-							importedAdsWithConv[conversionKey].Add(trackingPurpose, manyPerClick);
+							_importedAdsWithConv[conversionKey].Add(trackingPurpose, manyPerClick);
 						}
 					}
 				}
 			}
-			return importedAdsWithConv;
 		}
 
-		private Ad CreateNewAd(CsvDynamicReader adsReader)
+		private Ad CreateAd(CsvDynamicReader adsReader)
 		{
+			//--------------
+			// Ad
+			//--------------
 			var ad = new Ad
 			{
 				OriginalID = adsReader.Current[AdWordsConst.AdIDFieldName],
 				Channel = GetChannel("Google"),
 				Account = GetAccount("Bbinary"),
 				Fields = new Dictionary<EdgeField, object>(),
-				TK = adsReader.Current[AdWordsConst.AdIDFieldName]
+				TK = adsReader.Current[AdWordsConst.AdIDFieldName], 
+				EdgeType = GetEdgeType("Ad")
 			};
-			SetEdgeType(ad);
-			// ad.Status = ad_Status_Data[Convert.ToInt64(adId)];
 
 			//--------------
 			// Ad Type
@@ -451,9 +332,9 @@ namespace Edge.Services.Google.AdWords
 			{
 				Name = adsReader.Current[AdWordsConst.CampaignFieldName],
 				OriginalID = adsReader.Current[AdWordsConst.CampaignIdFieldName],
-				TK = adsReader.Current[AdWordsConst.CampaignIdFieldName]
+				TK = adsReader.Current[AdWordsConst.CampaignIdFieldName],
+				EdgeType = GetEdgeType("Campaign")
 			};
-			SetEdgeType(campaign);
 			ad.Fields.Add(GetExtraField("Campaign"), campaign);
 
 			//--------------
@@ -464,9 +345,9 @@ namespace Edge.Services.Google.AdWords
 				Value = adsReader.Current[AdWordsConst.AdGroupFieldName],
 				OriginalID = adsReader.Current[AdWordsConst.AdGroupIdFieldName],
 				Fields = new Dictionary<EdgeField, object>(),
-				TK = adsReader.Current[AdWordsConst.AdGroupIdFieldName]
+				TK = adsReader.Current[AdWordsConst.AdGroupIdFieldName],
+				EdgeType = GetEdgeType("AdGroup")
 			};
-			adGroup.EdgeType = GetEdgeType("AdGroup");
 			adGroup.Fields.Add(GetExtraField("Campaign"), campaign);
 			ad.Fields.Add(GetExtraField("AdGroup"), adGroup);
 
@@ -594,15 +475,107 @@ namespace Edge.Services.Google.AdWords
 				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc2Definition"), definition);
 			}
 
-			SetCompositeCreativeTK(compCreative);
-			SetCompositeCreativeDefinitionTK(compCreativeDefinition);
+			SetCompositeCreativeTk(compCreative);
+			SetCompositeCreativeDefinitionTk(compCreativeDefinition);
 			ad.CreativeDefinition = compCreativeDefinition;
 			ad.CreativeDefinition.Creative = compCreative;
 
+			// add Ad to cache of Ads
+			_importedAds.Add(ad.OriginalID, ad);
 			return ad;
 		}
 
-		private static void SetCompositeCreativeDefinitionTK(CompositeCreativeDefinition compCreativeDefinition)
+		private MetricsUnit CreateMetricsUnit(CsvDynamicReader adsReader)
+		{
+			// get already existing or create new Ad
+			string adId = adsReader.Current[AdWordsConst.AdIDFieldName];
+			Ad ad = _importedAds.ContainsKey(adId) ? _importedAds[adId] : CreateAd(adsReader);
+
+			// create metrics unit
+			var metricsUnit = new MetricsUnit
+			{
+				GetEdgeField = GetEdgeField,
+				Ad = ad,
+				Channel = GetChannel("Google"),		// TODO change from Delivery
+				Account = GetAccount("Bbinary"),	// TODO change from Delivery
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd,
+				Currency = new Currency { Code = Convert.ToString(adsReader.Current.Currency) }
+			};
+
+			// add keyword or placement as a target to metrics
+			var target = GetTarget(adsReader);
+			metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
+			{
+				Target = target,
+				EdgeType = GetEdgeType("TargetMatch"),
+				TK = target.TK
+			});
+
+			// metrics measures
+			metricsUnit.MeasureValues = new Dictionary<Measure, double>();
+			metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(adsReader.Current.Clicks));
+			metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToInt64(adsReader.Current.Cost) / 1000000);
+			metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToDouble(adsReader.Current[AdWordsConst.AvgPositionFieldName]));
+			metricsUnit.MeasureValues.Add(GetMeasure("AveragePosition"), Convert.ToInt64(adsReader.Current.Clicks));
+			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionOnePerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionOnePerClickFieldName]));
+			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionManyPerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]));
+
+			// add conversion values
+			string conversionKey = String.Format("{0}#{1}", ad.OriginalID, adsReader.Current[AdWordsConst.KeywordIdFieldName]);
+			if (_importedAdsWithConv.ContainsKey(conversionKey))
+			{
+				var conversionDic = _importedAdsWithConv[conversionKey];
+				foreach (var pair in conversionDic.Where(pair => _googleMeasuresDic.ContainsKey(pair.Key)))
+				{
+					metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[pair.Key]), pair.Value);
+				}
+			}
+
+			return metricsUnit;
+		}
+
+		private Target GetTarget(CsvDynamicReader adsReader)
+		{
+			Target target;
+
+			// get keyword by key from keyword or placement dictionary
+			var key = new KeywordPrimaryKey
+			{
+				AdgroupId = Convert.ToInt64(adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
+				KeywordId = Convert.ToInt64(adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+				CampaignId = Convert.ToInt64(adsReader.Current[AdWordsConst.CampaignIdFieldName])
+			};
+
+			if (key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"]) && _keywordsCache.ContainsKey(key.ToString()))
+			{
+				// Check if keyword exists in keywords cache (keywords report), if not - create new by ID
+				target = _keywordsCache.ContainsKey(key.ToString()) ? _keywordsCache[key.ToString()] :
+							new KeywordTarget
+							{
+								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
+								MatchType = KeywordMatchType.Unidentified,
+								EdgeType = GetEdgeType("KeywordTarget"),
+								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, adsReader.Current[AdWordsConst.KeywordIdFieldName])
+							};
+			}
+			else
+			{
+				// Check if placement exists in placement cache (placements report), if not - create new by ID
+				target = _placementsCache.ContainsKey(key.ToString()) ? _placementsCache[key.ToString()] :
+							new PlacementTarget
+							{
+								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
+								PlacementType = PlacementType.Automatic,
+								EdgeType = GetEdgeType("PlacementTarget"),
+								TK = String.Format("{0}_{1}", PlacementType.Automatic, adsReader.Current[AdWordsConst.KeywordIdFieldName])
+							};
+
+			}
+			return target;
+		}
+
+		private static void SetCompositeCreativeDefinitionTk(CompositeCreativeDefinition compCreativeDefinition)
 		{
 			foreach (var part in compCreativeDefinition.CreativeDefinitions)
 			{
@@ -611,7 +584,7 @@ namespace Edge.Services.Google.AdWords
 			if (compCreativeDefinition.TK.Length > 1) compCreativeDefinition.TK = compCreativeDefinition.TK.Remove(0, 1);
 		}
 
-		private static void SetCompositeCreativeTK(CompositeCreative compCreative)
+		private static void SetCompositeCreativeTk(CompositeCreative compCreative)
 		{
 			foreach (var part in compCreative.Parts)
 			{
