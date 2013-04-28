@@ -556,8 +556,10 @@ namespace Edge.Services.Google.AdWords
 								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
 								MatchType = KeywordMatchType.Unidentified,
 								EdgeType = GetEdgeType("KeywordTarget"),
-								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, adsReader.Current[AdWordsConst.KeywordIdFieldName])
+								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+								Fields = new Dictionary<EdgeField, object>()
 							};
+					
 			}
 			else
 			{
@@ -568,10 +570,15 @@ namespace Edge.Services.Google.AdWords
 								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
 								PlacementType = PlacementType.Automatic,
 								EdgeType = GetEdgeType("PlacementTarget"),
-								TK = String.Format("{0}_{1}", PlacementType.Automatic, adsReader.Current[AdWordsConst.KeywordIdFieldName])
+								TK = String.Format("{0}_{1}", PlacementType.Automatic, adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+								Fields = new Dictionary<EdgeField, object>()
 							};
-
 			}
+			if (!target.Fields.ContainsKey(GetExtraField("OriginalID"))) 
+				target.Fields.Add(GetExtraField("OriginalID"), adsReader.Current[AdWordsConst.KeywordIdFieldName]);
+
+			if (!target.Fields.ContainsKey(GetExtraField("DestinationUrl"))) 
+				target.Fields.Add(GetExtraField("DestinationUrl"), adsReader.Current[AdWordsConst.DestUrlFieldName]);
 			return target;
 		}
 
