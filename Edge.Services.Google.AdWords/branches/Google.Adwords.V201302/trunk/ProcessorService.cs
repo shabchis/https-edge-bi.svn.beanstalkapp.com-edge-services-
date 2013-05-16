@@ -141,6 +141,7 @@ namespace Edge.Services.Google.AdWords
 
                         keyword.QualityScore = Convert.ToString(_keywordsReader.Current[Const.QualityScoreFieldName]);
                         string matchType = _keywordsReader.Current[Const.MatchTypeFieldName];
+                        keyword.MatchType = (KeywordMatchType)Enum.Parse(typeof(KeywordMatchType), matchType, true);
 
                         //Setting Tracker for Keyword
                         if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
