@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using Edge.Core.Services;
+using Edge.Data.Pipeline.Mapping;
 using Edge.Data.Pipeline.Metrics.Managers;
 using Edge.Data.Pipeline.Metrics.Misc;
 using Edge.Data.Pipeline;
@@ -18,30 +19,36 @@ namespace Edge.Services.Google.AdWords
 		#region Edge Ad types
 		public enum EdgeAdType
 		{
-			Text_ad = 1,
+			TextAd = 1,
 			Flash = 2,
-			Image_ad = 3,
-			Display_ad = 4,
-			Product_listing_ad = 5,
-			Mobile_ad = 6,
-			Local_business_ad = 7,
-			Third_party_ad = 8,
+			ImageAd = 3,
+			DisplayAd = 4,
+			ProductListingAd = 5,
+			MobileAd = 6,
+			LocalBusinessAd = 7,
+			ThirdPartyAd = 8,
 			Other = 9,
-			Mobile_text = 10,
-			Mobile_image = 11,
-			Mobile_display = 12
+			MobileText = 10,
+			MobileImage = 11,
+			MobileDisplay = 12
 		} 
 		#endregion
 		
 		#region Data Members
 		static Dictionary<string, EdgeAdType> _googleAdTypeDic;
 		static Dictionary<string, string> _googleMeasuresDic;
-		static Dictionary<string, ObjectStatus> _objectStatusDic; 
+		//static Dictionary<string, ObjectStatus> _objectStatusDic; 
 
 		private readonly Dictionary<string, Dictionary<string, long>> _importedAdsWithConv = new Dictionary<string, Dictionary<string, long>>();
 		private readonly Dictionary<string, KeywordTarget> _keywordsCache = new Dictionary<string, KeywordTarget>();
 		private readonly Dictionary<string, PlacementTarget> _placementsCache = new Dictionary<string, PlacementTarget>();
 		private readonly Dictionary<string, Ad> _importedAds = new Dictionary<string, Ad>();
+
+		protected MappingContainer KeywordMappings;
+		protected MappingContainer PlacementMappings;
+		protected MappingContainer MetricsMappings;
+
+		private CsvDynamicReader _adsReader;
 		#endregion
 
 		#region Ctor
@@ -49,18 +56,18 @@ namespace Edge.Services.Google.AdWords
 		{
 			_googleAdTypeDic = new Dictionary<string, EdgeAdType>
 	            {
-				{AdWordsConst.AdTypeValues.Text_ad,EdgeAdType.Text_ad},
+				{AdWordsConst.AdTypeValues.Text_ad,EdgeAdType.TextAd},
 				{AdWordsConst.AdTypeValues.Flash_ad,EdgeAdType.Flash},
-				{AdWordsConst.AdTypeValues.Image_ad,EdgeAdType.Image_ad},
-				{AdWordsConst.AdTypeValues.Display_ad,EdgeAdType.Display_ad},
-				{AdWordsConst.AdTypeValues.Product_listing_ad,EdgeAdType.Product_listing_ad},
-				{AdWordsConst.AdTypeValues.Mobile_ad,EdgeAdType.Mobile_ad},
-				{AdWordsConst.AdTypeValues.Local_business_ad,EdgeAdType.Local_business_ad},
-				{AdWordsConst.AdTypeValues.Third_party_ad,EdgeAdType.Third_party_ad},
+				{AdWordsConst.AdTypeValues.Image_ad,EdgeAdType.ImageAd},
+				{AdWordsConst.AdTypeValues.Display_ad,EdgeAdType.DisplayAd},
+				{AdWordsConst.AdTypeValues.Product_listing_ad,EdgeAdType.ProductListingAd},
+				{AdWordsConst.AdTypeValues.Mobile_ad,EdgeAdType.MobileAd},
+				{AdWordsConst.AdTypeValues.Local_business_ad,EdgeAdType.LocalBusinessAd},
+				{AdWordsConst.AdTypeValues.Third_party_ad,EdgeAdType.ThirdPartyAd},
 				{AdWordsConst.AdTypeValues.Other,EdgeAdType.Other},
-                {AdWordsConst.AdTypeValues.Mobile_text,EdgeAdType.Mobile_text},
-                {AdWordsConst.AdTypeValues.Mobile_image,EdgeAdType.Mobile_image},
-                {AdWordsConst.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display}
+                {AdWordsConst.AdTypeValues.Mobile_text,EdgeAdType.MobileText},
+                {AdWordsConst.AdTypeValues.Mobile_image,EdgeAdType.MobileImage},
+                {AdWordsConst.AdTypeValues.Mobile_display,EdgeAdType.MobileDisplay}
 			};
 
 			_googleMeasuresDic = new Dictionary<string, string>
@@ -75,14 +82,14 @@ namespace Edge.Services.Google.AdWords
 				{AdWordsConst.ConversionManyPerClickFieldName,"TotalConversionsManyPerClick"}
 			};
 
-			_objectStatusDic = new Dictionary<string, ObjectStatus>
-	            {
-				{"PAUSED",ObjectStatus.Paused},
-				{"DISABLED",ObjectStatus.Paused},
-				{"DELETED",ObjectStatus.Deleted},
-				{"ACTIVE",ObjectStatus.Active},
-				{"ENABLED",ObjectStatus.Active}
-			};
+			//_objectStatusDic = new Dictionary<string, ObjectStatus>
+			//	{
+			//	{"PAUSED",ObjectStatus.Paused},
+			//	{"DISABLED",ObjectStatus.Paused},
+			//	{"DELETED",ObjectStatus.Deleted},
+			//	{"ACTIVE",ObjectStatus.Active},
+			//	{"ENABLED",ObjectStatus.Active}
+			//};
 		} 
 		#endregion
 
@@ -90,6 +97,18 @@ namespace Edge.Services.Google.AdWords
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			InitMappings();
+
+			//Mappings.OnFieldRequired = ReaderAdapter.GetField;
+			Mappings.OnMappingApplied = SetEdgeType;
+
+			if (!Mappings.Objects.TryGetValue(typeof(KeywordTarget), out KeywordMappings))
+				throw new MappingConfigurationException("Missing mapping definition for KeywordTarget.", "Object");
+
+			if (!Mappings.Objects.TryGetValue(typeof(PlacementTarget), out PlacementMappings))
+				throw new MappingConfigurationException("Missing mapping definition for PlacementTarget.", "Object");
+
+			if (!Mappings.Objects.TryGetValue(typeof(MetricsUnit), out MetricsMappings))
+				throw new MappingConfigurationException("Missing mapping definition for MetricsUnit.", "Object");
 
 			//bool includeConversionTypes = Boolean.Parse(Delivery.Parameters["includeConversionTypes"].ToString());
 			//bool includeDisplaytData = Boolean.Parse(Delivery.Parameters["includeDisplaytData"].ToString());
@@ -127,16 +146,17 @@ namespace Edge.Services.Google.AdWords
 				#region Getting Ads Data
 
 				var adPerformanceFile = Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
-				var adsReader = new CsvDynamicReader(adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+				_adsReader = new CsvDynamicReader(adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 				var currentOutput = Delivery.Outputs.First();
-				Mappings.OnFieldRequired = field => adsReader.Current[field];
+				Mappings.OnFieldRequired = field => _adsReader.Current[field];
 				_importedAds.Clear();
 
-				using (adsReader)
+				using (_adsReader)
 				{
-					while (adsReader.Read() && adsReader.Current[AdWordsConst.AdIDFieldName] != AdWordsConst.EOF)
+					Mappings.OnFieldRequired = fieldName => _adsReader.Current[fieldName];
+					while (_adsReader.Read() && _adsReader.Current[AdWordsConst.AdIDFieldName] != AdWordsConst.EOF)
 					{
-						var metricUnit = CreateMetricsUnit(adsReader);
+						var metricUnit = CreateMetricsUnit();
 						metricUnit.Output = currentOutput;
 
 						ImportManager.ImportMetrics(metricUnit);
@@ -150,6 +170,15 @@ namespace Edge.Services.Google.AdWords
 			return ServiceOutcome.Success;
 		}
 
+		protected override void AddExternalMethods()
+		{
+			base.AddExternalMethods();
+			Mappings.ExternalMethods.Add("GetAd", new Func<dynamic, Ad>(GetAd));
+			Mappings.ExternalMethods.Add("GetAdType", new Func<dynamic, dynamic, int>(GetAdType));
+			Mappings.ExternalMethods.Add("GetTarget", new Func<Target>(GetTarget));
+			Mappings.ExternalMethods.Add("GetImageData", new Func<dynamic, dynamic, string>(GetImageData));
+		}
+
 		protected override MetricsUnit GetSampleMetrics()
 		{
 			var headers = new[] { AdWordsConst.AdPreRequiredHeader };
@@ -159,11 +188,12 @@ namespace Edge.Services.Google.AdWords
 			LoadKeywords(file, headers, FileCompression.None);
 			
 			// load ad
-			using (var adsReader = new CsvDynamicReader(Configuration.Parameters.Get<string>("AdSampleFile"), headers))
+			using (_adsReader = new CsvDynamicReader(Configuration.Parameters.Get<string>("AdSampleFile"), headers))
 			{
-				if (adsReader.Read())
+				Mappings.OnFieldRequired = fieldName => _adsReader.Current[fieldName];
+				if (_adsReader.Read())
 				{
-					return CreateMetricsUnit(adsReader);
+					return CreateMetricsUnit();
 				}
 			}
 			throw new ConfigurationErrorsException(String.Format("Failed to read sample metrics from file: {0}", Configuration.Parameters.Get<string>("AdSampleFile")));
@@ -179,6 +209,8 @@ namespace Edge.Services.Google.AdWords
 			_keywordsCache.Clear();
 			using (var keywordsReader = new CsvDynamicReader(file.OpenContents(compression: compression), headers))
 			{
+				Mappings.OnFieldRequired = fieldName => keywordsReader.Current[fieldName];
+
 				keywordsReader.MatchExactColumns = false;
 				while (keywordsReader.Read())
 				{
@@ -190,19 +222,23 @@ namespace Edge.Services.Google.AdWords
 						AdgroupId = Convert.ToInt64(keywordsReader.Current[AdWordsConst.AdGroupIdFieldName]),
 						CampaignId = Convert.ToInt64(keywordsReader.Current[AdWordsConst.CampaignIdFieldName])
 					};
-					var keyword = new KeywordTarget
-					{
-						//OriginalID = keywordsReader.Current[AdWordsConst.KeywordIdFieldName],
-						Value = keywordsReader.Current[AdWordsConst.KeywordFieldName],
-						MatchType = Enum.Parse(typeof(KeywordMatchType), keywordsReader.Current[AdWordsConst.MatchTypeFieldName]),
-						Fields = new Dictionary<EdgeField, object>(),
-						EdgeType = GetEdgeType("KeywordTarget"),
-						TK = keywordsReader.Current[AdWordsConst.KeywordIdFieldName]
 
-					};
-					keyword.Fields.Add(GetExtraField("OriginalID"), keywordsReader.Current[AdWordsConst.KeywordIdFieldName]);
-					keyword.Fields.Add(GetExtraField("QualityScore"), keywordsReader.Current[AdWordsConst.QualityScoreFieldName]);
-					keyword.Fields.Add(GetExtraField("DestinationUrl"), keywordsReader.Current[AdWordsConst.DestUrlFieldName]);
+					var keyword = new KeywordTarget();
+					KeywordMappings.Apply(keyword);
+
+					//var keywordTemp = new KeywordTarget
+					//{
+					//	//OriginalID = keywordsReader.Current[AdWordsConst.KeywordIdFieldName],
+					//	Value = keywordsReader.Current[AdWordsConst.KeywordFieldName],
+					//	MatchType = Enum.Parse(typeof(KeywordMatchType), keywordsReader.Current[AdWordsConst.MatchTypeFieldName]),
+					//	Fields = new Dictionary<EdgeField, object>(),
+					//	EdgeType = GetEdgeType("KeywordTarget"),
+					//	TK = keywordsReader.Current[AdWordsConst.KeywordIdFieldName]
+
+					//};
+					//keywordTemp.Fields.Add(GetExtraField("OriginalID"), keywordsReader.Current[AdWordsConst.KeywordIdFieldName]);
+					//keywordTemp.Fields.Add(GetExtraField("QualityScore"), keywordsReader.Current[AdWordsConst.QualityScoreFieldName]);
+					//keywordTemp.Fields.Add(GetExtraField("DestinationUrl"), keywordsReader.Current[AdWordsConst.DestUrlFieldName]);
 
 					_keywordsCache.Add(keywordPrimaryKey.ToString(), keyword);
 				}
@@ -219,6 +255,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				while (placementsReader.Read())
 				{
+					Mappings.OnFieldRequired = fieldName => placementsReader.Current[fieldName];
+
 					if (placementsReader.Current[AdWordsConst.KeywordIdFieldName] == AdWordsConst.EOF)
 						break;
 					var placementPrimaryKey = new KeywordPrimaryKey
@@ -284,6 +322,76 @@ namespace Edge.Services.Google.AdWords
 				}
 			}
 		}
+		
+		private MetricsUnit CreateMetricsUnit()
+		{
+			CurrentMetricsUnit = new MetricsUnit
+				{
+					GetEdgeField = GetEdgeField,
+					TimePeriodStart = Delivery.TimePeriodStart,
+					TimePeriodEnd = Delivery.TimePeriodEnd,
+				};
+			MetricsMappings.Apply(CurrentMetricsUnit);
+
+			// add Ad if it is not exists yet
+			if (!_importedAds.ContainsKey(CurrentMetricsUnit.Ad.OriginalID))
+				_importedAds.Add(CurrentMetricsUnit.Ad.OriginalID, CurrentMetricsUnit.Ad);
+
+			return CurrentMetricsUnit;
+		}
+
+		#endregion
+
+		#region Private: Create metrics unit with no mapping
+		private MetricsUnit CreateMetricsUnitNoMapping(CsvDynamicReader adsReader)
+		{
+			// get already existing or create new Ad
+			string adId = adsReader.Current[AdWordsConst.AdIDFieldName];
+			Ad ad = _importedAds.ContainsKey(adId) ? _importedAds[adId] : CreateAd(adsReader);
+
+			// create metrics unit
+			var metricsUnit = new MetricsUnit
+			{
+				GetEdgeField = GetEdgeField,
+				Ad = ad,
+				Channel = GetChannel("Google"),		// TODO change from Delivery
+				Account = GetAccount("Bbinary"),	// TODO change from Delivery
+				TimePeriodStart = Delivery.TimePeriodStart,
+				TimePeriodEnd = Delivery.TimePeriodEnd,
+				Currency = new EdgeCurrency { Code = Convert.ToString(adsReader.Current.Currency) }
+			};
+
+			// add keyword or placement as a target to metrics
+			var target = GetTarget();
+			metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
+			{
+				Target = target,
+				EdgeType = GetEdgeType("TargetMatch"),
+				TK = target.TK
+			});
+
+			// metrics measures
+			metricsUnit.MeasureValues = new Dictionary<Measure, double>();
+			metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(adsReader.Current.Clicks));
+			metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToDouble(adsReader.Current.Cost) / 1000000);
+			metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToInt64(adsReader.Current.Impressions));
+			metricsUnit.MeasureValues.Add(GetMeasure("AveragePosition"), Convert.ToDouble(adsReader.Current[AdWordsConst.AvgPositionFieldName]));
+			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionOnePerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionOnePerClickFieldName]));
+			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionManyPerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]));
+
+			// add conversion values
+			string conversionKey = String.Format("{0}#{1}", ad.OriginalID, adsReader.Current[AdWordsConst.KeywordIdFieldName]);
+			if (_importedAdsWithConv.ContainsKey(conversionKey))
+			{
+				var conversionDic = _importedAdsWithConv[conversionKey];
+				foreach (var pair in conversionDic.Where(pair => _googleMeasuresDic.ContainsKey(pair.Key)))
+				{
+					metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[pair.Key]), pair.Value);
+				}
+			}
+
+			return metricsUnit;
+		}
 
 		private Ad CreateAd(CsvDynamicReader adsReader)
 		{
@@ -296,7 +404,7 @@ namespace Edge.Services.Google.AdWords
 				Channel = GetChannel("Google"),
 				Account = GetAccount("Bbinary"),
 				Fields = new Dictionary<EdgeField, object>(),
-				TK = adsReader.Current[AdWordsConst.AdIDFieldName], 
+				TK = adsReader.Current[AdWordsConst.AdIDFieldName],
 				EdgeType = GetEdgeType("Ad")
 			};
 
@@ -359,14 +467,14 @@ namespace Edge.Services.Google.AdWords
 			{
 				Parts = new Dictionary<CompositePartField, SingleCreative>(),
 				EdgeType = GetEdgeType("CompositeCreative")
-			}; 
+			};
 			var compCreativeDefinition = new CompositeCreativeDefinition
-				{
-					CreativeDefinitions = new Dictionary<CompositePartField, SingleCreativeDefinition>(),
-					Creative = compCreative,
-					EdgeType = GetEdgeType("CompositeCreativeDefinition")
-				};
-			
+			{
+				CreativeDefinitions = new Dictionary<CompositePartField, SingleCreativeDefinition>(),
+				Creative = compCreative,
+				EdgeType = GetEdgeType("CompositeCreativeDefinition")
+			};
+
 			//----------------------------------
 			// Display Url as text creative
 			//----------------------------------
@@ -374,17 +482,17 @@ namespace Edge.Services.Google.AdWords
 			{
 				Text = adsReader.Current[AdWordsConst.DisplayURLFieldName],
 				TextType = TextCreativeType.Url,
-				EdgeType =  GetEdgeType("TextCreative"),
+				EdgeType = GetEdgeType("TextCreative"),
 				TK = String.Format("{0}_{1}", TextCreativeType.Url, adsReader.Current[AdWordsConst.DisplayURLFieldName])
 			};
 			compCreative.Parts.Add(GetCompositePartField("DisplayUrlCreative"), creative);
 
 			SingleCreativeDefinition definition = new TextCreativeDefinition
-				{
-					Creative = creative, 
-					EdgeType = GetEdgeType("TextCreativeDefinition"),
-					TK = adsReader.Current[AdWordsConst.DisplayURLFieldName]
-				};
+			{
+				Creative = creative,
+				EdgeType = GetEdgeType("TextCreativeDefinition"),
+				TK = adsReader.Current[AdWordsConst.DisplayURLFieldName]
+			};
 			compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("DisplayUrlDefinition"), definition);
 
 			if (String.Equals(Convert.ToString(adsReader.Current[AdWordsConst.AdTypeFieldName]), "Image ad"))
@@ -396,21 +504,21 @@ namespace Edge.Services.Google.AdWords
 				var imageParams = adsReader.Current[AdWordsConst.AdFieldName].Trim().Split(new[] { ':', ';' });
 
 				creative = new ImageCreative
-					{
-						Image = imageParams[1].Trim(),
-						EdgeType = GetEdgeType("ImageCreative"),
-						TK = imageParams[1].Trim()
-					};
+				{
+					Image = imageParams[1].Trim(),
+					EdgeType = GetEdgeType("ImageCreative"),
+					TK = imageParams[1].Trim()
+				};
 				compCreative.Parts.Add(GetCompositePartField("SingleCreative"), creative);
 
 				definition = new ImageCreativeDefinition
-					{
-						Creative = creative, 
-						ImageSize = imageParams[2].Trim(), 
-						EdgeType = GetEdgeType("ImageCreativeDefinition"),
-						TK = String.Format("{0}_{1}", imageParams[1].Trim(), imageParams[2].Trim())
-					};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("SingleCreativeDefinition"), definition );
+				{
+					Creative = creative,
+					ImageSize = imageParams[2].Trim(),
+					EdgeType = GetEdgeType("ImageCreativeDefinition"),
+					TK = String.Format("{0}_{1}", imageParams[1].Trim(), imageParams[2].Trim())
+				};
+				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("SingleCreativeDefinition"), definition);
 			}
 			else
 			{
@@ -418,60 +526,60 @@ namespace Edge.Services.Google.AdWords
 				// Title as Text creative
 				//----------------------------------
 				creative = new TextCreative
-					{
-						Text = adsReader.Current.Ad, 
-						TextType = TextCreativeType.Text,
-						EdgeType = GetEdgeType("TextCreative"),
-						TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current.Ad)
-					};
+				{
+					Text = adsReader.Current.Ad,
+					TextType = TextCreativeType.Text,
+					EdgeType = GetEdgeType("TextCreative"),
+					TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current.Ad)
+				};
 				compCreative.Parts.Add(GetCompositePartField("SingleCreative"), creative);
 
 				definition = new TextCreativeDefinition
-					{
-						Creative = creative, 
-						EdgeType = GetEdgeType("TextCreativeDefinition"),
-						TK = adsReader.Current.Ad
-					};
+				{
+					Creative = creative,
+					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					TK = adsReader.Current.Ad
+				};
 				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("SingleCreativeDefinition"), definition);
 
 				//----------------------------------
 				// Description 1 as Text creative
 				//----------------------------------
 				creative = new TextCreative
-					{
-						Text = adsReader.Current["Description line 1"], 
-						TextType = TextCreativeType.Text,
-						EdgeType = GetEdgeType("TextCreative"),
-						TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current["Description line 1"])
-					};
+				{
+					Text = adsReader.Current["Description line 1"],
+					TextType = TextCreativeType.Text,
+					EdgeType = GetEdgeType("TextCreative"),
+					TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current["Description line 1"])
+				};
 				compCreative.Parts.Add(GetCompositePartField("Desc1Creative"), creative);
 
 				definition = new TextCreativeDefinition
-					{
-						Creative = creative, 
-						EdgeType = GetEdgeType("TextCreativeDefinition"),
-						TK = adsReader.Current["Description line 1"]
-					};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc1Definition"),definition);
+				{
+					Creative = creative,
+					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					TK = adsReader.Current["Description line 1"]
+				};
+				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc1Definition"), definition);
 
 				//----------------------------------
 				// Description 2 as Text creative
 				//----------------------------------
 				creative = new TextCreative
-					{
-						Text = adsReader.Current["Description line 2"], 
-						TextType = TextCreativeType.Text,
-						EdgeType = GetEdgeType("TextCreative"),
-						TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current["Description line 2"])
-					};
+				{
+					Text = adsReader.Current["Description line 2"],
+					TextType = TextCreativeType.Text,
+					EdgeType = GetEdgeType("TextCreative"),
+					TK = String.Format("{0}_{1}", TextCreativeType.Text, adsReader.Current["Description line 2"])
+				};
 				compCreative.Parts.Add(GetCompositePartField("Desc2Creative"), creative);
 
 				definition = new TextCreativeDefinition
-					{
-						Creative = creative, 
-						EdgeType = GetEdgeType("TextCreativeDefinition"),
-						TK = adsReader.Current["Description line 2"]
-					};
+				{
+					Creative = creative,
+					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					TK = adsReader.Current["Description line 2"]
+				};
 				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc2Definition"), definition);
 			}
 
@@ -483,103 +591,6 @@ namespace Edge.Services.Google.AdWords
 			// add Ad to cache of Ads
 			_importedAds.Add(ad.OriginalID, ad);
 			return ad;
-		}
-
-		private MetricsUnit CreateMetricsUnit(CsvDynamicReader adsReader)
-		{
-			// get already existing or create new Ad
-			string adId = adsReader.Current[AdWordsConst.AdIDFieldName];
-			Ad ad = _importedAds.ContainsKey(adId) ? _importedAds[adId] : CreateAd(adsReader);
-
-			// create metrics unit
-			var metricsUnit = new MetricsUnit
-			{
-				GetEdgeField = GetEdgeField,
-				Ad = ad,
-				Channel = GetChannel("Google"),		// TODO change from Delivery
-				Account = GetAccount("Bbinary"),	// TODO change from Delivery
-				TimePeriodStart = Delivery.TimePeriodStart,
-				TimePeriodEnd = Delivery.TimePeriodEnd,
-				Currency = new Currency { Code = Convert.ToString(adsReader.Current.Currency) }
-			};
-
-			// add keyword or placement as a target to metrics
-			var target = GetTarget(adsReader);
-			metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
-			{
-				Target = target,
-				EdgeType = GetEdgeType("TargetMatch"),
-				TK = target.TK
-			});
-
-			// metrics measures
-			metricsUnit.MeasureValues = new Dictionary<Measure, double>();
-			metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(adsReader.Current.Clicks));
-			metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToInt64(adsReader.Current.Cost) / 1000000);
-			metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToDouble(adsReader.Current[AdWordsConst.AvgPositionFieldName]));
-			metricsUnit.MeasureValues.Add(GetMeasure("AveragePosition"), Convert.ToInt64(adsReader.Current.Clicks));
-			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionOnePerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionOnePerClickFieldName]));
-			metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[AdWordsConst.ConversionManyPerClickFieldName]), Convert.ToDouble(adsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]));
-
-			// add conversion values
-			string conversionKey = String.Format("{0}#{1}", ad.OriginalID, adsReader.Current[AdWordsConst.KeywordIdFieldName]);
-			if (_importedAdsWithConv.ContainsKey(conversionKey))
-			{
-				var conversionDic = _importedAdsWithConv[conversionKey];
-				foreach (var pair in conversionDic.Where(pair => _googleMeasuresDic.ContainsKey(pair.Key)))
-				{
-					metricsUnit.MeasureValues.Add(GetMeasure(_googleMeasuresDic[pair.Key]), pair.Value);
-				}
-			}
-
-			return metricsUnit;
-		}
-
-		private Target GetTarget(CsvDynamicReader adsReader)
-		{
-			Target target;
-
-			// get keyword by key from keyword or placement dictionary
-			var key = new KeywordPrimaryKey
-			{
-				AdgroupId = Convert.ToInt64(adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
-				KeywordId = Convert.ToInt64(adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-				CampaignId = Convert.ToInt64(adsReader.Current[AdWordsConst.CampaignIdFieldName])
-			};
-
-			if (key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"]) && _keywordsCache.ContainsKey(key.ToString()))
-			{
-				// Check if keyword exists in keywords cache (keywords report), if not - create new by ID
-				target = _keywordsCache.ContainsKey(key.ToString()) ? _keywordsCache[key.ToString()] :
-							new KeywordTarget
-							{
-								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
-								MatchType = KeywordMatchType.Unidentified,
-								EdgeType = GetEdgeType("KeywordTarget"),
-								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-								Fields = new Dictionary<EdgeField, object>()
-							};
-					
-			}
-			else
-			{
-				// Check if placement exists in placement cache (placements report), if not - create new by ID
-				target = _placementsCache.ContainsKey(key.ToString()) ? _placementsCache[key.ToString()] :
-							new PlacementTarget
-							{
-								Value = adsReader.Current[AdWordsConst.KeywordIdFieldName],
-								PlacementType = PlacementType.Automatic,
-								EdgeType = GetEdgeType("PlacementTarget"),
-								TK = String.Format("{0}_{1}", PlacementType.Automatic, adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-								Fields = new Dictionary<EdgeField, object>()
-							};
-			}
-			if (!target.Fields.ContainsKey(GetExtraField("OriginalID"))) 
-				target.Fields.Add(GetExtraField("OriginalID"), adsReader.Current[AdWordsConst.KeywordIdFieldName]);
-
-			if (!target.Fields.ContainsKey(GetExtraField("DestinationUrl"))) 
-				target.Fields.Add(GetExtraField("DestinationUrl"), adsReader.Current[AdWordsConst.DestUrlFieldName]);
-			return target;
 		}
 
 		private static void SetCompositeCreativeDefinitionTk(CompositeCreativeDefinition compCreativeDefinition)
@@ -598,6 +609,94 @@ namespace Edge.Services.Google.AdWords
 				compCreative.TK = String.Format("{0}_{1}", compCreative.TK, part.Value.TK);
 			}
 			if (compCreative.TK.Length > 1) compCreative.TK = compCreative.TK.Remove(0, 1);
+		} 
+		#endregion
+		
+		#region Scriptable Methods
+		private Ad GetAd(dynamic adId)
+		{
+			if (_importedAds.ContainsKey(adId))
+				return _importedAds[adId];
+
+			return null;
+		}
+
+		private int GetAdType(dynamic adType, dynamic deviceRef)
+		{
+			// mbile device
+			if (deviceRef.ToString() == AdWordsConst.AdDevicePreferenceMobileFieldValue)
+			{
+				string mobileValue = String.Format("Mobile {0}", adType.ToString());
+				return _googleAdTypeDic.ContainsKey(mobileValue) ? (int)_googleAdTypeDic[mobileValue] : (int)_googleAdTypeDic[AdWordsConst.AdTypeValues.Mobile_ad];
+			}
+			// regular
+			if (_googleAdTypeDic.ContainsKey(adType.ToString()))
+			{
+				return (int) _googleAdTypeDic[adType.ToString()];
+			}
+			throw new Exception(String.Format("Unknown ad type '{0}'", adType));
+		}
+
+		private Target GetTarget()
+		{
+			Target target;
+
+			// get keyword by key from keyword or placement dictionary
+			var key = new KeywordPrimaryKey
+			{
+				AdgroupId = Convert.ToInt64(_adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
+				KeywordId = Convert.ToInt64(_adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+				CampaignId = Convert.ToInt64(_adsReader.Current[AdWordsConst.CampaignIdFieldName])
+			};
+
+			if (key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"]) && _keywordsCache.ContainsKey(key.ToString()))
+			{
+				// Check if keyword exists in keywords cache (keywords report), if not - create new by ID
+				target = _keywordsCache.ContainsKey(key.ToString()) ? _keywordsCache[key.ToString()] :
+							new KeywordTarget
+							{
+								Value = _adsReader.Current[AdWordsConst.KeywordIdFieldName],
+								MatchType = KeywordMatchType.Unidentified,
+								EdgeType = GetEdgeType("KeywordTarget"),
+								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, _adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+								Fields = new Dictionary<EdgeField, object>()
+							};
+
+			}
+			else
+			{
+				// Check if placement exists in placement cache (placements report), if not - create new by ID
+				target = _placementsCache.ContainsKey(key.ToString()) ? _placementsCache[key.ToString()] :
+							new PlacementTarget
+							{
+								Value = _adsReader.Current[AdWordsConst.KeywordIdFieldName],
+								PlacementType = PlacementType.Automatic,
+								EdgeType = GetEdgeType("PlacementTarget"),
+								TK = String.Format("{0}_{1}", PlacementType.Automatic, _adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+								Fields = new Dictionary<EdgeField, object>()
+							};
+			}
+			if (!target.Fields.ContainsKey(GetExtraField("OriginalID")))
+				target.Fields.Add(GetExtraField("OriginalID"), _adsReader.Current[AdWordsConst.KeywordIdFieldName]);
+
+			if (!target.Fields.ContainsKey(GetExtraField("DestinationUrl")))
+				target.Fields.Add(GetExtraField("DestinationUrl"), _adsReader.Current[AdWordsConst.DestUrlFieldName]);
+
+			return target;
+		}
+
+		private string GetImageData(dynamic ad, dynamic dataType)
+		{
+			var imageParams = ad.ToString().Trim().Split(new[] { ':', ';' });
+			if (imageParams.Length < 3)
+				throw  new Exception(String.Format("Invalid image ad format='{0}'", ad.ToString()));
+
+			if (dataType.ToString() == "name")
+				return imageParams[1];
+			if (dataType.ToString() == "size")
+				return imageParams[2];
+
+			throw new Exception(String.Format("Unknown image data type request='{0}'", dataType.ToString()));
 		}
 		#endregion
     }
