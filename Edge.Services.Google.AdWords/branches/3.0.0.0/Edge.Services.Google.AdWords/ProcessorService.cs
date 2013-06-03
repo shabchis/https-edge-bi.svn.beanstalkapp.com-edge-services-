@@ -177,6 +177,7 @@ namespace Edge.Services.Google.AdWords
 			Mappings.ExternalMethods.Add("GetAdType", new Func<dynamic, dynamic, int>(GetAdType));
 			Mappings.ExternalMethods.Add("GetTarget", new Func<Target>(GetTarget));
 			Mappings.ExternalMethods.Add("GetImageData", new Func<dynamic, dynamic, string>(GetImageData));
+			Mappings.ExternalMethods.Add("GetConversion", new Func<dynamic, dynamic, dynamic, double>(GetConversion));
 		}
 
 		protected override MetricsUnit GetSampleMetrics()
@@ -226,20 +227,6 @@ namespace Edge.Services.Google.AdWords
 					var keyword = new KeywordTarget();
 					KeywordMappings.Apply(keyword);
 
-					//var keywordTemp = new KeywordTarget
-					//{
-					//	//OriginalID = keywordsReader.Current[AdWordsConst.KeywordIdFieldName],
-					//	Value = keywordsReader.Current[AdWordsConst.KeywordFieldName],
-					//	MatchType = Enum.Parse(typeof(KeywordMatchType), keywordsReader.Current[AdWordsConst.MatchTypeFieldName]),
-					//	Fields = new Dictionary<EdgeField, object>(),
-					//	EdgeType = GetEdgeType("KeywordTarget"),
-					//	TK = keywordsReader.Current[AdWordsConst.KeywordIdFieldName]
-
-					//};
-					//keywordTemp.Fields.Add(GetExtraField("OriginalID"), keywordsReader.Current[AdWordsConst.KeywordIdFieldName]);
-					//keywordTemp.Fields.Add(GetExtraField("QualityScore"), keywordsReader.Current[AdWordsConst.QualityScoreFieldName]);
-					//keywordTemp.Fields.Add(GetExtraField("DestinationUrl"), keywordsReader.Current[AdWordsConst.DestUrlFieldName]);
-
 					_keywordsCache.Add(keywordPrimaryKey.ToString(), keyword);
 				}
 			}
@@ -284,11 +271,8 @@ namespace Edge.Services.Google.AdWords
 
 		private void LoadConversions(DeliveryFile file, string[] headers)
 		{
-			// TODO - throw exception if file does not exists
-			//if (file == null)
-			//	throw new ArgumentException("Ad conversions delivery file does not exist");
-
-			if (file == null) return;
+			if (file == null)
+				throw new ArgumentException("Ad conversions delivery file does not exist");
 
 			_importedAdsWithConv.Clear();
 			using (var conversionsReader = new CsvDynamicReader(file.OpenContents(compression: FileCompression.Gzip), headers))
@@ -354,8 +338,8 @@ namespace Edge.Services.Google.AdWords
 			{
 				GetEdgeField = GetEdgeField,
 				Ad = ad,
-				Channel = GetChannel("Google"),		// TODO change from Delivery
-				Account = GetAccount("Bbinary"),	// TODO change from Delivery
+				Channel = GetChannel("Google"),		
+				Account = GetAccount("Bbinary"),	
 				TimePeriodStart = Delivery.TimePeriodStart,
 				TimePeriodEnd = Delivery.TimePeriodEnd,
 				Currency = new EdgeCurrency { Code = Convert.ToString(adsReader.Current.Currency) }
@@ -697,6 +681,18 @@ namespace Edge.Services.Google.AdWords
 				return imageParams[2];
 
 			throw new Exception(String.Format("Unknown image data type request='{0}'", dataType.ToString()));
+		}
+
+		private double GetConversion(dynamic conversionName, dynamic adId, dynamic keywordId)
+		{
+			var conversionKey = String.Format("{0}#{1}", adId, keywordId);
+			if (_importedAdsWithConv.ContainsKey(conversionKey))
+			{
+				Dictionary<string, long> conversionDic = _importedAdsWithConv[conversionKey];
+				if (conversionDic.ContainsKey(conversionName.ToString()))
+					return conversionDic[conversionName.ToString()];
+			}
+			return 0;
 		}
 		#endregion
     }
