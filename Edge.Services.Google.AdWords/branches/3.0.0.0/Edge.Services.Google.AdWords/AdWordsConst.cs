@@ -49,6 +49,7 @@
 		public const string AutoDisplayNetworkName = "Total - content targeting";
 
 		public const string DomainFieldName = "Domain";
+		public const string DateFieldName = "Day";
 
 		public static class AdTypeValues
 		{

@@ -177,7 +177,7 @@ namespace Edge.Services.Google.AdWords
 			Mappings.ExternalMethods.Add("GetAdType", new Func<dynamic, dynamic, int>(GetAdType));
 			Mappings.ExternalMethods.Add("GetTarget", new Func<Target>(GetTarget));
 			Mappings.ExternalMethods.Add("GetImageData", new Func<dynamic, dynamic, string>(GetImageData));
-			Mappings.ExternalMethods.Add("GetConversion", new Func<dynamic, dynamic, dynamic, double>(GetConversion));
+			Mappings.ExternalMethods.Add("GetConversion", new Func<dynamic, dynamic, dynamic, dynamic, double>(GetConversion));
 		}
 
 		protected override MetricsUnit GetSampleMetrics()
@@ -281,7 +281,9 @@ namespace Edge.Services.Google.AdWords
 				{
 					if (conversionsReader.Current[AdWordsConst.AdIDFieldName] == AdWordsConst.EOF) break; // if end of report
 
-					string conversionKey = String.Format("{0}#{1}", conversionsReader.Current[AdWordsConst.AdIDFieldName], conversionsReader.Current[AdWordsConst.KeywordIdFieldName]);
+					string conversionKey = String.Format("{0}#{1}#{2}", conversionsReader.Current[AdWordsConst.AdIDFieldName], 
+																		conversionsReader.Current[AdWordsConst.KeywordIdFieldName],
+																		conversionsReader.Current[AdWordsConst.DateFieldName]);
 					var trackingPurpose = Convert.ToString(conversionsReader.Current[AdWordsConst.ConversionTrackingPurposeFieldName]);
 					var manyPerClick = Convert.ToInt64(conversionsReader.Current[AdWordsConst.ConversionManyPerClickFieldName]);
 
@@ -309,12 +311,7 @@ namespace Edge.Services.Google.AdWords
 		
 		private MetricsUnit CreateMetricsUnit()
 		{
-			CurrentMetricsUnit = new MetricsUnit
-				{
-					GetEdgeField = GetEdgeField,
-					TimePeriodStart = Delivery.TimePeriodStart,
-					TimePeriodEnd = Delivery.TimePeriodEnd,
-				};
+			CurrentMetricsUnit = new MetricsUnit { GetEdgeField = GetEdgeField };
 			MetricsMappings.Apply(CurrentMetricsUnit);
 
 			// add Ad if it is not exists yet
@@ -683,9 +680,9 @@ namespace Edge.Services.Google.AdWords
 			throw new Exception(String.Format("Unknown image data type request='{0}'", dataType.ToString()));
 		}
 
-		private double GetConversion(dynamic conversionName, dynamic adId, dynamic keywordId)
+		private double GetConversion(dynamic conversionName, dynamic adId, dynamic keywordId, dynamic dayCode)
 		{
-			var conversionKey = String.Format("{0}#{1}", adId, keywordId);
+			var conversionKey = String.Format("{0}#{1}#{2}", adId, keywordId, dayCode);
 			if (_importedAdsWithConv.ContainsKey(conversionKey))
 			{
 				Dictionary<string, long> conversionDic = _importedAdsWithConv[conversionKey];

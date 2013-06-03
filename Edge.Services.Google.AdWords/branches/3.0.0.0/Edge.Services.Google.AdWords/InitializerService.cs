@@ -46,21 +46,24 @@ namespace Edge.Services.Google.AdWords
 			Delivery.Parameters["FilterDeleted"] = Configuration.Parameters["FilterDeleted"];
 
 			//checking for conflicts 
-			Delivery.Outputs.Add(new DeliveryOutput
+			var dateRanges = Delivery.TimePeriodDefinition.ToAbsoluteSplit(DateTimeRangeSplitResolution.Day);
+			foreach (var dateRange in dateRanges)
 			{
-				Signature = Delivery.CreateSignature(String.Format("{4}-[{0}]-[{1}]-[{2}]-[{3}]",//-[{4}]",//EdgeAccountID , MCC Email ,AdwordsClientID , TimePeriod
-													accountId,
-													Configuration.Parameters["Adwords.MccEmail"],
-													Configuration.Parameters["Adwords.ClientID"],
-													Configuration.TimePeriod.Value.ToAbsolute(),
-													Configuration.Parameters["SubChannelName"]
-				)),
-				Account = new Account { ID = accountId },
-				Channel = new Channel { ID = channelId },
-				TimePeriodStart = Delivery.TimePeriodStart,
-				TimePeriodEnd = Delivery.TimePeriodEnd
+				Delivery.Outputs.Add(new DeliveryOutput
+					{
+						Signature = Delivery.CreateSignature(String.Format("{4}-[{0}]-[{1}]-[{2}]-[{3}]",
+																		   accountId,
+																		   Configuration.Parameters["Adwords.MccEmail"],
+																		   Configuration.Parameters["Adwords.ClientID"],
+																		   dateRange.ToAbsolute(),
+																		   Configuration.Parameters["SubChannelName"])),
+						Account = new Account {ID = accountId},
+						Channel = new Channel {ID = channelId},
+						TimePeriodStart = dateRange.Start.BaseDateTime,
+						TimePeriodEnd = dateRange.Start.BaseDateTime
+					}
+					);
 			}
-			);
 
 			// Create an import manager that will handle rollback, if necessary
 			var importManager = new MetricsDeliveryManager(InstanceID, null, new MetricsDeliveryManagerOptions
