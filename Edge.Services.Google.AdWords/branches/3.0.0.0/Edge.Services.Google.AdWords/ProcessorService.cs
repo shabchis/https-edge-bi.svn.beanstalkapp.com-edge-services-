@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace Edge.Services.Google.AdWords
 {
-	public class ProcessorService : MetricsProcessorServiceBase
+	public class ProcessorService : AutoMetricsProcessorService
     {
 		#region Edge Ad types
 		public enum EdgeAdType
@@ -46,8 +46,7 @@ namespace Edge.Services.Google.AdWords
 
 		protected MappingContainer KeywordMappings;
 		protected MappingContainer PlacementMappings;
-		protected MappingContainer MetricsMappings;
-
+		
 		private CsvDynamicReader _adsReader;
 		#endregion
 
@@ -110,6 +109,9 @@ namespace Edge.Services.Google.AdWords
 			if (!Mappings.Objects.TryGetValue(typeof(MetricsUnit), out MetricsMappings))
 				throw new MappingConfigurationException("Missing mapping definition for MetricsUnit.", "Object");
 
+			if (!Mappings.Objects.TryGetValue(typeof(Signature), out SignatureMappings))
+				throw new MappingConfigurationException("Missing mapping definition for Signature.", "Object");
+
 			//bool includeConversionTypes = Boolean.Parse(Delivery.Parameters["includeConversionTypes"].ToString());
 			//bool includeDisplaytData = Boolean.Parse(Delivery.Parameters["includeDisplaytData"].ToString());
 
@@ -143,11 +145,10 @@ namespace Edge.Services.Google.AdWords
 				// Getting Conversions Data ( for ex. signup , purchase )
 				LoadConversions(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"], requiredHeaders);
 
-				#region Getting Ads Data
+				#region Getting Ads Data and Import Metrics
 
 				var adPerformanceFile = Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
 				_adsReader = new CsvDynamicReader(adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
-				var currentOutput = Delivery.Outputs.First();
 				Mappings.OnFieldRequired = field => _adsReader.Current[field];
 				_importedAds.Clear();
 
@@ -156,13 +157,12 @@ namespace Edge.Services.Google.AdWords
 					Mappings.OnFieldRequired = fieldName => _adsReader.Current[fieldName];
 					while (_adsReader.Read() && _adsReader.Current[AdWordsConst.AdIDFieldName] != AdWordsConst.EOF)
 					{
-						var metricUnit = CreateMetricsUnit();
-						metricUnit.Output = currentOutput;
+						ProcessMetrics();
 
-						ImportManager.ImportMetrics(metricUnit);
+						// add Ad if it is not exists yet
+						if (!_importedAds.ContainsKey(CurrentMetricsUnit.Ad.OriginalID))
+							_importedAds.Add(CurrentMetricsUnit.Ad.OriginalID, CurrentMetricsUnit.Ad);
 					}
-
-					currentOutput.Checksum = totals;
 					ImportManager.EndImport();
 				}
 				#endregion
@@ -194,11 +194,14 @@ namespace Edge.Services.Google.AdWords
 				Mappings.OnFieldRequired = fieldName => _adsReader.Current[fieldName];
 				if (_adsReader.Read())
 				{
-					return CreateMetricsUnit();
+					CurrentMetricsUnit = new MetricsUnit { GetEdgeField = GetEdgeField, Output = new DeliveryOutput()};
+					MetricsMappings.Apply(CurrentMetricsUnit);
+					return CurrentMetricsUnit;
 				}
 			}
 			throw new ConfigurationErrorsException(String.Format("Failed to read sample metrics from file: {0}", Configuration.Parameters.Get<string>("AdSampleFile")));
 		}
+
 		#endregion
 
 		#region Private Methods
@@ -309,18 +312,6 @@ namespace Edge.Services.Google.AdWords
 			}
 		}
 		
-		private MetricsUnit CreateMetricsUnit()
-		{
-			CurrentMetricsUnit = new MetricsUnit { GetEdgeField = GetEdgeField };
-			MetricsMappings.Apply(CurrentMetricsUnit);
-
-			// add Ad if it is not exists yet
-			if (!_importedAds.ContainsKey(CurrentMetricsUnit.Ad.OriginalID))
-				_importedAds.Add(CurrentMetricsUnit.Ad.OriginalID, CurrentMetricsUnit.Ad);
-
-			return CurrentMetricsUnit;
-		}
-
 		#endregion
 
 		#region Private: Create metrics unit with no mapping

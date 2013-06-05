@@ -45,34 +45,35 @@ namespace Edge.Services.Google.AdWords
 			}
 			Delivery.Parameters["FilterDeleted"] = Configuration.Parameters["FilterDeleted"];
 
-			//checking for conflicts 
-			var dateRanges = Delivery.TimePeriodDefinition.ToAbsoluteSplit(DateTimeRangeSplitResolution.Day);
-			foreach (var dateRange in dateRanges)
-			{
-				Delivery.Outputs.Add(new DeliveryOutput
-					{
-						Signature = Delivery.CreateSignature(String.Format("{4}-[{0}]-[{1}]-[{2}]-[{3}]",
-																		   accountId,
-																		   Configuration.Parameters["Adwords.MccEmail"],
-																		   Configuration.Parameters["Adwords.ClientID"],
-																		   dateRange.ToAbsolute(),
-																		   Configuration.Parameters["SubChannelName"])),
-						Account = new Account {ID = accountId},
-						Channel = new Channel {ID = channelId},
-						TimePeriodStart = dateRange.Start.BaseDateTime,
-						TimePeriodEnd = dateRange.Start.BaseDateTime
-					}
-					);
-			}
+			// shirat - Delivery outputs are created in Processor stage (signature from dates in the file by Mapping)
+			////checking for conflicts 
+			//var dateRanges = Delivery.TimePeriodDefinition.ToAbsoluteSplit(DateTimeRangeSplitResolution.Day);
+			//foreach (var dateRange in dateRanges)
+			//{
+			//	Delivery.Outputs.Add(new DeliveryOutput
+			//		{
+			//			Signature = Delivery.CreateSignature(String.Format("{4}-[{0}]-[{1}]-[{2}]-[{3}]",
+			//															   accountId,
+			//															   Configuration.Parameters["Adwords.MccEmail"],
+			//															   Configuration.Parameters["Adwords.ClientID"],
+			//															   dateRange.ToAbsolute(),
+			//															   Configuration.Parameters["SubChannelName"])),
+			//			Account = new Account {ID = accountId},
+			//			Channel = new Channel {ID = channelId},
+			//			TimePeriodStart = dateRange.Start.BaseDateTime,
+			//			TimePeriodEnd = dateRange.Start.BaseDateTime
+			//		}
+			//		);
+			//}
 
-			// Create an import manager that will handle rollback, if necessary
-			var importManager = new MetricsDeliveryManager(InstanceID, null, new MetricsDeliveryManagerOptions
-			{
-				SqlRollbackCommand = Configuration.Parameters[Consts.AppSettings.SqlRollbackCommand].ToString()
-			});
+			//// Create an import manager that will handle rollback, if necessary
+			//var importManager = new MetricsDeliveryManager(InstanceID, null, new MetricsDeliveryManagerOptions
+			//{
+			//	SqlRollbackCommand = Configuration.Parameters[Consts.AppSettings.SqlRollbackCommand].ToString()
+			//});
 
-			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
-			HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+			//// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
+			//HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			#region Must Have Params
 			Delivery.Parameters["IncludeStatus"] = Configuration.Parameters.Get<string>("IncludeStatus");
