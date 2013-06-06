@@ -158,6 +158,8 @@ namespace Edge.Services.Google.AdWords
 
 		#region Supported Reports fields
 
+        private static string[] PLACEHOLDER_FEED_ITEM_REPORT = {"PlaceholderType","FeedItemId","FeedId","Ctr","DevicePreference","ConversionsManyPerClick","Conversions","Cost","ClickType","Clicks","CampaignName","CampaignId","AdGroupId","AdGroupName","AdId" };
+
 		private static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions","DevicePreference",
@@ -221,6 +223,11 @@ namespace Edge.Services.Google.AdWords
 			},
 			{ADWORDS_V201302.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,Display_Topics_Performance_Report}
+												
+				}
+			},
+            {ADWORDS_V201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT,  
+				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,PLACEHOLDER_FEED_ITEM_REPORT}
 												
 				}
 			}
