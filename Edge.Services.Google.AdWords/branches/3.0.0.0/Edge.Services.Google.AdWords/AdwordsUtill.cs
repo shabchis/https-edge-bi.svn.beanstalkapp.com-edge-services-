@@ -46,7 +46,6 @@ namespace Edge.Services.Google.AdWords
 				throw new Exception("Error while trying to create new Auth key", ex);
 			}
 			return auth;
-
 		}
 
 		private static void SaveAuthTokenToDB(string mccEmail, string authToken)
@@ -124,86 +123,6 @@ namespace Edge.Services.Google.AdWords
 			{ADWORDS_V201302.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
 			{ADWORDS_V201302.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT, "DISPLAY_TOPIC_PREF"},
 			{ADWORDS_V201302.ReportDefinitionReportType.UNKNOWN, ""}
-		};
-	}
-
-	public static class ReportDefinitionReportFieldsType
-	{
-		public static string DEFAULT = "DEFAULT";
-		public static string CONVERSION = "CONVERSION";
-		public static string STATUS = "STATUS";
-	}
-
-	public static class GoogleStaticReportFields
-	{
-		#region Supported Reports fields
-
-		private static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
-		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
-		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions","DevicePreference",
-		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionsManyPerClick","ConversionValue","TotalConvValue", "Date"
-		                                                  
-		                                               };
-        private static string[] AD_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",
-		                                                   "Status"
-		                                               };
-		private static string[] AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "Id", "KeywordId", "ConversionsManyPerClick", "ConversionCategoryName", "Date" };
-
-        private static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "CampaignId", "KeywordText", "KeywordMatchType", "Impressions", "Clicks", "Cost", "Status", "DestinationUrl", "QualityScore" };
-        private static string[] KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "CampaignId", "Status" };
-
-        private static string[] DESTINATION_URL_REPORT = { "AdGroupName","CampaignName","EffectiveDestinationUrl", "Impressions", "Clicks", "Cost", "ValuePerConv", "ValuePerConversion",
-												   "ValuePerConversionManyPerClick", "ValuePerConvManyPerClick","ViewThroughConversions","AverageCpc","AveragePosition"};
-
-        private static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "Id", "CampaignId", "AdGroupId", "DestinationUrl", "PlacementUrl", "Status" };
-        private static string[] MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "CampaignId", "AdGroupId", "Status" };
-
-        private static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS = { "CampaignId","CampaignName","CampaignStatus", "AdGroupId","AdGroupName","Clicks", "Cost", "Impressions",
-																			 "Domain","ConversionsManyPerClick","Conversions"
-																		 };
-        private static string[] AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION = { "ConversionsManyPerClick", "ConversionCategoryName" };
-        private static string[] CRITERIA_PERFORMANCE_REPORT_FIELDS = { "id", "CriteriaDestinationUrl", "ConversionsManyPerClick", "ConversionCategoryName" };
-
-        private static string[] Display_Topics_Performance_Report = { "AdGroupId", "AdGroupName", "CampaignId", "CampaignName", "Clicks", "Cost", "CpcBidSource", "Criteria", "CriteriaDestinationUrl", "Date", "DestinationUrl", "Id", "Impressions", "IsNegative", "MaxCpc", "MaxCpm" };
-
-
-		#endregion Reports fields
-
-		public static Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>> REPORTS_FIELDS = new Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>>()
-		{
-			
-			{ADWORDS_V201302.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS},
-													{ReportDefinitionReportFieldsType.STATUS,KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS}
-												  }
-			},
-			{ADWORDS_V201302.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AD_PERFORMANCE_REPORT_FIELDS} , 
-													{ReportDefinitionReportFieldsType.CONVERSION,AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION},
-													{ReportDefinitionReportFieldsType.STATUS,AD_PERFORMANCE_REPORT_FIELDS_STATUS},
-												  }
-			},
-			{ADWORDS_V201302.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT, 
-				new Dictionary<string, string[]>(){ 
-													{ReportDefinitionReportFieldsType.DEFAULT,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
-													{ReportDefinitionReportFieldsType.STATUS,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_STATUS},
-												  }
-			},
-			{ADWORDS_V201302.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
-													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
-				}
-			},
-			{ADWORDS_V201302.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
-													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
-				}
-			},
-			{ADWORDS_V201302.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT,  
-				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,Display_Topics_Performance_Report}
-												
-				}
-			}
 		};
 	}
 }

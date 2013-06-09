@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdWordsConst.cs" />
+    <Compile Include="AdwordsReportConfig.cs" />
     <Compile Include="AdwordsUtill.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
