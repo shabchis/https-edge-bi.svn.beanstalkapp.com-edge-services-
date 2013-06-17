@@ -40,7 +40,7 @@ namespace Edge.Services.Facebook.GraphApi
 			{
 				if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length))
 				{
-					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString() + "limit=0"));
+					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString() + "limit=1"));
 					countBatch.Add(fileDownloadOperation);
 				}
 			}
