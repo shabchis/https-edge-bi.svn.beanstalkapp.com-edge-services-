@@ -112,11 +112,13 @@ namespace Edge.Services.Google.AdWords
 				}
 			}
 
+			Progress = 0.2;
 			_batchDownloadOperation.Start();
 			_batchDownloadOperation.Wait();
 
 			_batchDownloadOperation.EnsureSuccess(); //INCASE OF GENERAL EXCEPTION OPEN DELIVERY FILE HAS HTML AND VIEW INNER ERROR
 
+			Progress = 0.9;
 			Delivery.Save();
 			return ServiceOutcome.Success;
 		} 

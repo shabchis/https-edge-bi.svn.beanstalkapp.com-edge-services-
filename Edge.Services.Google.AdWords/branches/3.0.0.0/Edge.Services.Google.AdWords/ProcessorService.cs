@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using Edge.Core.Services;
+using Edge.Core.Utilities;
 using Edge.Data.Pipeline.Mapping;
 using Edge.Data.Pipeline.Metrics.Managers;
 using Edge.Data.Pipeline.Metrics.Misc;
@@ -95,6 +96,7 @@ namespace Edge.Services.Google.AdWords
 		#region Overrides
 		protected override ServiceOutcome DoPipelineWork()
 		{
+			Log("Starting Google.AdWords.ProcessorService", LogMessageType.Debug);
 			InitMappings();
 
 			//Mappings.OnFieldRequired = ReaderAdapter.GetField;
@@ -132,21 +134,32 @@ namespace Edge.Services.Google.AdWords
 			//}))
 			{
 				ImportManager.BeginImport(Delivery, GetSampleMetrics());
+				Log("Objects and Metrics tables are created", LogMessageType.Debug);
+				Progress = 0.1;
 				
 				var requiredHeaders = new[] { AdWordsConst.AdPreRequiredHeader };
 				var totals = new Dictionary<string, double>();
 
 				// Getting Keywords Data
+				Log("Start loading keywords", LogMessageType.Debug);
 				LoadKeywords(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT]], requiredHeaders);
-
+				Log("Finished loading keywords", LogMessageType.Debug);
+				Progress = 0.3;
+				
 				// Getting Placements Data
+				Log("Start loading placements", LogMessageType.Debug);
 				LoadPlacements(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT]], requiredHeaders);
+				Log("Finished loading placements", LogMessageType.Debug);
 
 				// Getting Conversions Data ( for ex. signup , purchase )
+				Log("Start loading conversions", LogMessageType.Debug);
 				LoadConversions(Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT] + "_Conv"], requiredHeaders);
+				Log("Finished loading conversions", LogMessageType.Debug);
+				Progress = 0.4;
 
 				#region Getting Ads Data and Import Metrics
-
+				Log("Start loading Ads", LogMessageType.Debug);
+				
 				var adPerformanceFile = Delivery.Files[GoogleStaticReportsNamesUtill.ReportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
 				_adsReader = new CsvDynamicReader(adPerformanceFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
 				Mappings.OnFieldRequired = field => _adsReader.Current[field];
@@ -163,7 +176,10 @@ namespace Edge.Services.Google.AdWords
 						if (!_importedAds.ContainsKey(CurrentMetricsUnit.Ad.OriginalID))
 							_importedAds.Add(CurrentMetricsUnit.Ad.OriginalID, CurrentMetricsUnit.Ad);
 					}
+					Progress = 0.8;
+					Log("Start importing objects", LogMessageType.Debug);
 					ImportManager.EndImport();
+					Log("Finished importing objects", LogMessageType.Debug);
 				}
 				#endregion
 			}

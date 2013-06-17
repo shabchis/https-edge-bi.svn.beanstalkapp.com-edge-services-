@@ -52,6 +52,7 @@ namespace Edge.Services.Google.AdWords
 				Delivery.FileDirectory = Configuration.Parameters.Get<string>(Const.DeliveryServiceConfigurationOptions.FileDirectory);
 				if (channelId != -1) Delivery.Channel = new Channel { ID = channelId };
 			}
+			Progress = 0.3;
 
 			#region Must Have Params
 			Delivery.Parameters["FilterDeleted"] = Configuration.Parameters["FilterDeleted"];
@@ -92,6 +93,7 @@ namespace Edge.Services.Google.AdWords
 				Delivery.Parameters["includeDisplaytData"] = false; // default
 			#endregion
 
+			Progress = 0.5;
 			// create Delivery files for each Client ID and Report type
 			foreach (var clientId in adwordsClientIds)
 			{
@@ -104,7 +106,8 @@ namespace Edge.Services.Google.AdWords
 					Delivery.Files.Add(file);
 				}
 			}
-
+			
+			Progress = 0.8;
 			Delivery.Save();
 			return ServiceOutcome.Success;
 		}
