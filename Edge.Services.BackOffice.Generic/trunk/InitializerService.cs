@@ -38,11 +38,13 @@ namespace Edge.Services.BackOffice.Generic
 			if (string.IsNullOrEmpty(this.Delivery.FileDirectory))
 				throw new Exception("Delivery.TargetLocationDirectory must be configured in configuration file (DeliveryFilesDir)");
 
+            bool multibo = false;
+            if (this.Instance.Configuration.Options.ContainsKey("URL.SignatureAppend"))
+                multibo = Convert.ToBoolean(this.Instance.Configuration.Options["URL.SignatureAppend"]);
+
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
-				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]",
-			  this.Instance.AccountID,
-			  this.TimePeriod.ToAbsolute())),
+				Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}{2}]", this.Instance.AccountID, this.TimePeriod.ToAbsolute(),multibo?"-"+this.Instance.Configuration.Options["Bo.ServiceAdress"]:string.Empty)),
 				Account = Delivery.Account,
 				Channel = Delivery.Channel,
 				TimePeriodStart = Delivery.TimePeriodStart,
