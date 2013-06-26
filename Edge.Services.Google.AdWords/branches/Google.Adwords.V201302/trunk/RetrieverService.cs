@@ -106,16 +106,7 @@ namespace Edge.Services.Google.AdWords
                     if (!includeZeroImpression && GoogleStaticReportFields.REPORTS_FIELDS[reportType][file.Parameters["ReportFieldsType"].ToString()].Contains(""))
                         sb.Append(" WHERE Impressions > 0");
 
-                    //SiteLinks
-                    //if (this.Delivery.Parameters.ContainsKey("AppendSitelinks") && (Boolean.Parse(this.Delivery.Parameters["AppendSitelinks"].ToString())))
-                    //if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201302.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]))
-                    //{
-
-                    //    if (sb.ToString().Contains("WHERE"))
-                    //        sb.Append("AND ClickType NOT_IN [SITELINKS]");
-                    //    else sb.Append("WHERE ClickType NOT_IN [SITELINKS] ");
-
-                    //}
+                    
                     //if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT]))
                     // //Site link file
                     //{

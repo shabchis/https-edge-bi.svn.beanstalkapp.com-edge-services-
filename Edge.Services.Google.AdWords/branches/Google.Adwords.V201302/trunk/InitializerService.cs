@@ -27,8 +27,8 @@ namespace Edge.Services.Google.AdWords
                 throw new Exception("Missing Configuration Param , FilterDeleted");
             this.Delivery.Parameters["FilterDeleted"] = this.Instance.Configuration.Options["FilterDeleted"];
 
-            //if (String.IsNullOrEmpty(this.Instance.Configuration.Options["AppendSitelinks"]))
-            //    this.Delivery.Parameters["AppendSitelinks"] = this.Instance.Configuration.Options["AppendSitelinks"];
+            if (this.Instance.Configuration.Options.ContainsKey("AppendSitelinks"))
+                this.Delivery.Parameters.Add("AppendSitelinks", this.Instance.Configuration.Options["AppendSitelinks"]);
 
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
                 throw new Exception("Missing Configuration Param , KeywordContentId");
@@ -192,20 +192,20 @@ namespace Edge.Services.Google.AdWords
                     this.Delivery.Files.Add(file);
                 }
 
-                //#region Sitelinks
+                #region Sitelinks
 
-                //if(this.Delivery.Parameters.ContainsKey("AppendSitelinks"))
-                //    if (Boolean.Parse(this.Delivery.Parameters["AppendSitelinks"].ToString()))
-                //    {
-                //        DeliveryFile siteLinkFile = new DeliveryFile();
-                //        siteLinkFile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT];
-                //        siteLinkFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT.ToString());
-                //        siteLinkFile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
-                //        siteLinkFile.Parameters.Add("AdwordsClientID", clientId);
-                //        this.Delivery.Files.Add(siteLinkFile);
-                //    }
+                if (this.Delivery.Parameters.ContainsKey("AppendSitelinks"))
+                    if (Boolean.Parse(this.Delivery.Parameters["AppendSitelinks"].ToString()))
+                    {
+                        DeliveryFile siteLinkFile = new DeliveryFile();
+                        siteLinkFile.Name = GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT];
+                        siteLinkFile.Parameters.Add("ReportType", GA.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT.ToString());
+                        siteLinkFile.Parameters.Add("ReportFieldsType", ReportDefinitionReportFieldsType.DEFAULT);
+                        siteLinkFile.Parameters.Add("AdwordsClientID", clientId);
+                        this.Delivery.Files.Add(siteLinkFile);
+                    }
 
-                //#endregion
+                #endregion
 
 
                 #region Status Reports
