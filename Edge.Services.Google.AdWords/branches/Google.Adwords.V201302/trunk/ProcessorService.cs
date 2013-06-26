@@ -465,57 +465,57 @@ namespace Edge.Services.Google.AdWords
                 #endregion
                 }
 
-                #region Getting Sitelinks Data without metrics
-                string[] sitelinksRequiredHeaders = new string[1];
-                sitelinksRequiredHeaders[0] = Const.AdIDFieldName;
+                //#region Getting Sitelinks Data without metrics
+                //string[] sitelinksRequiredHeaders = new string[1];
+                //sitelinksRequiredHeaders[0] = Const.AdIDFieldName;
 
-                DeliveryFile _sitelinkPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
-                var _sitelinkReader = new CsvDynamicReader(_sitelinkPerformanceFile.OpenContents(compression: FileCompression.Gzip), sitelinksRequiredHeaders);
+                //DeliveryFile _sitelinkPerformanceFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.AD_PERFORMANCE_REPORT]];
+                //var _sitelinkReader = new CsvDynamicReader(_sitelinkPerformanceFile.OpenContents(compression: FileCompression.Gzip), sitelinksRequiredHeaders);
 
-                AdMetricsUnit siteLinkMetricsUnit = new AdMetricsUnit();
-                siteLinkMetricsUnit.Output = currentOutput;
-                Ad sitelinkAd;
+                //AdMetricsUnit siteLinkMetricsUnit = new AdMetricsUnit();
+                //siteLinkMetricsUnit.Output = currentOutput;
+                //Ad sitelinkAd;
 
-                using (_sitelinkReader)
-                {
-                    this.Mappings.OnFieldRequired = field => _adsReader.Current[field];
-                    to do : get site link tracker
+                //using (_sitelinkReader)
+                //{
+                //    //this.Mappings.OnFieldRequired = field => _adsReader.Current[field];
+                //    //to do : get site link tracker
 
-                    while (_sitelinkReader.Read())
-                    {
+                //    while (_sitelinkReader.Read())
+                //    {
 
-                        string sitelinkId = _adsReader.Current[Const.AdIDFieldName];
-                        sitelinkAd = new Ad();
-                        sitelinkAd.OriginalID = sitelinkId;
-                        sitelinkAd.Channel = new Channel() { ID = 1 };
-                        sitelinkAd.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
+                //        string sitelinkId = _adsReader.Current[Const.AdIDFieldName];
+                //        sitelinkAd = new Ad();
+                //        sitelinkAd.OriginalID = sitelinkId;
+                //        sitelinkAd.Channel = new Channel() { ID = 1 };
+                //        sitelinkAd.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
 
-                        Creative
-                        sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _sitelinkReader.Current[Const.DisplayURLFieldName] });
+                //        //Creative
+                //        sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _sitelinkReader.Current[Const.DisplayURLFieldName] });
 
-                        //Setting Tracker for Ad
-                        if (!String.IsNullOrWhiteSpace(_sitelinkReader.Current[Const.DestUrlFieldName]))
-                        {
-                            sitelinkAd.DestinationUrl = _sitelinkReader.Current[Const.DestUrlFieldName];
+                //        ////Setting Tracker for Ad
+                //        if (!String.IsNullOrWhiteSpace(_sitelinkReader.Current[Const.DestUrlFieldName]))
+                //        {
+                //            sitelinkAd.DestinationUrl = _sitelinkReader.Current[Const.DestUrlFieldName];
 
-                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                this.Mappings.Objects[typeof(Ad)].Apply(sitelinkAd);
-                        }
+                //            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                //                this.Mappings.Objects[typeof(Ad)].Apply(sitelinkAd);
+                //        }
 
-                        sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
-                        {
-                            OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
-                            Name = _adsReader.Current[Const.CampaignFieldName],
-                        };
+                //        sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
+                //        {
+                //            OriginalID = _adsReader.Current[Const.CampaignIdFieldName],
+                //            Name = _adsReader.Current[Const.CampaignFieldName],
+                //        };
 
-                        TO DO: Get campaign of site link
-                        TO DO: Get Adgroup of site link
-                        TO DO: Get Desc of site link
-                        TO DO: Get Headlink of site link
-                    }
-                }
+                //        //TO DO: Get campaign of site link
+                //        //TO DO: Get Adgroup of site link
+                //        //TO DO: Get Desc of site link
+                //        //TO DO: Get Headlink of site link
+                //    }
+                //}
 
-                #endregion
+                //#endregion
 
 
                 currentOutput.Checksum = _totals;
