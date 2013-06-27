@@ -12,9 +12,6 @@ namespace Edge.Services.Google.AdWords
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			#region Check config parameters
-			if (!Configuration.Parameters.ContainsKey("IncludeStatus"))
-				throw new Exception("Missing Configuration Param: IncludeStatus");
-
 			if (!Configuration.Parameters.ContainsKey("FilterDeleted"))
 				throw new Exception("Missing Configuration Param: FilterDeleted");
 
@@ -56,7 +53,7 @@ namespace Edge.Services.Google.AdWords
 
 			#region Must Have Params
 			Delivery.Parameters["FilterDeleted"] = Configuration.Parameters["FilterDeleted"];
-			Delivery.Parameters["IncludeStatus"] = Configuration.Parameters.Get<string>("IncludeStatus");
+			//Delivery.Parameters["IncludeStatus"] = Configuration.Parameters.Get<string>("IncludeStatus");
 
 			//Get MCC Paramerters
 			Delivery.Parameters["DeveloperToken"] = Configuration.Parameters.Get<string>("DeveloperToken");
