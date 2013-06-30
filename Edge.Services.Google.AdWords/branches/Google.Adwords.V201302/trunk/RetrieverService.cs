@@ -106,14 +106,14 @@ namespace Edge.Services.Google.AdWords
                     if (!includeZeroImpression && GoogleStaticReportFields.REPORTS_FIELDS[reportType][file.Parameters["ReportFieldsType"].ToString()].Contains(""))
                         sb.Append(" WHERE Impressions > 0");
 
-                    
-                    //if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT]))
-                    // //Site link file
-                    //{
-                    //    if (sb.ToString().Contains("WHERE"))
-                    //        sb.Append("AND ClickType IN [SITELINKS]");
-                    //    else sb.Append("WHERE ClickType IN [SITELINKS] ");
-                    //}
+
+                    if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT]))
+                    //Site link file
+                    {
+                        if (sb.ToString().Contains("WHERE"))
+                            sb.Append("AND ClickType IN [SITELINKS]");
+                        else sb.Append("WHERE ClickType IN [SITELINKS] ");
+                    }
 
                     sb.Append(string.Format(" DURING {0},{1}", startDate, endDate));
 
