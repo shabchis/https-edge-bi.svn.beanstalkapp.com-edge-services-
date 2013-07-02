@@ -160,8 +160,11 @@ namespace Edge.Services.Google.AdWords
                 #region Getting Placements Data
 
 
+                string[] _placementsFileRequiredHeaders = new string[1];
+                _placementsFileRequiredHeaders[0] = Const.PlacementCriteriaID;
+
                 DeliveryFile _PlacementsFile = this.Delivery.Files[GoogleStaticReportsNamesUtill._reportNames[GA.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT]];
-                var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(compression: FileCompression.Gzip), requiredHeaders);
+                var _PlacementsReader = new CsvDynamicReader(_PlacementsFile.OpenContents(compression: FileCompression.Gzip), _placementsFileRequiredHeaders);
                 using (_PlacementsReader)
                 {
                     while (_PlacementsReader.Read())
