@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
@@ -15,6 +14,8 @@ namespace Edge.Services.Facebook.GraphApi
 {
 	public class ProcessorService : AutoMetricsProcessorService
 	{
+		private readonly Dictionary<string, Ad> _adCache = new Dictionary<string, Ad>();
+
 		#region Overrides
 		protected override ServiceOutcome DoPipelineWork()
 		{
@@ -23,7 +24,7 @@ namespace Edge.Services.Facebook.GraphApi
 			Mappings.OnMappingApplied = SetEdgeType;
 			
 			var filesByType = Delivery.Parameters["FilesByType"] as IDictionary<Consts.FileTypes, List<string>>;
-			var adCache = LoadAds(filesByType);
+			LoadAds(filesByType);
 			Log("Ads loaded into local cache", LogMessageType.Debug);
 			Progress = 0.2;
 
@@ -39,7 +40,7 @@ namespace Edge.Services.Facebook.GraphApi
 					{
 						while (reader.Read())
 						{
-							ImportManager.ImportMetrics(GetMetrics(reader, adCache));
+							ImportManager.ImportMetrics(GetMetrics(reader));
 						}
 					}
 				}
@@ -52,22 +53,22 @@ namespace Edge.Services.Facebook.GraphApi
 			return ServiceOutcome.Success;
 		}
 
-		protected override MetricsUnit GetSampleMetrics(Dictionary<string, Ad> adCache)
+		protected override MetricsUnit GetSampleMetrics()
 		{
 			using (var reader = new JsonDynamicReader(Configuration.SampleFilePath, "$.data[*].*"))
 			{
-				while (reader.Read())
+				if (reader.Read())
 				{
-					GetMetrics(reader, adCache);
+					return GetMetrics(reader);
 				}
 			}
-			return metri
+			return null;
 		}
 		#endregion
 
 		#region Private Methods
 
-		private MetricsUnit GetMetrics(JsonDynamicReader reader, Dictionary<string, Ad> adCache)
+		private MetricsUnit GetMetrics(JsonDynamicReader reader)
 		{
 			var metricsUnit = new MetricsUnit
 			{
@@ -78,10 +79,10 @@ namespace Edge.Services.Facebook.GraphApi
 
 			if (reader.Current.adgroup_id != null)
 			{
-				if (adCache.ContainsKey(reader.Current.adgroup_id))
+				if (_adCache.ContainsKey(reader.Current.adgroup_id))
 				{
 					// set Ad
-					metricsUnit.Ad = adCache[reader.Current.adgroup_id];
+					metricsUnit.Ad = _adCache[reader.Current.adgroup_id];
 
 					// set measures
 					metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(reader.Current.clicks));
@@ -104,10 +105,8 @@ namespace Edge.Services.Facebook.GraphApi
 			return metricsUnit;
 		}
 
-		private Dictionary<string, Ad> LoadAds(IDictionary<Consts.FileTypes, List<string>> filesByType)
+		private void LoadAds(IDictionary<Consts.FileTypes, List<string>> filesByType)
 		{
-			var adList = new Dictionary<string, Ad>();
-
 			var campaignCache = LoadCampaigns(filesByType[Consts.FileTypes.Campaigns]);
 			var creativeCache = LoadCreatives(filesByType[Consts.FileTypes.Creatives]);
 
@@ -153,9 +152,9 @@ namespace Edge.Services.Facebook.GraphApi
 
 							var creativeDefId = reader.Current.creative_ids[0];
 							if (!creativeCache.ContainsKey(creativeDefId))
-								Log(String.Format("Cannot find Creative '{0}' for Ad '{}' in file '{1}'", reader.Current.campaign_id, ad.OriginalID, filePath), LogMessageType.Warning);
+								Log(String.Format("Cannot find Creative '{0}' for Ad '{2}' in file '{1}'", reader.Current.campaign_id, ad.OriginalID, filePath), LogMessageType.Warning);
 							else
-								ad.CreativeDefinition = creativeCache[creativeDefId];
+								ad.CreativeMatch = creativeCache[creativeDefId];
 						}
 
 						// targeting - age
@@ -177,12 +176,10 @@ namespace Edge.Services.Facebook.GraphApi
 								});
 							}
 						}
-						adList.Add(ad.OriginalID, ad);
+						_adCache.Add(ad.OriginalID, ad);
 					}
 				}
 			}
-
-			return adList;
 		}
 
 		private Dictionary<string, Campaign> LoadCampaigns(IEnumerable<string> filePaths)
@@ -221,9 +218,9 @@ namespace Edge.Services.Facebook.GraphApi
 			return campaignList;
 		}
 
-		private Dictionary<string, CreativeDefinition> LoadCreatives(IEnumerable<string> filePaths)
+		private Dictionary<string, CreativeMatch> LoadCreatives(IEnumerable<string> filePaths)
 		{
-			var creativeDefList = new Dictionary<string, CreativeDefinition>();
+			var creativeDefList = new Dictionary<string, CreativeMatch>();
 
 			foreach (var filePath in filePaths)
 			{
@@ -239,7 +236,7 @@ namespace Edge.Services.Facebook.GraphApi
 							case "4":
 							case "12":
 								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeDef(reader));
+									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader));
 									break;
 								}
 							case "8":
@@ -250,17 +247,17 @@ namespace Edge.Services.Facebook.GraphApi
 							case "19":
 							case "25":
 								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeDef(reader, "Sponsored Story"));
+									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "Sponsored Story"));
 									break;
 								}
 							case "27":
 								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeDef(reader, "Page Ads for a Page post"));
+									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "Page Ads for a Page post"));
 									break;
 								}
 							default:
 								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeDef(reader, "UnKnown creativet"));
+									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "UnKnown creativet"));
 									break;
 								}
 						}
@@ -271,7 +268,7 @@ namespace Edge.Services.Facebook.GraphApi
 			return creativeDefList;
 		}
 
-		private CreativeDefinition GetCreativeDef(JsonDynamicReader reader, string text)
+		private CreativeMatch GetCreativeMatch(JsonDynamicReader reader, string text)
 		{
 			var creative = new TextCreative
 			{
@@ -279,25 +276,25 @@ namespace Edge.Services.Facebook.GraphApi
 				Text = text,
 				Fields = new Dictionary<EdgeField, object> { { GetEdgeField("OriginalID"), reader.Current.creative_id } },
 			};
-			var creativeDef = new TextCreativeDefinition
-			{
+			var creativeDef = new TextCreativeMatch
+				{
 				Creative = creative,
 				DestinationUrl = text
 			};
 			return creativeDef;
 		}
 
-		private CreativeDefinition GetCreativeDef(JsonDynamicReader reader)
+		private CreativeMatch GetCreativeMatch(JsonDynamicReader reader)
 		{
 			// composite creative
 			var compCreative = new CompositeCreative
 				{
 					Parts = new Dictionary<CompositePartField, SingleCreative>()
 				};
-			var compCreativeDef = new CompositeCreativeDefinition
+			var compCreativeDef = new CompositeCreativeMatch
 				{
 					Creative = compCreative,
-					CreativeDefinitions = new Dictionary<CompositePartField, SingleCreativeDefinition>()
+					CreativesMatches = new Dictionary<CompositePartField, SingleCreativeMatch>()
 				};
 
 			// 1. image creative
@@ -307,17 +304,17 @@ namespace Edge.Services.Facebook.GraphApi
 					Fields = new Dictionary<EdgeField, object> { { GetEdgeField("OriginalID"), reader.Current.creative_id } },
 				};
 			compCreative.Parts.Add(GetCompositePartField("ImageCreative"), creative);
-			compCreativeDef.CreativeDefinitions.Add(GetCompositePartField("ImageCreativeDefinition"), new ImageCreativeDefinition { Creative = creative });
+			compCreativeDef.CreativesMatches.Add(GetCompositePartField("ImageCreativeDefinition"), new ImageCreativeMatch { Creative = creative });
 
 			// 2. text creative Body
-			var creativeDef = GetCreativeDef(reader, reader.Current.Body);
+			var creativeDef = GetCreativeMatch(reader, reader.Current.Body);
 			compCreative.Parts.Add(GetCompositePartField("Desc1Creative"), creativeDef.Creative);
-			compCreativeDef.CreativeDefinitions.Add(GetCompositePartField("Desc1CreativeDefinition"), creativeDef);
+			compCreativeDef.CreativesMatches.Add(GetCompositePartField("Desc1CreativeDefinition"), creativeDef);
 
 			// 3. text creative Title
-			creativeDef = GetCreativeDef(reader, reader.Current.Title);
+			creativeDef = GetCreativeMatch(reader, reader.Current.Title);
 			compCreative.Parts.Add(GetCompositePartField("TitleCreative"), creativeDef.Creative);
-			compCreativeDef.CreativeDefinitions.Add(GetCompositePartField("TitleCreativeDefinition"), creativeDef);
+			compCreativeDef.CreativesMatches.Add(GetCompositePartField("TitleCreativeDefinition"), creativeDef);
 
 			return compCreativeDef;
 		} 

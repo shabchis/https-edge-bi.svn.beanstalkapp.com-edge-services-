@@ -138,7 +138,6 @@ namespace Edge.Services.Google.AdWords
 				Progress = 0.1;
 				
 				var requiredHeaders = new[] { AdWordsConst.AdPreRequiredHeader };
-				var totals = new Dictionary<string, double>();
 
 				// Getting Keywords Data
 				Log("Start loading keywords", LogMessageType.Debug);
@@ -456,11 +455,11 @@ namespace Edge.Services.Google.AdWords
 				Parts = new Dictionary<CompositePartField, SingleCreative>(),
 				EdgeType = GetEdgeType("CompositeCreative")
 			};
-			var compCreativeDefinition = new CompositeCreativeDefinition
+			var compCreativeMatch = new CompositeCreativeMatch
 			{
-				CreativeDefinitions = new Dictionary<CompositePartField, SingleCreativeDefinition>(),
+				CreativesMatches = new Dictionary<CompositePartField, SingleCreativeMatch>(),
 				Creative = compCreative,
-				EdgeType = GetEdgeType("CompositeCreativeDefinition")
+				EdgeType = GetEdgeType("CompositeCreativeMatch")
 			};
 
 			//----------------------------------
@@ -475,13 +474,13 @@ namespace Edge.Services.Google.AdWords
 			};
 			compCreative.Parts.Add(GetCompositePartField("DisplayUrlCreative"), creative);
 
-			SingleCreativeDefinition definition = new TextCreativeDefinition
+			SingleCreativeMatch match = new TextCreativeMatch
 			{
 				Creative = creative,
-				EdgeType = GetEdgeType("TextCreativeDefinition"),
+				EdgeType = GetEdgeType("TextCreativeMatch"),
 				TK = adsReader.Current[AdWordsConst.DisplayURLFieldName]
 			};
-			compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("DisplayUrlDefinition"), definition);
+			compCreativeMatch.CreativesMatches.Add(GetCompositePartField("DisplayUrlMatch"), match);
 
 			if (String.Equals(Convert.ToString(adsReader.Current[AdWordsConst.AdTypeFieldName]), "Image ad"))
 			{
@@ -499,14 +498,14 @@ namespace Edge.Services.Google.AdWords
 				};
 				compCreative.Parts.Add(GetCompositePartField("SingleCreative"), creative);
 
-				definition = new ImageCreativeDefinition
+				match = new ImageCreativeMatch
 				{
 					Creative = creative,
 					ImageSize = imageParams[2].Trim(),
 					EdgeType = GetEdgeType("ImageCreativeDefinition"),
 					TK = String.Format("{0}_{1}", imageParams[1].Trim(), imageParams[2].Trim())
 				};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("SingleCreativeDefinition"), definition);
+				compCreativeMatch.CreativesMatches.Add(GetCompositePartField("SingleCreativeMatch"), match);
 			}
 			else
 			{
@@ -522,13 +521,13 @@ namespace Edge.Services.Google.AdWords
 				};
 				compCreative.Parts.Add(GetCompositePartField("SingleCreative"), creative);
 
-				definition = new TextCreativeDefinition
+				match = new TextCreativeMatch
 				{
 					Creative = creative,
-					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					EdgeType = GetEdgeType("TextCreativeMatch"),
 					TK = adsReader.Current.Ad
 				};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("SingleCreativeDefinition"), definition);
+				compCreativeMatch.CreativesMatches.Add(GetCompositePartField("SingleCreativeMatch"), match);
 
 				//----------------------------------
 				// Description 1 as Text creative
@@ -542,13 +541,13 @@ namespace Edge.Services.Google.AdWords
 				};
 				compCreative.Parts.Add(GetCompositePartField("Desc1Creative"), creative);
 
-				definition = new TextCreativeDefinition
+				match = new TextCreativeMatch
 				{
 					Creative = creative,
-					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					EdgeType = GetEdgeType("TextCreativeMatch"),
 					TK = adsReader.Current["Description line 1"]
 				};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc1Definition"), definition);
+				compCreativeMatch.CreativesMatches.Add(GetCompositePartField("Desc1Definition"), match);
 
 				//----------------------------------
 				// Description 2 as Text creative
@@ -562,32 +561,32 @@ namespace Edge.Services.Google.AdWords
 				};
 				compCreative.Parts.Add(GetCompositePartField("Desc2Creative"), creative);
 
-				definition = new TextCreativeDefinition
+				match = new TextCreativeMatch
 				{
 					Creative = creative,
-					EdgeType = GetEdgeType("TextCreativeDefinition"),
+					EdgeType = GetEdgeType("TextCreativeMatch"),
 					TK = adsReader.Current["Description line 2"]
 				};
-				compCreativeDefinition.CreativeDefinitions.Add(GetCompositePartField("Desc2Definition"), definition);
+				compCreativeMatch.CreativesMatches.Add(GetCompositePartField("Desc2Definition"), match);
 			}
 
 			SetCompositeCreativeTk(compCreative);
-			SetCompositeCreativeDefinitionTk(compCreativeDefinition);
-			ad.CreativeDefinition = compCreativeDefinition;
-			ad.CreativeDefinition.Creative = compCreative;
+			SetCompositeCreativeDefinitionTk(compCreativeMatch);
+			ad.CreativeMatch = compCreativeMatch;
+			ad.CreativeMatch.Creative = compCreative;
 
 			// add Ad to cache of Ads
 			_importedAds.Add(ad.OriginalID, ad);
 			return ad;
 		}
 
-		private static void SetCompositeCreativeDefinitionTk(CompositeCreativeDefinition compCreativeDefinition)
+		private static void SetCompositeCreativeDefinitionTk(CompositeCreativeMatch compCreativeMatch)
 		{
-			foreach (var part in compCreativeDefinition.CreativeDefinitions)
+			foreach (var part in compCreativeMatch.CreativesMatches)
 			{
-				compCreativeDefinition.TK = String.Format("{0}_{1}", compCreativeDefinition.TK, part.Value.TK);
+				compCreativeMatch.TK = String.Format("{0}_{1}", compCreativeMatch.TK, part.Value.TK);
 			}
-			if (compCreativeDefinition.TK.Length > 1) compCreativeDefinition.TK = compCreativeDefinition.TK.Remove(0, 1);
+			if (compCreativeMatch.TK.Length > 1) compCreativeMatch.TK = compCreativeMatch.TK.Remove(0, 1);
 		}
 
 		private static void SetCompositeCreativeTk(CompositeCreative compCreative)
