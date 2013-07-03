@@ -1,22 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Edge.Services.Facebook.GraphApi
+﻿namespace Edge.Services.Facebook.GraphApi
 {
 	public static class FacebookConfigurationOptions
 	{
 		public const string BaseServiceAddress = "Facebook.BaseServiceAdress";
 		public const string Account_ID = "Facebook.Account.ID";
 		public const string Account_Name = "Facebook.Account.Name";
-		public const string Auth_SessionKey = "Facebook.Auth.SessionKey";
-		public const string Auth_ApiKey = "Facebook.Auth.ApiKey";
-		public const string Auth_RedirectUri = "Facebook.Auth.RedirectUri";
-		public const string Auth_Permision = "Facebook.Auth.RedirectUri";
-		public const string Auth_AuthenticationUrl = "Facebook.AuthenticationUrl";
-		public const string Auth_AppSecret = "Facebook.Auth.AppSecret";
-		public const string Auth_SessionSecret = "Facebook.Auth.SessionSecret";
+		public const string AccessToken = "Facebook.AccessToken";
 		public const string Ads_XPath_GetAdGroups = "Facebook.Ads.XPath.GetAdGroups";
 		public const string Ads_XPath_GetCampaigns = "Facebook.Ads.XPath.GetCampaigns";
 		public const string Ads_XPath_GetAdGroupStats = "Facebook.Ads.XPath.GetAdGroupStats";
@@ -49,17 +38,17 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string AdGroupStats = "AdGroupStats-{0}.json";
 			public const string Creatives = "AdGroupCreatives-{0}.json";
 		}
-		public  enum FileTypes
-		{			
+		public enum FileTypes
+		{
 			Campaigns,
 			AdGroups,
 			AdGroupStats,
-			Creatives			
+			Creatives
 		}
-		public  enum FileSubType
+		public enum FileSubType
 		{
-			Length=0,
-			Data=1,
+			Length = 0,
+			Data = 1,
 		}
 		public static class DeliveryFileParameters
 		{

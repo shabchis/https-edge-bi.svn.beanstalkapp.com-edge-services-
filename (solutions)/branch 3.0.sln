@@ -59,6 +59,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Google.AdWord
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.BackOffice.EasyForex", "..\Edge.Services.BackOffice.EasyForex\branches\3.0.0.0\Edge.Services.BackOffice.EasyForex.csproj", "{ADC1E54C-4487-40B2-A2AA-ECE3853CED89}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Facebook.GraphApi", "..\Edge.Services.Facebook.GraphApi\branches\3.0.0\Edge.Services.Facebook.GraphApi.csproj", "{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebubNewScheduling|Any CPU = DebubNewScheduling|Any CPU
@@ -762,6 +764,36 @@ Global
 		{ADC1E54C-4487-40B2-A2AA-ECE3853CED89}.Seperia|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{ADC1E54C-4487-40B2-A2AA-ECE3853CED89}.Seperia|Mixed Platforms.Build.0 = Release|Any CPU
 		{ADC1E54C-4487-40B2-A2AA-ECE3853CED89}.Seperia|x86.ActiveCfg = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.DebubNewScheduling|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.DebubNewScheduling|Any CPU.Build.0 = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.DebubNewScheduling|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.DebubNewScheduling|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.DebubNewScheduling|x86.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Edge|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Edge|Any CPU.Build.0 = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Edge|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Edge|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Edge|x86.ActiveCfg = DebubNewScheduling|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Release|x86.ActiveCfg = Release|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.Build.0 = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.Build.0 = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia.Facebook.UpdateCampaignStatus|x86.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Any CPU.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Any CPU.Build.0 = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Mixed Platforms.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Mixed Platforms.Build.0 = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|x86.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -776,6 +808,7 @@ Global
 		{66C46DDE-68B3-4D4F-BAB0-B2B35FB6CB3E} = {8D2675B3-0E24-4611-9ADE-AA45DF04821A}
 		{452F5585-4DE6-431B-B691-2CE4EC06E49A} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{ADC1E54C-4487-40B2-A2AA-ECE3853CED89} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
+		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{747BA114-2B73-4498-98DB-89D7EFC01C46} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C} = {12816A6E-5B10-4679-A152-2F8F24694123}
