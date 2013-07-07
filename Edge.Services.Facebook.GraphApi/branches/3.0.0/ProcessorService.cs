@@ -272,7 +272,12 @@ namespace Edge.Services.Facebook.GraphApi
 		{
 			var creative = new TextCreative
 			{
-				TextType = TextCreativeType.Text,
+				//TextCreativeType = new TextCreativeType
+				//{
+				//	Value = "Text",
+				//	TK = "Text",
+				//	EdgeType = GetEdgeType("TextCreativeType")
+				//},
 				Text = text,
 				Fields = new Dictionary<EdgeField, object> { { GetEdgeField("OriginalID"), reader.Current.creative_id } },
 			};
