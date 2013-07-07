@@ -283,9 +283,9 @@ namespace Edge.Services.Facebook.GraphApi
 			};
 			var creativeDef = new TextCreativeMatch
 				{
-				Creative = creative,
-				DestinationUrl = text
-			};
+					Creative = creative,
+					Destination = new Destination { Value = text, TK = text }
+				};
 			return creativeDef;
 		}
 

@@ -224,7 +224,11 @@ namespace Edge.Services.Google.AdWords
 						TK = placementsReader.Current[AdWordsConst.PlacementIdFieldName]
 					};
 					placement.Fields.Add(GetExtraField("OriginalID"), placementsReader.Current[AdWordsConst.KeywordIdFieldName]);
-					placement.Fields.Add(GetExtraField("DestinationUrl"), placementsReader.Current[AdWordsConst.DestUrlFieldName]);
+					//placement.Fields.Add(GetExtraField("Destination"), new Destination
+					//{
+					//	Value = placementsReader.Current[AdWordsConst.DestUrlFieldName],
+					//	TK = placementsReader.Current[AdWordsConst.DestUrlFieldName],
+					//});
 					
 					_placementsCache.Add(placementPrimaryKey.ToString(), placement);
 				}
@@ -360,7 +364,12 @@ namespace Edge.Services.Google.AdWords
 			// Destination Url
 			//------------------
 			if (!String.IsNullOrWhiteSpace(adsReader.Current[AdWordsConst.DestUrlFieldName]))
-				ad.DestinationUrl = adsReader.Current[AdWordsConst.DestUrlFieldName];
+				ad.Destination = new Destination
+			{
+				Value = adsReader.Current[AdWordsConst.DestUrlFieldName],
+				TK = adsReader.Current[AdWordsConst.DestUrlFieldName],
+				EdgeType = GetEdgeType("Destination")
+			};
 
 			//--------------
 			// Campaign
@@ -621,8 +630,12 @@ namespace Edge.Services.Google.AdWords
 			if (!target.Fields.ContainsKey(GetExtraField("OriginalID")))
 				target.Fields.Add(GetExtraField("OriginalID"), _adsReader.Current[AdWordsConst.KeywordIdFieldName]);
 
-			if (!target.Fields.ContainsKey(GetExtraField("DestinationUrl")))
-				target.Fields.Add(GetExtraField("DestinationUrl"), _adsReader.Current[AdWordsConst.DestUrlFieldName]);
+			//if (!target.Fields.ContainsKey(GetExtraField("Destination")))
+			//	target.Fields.Add(GetExtraField("Destination"), new Destination 
+			//	{ 
+			//		Value = _adsReader.Current[AdWordsConst.DestUrlFieldName], 
+			//		TK = _adsReader.Current[AdWordsConst.DestUrlFieldName] 
+			//	});
 
 			return target;
 		}
