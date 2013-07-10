@@ -119,10 +119,10 @@ namespace Edge.Services.Google.AdWords
 						if (!_importedAds.ContainsKey(CurrentMetricsUnit.Ad.OriginalID))
 							_importedAds.Add(CurrentMetricsUnit.Ad.OriginalID, CurrentMetricsUnit.Ad);
 					}
-					Progress = 0.8;
-					Log("Start importing objects", LogMessageType.Debug);
+					//Progress = 0.8;
+					//Log("Start importing objects", LogMessageType.Debug);
 					ImportManager.EndImport();
-					Log("Finished importing objects", LogMessageType.Debug);
+					//Log("Finished importing objects", LogMessageType.Debug);
 				}
 				#endregion
 			}
@@ -364,7 +364,7 @@ namespace Edge.Services.Google.AdWords
 			// Destination Url
 			//------------------
 			if (!String.IsNullOrWhiteSpace(adsReader.Current[AdWordsConst.DestUrlFieldName]))
-				ad.Destination = new Destination
+				ad.MatchDestination = new Destination
 			{
 				Value = adsReader.Current[AdWordsConst.DestUrlFieldName],
 				TK = adsReader.Current[AdWordsConst.DestUrlFieldName],
@@ -630,12 +630,13 @@ namespace Edge.Services.Google.AdWords
 			if (!target.Fields.ContainsKey(GetExtraField("OriginalID")))
 				target.Fields.Add(GetExtraField("OriginalID"), _adsReader.Current[AdWordsConst.KeywordIdFieldName]);
 
-			//if (!target.Fields.ContainsKey(GetExtraField("Destination")))
-			//	target.Fields.Add(GetExtraField("Destination"), new Destination 
-			//	{ 
-			//		Value = _adsReader.Current[AdWordsConst.DestUrlFieldName], 
-			//		TK = _adsReader.Current[AdWordsConst.DestUrlFieldName] 
-			//	});
+			if (!target.Fields.ContainsKey(GetExtraField("TargetDestination")))
+				target.Fields.Add(GetExtraField("TargetDestination"), new Destination
+				{
+					Value = _adsReader.Current[AdWordsConst.DestUrlFieldName],
+					TK = _adsReader.Current[AdWordsConst.DestUrlFieldName],
+					EdgeType = GetEdgeType("Destination"),
+				});
 
 			return target;
 		}
