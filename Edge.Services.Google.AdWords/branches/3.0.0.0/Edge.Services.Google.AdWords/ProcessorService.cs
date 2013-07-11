@@ -134,7 +134,8 @@ namespace Edge.Services.Google.AdWords
 			base.AddExternalMethods();
 			Mappings.ExternalMethods.Add("GetAd", new Func<dynamic, Ad>(GetAd));
 			Mappings.ExternalMethods.Add("GetAdType", new Func<dynamic, dynamic, string>(GetAdType));
-			Mappings.ExternalMethods.Add("GetTarget", new Func<Target>(GetTarget));
+			Mappings.ExternalMethods.Add("GetKeywordTarget", new Func<Target>(GetKeywordTarget));
+			Mappings.ExternalMethods.Add("GetPlacementTarget", new Func<Target>(GetPlacementTarget));
 			Mappings.ExternalMethods.Add("GetImageData", new Func<dynamic, dynamic, string>(GetImageData));
 			Mappings.ExternalMethods.Add("GetConversion", new Func<dynamic, dynamic, dynamic, dynamic, double>(GetConversion));
 		}
@@ -146,6 +147,9 @@ namespace Edge.Services.Google.AdWords
 			// load sample keywords
 			var file = new DeliveryFile {Location = Configuration.Parameters.Get<string>("KeywordSampleFile")};
 			LoadKeywords(file, headers, FileCompression.None);
+
+			file = new DeliveryFile { Location = Configuration.Parameters.Get<string>("PlacementSampleFile") };
+			LoadPlacements(file, new[] { AdWordsConst.AutoPlacRequiredHeader }, FileCompression.None);
 			
 			// load ad
 			using (_adsReader = new CsvDynamicReader(Configuration.Parameters.Get<string>("AdSampleFile"), headers))
@@ -173,7 +177,6 @@ namespace Edge.Services.Google.AdWords
 			using (var keywordsReader = new CsvDynamicReader(file.OpenContents(compression: compression), headers))
 			{
 				Mappings.OnFieldRequired = fieldName => keywordsReader.Current[fieldName];
-
 				keywordsReader.MatchExactColumns = false;
 				while (keywordsReader.Read())
 				{
@@ -194,42 +197,30 @@ namespace Edge.Services.Google.AdWords
 			}
 		}
 
-		private void LoadPlacements(DeliveryFile file, string[] headers)
+		private void LoadPlacements(DeliveryFile file, string[] headers, FileCompression compression = FileCompression.Gzip)
 		{
 			if (file == null)
 				throw new ArgumentException("Placement delivery file does not exist");
 
 			_placementsCache.Clear();
-			using (var placementsReader = new CsvDynamicReader(file.OpenContents(compression: FileCompression.Gzip), headers))
+			using (var placementsReader = new CsvDynamicReader(file.OpenContents(compression: compression), headers))
 			{
+				Mappings.OnFieldRequired = fieldName => placementsReader.Current[fieldName];
+				placementsReader.MatchExactColumns = false;
 				while (placementsReader.Read())
 				{
-					Mappings.OnFieldRequired = fieldName => placementsReader.Current[fieldName];
-
-					if (placementsReader.Current[AdWordsConst.KeywordIdFieldName] == AdWordsConst.EOF)
+					if (placementsReader.Current[AdWordsConst.PlacementIdFieldName] == AdWordsConst.EOF)
 						break;
 					var placementPrimaryKey = new KeywordPrimaryKey
 					{
-						KeywordId = Convert.ToInt64(placementsReader.Current[AdWordsConst.KeywordIdFieldName]),
+						KeywordId = Convert.ToInt64(placementsReader.Current[AdWordsConst.PlacementIdFieldName]),
 						AdgroupId = Convert.ToInt64(placementsReader.Current[AdWordsConst.AdGroupIdFieldName]),
 						CampaignId = Convert.ToInt64(placementsReader.Current[AdWordsConst.CampaignIdFieldName])
 					};
-					var placement = new PlacementTarget
-					{
-						//OriginalID = placementsReader.Current[AdWordsConst.KeywordIdFieldName],
-						Value = placementsReader.Current[AdWordsConst.PlacementFieldName],
-						PlacementType = PlacementType.Managed,
-						Fields = new Dictionary<EdgeField, object>(),
-						EdgeType = GetEdgeType("PlacementTarget"),
-						TK = placementsReader.Current[AdWordsConst.PlacementIdFieldName]
-					};
-					placement.Fields.Add(GetExtraField("OriginalID"), placementsReader.Current[AdWordsConst.KeywordIdFieldName]);
-					//placement.Fields.Add(GetExtraField("Destination"), new Destination
-					//{
-					//	Value = placementsReader.Current[AdWordsConst.DestUrlFieldName],
-					//	TK = placementsReader.Current[AdWordsConst.DestUrlFieldName],
-					//});
 					
+					var placement = new PlacementTarget();
+					PlacementMappings.Apply(placement);
+
 					_placementsCache.Add(placementPrimaryKey.ToString(), placement);
 				}
 			}
@@ -297,7 +288,7 @@ namespace Edge.Services.Google.AdWords
 			};
 
 			// add keyword or placement as a target to metrics
-			var target = GetTarget();
+			var target = GetKeywordTarget();
 			metricsUnit.Dimensions.Add(GetTargetField("TargetMatch"), new TargetMatch
 			{
 				Target = target,
@@ -588,9 +579,10 @@ namespace Edge.Services.Google.AdWords
 			return adType.ToString();
 		}
 
-		private Target GetTarget()
+		private Target GetKeywordTarget()
 		{
 			Target target;
+			var id = _adsReader.Current[AdWordsConst.KeywordIdFieldName];
 
 			// get keyword by key from keyword or placement dictionary
 			var key = new KeywordPrimaryKey
@@ -600,44 +592,61 @@ namespace Edge.Services.Google.AdWords
 				CampaignId = Convert.ToInt64(_adsReader.Current[AdWordsConst.CampaignIdFieldName])
 			};
 
-			if (key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"]) && _keywordsCache.ContainsKey(key.ToString()))
-			{
-				// Check if keyword exists in keywords cache (keywords report), if not - create new by ID
-				target = _keywordsCache.ContainsKey(key.ToString()) ? _keywordsCache[key.ToString()] :
-							new KeywordTarget
+			// TODO - what is it for???   key.KeywordId != Convert.ToInt64(Delivery.Parameters["KeywordContentId"])
+			 
+			// Check if keyword exists in Keywords cache, if YES - take it
+			target = _keywordsCache.ContainsKey(key.ToString()) ? _keywordsCache[key.ToString()] :
+					
+					 // check if contains in Placement cache, if YES - null (because placement exists)
+					 _placementsCache.ContainsKey(key.ToString()) ? null :
+					 
+					 // otherwise - create new Keyword by ID
+					 new KeywordTarget
+						{
+							Value = id,
+							MatchType = new KeywordMatchType
 							{
-								Value = _adsReader.Current[AdWordsConst.KeywordIdFieldName],
-								MatchType = KeywordMatchType.Unidentified,
-								EdgeType = GetEdgeType("KeywordTarget"),
-								TK = String.Format("{0}_{1}", KeywordMatchType.Unidentified, _adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-								Fields = new Dictionary<EdgeField, object>()
-							};
+								Value = "Unidentified",
+								TK = "Unidentified",
+								EdgeType = GetEdgeType("KeywordMatchType"),
+							},
+							EdgeType = GetEdgeType("KeywordTarget"),
+							TK = id,
+							Fields = new Dictionary<EdgeField, object> { {GetExtraField("OriginalID"), id} }
+						};
+			return target;
+		}
 
-			}
-			else
+		private Target GetPlacementTarget()
+		{
+			Target target;
+			var id = _adsReader.Current[AdWordsConst.KeywordIdFieldName];
+
+			// get keyword by key from keyword or placement dictionary
+			var key = new KeywordPrimaryKey
 			{
-				// Check if placement exists in placement cache (placements report), if not - create new by ID
-				target = _placementsCache.ContainsKey(key.ToString()) ? _placementsCache[key.ToString()] :
-							new PlacementTarget
-							{
-								Value = _adsReader.Current[AdWordsConst.KeywordIdFieldName],
-								PlacementType = PlacementType.Automatic,
-								EdgeType = GetEdgeType("PlacementTarget"),
-								TK = String.Format("{0}_{1}", PlacementType.Automatic, _adsReader.Current[AdWordsConst.KeywordIdFieldName]),
-								Fields = new Dictionary<EdgeField, object>()
-							};
-			}
-			if (!target.Fields.ContainsKey(GetExtraField("OriginalID")))
-				target.Fields.Add(GetExtraField("OriginalID"), _adsReader.Current[AdWordsConst.KeywordIdFieldName]);
-
-			if (!target.Fields.ContainsKey(GetExtraField("TargetDestination")))
-				target.Fields.Add(GetExtraField("TargetDestination"), new Destination
-				{
-					Value = _adsReader.Current[AdWordsConst.DestUrlFieldName],
-					TK = _adsReader.Current[AdWordsConst.DestUrlFieldName],
-					EdgeType = GetEdgeType("Destination"),
-				});
-
+				AdgroupId = Convert.ToInt64(_adsReader.Current[AdWordsConst.AdGroupIdFieldName]),
+				KeywordId = Convert.ToInt64(_adsReader.Current[AdWordsConst.KeywordIdFieldName]),
+				CampaignId = Convert.ToInt64(_adsReader.Current[AdWordsConst.CampaignIdFieldName])
+			};
+			 
+			// Check if placement exists in Placement cache, if YES - take it, otherwise - null
+			target = _placementsCache.ContainsKey(key.ToString()) ? _placementsCache[key.ToString()] : null;
+					
+					 // otherwise - create new Placement by ID
+					 //new PlacementTarget
+					 //	   {
+					 //		   Value = id,
+					 //		   PlacementType = new PlacementType 
+					 //		   {
+					 //			   Value = "Automatic",
+					 //			   TK = "Automatic",
+					 //			   EdgeType = GetEdgeType("PlacementType"),
+					 //		   },
+					 //		   EdgeType = GetEdgeType("PlacementTarget"),
+					 //		   TK = id,
+					 //		   Fields = new Dictionary<EdgeField, object> { {GetExtraField("OriginalID"), id}}
+					 //	   };
 			return target;
 		}
 
