@@ -111,8 +111,8 @@ namespace Edge.Services.Google.AdWords
                     //Site link file
                     {
                         if (sb.ToString().Contains("WHERE"))
-                            sb.Append("AND ClickType IN [SITELINKS]");
-                        else sb.Append("WHERE ClickType IN [SITELINKS] ");
+                            sb.Append("AND ClickType IN [SITELINKS] ");
+                        else sb.Append(" WHERE ClickType IN [SITELINKS] ");
                     }
 
                     sb.Append(string.Format(" DURING {0},{1}", startDate, endDate));
