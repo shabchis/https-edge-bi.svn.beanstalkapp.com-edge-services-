@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
 using Edge.Core.Utilities;
+using Edge.Data.Pipeline.Mapping;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Objects;
 using Edge.Data.Pipeline.Metrics.Managers;
@@ -15,32 +17,61 @@ namespace Edge.Services.Facebook.GraphApi
 	public class ProcessorService : AutoMetricsProcessorService
 	{
 		private readonly Dictionary<string, Ad> _adCache = new Dictionary<string, Ad>();
+		private readonly Dictionary<string, Campaign> _campaignCache = new Dictionary<string, Campaign>();
+		private readonly Dictionary<string, CompositeCreative> _creativeCache = new Dictionary<string, CompositeCreative>();
 
+		protected MappingContainer AdMappings;
+		protected MappingContainer CampaignMappings;
+		protected MappingContainer CreativeMappings;
+		
 		#region Overrides
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			Log("Starting Google.AdWords.ProcessorService", LogMessageType.Debug);
 			InitMappings();
 			Mappings.OnMappingApplied = SetEdgeType;
-			
-			var filesByType = Delivery.Parameters["FilesByType"] as IDictionary<Consts.FileTypes, List<string>>;
-			LoadAds(filesByType);
-			Log("Ads loaded into local cache", LogMessageType.Debug);
-			Progress = 0.2;
 
+			if (!Mappings.Objects.TryGetValue(typeof(Ad), out AdMappings))
+				throw new MappingConfigurationException("Missing mapping definition for Ad.", "Object");
+			
+			if (!Mappings.Objects.TryGetValue(typeof(Campaign), out CampaignMappings))
+				throw new MappingConfigurationException("Missing mapping definition for Campaign.", "Object");
+
+			if (!Mappings.Objects.TryGetValue(typeof(CompositeCreative), out CreativeMappings))
+				throw new MappingConfigurationException("Missing mapping definition for CompositeCreative.", "Object");
+
+			if (!Mappings.Objects.TryGetValue(typeof(MetricsUnit), out MetricsMappings))
+				throw new MappingConfigurationException("Missing mapping definition for MetricsUnit.", "Object");
+
+			if (!Mappings.Objects.TryGetValue(typeof(Signature), out SignatureMappings))
+				throw new MappingConfigurationException("Missing mapping definition for Signature.", "Object");
+			
 			using (ImportManager = new MetricsDeliveryManager(InstanceID, EdgeTypes, new MetricsDeliveryManagerOptions()))
 			{
+				// create objects and metrics table according to sample metrics
 				ImportManager.BeginImport(Delivery, GetSampleMetrics());
 				Log("Objects and Metrics tables are created", LogMessageType.Debug);
+				Progress = 0.1;
+
+				// load Campaigns, Creatives and Ads into local Cache
+				ClearLocalCache();
+				var filesByType = Delivery.Parameters["FilesByType"] as IDictionary<Consts.FileTypes, List<string>>;
+				LoadFiles(filesByType[Consts.FileTypes.Campaigns], LoadCampaigns);
+				LoadFiles(filesByType[Consts.FileTypes.Creatives], LoadCreatives);
+				LoadFiles(filesByType[Consts.FileTypes.AdGroups], LoadAds);
+
+				Log("Campaigns, Creatives and Ads are loaded into local cache", LogMessageType.Debug);
 				Progress = 0.3;
 
-				foreach (var filePath in filesByType[Consts.FileTypes.AdGroups])
+				// start processing metrics
+				foreach (var filePath in filesByType[Consts.FileTypes.AdGroupStats])
 				{
 					using (var reader = new JsonDynamicReader(Delivery.Files[filePath].OpenContents(), "$.data[*].*"))
 					{
+						Mappings.OnFieldRequired = fieldName => reader.Current[fieldName];
 						while (reader.Read())
 						{
-							ImportManager.ImportMetrics(GetMetrics(reader));
+							ProcessMetrics();
 						}
 					}
 				}
@@ -53,276 +84,155 @@ namespace Edge.Services.Facebook.GraphApi
 			return ServiceOutcome.Success;
 		}
 
+		protected override void AddExternalMethods()
+		{
+			base.AddExternalMethods();
+			Mappings.ExternalMethods.Add("GetAd", new Func<dynamic, Ad>(GetAd));
+			Mappings.ExternalMethods.Add("GetCampaign", new Func<dynamic, Campaign>(GetCampaign));
+			Mappings.ExternalMethods.Add("GetCreative", new Func<dynamic, CompositeCreative>(GetCreative));
+		}
+
 		protected override MetricsUnit GetSampleMetrics()
 		{
+			LoadCampaigns(new DeliveryFile {Location = Configuration.Parameters.Get<string>("CampaignSampleFile")});
+			LoadCreatives(new DeliveryFile {Location = Configuration.Parameters.Get<string>("CreativeSampleFile")});
+			LoadAds      (new DeliveryFile {Location = Configuration.Parameters.Get<string>("AdGroupSampleFile")});
+
 			using (var reader = new JsonDynamicReader(Configuration.SampleFilePath, "$.data[*].*"))
 			{
+				Mappings.OnFieldRequired = fieldName => reader.Current[fieldName];
 				if (reader.Read())
 				{
-					return GetMetrics(reader);
+					CurrentMetricsUnit = new MetricsUnit { GetEdgeField = GetEdgeField, Output = new DeliveryOutput() };
+					MetricsMappings.Apply(CurrentMetricsUnit);
+					return CurrentMetricsUnit;
 				}
 			}
-			return null;
+			throw new ConfigurationErrorsException(String.Format("Failed to read sample metrics from file: {0}", Configuration.SampleFilePath));
 		}
 		#endregion
 
 		#region Private Methods
 
-		private MetricsUnit GetMetrics(JsonDynamicReader reader)
+		private void LoadFiles(IEnumerable<string> filePaths, Action<DeliveryFile> loadingMethod)
 		{
-			var metricsUnit = new MetricsUnit
-			{
-				GetEdgeField = GetEdgeField,
-				Output = Delivery.Outputs.First(),
-				MeasureValues = new Dictionary<Measure, double>()
-			};
-
-			if (reader.Current.adgroup_id != null)
-			{
-				if (_adCache.ContainsKey(reader.Current.adgroup_id))
-				{
-					// set Ad
-					metricsUnit.Ad = _adCache[reader.Current.adgroup_id];
-
-					// set measures
-					metricsUnit.MeasureValues.Add(GetMeasure("Clicks"), Convert.ToInt64(reader.Current.clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure("UniqueClicks"), Convert.ToInt64(reader.Current.unique_clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure("Impressions"), Convert.ToInt64(reader.Current.impressions));
-					metricsUnit.MeasureValues.Add(GetMeasure("UniqueImpressions"), Convert.ToInt64(reader.Current.unique_impressions));
-					metricsUnit.MeasureValues.Add(GetMeasure("Cost"), Convert.ToDouble(Convert.ToDouble(reader.Current.spent) / 100d));
-					metricsUnit.MeasureValues.Add(GetMeasure("SocialImpressions"), double.Parse(reader.Current.social_impressions));
-					metricsUnit.MeasureValues.Add(GetMeasure("SocialUniqueImpressions"), double.Parse(reader.Current.social_unique_impressions));
-					metricsUnit.MeasureValues.Add(GetMeasure("SocialClicks"), double.Parse(reader.Current.social_clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure("SocialUniqueClicks"), double.Parse(reader.Current.social_unique_clicks));
-					metricsUnit.MeasureValues.Add(GetMeasure("SocialCost"), Convert.ToDouble(reader.Current.social_spent) / 100d);
-					metricsUnit.MeasureValues.Add(GetMeasure("Actions"), 0);
-
-					
-				}
-				else
-					Log(String.Format("Cannot find Ad '{0}'", reader.Current.adgroup_id), LogMessageType.Warning);
-			}
-			return metricsUnit;
-		}
-
-		private void LoadAds(IDictionary<Consts.FileTypes, List<string>> filesByType)
-		{
-			var campaignCache = LoadCampaigns(filesByType[Consts.FileTypes.Campaigns]);
-			var creativeCache = LoadCreatives(filesByType[Consts.FileTypes.Creatives]);
-
-			var delimiter = Configuration.Parameters.ContainsKey("AdGroupDelimiter") ? Configuration.Parameters.Get<string>("AdGroupDelimiter") : String.Empty;
-			var autoSeg = Configuration.Parameters.ContainsKey("AutoAdGroupSegment") && Configuration.Parameters.Get<bool>("AutoAdGroupSegment") && delimiter != String.Empty;
-
-			foreach (var filePath in filesByType[Consts.FileTypes.AdGroups])
-			{
-				using (var reader = new JsonDynamicReader(Delivery.Files[filePath].OpenContents(), "$.data[*].*"))
-				{
-					while (reader.Read())
-					{
-						// create ad
-						var ad = new Ad
-							{
-								OriginalID = reader.Current.ad_id,
-								Fields = new Dictionary<EdgeField, object>(),
-								TargetDefinitions = new List<TargetDefinition>()
-							};
-
-						// set campaign and adGroup
-						if (campaignCache.ContainsKey(reader.Current.campaign_id))
-						{
-							var campaign = campaignCache[reader.Current.campaign_id];
-							var adGroup = new StringValue
-								{
-									Value = autoSeg ? reader.Current.name.Split(delimiter) : reader.Current.name,
-									OriginalID = String.Format("{0}{1}{2}", reader.Current.name, campaign.OriginalID, Delivery.Account.ID),
-									Fields = new Dictionary<EdgeField, object> { { GetExtraField("Campaign"), campaign } }
-								};
-
-							ad.Fields.Add(GetExtraField("Campaign"), campaign);
-							ad.Fields.Add(GetExtraField("AdGroup"), adGroup);
-						}
-						else
-							Log(String.Format("Cannot find Campaign '{0}' for Ad '{1}' in file '{2}'", reader.Current.campaign_id, ad.OriginalID, filePath), LogMessageType.Warning);
-
-						// set creative definition
-						if (reader.Current.creative_ids != null && reader.Current.creative_ids.Count > 0)
-						{
-							if (reader.Current.creative_ids.Count > 1)
-								Log(String.Format("There are more than one Creative ({1}) for Ad '{0}'", ad.OriginalID, reader.Current.creative_ids.Count), LogMessageType.Error);
-
-							var creativeDefId = reader.Current.creative_ids[0];
-							if (!creativeCache.ContainsKey(creativeDefId))
-								Log(String.Format("Cannot find Creative '{0}' for Ad '{2}' in file '{1}'", reader.Current.campaign_id, ad.OriginalID, filePath), LogMessageType.Warning);
-							else
-								ad.CreativeMatch = creativeCache[creativeDefId];
-						}
-
-						// targeting - age
-						if (reader.Current.targeting.ContainsKey("age_min") && reader.Current.targeting.ContainsKey("age_max"))
-						{
-							ad.TargetDefinitions.Add(new TargetDefinition
-								{
-									Target = new AgeTarget { FromAge = int.Parse(reader.Current.targeting["age_min"]), ToAge = int.Parse(reader.Current.targeting["age_max"]) }
-								});
-						}
-						// targeting - gender
-						if (reader.Current.targeting.ContainsKey("genders"))
-						{
-							foreach (var gender in reader.Current.targeting["genders"])
-							{
-								ad.TargetDefinitions.Add(new TargetDefinition
-								{
-									Target = new GenderTarget { Gender = gender == "1" ? Gender.Male : gender == "2" ? Gender.Female : Gender.Unspecified }
-								});
-							}
-						}
-						_adCache.Add(ad.OriginalID, ad);
-					}
-				}
-			}
-		}
-
-		private Dictionary<string, Campaign> LoadCampaigns(IEnumerable<string> filePaths)
-		{
-			var campaignList = new Dictionary<string, Campaign>();
-			foreach (var campaignFilePath in filePaths)
-			{
-				using (var reader = new JsonDynamicReader(Delivery.Files[campaignFilePath].OpenContents(), "$.data[*].*"))
-				{
-					while (reader.Read())
-					{
-						var campaign = new Campaign
-						{
-							Name = reader.Current.name,
-							OriginalID = Convert.ToString(reader.Current.campaign_id),
-						};
-
-						long campaignStatus = long.Parse(reader.Current.campaign_status);
-						switch (campaignStatus)
-						{
-							case 1:
-								campaign.Status = ObjectStatus.Active;
-								break;
-							case 2:
-								campaign.Status = ObjectStatus.Paused;
-								break;
-							case 3:
-								campaign.Status = ObjectStatus.Deleted;
-								break;
-						}
-						campaignList.Add(campaign.OriginalID, campaign);
-					}
-				}
-
-			}
-			return campaignList;
-		}
-
-		private Dictionary<string, CreativeMatch> LoadCreatives(IEnumerable<string> filePaths)
-		{
-			var creativeDefList = new Dictionary<string, CreativeMatch>();
-
 			foreach (var filePath in filePaths)
 			{
-				using (var reader = new JsonDynamicReader(Delivery.Files[filePath].OpenContents(), "$.data[*].*"))
-				{
-					while (reader.Read())
-					{
-						switch ((string)reader.Current.type)
-						{
-							case "1":
-							case "2":
-							case "3":
-							case "4":
-							case "12":
-								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader));
-									break;
-								}
-							case "8":
-							case "9":
-							case "10":
-							case "16":
-							case "17":
-							case "19":
-							case "25":
-								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "Sponsored Story"));
-									break;
-								}
-							case "27":
-								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "Page Ads for a Page post"));
-									break;
-								}
-							default:
-								{
-									creativeDefList.Add(reader.Current.creative_id, GetCreativeMatch(reader, "UnKnown creativet"));
-									break;
-								}
-						}
-					}
-				}
-
+				loadingMethod(Delivery.Files[filePath]);
 			}
-			return creativeDefList;
 		}
 
-		private CreativeMatch GetCreativeMatch(JsonDynamicReader reader, string text)
+		private void LoadAds(DeliveryFile file)
 		{
-			var creative = new TextCreative
+			using (var reader = new JsonDynamicReader(file.OpenContents(), "$.data[*].*"))
 			{
-				//TextCreativeType = new TextCreativeType
-				//{
-				//	Value = "Text",
-				//	TK = "Text",
-				//	EdgeType = GetEdgeType("TextCreativeType")
-				//},
-				Text = text,
-				Fields = new Dictionary<EdgeField, object> { { GetEdgeField("OriginalID"), reader.Current.creative_id } },
-			};
-			var creativeDef = new TextCreativeMatch
+				Mappings.OnFieldRequired = fieldName =>
 				{
-					Creative = creative,
-					Destination = new Destination { Value = text, TK = text }
+					var parts = fieldName.Split('@');
+					if (parts.Length > 1)
+					{
+						// value from the dictionary by key
+						var fieldValue = reader.Current[parts[1]].ContainsKey(parts[0]) ?
+											 reader.Current[parts[1]][parts[0]] is List<object> ?
+											 String.Join(",", reader.Current[parts[1]][parts[0]]) :
+										 reader.Current[parts[1]][parts[0]] : null;
+						return fieldValue;
+					}
+
+					// 1st item in the list
+					if (reader.Current[fieldName] is IList<object>)
+						return (reader.Current[fieldName] as IList<object>)[0];
+
+					// just a string value
+					return reader.Current[fieldName];
 				};
-			return creativeDef;
+
+				while (reader.Read())
+				{
+					var ad = new Ad();
+					AdMappings.Apply(ad);
+					_adCache.Add(ad.OriginalID, ad);
+				}
+			}
 		}
 
-		private CreativeMatch GetCreativeMatch(JsonDynamicReader reader)
+		private void LoadCampaigns(DeliveryFile file)
 		{
-			// composite creative
-			var compCreative = new CompositeCreative
+			using (var reader = new JsonDynamicReader(file.OpenContents(), "$.data[*].*"))
+			{
+				Mappings.OnFieldRequired = fieldName => reader.Current[fieldName];
+				while (reader.Read())
 				{
-					Parts = new Dictionary<CompositePartField, SingleCreative>()
-				};
-			var compCreativeDef = new CompositeCreativeMatch
+					var campaign = new Campaign();
+					CampaignMappings.Apply(campaign);
+
+					_campaignCache.Add(campaign.OriginalID, campaign);
+				}
+			}
+		}
+
+		private void LoadCreatives(DeliveryFile file)
+		{
+			using (var reader = new JsonDynamicReader(file.OpenContents(), "$.data[*].*"))
+			{
+				Mappings.OnFieldRequired = fieldName =>
 				{
-					Creative = compCreative,
-					CreativesMatches = new Dictionary<CompositePartField, SingleCreativeMatch>()
+					try
+					{
+						return reader.Current[fieldName];
+					}
+					catch (Exception ex)
+					{
+						Log(String.Format("Failed to read field '{0}' for creative id = {1} in file {2}, ex: {3}", fieldName, reader.Current.creative_id, file.Name, ex.Message), LogMessageType.Error);
+						return null;
+					}
 				};
-
-			// 1. image creative
-			var creative = new ImageCreative
+				while (reader.Read())
 				{
-					Image = reader.Current.image_url,
-					Fields = new Dictionary<EdgeField, object> { { GetEdgeField("OriginalID"), reader.Current.creative_id } },
-				};
-			compCreative.Parts.Add(GetCompositePartField("ImageCreative"), creative);
-			compCreativeDef.CreativesMatches.Add(GetCompositePartField("ImageCreativeDefinition"), new ImageCreativeMatch { Creative = creative });
+					var creative = new CompositeCreative();
+					CreativeMappings.Apply(creative);
 
-			// 2. text creative Body
-			var creativeDef = GetCreativeMatch(reader, reader.Current.Body);
-			compCreative.Parts.Add(GetCompositePartField("Desc1Creative"), creativeDef.Creative);
-			compCreativeDef.CreativesMatches.Add(GetCompositePartField("Desc1CreativeDefinition"), creativeDef);
+					_creativeCache.Add(reader.Current.creative_id, creative);
+				}
+			}
+		}
 
-			// 3. text creative Title
-			creativeDef = GetCreativeMatch(reader, reader.Current.Title);
-			compCreative.Parts.Add(GetCompositePartField("TitleCreative"), creativeDef.Creative);
-			compCreativeDef.CreativesMatches.Add(GetCompositePartField("TitleCreativeDefinition"), creativeDef);
+		private void ClearLocalCache()
+		{
+			_adCache.Clear();
+			_creativeCache.Clear();
+			_campaignCache.Clear();
+		}
 
-			return compCreativeDef;
-		} 
+		#endregion
+
+		#region Scriptable Methods
+		private Ad GetAd(dynamic adId)
+		{
+			if (_adCache.ContainsKey(adId))
+				return _adCache[adId];
+			
+			Log(String.Format("Ad '{0}' was not found in local cache", adId), LogMessageType.Warning);
+			return null;
+		}
+
+		private Campaign GetCampaign(dynamic campaignId)
+		{
+			if (_campaignCache.ContainsKey(campaignId))
+				return _campaignCache[campaignId];
+			
+			Log(String.Format("Campaign '{0}' was not found in local cache", campaignId), LogMessageType.Warning);
+			return null;
+		}
+
+		private CompositeCreative GetCreative(dynamic creativeId)
+		{
+			if (_creativeCache.ContainsKey(creativeId))
+				return _creativeCache[creativeId];
+
+			Log(String.Format("Creative '{0}' was not found in local cache", creativeId), LogMessageType.Warning);
+			return null;
+		}
 		#endregion
 	}
 }
