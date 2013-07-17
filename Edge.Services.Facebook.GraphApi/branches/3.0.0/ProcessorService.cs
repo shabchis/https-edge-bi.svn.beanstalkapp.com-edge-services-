@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
 using Edge.Core.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
@@ -48,7 +47,7 @@ namespace Edge.Services.Facebook.GraphApi
 			
 			using (ImportManager = new MetricsDeliveryManager(InstanceID, EdgeTypes, new MetricsDeliveryManagerOptions()))
 			{
-				// create objects and metrics table according to sample metrics
+				// create objects and metrics table according to the sample metrics
 				ImportManager.BeginImport(Delivery, GetSampleMetrics());
 				Log("Objects and Metrics tables are created", LogMessageType.Debug);
 				Progress = 0.1;
