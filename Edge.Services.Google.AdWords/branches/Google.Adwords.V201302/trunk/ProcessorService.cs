@@ -502,7 +502,7 @@ namespace Edge.Services.Google.AdWords
 
                             //Creative
 
-                            sitelinkAttr = ((String)_sitelinkReader.Current[Const.DisplayURLFieldName]).Split(';');
+                            sitelinkAttr = ((String)_sitelinkReader.Current[Const.SiteLinkAttributeValuesHeader]).Split(';');
                             sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
 
                             ////Setting Tracker for Ad
@@ -547,18 +547,17 @@ namespace Edge.Services.Google.AdWords
                             }
                             else sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Text_ad);
 
-
-                           
+                                                      
                             siteLinkMetricsUnit.Ad = sitelinkAd;
 
                             //INSERTING METRICS DATA
                             siteLinkMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPositionFieldName]));
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClickFieldName]));
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionManyPerClickFieldName]));
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], 0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], 0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], 0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], 0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]],0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], 0);
                             this.ImportManager.ImportMetrics(siteLinkMetricsUnit);
                         }
 
