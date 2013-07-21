@@ -159,7 +159,7 @@ namespace Edge.Services.Google.AdWords
 
 		#region Supported Reports fields
 
-        private static string[] PLACEHOLDER_FEED_ITEM_REPORT = {"FeedItemId","FeedId","DevicePreference","Cost","ClickType","Clicks","CampaignName","CampaignId","AdGroupId","AdGroupName"};
+        private static string[] PLACEHOLDER_FEED_ITEM_REPORT = {"FeedItemId","FeedId","DevicePreference","Cost","ClickType","Clicks","CampaignName","CampaignId","AdGroupId","AdGroupName","AttributeValues"};
 
 		private static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
