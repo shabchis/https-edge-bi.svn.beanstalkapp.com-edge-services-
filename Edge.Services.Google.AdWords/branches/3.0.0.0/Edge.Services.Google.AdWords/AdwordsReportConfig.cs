@@ -41,6 +41,9 @@ namespace Edge.Services.Google.AdWords
 		[XmlAttribute(AttributeName = "Type")]
 		public string Type { get; set; }
 
+		[XmlAttribute(AttributeName = "Filter")]
+		public string Filter { get; set; }
+
 		[XmlAttribute(AttributeName = "Enable")]
 		public bool Enable { get; set; }
 

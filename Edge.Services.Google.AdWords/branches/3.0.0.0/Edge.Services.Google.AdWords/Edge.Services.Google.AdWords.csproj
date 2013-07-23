@@ -54,11 +54,15 @@
     <Compile Include="AdWordsConst.cs" />
     <Compile Include="AdwordsReportConfig.cs" />
     <Compile Include="AdwordsUtill.cs" />
-    <Compile Include="InitializerService.cs" />
+    <Compile Include="Performance\InitializerService.cs" />
     <Compile Include="KeywordPrimaryKey.cs" />
-    <Compile Include="ProcessorService.cs" />
+    <Compile Include="Performance\ProcessorService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RetrieverService.cs" />
+    <Compile Include="Performance\RetrieverService.cs" />
+    <Compile Include="Settings\InitializerService.cs" />
+    <Compile Include="Settings\RetrieverService.cs" />
+    <Compile Include="Settings\Retrievers\CampaignCriterionRetriever.cs" />
+    <Compile Include="Settings\Retrievers\IRetriever.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\edge-framework\Edge.Core\branches\3.0.0\Edge.Core.csproj">
@@ -78,6 +82,7 @@
       <Name>Edge.Data.Pipeline</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
