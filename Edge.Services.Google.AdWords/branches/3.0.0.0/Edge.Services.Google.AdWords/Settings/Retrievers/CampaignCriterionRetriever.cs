@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Globalization;
 using System.Text;
 using Edge.Data.Pipeline;
@@ -9,6 +8,11 @@ using Google.Api.Ads.AdWords.v201302;
 
 namespace Edge.Services.Google.AdWords.Settings.Retrievers
 {
+	/// <summary>
+	/// Specific retriever for Google CampaignCriterionService - 
+	/// retrieve data from the service and save it in TXT file with headers in the 1st row and row for each criterion with fields seperated by comma
+	/// to be processed as regular performance report
+	/// </summary>
 	public class CampaignCriterionRetriever : IRetriever
 	{
 		private const int PAGE_SIZE = 500;
@@ -64,6 +68,7 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 		{
 			return  fieldName == "Id" ? campaignCriterion.criterion.id.ToString(CultureInfo.InvariantCulture) :
 					fieldName == "CriteriaType" ? campaignCriterion.criterion.type.ToString() :
+					fieldName == "IsNegative" ? campaignCriterion.isNegative.ToString() :
 					fieldName == "CampaignId" ? campaignCriterion.campaignId.ToString(CultureInfo.InvariantCulture) :
 					fieldName == "LanguageCode" ? campaignCriterion.criterion is Language ? (campaignCriterion.criterion as Language).code : "" :
 					fieldName == "LanguageName" ? campaignCriterion.criterion is Language ? (campaignCriterion.criterion as Language).name : "" :
