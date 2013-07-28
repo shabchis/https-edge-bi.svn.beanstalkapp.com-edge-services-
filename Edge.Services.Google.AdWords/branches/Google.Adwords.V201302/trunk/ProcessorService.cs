@@ -494,6 +494,9 @@ namespace Edge.Services.Google.AdWords
                         while (_sitelinkReader.Read())
                         {
 
+                            if (((String)_sitelinkReader.Current[Const.SiteLinkAttributeValuesHeader]).Equals(Const.Sitelink_EOF))
+                                break;
+
                             string sitelinkId = _sitelinkReader.Current[Const.PlaceholderFeedItemID];
                             sitelinkAd = new Ad();
                             sitelinkAd.OriginalID = sitelinkId;
@@ -503,7 +506,15 @@ namespace Edge.Services.Google.AdWords
                             //Creative
 
                             sitelinkAttr = ((String)_sitelinkReader.Current[Const.SiteLinkAttributeValuesHeader]).Split(';');
+                            
                             sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
+
+                            sitelinkAd.Creatives.Add(new TextCreative
+                            {
+                                TextType = TextCreativeType.Body,
+                                Text = sitelinkAttr[2],
+                                Text2 = sitelinkAttr[3]
+                            });
 
                             ////Setting Tracker for Ad
                             if (!String.IsNullOrWhiteSpace(sitelinkAttr[1]))
@@ -524,7 +535,7 @@ namespace Edge.Services.Google.AdWords
                             sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
                             {
                                 Campaign = (Campaign)sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
-                                Value = Const.SitelinkAdgroupName,
+                                Value = _sitelinkReader.Current[Const.AdGroupFieldName],
                                 OriginalID = _sitelinkReader.Current[Const.AdGroupIdFieldName],
                                 // Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
                             };
@@ -651,6 +662,8 @@ namespace Edge.Services.Google.AdWords
             public const string Mobile_display = "Mobile Display ad";
         }
 
+
+        public const string Sitelink_EOF = "--";
     }
 }
 
