@@ -15,14 +15,17 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 	/// </summary>
 	public class CampaignCriterionRetriever : IRetriever
 	{
-		private const int PAGE_SIZE = 500;
+		#region Consts
+		private const int PAGE_SIZE = 500; 
+		#endregion
 
+		#region IRetriever implementation
 		IEnumerable<string> IRetriever.RetrieveData(DeliveryFile file, AdWordsUser user)
 		{
 			var offset = 0;
 			var sb = new StringBuilder();
 			// 1st row is a header (field list)
-			var outputLines = new List<string> {file.Parameters["ReportFields"].ToString()};
+			var outputLines = new List<string> { file.Parameters["ReportFields"].ToString() };
 
 			var service = user.GetService(AdWordsService.v201302.CampaignCriterionService) as CampaignCriterionService;
 			if (service == null)
@@ -35,7 +38,7 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 			};
 
 			if (!String.IsNullOrEmpty(file.Parameters["ReportFilter"].ToString()))
-				selector.predicates = new[] { new Predicate { field = "CriteriaType", @operator = PredicateOperator.IN, values = file.Parameters["ReportFilter"].ToString().Split('|')} };
+				selector.predicates = new[] { new Predicate { field = "CriteriaType", @operator = PredicateOperator.IN, values = file.Parameters["ReportFilter"].ToString().Split('|') } };
 
 			//var query = String.Format("SELECT {0} WHERE CriteriaType IN ('LOCATION', 'LANGUAGE') LIMIT {{0}}, {1} ", file.Parameters["ReportFields"], PAGE_SIZE);
 			CampaignCriterionPage page;
@@ -44,7 +47,7 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 				// get next page
 				selector.paging.startIndex = offset;
 				page = service.get(selector);
-				
+
 				if (page != null && page.entries != null)
 				{
 					// for each criterion create row with all fields
@@ -62,11 +65,13 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 			} while (page != null && offset < page.totalNumEntries);
 
 			return outputLines;
-		}
+		} 
+		#endregion
 
+		#region Private Methods
 		private string GetFieldValue(CampaignCriterion campaignCriterion, string fieldName)
 		{
-			return  fieldName == "Id" ? campaignCriterion.criterion.id.ToString(CultureInfo.InvariantCulture) :
+			return fieldName == "Id" ? campaignCriterion.criterion.id.ToString(CultureInfo.InvariantCulture) :
 					fieldName == "CriteriaType" ? campaignCriterion.criterion.type.ToString() :
 					fieldName == "IsNegative" ? campaignCriterion.isNegative.ToString() :
 					fieldName == "CampaignId" ? campaignCriterion.campaignId.ToString(CultureInfo.InvariantCulture) :
@@ -75,6 +80,7 @@ namespace Edge.Services.Google.AdWords.Settings.Retrievers
 					fieldName == "LocationName" ? campaignCriterion.criterion is Location ? (campaignCriterion.criterion as Location).locationName : "" :
 					fieldName == "DisplayType" ? campaignCriterion.criterion is Location ? (campaignCriterion.criterion as Location).displayType : "" :
 					"";
-		}
+		} 
+		#endregion
 	}
 }
