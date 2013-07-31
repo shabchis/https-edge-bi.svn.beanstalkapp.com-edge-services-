@@ -61,6 +61,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.BackOffice.Ea
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.Facebook.GraphApi", "..\Edge.Services.Facebook.GraphApi\branches\3.0.0\Edge.Services.Facebook.GraphApi.csproj", "{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Services.BackOffice.Generic", "..\Edge.Services.BackOffice.Generic\branches\3.0.0.0\Edge.Services.BackOffice.Generic.csproj", "{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebubNewScheduling|Any CPU = DebubNewScheduling|Any CPU
@@ -794,6 +796,36 @@ Global
 		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Mixed Platforms.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
 		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|Mixed Platforms.Build.0 = Seperia.Facebook.UpdateCampaignStatus|Any CPU
 		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5}.Seperia|x86.ActiveCfg = Seperia.Facebook.UpdateCampaignStatus|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.DebubNewScheduling|Any CPU.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.DebubNewScheduling|Any CPU.Build.0 = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.DebubNewScheduling|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.DebubNewScheduling|Mixed Platforms.Build.0 = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.DebubNewScheduling|x86.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Edge|Any CPU.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Edge|Any CPU.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Edge|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Edge|Mixed Platforms.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Edge|x86.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Release|x86.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia.Facebook.UpdateCampaignStatus|x86.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia|Any CPU.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia|Any CPU.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia|Mixed Platforms.Build.0 = Release|Any CPU
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3}.Seperia|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -809,6 +841,7 @@ Global
 		{452F5585-4DE6-431B-B691-2CE4EC06E49A} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{ADC1E54C-4487-40B2-A2AA-ECE3853CED89} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{0CA66633-F417-4724-9FC5-5F8C6E1D72B5} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
+		{514BF5C6-1670-40F5-96CC-9E49EEC09BF3} = {D8C9F98E-6442-48C1-A99F-0D3FD1E39B09}
 		{747BA114-2B73-4498-98DB-89D7EFC01C46} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{BC56CE2C-4C01-4DC8-8707-9393ED301A6B} = {12816A6E-5B10-4679-A152-2F8F24694123}
 		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C} = {12816A6E-5B10-4679-A152-2F8F24694123}
