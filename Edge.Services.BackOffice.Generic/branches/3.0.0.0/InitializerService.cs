@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
 using Edge.Core.Services;
@@ -74,8 +71,8 @@ namespace Edge.Services.BackOffice.Generic
             boFile.Parameters.Add(BoConfigurationOptions.IsAttribute, Configuration.Parameters.Get<bool>(BoConfigurationOptions.IsAttribute));
             boFile.Parameters.Add(BoConfigurationOptions.TrackerFieldName, Configuration.Parameters.Get<string>(BoConfigurationOptions.TrackerFieldName));
 
-            this.Delivery.Files.Add(boFile);
-            this.Delivery.Save();
+            Delivery.Files.Add(boFile);
+            Delivery.Save();
 
             #endregion
 
