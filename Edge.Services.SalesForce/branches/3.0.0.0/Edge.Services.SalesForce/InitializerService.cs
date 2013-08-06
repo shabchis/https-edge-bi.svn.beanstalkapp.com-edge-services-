@@ -58,17 +58,6 @@ namespace Edge.Services.SalesForce
 				throw new Exception("Redirect_URI must be configured in configuration file");
 			Delivery.Parameters["Redirect_URI"] = Configuration.Parameters.Get<string>("Redirect_URI"); //http://localhost:8080/RestTest/oauth/_callback
 
-			// delivery output for finding conflicts
-			Delivery.Outputs.Add(new DeliveryOutput
-				{
-					Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]-[{2}]",
-																		Delivery.Account.ID, Delivery.TimePeriodDefinition.ToAbsolute(), Delivery.Parameters["SalesForceClientID"])),
-					Account = Delivery.Account,
-					Channel = Delivery.Channel,
-					TimePeriodStart = Delivery.TimePeriodStart,
-					TimePeriodEnd = Delivery.TimePeriodEnd
-				});
-
 			// Create an import manager that will handle rollback, if necessary
 			HandleConflicts(new MetricsDeliveryManager(InstanceID), DeliveryConflictBehavior.Abort);
 

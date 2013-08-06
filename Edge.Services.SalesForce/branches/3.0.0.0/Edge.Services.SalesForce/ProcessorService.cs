@@ -8,7 +8,6 @@ using Edge.Data.Pipeline.Mapping;
 using Edge.Data.Pipeline.Metrics.Managers;
 using Edge.Data.Pipeline.Metrics.Misc;
 using Edge.Data.Pipeline.Metrics.Services;
-using System.Globalization;
 using Edge.Data.Pipeline.Objects;
 using Edge.Data.Objects;
 
@@ -26,6 +25,9 @@ namespace Edge.Services.SalesForce
 			if (!Mappings.Objects.TryGetValue(typeof(MetricsUnit), out MetricsMappings))
 				throw new MappingConfigurationException("Missing mapping definition for MetricsUnit.", "Object");
 
+			if (!Mappings.Objects.TryGetValue(typeof(Signature), out SignatureMappings))
+				throw new MappingConfigurationException("Missing mapping definition for Signature.", "Object");
+
 			using (ImportManager = new MetricsDeliveryManager(InstanceID, EdgeTypes, new MetricsDeliveryManagerOptions()))
 			{
 				// create objects and metrics table according to the sample metrics
@@ -42,9 +44,8 @@ namespace Edge.Services.SalesForce
 						Log(String.Format("Start reading metrics for file '{0}'", file.Name), LogMessageType.Debug);
 						while (reader.Read())
 						{
-							// load currentl metrics unit
-							CurrentMetricsUnit = new MetricsUnit { GetEdgeField = GetEdgeField, Output = new DeliveryOutput() };
-							MetricsMappings.Apply(CurrentMetricsUnit);
+							// load current metrics unit
+							LoadCurrentMetrics();
 
 							if (CurrentMetricsUnit.Dimensions.ContainsKey(GetEdgeField("Tracker")) && CurrentMetricsUnit.Dimensions[GetEdgeField("Tracker")] is StringValue)
 							{
