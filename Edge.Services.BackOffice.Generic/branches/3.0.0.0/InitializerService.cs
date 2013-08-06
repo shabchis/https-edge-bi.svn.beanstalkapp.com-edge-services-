@@ -9,9 +9,10 @@ namespace Edge.Services.BackOffice.Generic
 {
     public class InitializerService : PipelineService
     {
-        protected override ServiceOutcome DoPipelineWork()
-        {
-            #region Init General
+		#region Override Methods
+		protected override ServiceOutcome DoPipelineWork()
+		{
+			#region Init General
 			if (!Configuration.TimePeriod.HasValue)
 				throw new Exception("No time period is set for Service");
 
@@ -35,12 +36,12 @@ namespace Edge.Services.BackOffice.Generic
 
 			// Create an import manager that will handle rollback, if necessary
 			HandleConflicts(new MetricsDeliveryManager(InstanceID), DeliveryConflictBehavior.Abort);
-          
-            var baseAddress = Configuration.Parameters.Get<string>(BoConfigurationOptions.BaseServiceAddress);
-            
-            int utcOffset = 0;
+
+			var baseAddress = Configuration.Parameters.Get<string>(BoConfigurationOptions.BaseServiceAddress);
+
+			int utcOffset = 0;
 			if (Configuration.Parameters.ContainsKey(BoConfigurationOptions.UtcOffset))
-                utcOffset = Configuration.Parameters.Get<int>(BoConfigurationOptions.UtcOffset);
+				utcOffset = Configuration.Parameters.Get<int>(BoConfigurationOptions.UtcOffset);
 			Delivery.Parameters.Add(BoConfigurationOptions.UtcOffset, utcOffset);
 
 			int timeZone = 0;
@@ -49,18 +50,18 @@ namespace Edge.Services.BackOffice.Generic
 			Delivery.Parameters.Add(BoConfigurationOptions.TimeZone, timeZone);
 
 			Progress = 0.2;
-            #endregion
+			#endregion
 
-            #region DeliveryFile
-            var boFile = new DeliveryFile();
+			#region DeliveryFile
+			var boFile = new DeliveryFile();
 			DateTime start = Delivery.TimePeriodDefinition.Start.ToDateTime();
 			DateTime end = Delivery.TimePeriodDefinition.End.ToDateTime();
-            boFile.Parameters[BoConfigurationOptions.BO_XPath_Trackers] = Configuration.Parameters.Get<string>(BoConfigurationOptions.BO_XPath_Trackers);
-            boFile.Name = BoConfigurationOptions.BoFileName;
+			boFile.Parameters[BoConfigurationOptions.BO_XPath_Trackers] = Configuration.Parameters.Get<string>(BoConfigurationOptions.BO_XPath_Trackers);
+			boFile.Name = BoConfigurationOptions.BoFileName;
 			if (utcOffset != 0)
 			{
 				start = start.AddHours(utcOffset);
-				end = end.AddHours(utcOffset);				
+				end = end.AddHours(utcOffset);
 			}
 			if (timeZone != 0)
 			{
@@ -68,15 +69,16 @@ namespace Edge.Services.BackOffice.Generic
 				end = end.AddHours(-timeZone);
 			}
 			boFile.SourceUrl = string.Format(baseAddress, start, end);
-            boFile.Parameters.Add(BoConfigurationOptions.IsAttribute, Configuration.Parameters.Get<bool>(BoConfigurationOptions.IsAttribute));
-            boFile.Parameters.Add(BoConfigurationOptions.TrackerFieldName, Configuration.Parameters.Get<string>(BoConfigurationOptions.TrackerFieldName));
+			boFile.Parameters.Add(BoConfigurationOptions.IsAttribute, Configuration.Parameters.Get<bool>(BoConfigurationOptions.IsAttribute));
+			boFile.Parameters.Add(BoConfigurationOptions.TrackerFieldName, Configuration.Parameters.Get<string>(BoConfigurationOptions.TrackerFieldName));
 
-            Delivery.Files.Add(boFile);
-            Delivery.Save();
+			Delivery.Files.Add(boFile);
+			Delivery.Save();
 
-            #endregion
+			#endregion
 
-            return ServiceOutcome.Success;
-        }
+			return ServiceOutcome.Success;
+		} 
+		#endregion
     }
 }

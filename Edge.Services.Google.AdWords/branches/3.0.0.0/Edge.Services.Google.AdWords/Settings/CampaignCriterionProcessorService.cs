@@ -18,7 +18,9 @@ namespace Edge.Services.Google.AdWords.Settings
 	/// </summary>
 	public class CampaignCriterionProcessorService : AutoMetricsProcessorService
 	{
-		private readonly Dictionary<string, List<RelationObject>> _campaignRelationMap = new Dictionary<string, List<RelationObject>>();
+		#region Data Members
+		private readonly Dictionary<string, List<RelationObject>> _campaignRelationMap = new Dictionary<string, List<RelationObject>>(); 
+		#endregion
 
 		#region Overrides
 		protected override ServiceOutcome DoPipelineWork()
@@ -87,6 +89,7 @@ namespace Edge.Services.Google.AdWords.Settings
 		}
 		#endregion
 
+		#region Private Methods
 		private EdgeField GetEdgeFieldByName(string fieldName)
 		{
 			var field = EdgeFields.FirstOrDefault(x => x.Name == fieldName);
@@ -138,6 +141,7 @@ namespace Edge.Services.Google.AdWords.Settings
 				(obj as ChannelSpecificObject).Channel = CurrentMetricsUnit.Channel;
 
 			return obj;
-		}
+		} 
+		#endregion
 	}
 }

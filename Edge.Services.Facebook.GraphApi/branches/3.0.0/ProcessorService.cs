@@ -15,18 +15,20 @@ namespace Edge.Services.Facebook.GraphApi
 {
 	public class ProcessorService : AutoMetricsProcessorService
 	{
+		#region Data Members
 		private readonly Dictionary<string, Ad> _adCache = new Dictionary<string, Ad>();
 		private readonly Dictionary<string, Campaign> _campaignCache = new Dictionary<string, Campaign>();
 		private readonly Dictionary<string, CompositeCreative> _creativeCache = new Dictionary<string, CompositeCreative>();
 
 		protected MappingContainer AdMappings;
 		protected MappingContainer CampaignMappings;
-		protected MappingContainer CreativeMappings;
+		protected MappingContainer CreativeMappings; 
+		#endregion
 		
 		#region Overrides
 		protected override ServiceOutcome DoPipelineWork()
 		{
-			Log("Starting Google.AdWords.ProcessorService", LogMessageType.Debug);
+			Log("Starting Facebook.GraphApi.ProcessorService", LogMessageType.Debug);
 			InitMappings();
 			Mappings.OnMappingApplied = SetEdgeType;
 

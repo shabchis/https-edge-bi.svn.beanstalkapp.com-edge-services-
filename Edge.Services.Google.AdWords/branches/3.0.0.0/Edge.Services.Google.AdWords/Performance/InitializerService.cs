@@ -9,6 +9,7 @@ namespace Edge.Services.Google.AdWords.Performance
 {
 	public class InitializerService : PipelineService
 	{
+		#region Override Methods
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			#region Check config parameters
@@ -34,7 +35,7 @@ namespace Edge.Services.Google.AdWords.Performance
 				throw new Exception("No time period is set for Service");
 
 			if (!Configuration.Parameters.ContainsKey("Adwords.ReportConfig"))
-				throw new Exception("Missing Configuration Param: Adwords.ReportConfig"); 
+				throw new Exception("Missing Configuration Param: Adwords.ReportConfig");
 			#endregion
 
 			var accountId = Configuration.Parameters.Get("AccountID", false, -1);
@@ -59,7 +60,7 @@ namespace Edge.Services.Google.AdWords.Performance
 			Delivery.Parameters["DeveloperToken"] = Configuration.Parameters.Get<string>("DeveloperToken");
 			Delivery.Parameters["MccEmail"] = Configuration.Parameters.Get<string>("Adwords.MccEmail");
 			Delivery.Parameters["KeywordContentId"] = Configuration.Parameters.Get<string>("KeywordContentId");
-			
+
 			//Get Account Client Id's
 			var adwordsClientIds = Configuration.Parameters.Get<string>("Adwords.ClientID").Split('|');
 			Delivery.Parameters["AdwordsClientIDs"] = adwordsClientIds;
@@ -103,10 +104,11 @@ namespace Edge.Services.Google.AdWords.Performance
 					Delivery.Files.Add(file);
 				}
 			}
-			
+
 			Progress = 0.8;
 			Delivery.Save();
 			return ServiceOutcome.Success;
-		}
+		} 
+		#endregion
 	}
 }

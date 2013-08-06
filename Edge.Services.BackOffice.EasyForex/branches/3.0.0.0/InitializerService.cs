@@ -9,6 +9,7 @@ namespace Edge.Services.BackOffice.EasyForex
 {
 	public class InitializerService : PipelineService
 	{
+		#region Override Methods
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			if (!Configuration.TimePeriod.HasValue)
@@ -52,7 +53,7 @@ namespace Edge.Services.BackOffice.EasyForex
 
 			Progress = 0.5;
 
-           //Create File
+			//Create File
 			var file = new DeliveryFile
 				{
 					Name = "EasyForexBackOffice",
@@ -60,74 +61,77 @@ namespace Edge.Services.BackOffice.EasyForex
 				};
 
 			//_file.Parameters.Add("SOAPAction", "http://www.easy-forex.com/GetGatewayStatistics");
-            file.Parameters.Add("Content-Type", "text/xml; charset=utf-8");
-            file.Parameters.Add("SOAPAction",Configuration.Parameters["SOAPAction"]);
+			file.Parameters.Add("Content-Type", "text/xml; charset=utf-8");
+			file.Parameters.Add("SOAPAction", Configuration.Parameters["SOAPAction"]);
 
-            Delivery.Parameters.Add("User",Configuration.Parameters["User"]);
+			Delivery.Parameters.Add("User", Configuration.Parameters["User"]);
 			Delivery.Parameters.Add("Pass", Core.Utilities.Encryptor.Dec(Configuration.Parameters["Pass"].ToString()));
 			Delivery.Parameters.Add("SoapMethod", Configuration.Parameters["SoapMethod"]);
 			Delivery.Parameters.Add("StartGid", Configuration.Parameters["StartGid"]);
 			Delivery.Parameters.Add("EndGid", Configuration.Parameters["EndGid"]);
 
-            //Creating  Soap Body
-            var strSoapEnvelope = GetSoapEnvelope(
-                 Delivery.Parameters["User"].ToString(),
-                 Delivery.Parameters["Pass"].ToString(),
-                 Delivery.Parameters["SoapMethod"].ToString(),
-                 Delivery.Parameters["StartGid"].ToString(),
-                 Delivery.Parameters["EndGid"].ToString(),
-                 Delivery.TimePeriodStart.ToString("yyyy-MM-ddTHH:mm:ss"),
-                 Delivery.TimePeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
-                 );
-           
-            file.Parameters.Add("Body", strSoapEnvelope);
+			//Creating  Soap Body
+			var strSoapEnvelope = GetSoapEnvelope(
+				 Delivery.Parameters["User"].ToString(),
+				 Delivery.Parameters["Pass"].ToString(),
+				 Delivery.Parameters["SoapMethod"].ToString(),
+				 Delivery.Parameters["StartGid"].ToString(),
+				 Delivery.Parameters["EndGid"].ToString(),
+				 Delivery.TimePeriodStart.ToString("yyyy-MM-ddTHH:mm:ss"),
+				 Delivery.TimePeriodEnd.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")
+				 );
+
+			file.Parameters.Add("Body", strSoapEnvelope);
 			file.Parameters.Add("Bo.IsAttribute", Configuration.Parameters["Bo.IsAttribute"]);
 			file.Parameters.Add("Bo.Xpath", Configuration.Parameters["Bo.Xpath"]);
 			file.Parameters.Add("Bo.TrackerIDField", Configuration.Parameters["Bo.TrackerIDField"]);
 
-            Delivery.Files.Add(file);
+			Delivery.Files.Add(file);
 
 			Progress = 0.8;
-        
+
 			// Save with success
 			Delivery.Save();
 			return ServiceOutcome.Success;
-		}
+		} 
+		#endregion
 
-        private string GetSoapEnvelope(string user , string pass, string methodName,string startGid, string endGid, string fromDate , string toDate)
-        {
-            //Soap 1.1
-            #region EnvelopeFormat
+		#region Private Methods
+		private string GetSoapEnvelope(string user, string pass, string methodName, string startGid, string endGid, string fromDate, string toDate)
+		{
+			//Soap 1.1
+			#region EnvelopeFormat
 
-	        var strSoapEnvelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
-            strSoapEnvelope += "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">";
-            strSoapEnvelope += "<soap:Header>";
-            strSoapEnvelope += "<AuthHeader xmlns=\"http://www.easy-forex.com\">";
-            strSoapEnvelope += "<Username>{USER}</Username>";
-            strSoapEnvelope += "<Password>{PASS}</Password>";
-            strSoapEnvelope += "</AuthHeader>";
-            strSoapEnvelope += "</soap:Header>";
-            strSoapEnvelope += "<soap:Body>";
-            strSoapEnvelope += "<{METHOD} xmlns=\"http://www.easy-forex.com\">";
-            strSoapEnvelope += "<startGid>{START_GID}</startGid>";
-            strSoapEnvelope += "<finishGid>{END_GID}</finishGid>";
-            strSoapEnvelope += "<fromDateTime>{FROM_DATE}</fromDateTime>";
-            strSoapEnvelope += "<toDateTime>{TO_DATE}</toDateTime>";
-            strSoapEnvelope += " </{METHOD}>";
-            strSoapEnvelope += " </soap:Body>";
-            strSoapEnvelope += " </soap:Envelope>";
-	        
+			var strSoapEnvelope = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+			strSoapEnvelope += "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">";
+			strSoapEnvelope += "<soap:Header>";
+			strSoapEnvelope += "<AuthHeader xmlns=\"http://www.easy-forex.com\">";
+			strSoapEnvelope += "<Username>{USER}</Username>";
+			strSoapEnvelope += "<Password>{PASS}</Password>";
+			strSoapEnvelope += "</AuthHeader>";
+			strSoapEnvelope += "</soap:Header>";
+			strSoapEnvelope += "<soap:Body>";
+			strSoapEnvelope += "<{METHOD} xmlns=\"http://www.easy-forex.com\">";
+			strSoapEnvelope += "<startGid>{START_GID}</startGid>";
+			strSoapEnvelope += "<finishGid>{END_GID}</finishGid>";
+			strSoapEnvelope += "<fromDateTime>{FROM_DATE}</fromDateTime>";
+			strSoapEnvelope += "<toDateTime>{TO_DATE}</toDateTime>";
+			strSoapEnvelope += " </{METHOD}>";
+			strSoapEnvelope += " </soap:Body>";
+			strSoapEnvelope += " </soap:Envelope>";
+
 			#endregion
-            
-			strSoapEnvelope = strSoapEnvelope.Replace("{USER}", user);
-            strSoapEnvelope = strSoapEnvelope.Replace("{PASS}", pass);
-            strSoapEnvelope = strSoapEnvelope.Replace("{METHOD}", methodName);
-            strSoapEnvelope = strSoapEnvelope.Replace("{START_GID}", startGid);
-            strSoapEnvelope = strSoapEnvelope.Replace("{END_GID}", endGid);
-            strSoapEnvelope = strSoapEnvelope.Replace("{FROM_DATE}", fromDate);
-            strSoapEnvelope = strSoapEnvelope.Replace("{TO_DATE}", toDate);
 
-            return strSoapEnvelope;
-        }
+			strSoapEnvelope = strSoapEnvelope.Replace("{USER}", user);
+			strSoapEnvelope = strSoapEnvelope.Replace("{PASS}", pass);
+			strSoapEnvelope = strSoapEnvelope.Replace("{METHOD}", methodName);
+			strSoapEnvelope = strSoapEnvelope.Replace("{START_GID}", startGid);
+			strSoapEnvelope = strSoapEnvelope.Replace("{END_GID}", endGid);
+			strSoapEnvelope = strSoapEnvelope.Replace("{FROM_DATE}", fromDate);
+			strSoapEnvelope = strSoapEnvelope.Replace("{TO_DATE}", toDate);
+
+			return strSoapEnvelope;
+		} 
+		#endregion
 	}
 }
