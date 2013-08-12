@@ -33,7 +33,6 @@ namespace Edge.Services.Facebook.GraphApi
 				ID = 6
 			};
 
-
 			this.Delivery.Outputs.Add(new DeliveryOutput()
 			{
 				Signature = Delivery.CreateSignature(String.Format("facebook-[{0}]-[{1}]-[{2}]",
@@ -48,10 +47,6 @@ namespace Edge.Services.Facebook.GraphApi
 			});
 			
 			// Now that we have a new delivery, start adding values
-			
-
-			
-
 			this.Delivery.FileDirectory = Instance.Configuration.Options[Const.DeliveryServiceConfigurationOptions.FileDirectory];
 
 			// Create an import manager that will handle rollback, if necessary
@@ -98,6 +93,9 @@ namespace Edge.Services.Facebook.GraphApi
 			deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupFields].ToString());
+			
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdGroups);
@@ -109,10 +107,12 @@ namespace Edge.Services.Facebook.GraphApi
 
 			#region Campaigns
 
-
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
+			
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
@@ -125,6 +125,9 @@ namespace Edge.Services.Facebook.GraphApi
 			deliveryFile = new DeliveryFile();
 			deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupCreativeFields].ToString());
+			
 			methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
@@ -140,10 +143,6 @@ namespace Edge.Services.Facebook.GraphApi
 			//deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Data);
 			//this.Delivery.Files.Add(deliveryFile);
 			//#endregion
-
-
-
-
 
 			#endregion
 

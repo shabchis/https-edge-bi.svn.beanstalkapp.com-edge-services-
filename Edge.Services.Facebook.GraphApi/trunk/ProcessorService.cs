@@ -59,19 +59,15 @@ namespace Edge.Services.Facebook.GraphApi
 				{
 
 					DeliveryFile campaigns = this.Delivery.Files[campaignFile];
-
-
 					var campaignsReader = new JsonDynamicReader(campaigns.OpenContents(), "$.data[*].*");
-
 					using (campaignsReader)
 					{
 						while (campaignsReader.Read())
 						{
-
 							Campaign camp = new Campaign()
 							{
 								Name = campaignsReader.Current.name,
-								OriginalID = Convert.ToString(campaignsReader.Current.campaign_id),
+								OriginalID = Convert.ToString(campaignsReader.Current.id),
 							};
 
 							long campaignStatus = long.Parse(campaignsReader.Current.campaign_status);
@@ -89,8 +85,6 @@ namespace Edge.Services.Facebook.GraphApi
 							}
 							campaignsData.Add(camp.OriginalID, camp);
 						}
-
-
 					}
 				}
 				#endregion
@@ -110,7 +104,7 @@ namespace Edge.Services.Facebook.GraphApi
 						while (adGroupsReader.Read())
 						{
 							Ad ad = new Ad();
-							ad.OriginalID = Convert.ToString(adGroupsReader.Current.ad_id);
+							ad.OriginalID = Convert.ToString(adGroupsReader.Current.id);
 							ad.Segments = new Dictionary<Segment, SegmentObject>();
 							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = campaignsData[Convert.ToString(adGroupsReader.Current.campaign_id)];
 
