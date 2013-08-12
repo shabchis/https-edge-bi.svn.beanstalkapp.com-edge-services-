@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{74201D7E-F570-4219-A676-F4A14CDB73FA}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Edge.Services.Microsoft.AdCenter</RootNamespace>
+    <AssemblyName>Edge.Services.Microsoft.AdCenter</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service References\AdCenter.Reporting\Reference.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Compile>
+    <Compile Include="Utils\Const.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Service References\AdCenter.Reporting\Edge.Services.Microsoft.AdCenter.AdCenter.Reporting.ReportRequestStatus.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
+    <None Include="Service References\AdCenter.Reporting\ReportingService.wsdl" />
+    <None Include="Service References\AdCenter.Reporting\ReportingService.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\AdCenter.Reporting\ReportingService1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\AdCenter.Reporting\ReportingService2.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\AdCenter.Reporting\ReportingService3.xsd">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadataStorage Include="Service References\AdCenter.Reporting\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\AdCenter.Reporting\configuration91.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\AdCenter.Reporting\configuration.svcinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\AdCenter.Reporting\Reference.svcmap">
+      <Generator>WCF Proxy Generator</Generator>
+      <LastGenOutput>Reference.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\edge-framework\Edge.Core\branches\3.0.0\Edge.Core.csproj">
+      <Project>{76f5133e-50cd-4282-97e0-b431facb3acc}</Project>
+      <Name>Edge.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\edge-framework\Edge.Data.Objects\trunk\Edge.Data.Objects.csproj">
+      <Project>{9bc787c7-c269-476b-a87c-e345e7db9e23}</Project>
+      <Name>Edge.Data.Objects</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\edge-framework\Edge.Data.Pipeline.Metrics\branches\3.0.0\Edge.Data.Pipeline.Metrics.csproj">
+      <Project>{16440453-3ac6-48da-a424-e87ce8de09cf}</Project>
+      <Name>Edge.Data.Pipeline.Metrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\edge-framework\Edge.Data.Pipeline\branches\3.0.0\Edge.Data.Pipeline.csproj">
+      <Project>{53391A99-E8CA-4262-A8E0-5F05A1CC6608}</Project>
+      <Name>Edge.Data.Pipeline</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

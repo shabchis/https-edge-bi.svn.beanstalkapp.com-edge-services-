@@ -94,6 +94,9 @@ namespace Edge.Services.Facebook.GraphApi
 
 			deliveryFile = new DeliveryFile { Name = Consts.DeliveryFilesNames.AdGroup };
 			methodUrl = string.Format("act_{0}/{1}", facebookAccountId, Consts.FacebookMethodsNames.GetAdGroups);
+			if (Configuration.Parameters.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Configuration.Parameters.Get<string>(FacebookConfigurationOptions.AdGroupFields));
+			
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
@@ -106,6 +109,9 @@ namespace Edge.Services.Facebook.GraphApi
 			#region Campaigns
 			deliveryFile = new DeliveryFile { Name = Consts.DeliveryFilesNames.Campaigns };
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			if (Configuration.Parameters.ContainsKey(FacebookConfigurationOptions.CampaignFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Configuration.Parameters.Get<string>(FacebookConfigurationOptions.CampaignFields));
+			
 			methodUrl = string.Format("act_{0}/{1}", facebookAccountId, Consts.FacebookMethodsNames.GetCampaigns);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
@@ -118,6 +124,9 @@ namespace Edge.Services.Facebook.GraphApi
 			#region Creatives
 			deliveryFile = new DeliveryFile { Name = Consts.DeliveryFilesNames.Creatives };
 			methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+			if (Configuration.Parameters.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
+				methodParams.Add(Consts.FacebookMethodsParams.Fields, Configuration.Parameters.Get<string>(FacebookConfigurationOptions.AdGroupCreativeFields));
+		
 			methodUrl = string.Format("act_{0}/{1}", facebookAccountId, Consts.FacebookMethodsNames.GetAdGroupCreatives);
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
 			deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);

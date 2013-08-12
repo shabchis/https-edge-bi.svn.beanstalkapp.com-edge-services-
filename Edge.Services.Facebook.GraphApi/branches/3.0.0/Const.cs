@@ -11,6 +11,10 @@
 		public const string Ads_XPath_GetAdGroupStats = "Facebook.Ads.XPath.GetAdGroupStats";
 		public const string Ads_XPath_GetAdGroupTargeting = "Facebook.Ads.XPath.GetAdGroupTargeting";
 		public const string Ads_XPath_GetAdGroupCreatives = "Facebook.Ads.XPath.GetAdGroupCreatives";
+
+		public const string AdGroupCreativeFields = "Facebook.Fields.AdGroupCreative";
+		public const string AdGroupFields = "Facebook.Fields.AdGroup";
+		public const string CampaignFields = "Facebook.Fields.Campaign";
 	}
 
 	public class Consts
@@ -29,6 +33,7 @@
 			public const string EndTime = "end_time";
 			public const string IncludeDeleted = "include_deleted";
 			public const string StatsMode = "stats_mode";
+			public const string Fields = "fields";
 		}
 		public static class DeliveryFilesNames
 		{
