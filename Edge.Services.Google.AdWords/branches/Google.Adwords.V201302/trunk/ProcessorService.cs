@@ -569,10 +569,9 @@ namespace Edge.Services.Google.AdWords
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], 0);
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]],0);
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], 0);
-                            this.ImportManager.ImportMetrics(siteLinkMetricsUnit);
+                            ImportManager.ImportMetrics(siteLinkMetricsUnit);
+							ImportManager.ImportAd(sitelinkAd);
                         }
-
-                       
                     }
                 }// end if 
                 #endregion
