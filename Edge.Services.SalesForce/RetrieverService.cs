@@ -44,7 +44,7 @@ namespace Edge.Services.SalesForce
 				// exist
 				foreach (var file in Delivery.Files)
 				{
-                    string Lead_query = "SELECT Edge_BI_Tracker__c, Company_Type__c FROM Lead WHERE CreatedDate > 2013-06-28T00:00:00.00Z AND Edge_BI_Tracker__c != null ORDER BY CreatedDate DESC";
+                    string Lead_query = "SELECT Edge_BI_Tracker__c Tracker, COUNT(Company_Type__c) LeadsCount FROM Lead WHERE CreatedDate > 2013-06-28T00:00:00.00Z AND Edge_BI_Tracker__c != null GROUP BY Edge_BI_Tracker__c";
                    
                     //Getting Empty results from this query.
                     string Lead_From_Task_Q = "SELECT CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c FROM Task WHERE CreatedDate > 2013-06-28T00:00:00.00Z  AND What.Type = 'Lead'";
