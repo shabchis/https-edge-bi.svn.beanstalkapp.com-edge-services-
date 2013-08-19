@@ -41,47 +41,21 @@ namespace Edge.Services.SalesForce
 				throw new Exception("AuthenticationUrl must be configured in configuration file");
 			this.Delivery.Parameters["AuthenticationUrl"] = this.Instance.Configuration.Options["AuthenticationUrl"];//https://test.salesforce.com/services/oauth2/token
 
-			if (!this.Instance.Configuration.Options.ContainsKey("SalesForceClientID"))
+            if (!this.Instance.Configuration.Options.ContainsKey("ConsumerKey"))
 				throw new Exception("ClientID must be configured in configuration file");
 			this.Delivery.Parameters["SalesForceClientID"] = this.Instance.Configuration.Options["SalesForceClientID"];//3MVG9GiqKapCZBwG.OqpT.DCgHmIXOlszzCpZPxbRyvzPDNlshB5LD0x94rQO5SzGOAZrWPNIPm_aGR7nBeXe
 
 			if (!this.Instance.Configuration.Options.ContainsKey("ConsentCode"))
 				throw new Exception("ConsentCode must be configured in configuration file");
 			this.Delivery.Parameters["ConsentCode"] = this.Instance.Configuration.Options["ConsentCode"];//(accesstoken
-
-			if (!this.Instance.Configuration.Options.ContainsKey("ClientSecret"))
+           
+            if (!this.Instance.Configuration.Options.ContainsKey("ConsumerSecret"))
 				throw new Exception("ClientSecret must be configured in configuration file");
 			this.Delivery.Parameters["ClientSecret"] = this.Instance.Configuration.Options["ClientSecret"];//321506373515061074
 
 			if (!this.Instance.Configuration.Options.ContainsKey("Redirect_URI"))
 				throw new Exception("Redirect_URI must be configured in configuration file");
 			this.Delivery.Parameters["Redirect_URI"] = this.Instance.Configuration.Options["Redirect_URI"];//http://localhost:8080/RestTest/oauth/_callback
-
-			
-
-			#region two profiles
-			//serviceAddress = Instance.Configuration.Options["ServiceAddress"];
-			//Match m=Regex.Match(serviceAddress,@"\bids=(?<profileID>[^&]+)",RegexOptions.IgnoreCase);
-			//Group g=m.Groups["profileID"];
-			//string profileID=g.Value;
-
-
-			//**************in case amir will want to run two profiles
-			//this.Delivery.Outputs.Add(new DeliveryOutput()
-			//{
-			//    Signature = Delivery.CreateSignature(String.Format("BackOffice-[{0}]-[{1}]-[{2}]",
-			//  this.Instance.AccountID,
-			//  this.TimePeriod.ToAbsolute(),
-			//  profileID)),
-			//    Account = Delivery.Account,
-			//    Channel = Delivery.Channel,
-			//    TimePeriodStart=Delivery.TimePeriodStart,
-			//    TimePeriodEnd=Delivery.TimePeriodEnd
-
-
-			//});
-			#endregion
-
 
 			// This is for finding conflicting services
 			this.Delivery.Outputs.Add(new DeliveryOutput()
@@ -107,17 +81,7 @@ namespace Edge.Services.SalesForce
 			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 			// ...............................
-
 			// Now that we have a new delivery, start adding values
-
-
-
-			
-
-
-
-
-
 
 			int utcOffset = 0;
 			if (this.Instance.Configuration.Options.ContainsKey(BoConfigurationOptions.UtcOffset))
@@ -135,25 +99,34 @@ namespace Edge.Services.SalesForce
 			#endregion
 
 			#region DeliveryFile
+            string query = Instance.Configuration.Options["Query"];
+            //@SMBLeads:SELECT  CreatedDate,Edge_BI_Tracker__c ,Company_Type__c  FROM Lead WHERE CreatedDate > 2013-06-28T00:00:00.00Z AND Edge_BI_Tracker__c != null
 
-			DeliveryFile file = new DeliveryFile();
-			file.Name = "GreenSqlDownload.json";
-			DateTime start = TimePeriod.Start.ToDateTime();
-			DateTime end = TimePeriod.End.ToDateTime();
-			if (utcOffset != 0)
-			{
-				start = start.AddHours(utcOffset);
-				end = end.AddHours(utcOffset);
-			}
-			if (timeZone != 0)
-			{
-				start = start.AddHours(-timeZone);
-				end = end.AddHours(-timeZone);
-			}
-			file.Parameters["Query"] = Instance.Configuration.Options["Query"];
+            string[] queries = query.Split('@');
+           
+            foreach (string qwry in queries)
+            {
+                DeliveryFile file = new DeliveryFile();
+                string[] q = qwry.Split(':');
+                file.Name = q[0];
+                DateTime start = TimePeriod.Start.ToDateTime();
+                DateTime end = TimePeriod.End.ToDateTime();
+                if (utcOffset != 0)
+                {
+                    start = start.AddHours(utcOffset);
+                    end = end.AddHours(utcOffset);
+                }
+                if (timeZone != 0)
+                {
+                    start = start.AddHours(-timeZone);
+                    end = end.AddHours(-timeZone);
+                }
+                file.Parameters["Query"] = q[1];
+                
+                this.Delivery.Files.Add(file);
+            }
 
-
-			this.Delivery.Files.Add(file);
+			
 			this.Delivery.Save();
 
 			return Core.Services.ServiceOutcome.Success;
