@@ -81,7 +81,7 @@ namespace Edge.Services.SalesForce
 
 					if (numOfRecordes > 0)
 					{
-						//Get Valuees
+						//Get Values
 						reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.records[*].*");
 						using (reportReader)
 						{

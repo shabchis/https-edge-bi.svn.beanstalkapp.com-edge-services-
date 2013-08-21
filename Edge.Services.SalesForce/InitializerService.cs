@@ -43,7 +43,7 @@ namespace Edge.Services.SalesForce
 
             if (!this.Instance.Configuration.Options.ContainsKey("ConsumerKey"))
 				throw new Exception("ClientID must be configured in configuration file");
-			this.Delivery.Parameters["SalesForceClientID"] = this.Instance.Configuration.Options["SalesForceClientID"];//3MVG9GiqKapCZBwG.OqpT.DCgHmIXOlszzCpZPxbRyvzPDNlshB5LD0x94rQO5SzGOAZrWPNIPm_aGR7nBeXe
+            this.Delivery.Parameters["SalesForceClientID"] = this.Instance.Configuration.Options["ConsumerKey"];//3MVG9GiqKapCZBwG.OqpT.DCgHmIXOlszzCpZPxbRyvzPDNlshB5LD0x94rQO5SzGOAZrWPNIPm_aGR7nBeXe
 
 			if (!this.Instance.Configuration.Options.ContainsKey("ConsentCode"))
 				throw new Exception("ConsentCode must be configured in configuration file");
@@ -51,7 +51,7 @@ namespace Edge.Services.SalesForce
            
             if (!this.Instance.Configuration.Options.ContainsKey("ConsumerSecret"))
 				throw new Exception("ClientSecret must be configured in configuration file");
-			this.Delivery.Parameters["ClientSecret"] = this.Instance.Configuration.Options["ClientSecret"];//321506373515061074
+            this.Delivery.Parameters["ClientSecret"] = this.Instance.Configuration.Options["ConsumerSecret"];//321506373515061074
 
 			if (!this.Instance.Configuration.Options.ContainsKey("Redirect_URI"))
 				throw new Exception("Redirect_URI must be configured in configuration file");

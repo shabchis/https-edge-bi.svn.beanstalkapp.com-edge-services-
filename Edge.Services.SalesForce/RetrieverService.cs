@@ -45,9 +45,9 @@ namespace Edge.Services.SalesForce
                 // exist
                 foreach (var file in Delivery.Files)
                 {
-                    //string sfTimePeriodFormat = string.Format("{0}-{1}-{2}00:00:00.00Z", Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day);
+                    
 
-                    string Lead_query = "SELECT  CreatedDate,Edge_BI_Tracker__c ,Company_Type__c  FROM Lead WHERE CreatedDate > 2013-06-28T00:00:00.00Z AND Edge_BI_Tracker__c != null";
+                    string Lead_query = "SELECT  CreatedDate,Edge_BI_Tracker__c ,Company_Type__c  FROM Lead WHERE TimePeriod.EqualToCalendarUnits(CreatedDate) AND Edge_BI_Tracker__c != null";
                     string Demo_query = "SELECT CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c FROM Task WHERE CreatedDate > 2013-06-28T00:00:00.00Z  AND Subject = '**Demo**' AND What.Type = 'Account' AND Status LIKE 'Waiting on someone else'";
 
                     //Check for closed date
@@ -63,20 +63,33 @@ namespace Edge.Services.SalesForce
                     string test_closed_Opportunity3 = "SELECT Id, What.Amount FROM Task WHERE What.Type ='Opportunity' LIMIT 30";
 
 
-                    string query = Lead_query;
+                    string query = file.Parameters["Query"].ToString();
 
-                    
+
                     //Regex for Calendar units.
-                    Match calendarMatch = Regex.Match(query, @"TimePeriod.EqualToCalendarUnits(([A-Za-z]+))$", RegexOptions.IgnoreCase);
-                    if (calendarMatch.Success)
+                    MatchCollection calendarMatches = Regex.Matches(query, @"TimePeriod.EqualToCalendarUnits\(([A-Z\.a-z]+)\)", RegexOptions.IgnoreCase);
+                    if (calendarMatches.Count > 0)
                     {
-                        foreach (Group matchGroup in calendarMatch.Groups)
+                        foreach (Match calendarMatch in calendarMatches)
                         {
-                            string dataParamName = matchGroup.Value;
-                            query.Replace(string.Format("TimePeriod.EqualToCalendarUnits({0})", dataParamName), string.Format(" CALENDAR_YEAR({0})={1} AND CALENDAR_MONTH({0})={2} AND DAY_IN_MONTH({0}) = {3} ", dataParamName, Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day));
+                            string dataParamName = calendarMatch.Groups[1].Value;
+                            query = query.Replace(string.Format("TimePeriod.EqualToCalendarUnits({0})", dataParamName), string.Format(" CALENDAR_YEAR({0})={1} AND CALENDAR_MONTH({0})={2} AND DAY_IN_MONTH({0}) = {3} ", dataParamName, Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day));
                         }
                     }
 
+                    //Regex for TimePeriodStringFormat units.
+                    MatchCollection timeMatches = Regex.Matches(query, @"TimePeriod.EqualToString\(([A-Z\.a-z]+)\)", RegexOptions.IgnoreCase);
+                    if (timeMatches.Count > 0)
+                    {
+                        foreach (Match calendarMatch in timeMatches)
+                        {
+                            string dataParamName = calendarMatch.Groups[1].Value;
+                            string sfTimePeriodStartFormat = string.Format("{0}T00:00:00.00Z", Delivery.TimePeriodStart.ToString("yyyy-MM-dd"));
+                            string sfTimePeriodEndFormat = string.Format("{0}T23:59:59.59Z", Delivery.TimePeriodStart.ToString("yyyy-MM-dd"));
+                            query = query.Replace(string.Format("TimePeriod.EqualToString({0})", dataParamName), string.Format("{0}>{1} AND {0}<{2} ", dataParamName, sfTimePeriodStartFormat, sfTimePeriodEndFormat));
+                        }
+                    }
+                 
 
 
                     //Tests:
@@ -86,7 +99,7 @@ namespace Edge.Services.SalesForce
                     //"SELECT CreatedDate,CloseDate Description,Subject, Status, Edge_BI_Tracker__c  FROM Task WHERE CloseDate > 2013-06-28T00:00:00.00Z  AND What.Type = 'Opportunity' LIMIT 100";
                     //CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c,Amount
                     //string query = string.Format(file.Parameters["Query"].ToString(), Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day);
-
+                    Console.WriteLine("#################"+query);
                     file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}", tokenResponse.instance_url, query);
 
                     HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
