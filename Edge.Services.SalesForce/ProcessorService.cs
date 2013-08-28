@@ -90,46 +90,48 @@ namespace Edge.Services.SalesForce
                             {
                                 GenericMetricsUnit metricsUnit = new GenericMetricsUnit();
                                 metricsUnitMapping.Apply(metricsUnit);
-
-                                SegmentObject tracker = metricsUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]];
-                                GenericMetricsUnit importedUnit = null;
-
-                                // check if we already found a metrics unit with the same tracker
-                                if (!data.TryGetValue(tracker.Value, out importedUnit))
+                                if (metricsUnit.MeasureValues != null)
                                 {
-                                    metricsUnit.Output = currentOutput;
-                                    data.Add(tracker.Value, metricsUnit);
-                                }
-                                else //Tracker already exists
-                                {
-                                    // Merge captured measure with existing measures
-                                    foreach (var capturedMeasure in metricsUnit.MeasureValues)
+                                    SegmentObject tracker = metricsUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]];
+                                    GenericMetricsUnit importedUnit = null;
+
+                                    // check if we already found a metrics unit with the same tracker
+                                    if (!data.TryGetValue(tracker.Value, out importedUnit))
                                     {
-                                        if (!capturedMeasure.Key.Options.HasFlag(MeasureOptions.IsBackOffice))
-                                            continue;
-                                        //Measure already exists per tracker than aggregate:
-                                        if (importedUnit.MeasureValues.ContainsKey(capturedMeasure.Key))
-                                            importedUnit.MeasureValues[capturedMeasure.Key] += capturedMeasure.Value;
-                                        else
-                                            //Captured Measure doest exists with this tracker:
-                                            importedUnit.MeasureValues.Add(capturedMeasure.Key, capturedMeasure.Value);
+                                        metricsUnit.Output = currentOutput;
+                                        data.Add(tracker.Value, metricsUnit);
                                     }
-                                }
-
-                                #region Validation
-                                // For validations
-                                foreach (var m in metricsUnit.MeasureValues)
-                                {
-                                    if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
+                                    else //Tracker already exists
                                     {
-                                        if (!currentOutput.Checksum.ContainsKey(m.Key.Name))
-                                            currentOutput.Checksum.Add(m.Key.Name, m.Value);
-                                        else
-                                            currentOutput.Checksum[m.Key.Name] += m.Value;
+                                        // Merge captured measure with existing measures
+                                        foreach (var capturedMeasure in metricsUnit.MeasureValues)
+                                        {
+                                            if (!capturedMeasure.Key.Options.HasFlag(MeasureOptions.IsBackOffice))
+                                                continue;
+                                            //Measure already exists per tracker than aggregate:
+                                            if (importedUnit.MeasureValues.ContainsKey(capturedMeasure.Key))
+                                                importedUnit.MeasureValues[capturedMeasure.Key] += capturedMeasure.Value;
+                                            else
+                                                //Captured Measure doest exists with this tracker:
+                                                importedUnit.MeasureValues.Add(capturedMeasure.Key, capturedMeasure.Value);
+                                        }
                                     }
-                                }
-                                #endregion
 
+                                    #region Validation
+                                    // For validations
+                                    foreach (var m in metricsUnit.MeasureValues)
+                                    {
+                                        if (m.Key.Options.HasFlag(MeasureOptions.ValidationRequired))
+                                        {
+                                            if (!currentOutput.Checksum.ContainsKey(m.Key.Name))
+                                                currentOutput.Checksum.Add(m.Key.Name, m.Value);
+                                            else
+                                                currentOutput.Checksum[m.Key.Name] += m.Value;
+                                        }
+                                    }
+                                    #endregion
+
+                                }
                             }
                         }
 
