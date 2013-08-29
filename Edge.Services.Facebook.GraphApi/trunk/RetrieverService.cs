@@ -9,14 +9,20 @@ using System.IO;
 using Edge.Data.Pipeline;
 using Newtonsoft.Json;
 using System.Collections;
+using System.Security.Cryptography;
 
 namespace Edge.Services.Facebook.GraphApi
 {
 	class RetrieverService : PipelineService
 	{
+		#region Data Members
 		private Uri _baseAddress;
 		private string _accessToken;
-		const double firstBatchRatio = 0.5;
+		private string _appSecretProof;
+		const double firstBatchRatio = 0.5; 
+		#endregion
+
+		#region Override Methods
 		protected override ServiceOutcome DoPipelineWork()
 		{
 			_baseAddress = new Uri(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]);
@@ -24,6 +30,7 @@ namespace Edge.Services.Facebook.GraphApi
 			//Get Access token
 
 			_accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.AccessToken];
+			_appSecretProof = GetAppSecretProof();
 
 			BatchDownloadOperation countBatch = new BatchDownloadOperation();
 
@@ -95,26 +102,51 @@ namespace Edge.Services.Facebook.GraphApi
 
 			this.Delivery.Save();
 			return ServiceOutcome.Success;
-		}
+		} 
+		#endregion
 
+		#region Event Handlers
 		void batch_Progressed(object sender, EventArgs e)
 		{
 			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
 			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
 		}
 
-		private HttpWebRequest CreateRequest(string baseUrl, string[] extraParams = null)
-		{
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}", baseUrl, _accessToken));
-			return request;
-		}
 		void counted_Batch_Progressed(object sender, EventArgs e)
 		{
 			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
 			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
+		} 
+		#endregion
+
+		#region Private Methods
+		private HttpWebRequest CreateRequest(string baseUrl, string[] extraParams = null)
+		{
+			//HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}", baseUrl, _accessToken));
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}&appsecret_proof={2}", baseUrl, _accessToken, _appSecretProof));
+			return request;
 		}
 
+		private string GetAppSecretProof()
+		{
+			var appSecret = Instance.Configuration.Options[FacebookConfigurationOptions.AppSecret];
+			var secretByte = Encoding.UTF8.GetBytes(appSecret);
+			var hmacsha256 = new HMACSHA256(secretByte);
+			var tokenBytes = Encoding.UTF8.GetBytes(_accessToken);
+			hmacsha256.ComputeHash(tokenBytes);
+			return ByteToString(hmacsha256.Hash);
+		}
+
+		private static string ByteToString(byte[] buff)
+		{
+			string sbinary = "";
+			for (int i = 0; i < buff.Length; i++)
+				sbinary += buff[i].ToString("X2"); /* hex format */
+			return sbinary;
+		}  
+		#endregion
 	}
+
 	public class MyType
 	{
 		//public string[] data;
@@ -126,7 +158,5 @@ namespace Edge.Services.Facebook.GraphApi
 		public int limit;
 		public int offset;
 		public int count;
-		
-
 	}
 }
