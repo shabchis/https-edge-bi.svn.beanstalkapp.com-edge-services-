@@ -506,15 +506,8 @@ namespace Edge.Services.Google.AdWords
                             //Creative
 
                             sitelinkAttr = ((String)_sitelinkReader.Current[Const.SiteLinkAttributeValuesHeader]).Split(';');
-                            
-                            sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
 
-                            sitelinkAd.Creatives.Add(new TextCreative
-                            {
-                                TextType = TextCreativeType.Body,
-                                Text = sitelinkAttr[2],
-                                Text2 = sitelinkAttr[3]
-                            });
+                            bool legacy = sitelinkAttr.Count() != 4 ? true : false;
 
                             ////Setting Tracker for Ad
                             if (!String.IsNullOrWhiteSpace(sitelinkAttr[1]))
@@ -540,6 +533,15 @@ namespace Edge.Services.Google.AdWords
                                 // Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
                             };
 
+                            sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
+
+                            if (!legacy) // only in case it doesnt contains legacy siteink
+                                sitelinkAd.Creatives.Add(new TextCreative
+                                {
+                                    TextType = TextCreativeType.Body,
+                                    Text = sitelinkAttr[2],
+                                    Text2 = sitelinkAttr[3]
+                                });
 
                             sitelinkAd.Name = sitelinkAttr[0];
                             sitelinkAd.Creatives.Add(new TextCreative
@@ -547,7 +549,7 @@ namespace Edge.Services.Google.AdWords
                                 TextType = TextCreativeType.Title,
                                 Text = sitelinkAttr[0]
                             });
-                            
+
                             //Ad Type
                             string devicePreferenceColumnValue = Convert.ToString(_sitelinkReader.Current[Const.AdDevicePreferenceFieldName]);
 
@@ -558,7 +560,7 @@ namespace Edge.Services.Google.AdWords
                             }
                             else sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Text_ad);
 
-                                                      
+
                             siteLinkMetricsUnit.Ad = sitelinkAd;
 
                             //INSERTING METRICS DATA
@@ -567,10 +569,10 @@ namespace Edge.Services.Google.AdWords
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], 0);
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], 0);
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]],0);
+                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], 0);
                             siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], 0);
                             ImportManager.ImportMetrics(siteLinkMetricsUnit);
-							ImportManager.ImportAd(sitelinkAd);
+                            ImportManager.ImportAd(sitelinkAd);
                         }
                     }
                 }// end if 
