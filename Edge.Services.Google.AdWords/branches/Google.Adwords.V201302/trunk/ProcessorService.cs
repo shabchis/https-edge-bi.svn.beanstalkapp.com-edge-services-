@@ -543,11 +543,11 @@ namespace Edge.Services.Google.AdWords
                                     Text2 = sitelinkAttr[3]
                                 });
 
-                            sitelinkAd.Name = "[SiteLink]"+sitelinkAttr[0];
+                            sitelinkAd.Name = "[Sitelink] "+sitelinkAttr[0];
                             sitelinkAd.Creatives.Add(new TextCreative
                             {
                                 TextType = TextCreativeType.Title,
-                                Text = "[SiteLink]"+sitelinkAttr[0]
+                                Text = "[Sitelink] "+sitelinkAttr[0]
                             });
 
                             //Ad Type
