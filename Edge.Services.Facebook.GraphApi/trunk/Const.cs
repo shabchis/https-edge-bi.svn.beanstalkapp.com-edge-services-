@@ -17,7 +17,7 @@ namespace Edge.Services.Facebook.GraphApi
 		public const string Ads_XPath_GetAdGroupStats = "Facebook.Ads.XPath.GetAdGroupStats";
 		public const string Ads_XPath_GetAdGroupTargeting = "Facebook.Ads.XPath.GetAdGroupTargeting";
 		public const string Ads_XPath_GetAdGroupCreatives = "Facebook.Ads.XPath.GetAdGroupCreatives";
-
+        public const string AppSecret = "Facebook.Auth.AppSecret";
 		public const string AdGroupCreativeFields = "Facebook.Fields.AdGroupCreative";
 		public const string AdGroupFields = "Facebook.Fields.AdGroup";
 		public const string CampaignFields = "Facebook.Fields.Campaign";
