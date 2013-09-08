@@ -130,21 +130,21 @@ namespace Edge.Services.Facebook.GraphApi
 		private string GetAppSecretProof()
 		{
             string appSecret = Instance.Configuration.Options[FacebookConfigurationOptions.AppSecret];
-            var secretByte = Encoding.UTF8.GetBytes(appSecret);
-            var hmacsha256 = new HMACSHA256(secretByte);
-            var tokenBytes = Encoding.UTF8.GetBytes(_accessToken);
-            hmacsha256.ComputeHash(tokenBytes);
-            return ByteToString(hmacsha256.Hash);
+            //var secretByte = Encoding.UTF8.GetBytes(appSecret);
+            //var hmacsha256 = new HMACSHA256(secretByte);
+            //var tokenBytes = Encoding.UTF8.GetBytes(_accessToken);
+            //hmacsha256.ComputeHash(tokenBytes);
+            //return ByteToString(hmacsha256.Hash);
 
-            //byte[] bytes = Encoding.UTF8.GetBytes(appSecret);
-            //SHA256Managed hashstring = new SHA256Managed();
-            //byte[] hash = hashstring.ComputeHash(bytes);
-            //string hashString = string.Empty;
-            //foreach (byte x in hash)
-            //{
-            //    hashString += String.Format("{0:x2}", x);
-            //}
-            //return hashString;
+            byte[] bytes = Encoding.UTF8.GetBytes(appSecret);
+            SHA256Managed hashstring = new SHA256Managed();
+            byte[] hash = hashstring.ComputeHash(bytes);
+            string hashString = string.Empty;
+            foreach (byte x in hash)
+            {
+                hashString += String.Format("{0:x2}", x);
+            }
+            return hashString;
 		}
 
 		private static string ByteToString(byte[] buff)
