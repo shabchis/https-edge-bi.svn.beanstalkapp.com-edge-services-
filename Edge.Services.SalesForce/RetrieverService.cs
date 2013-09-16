@@ -30,7 +30,7 @@ namespace Edge.Services.SalesForce
                 mutex.WaitOne();
                 #region Authentication
                 //get access token + refresh token from db (if exist)
-                Token tokenResponse = Token.Get(Delivery.Parameters["SalesForceClientID"].ToString());
+                Token tokenResponse = Token.Get(Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);
                 //if not exist
                 if (string.IsNullOrEmpty(tokenResponse.access_token) || (string.IsNullOrEmpty(tokenResponse.refresh_token)))
                     tokenResponse = GetAccessTokenParamsFromSalesForce();
@@ -122,7 +122,7 @@ namespace Edge.Services.SalesForce
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private Token RefreshToken(string refreshToken)
+        public Token RefreshToken(string refreshToken)
         {
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(Delivery.Parameters["AuthenticationUrl"].ToString());
             myRequest.Method = "POST";
@@ -149,11 +149,11 @@ namespace Edge.Services.SalesForce
             tokenResponse = (Token)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Token));
             tokenResponse.refresh_token = refreshToken;
             tokenResponse.UpdateTime = DateTime.Now;
-            tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString());
+            tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);
             return tokenResponse;
         }
 
-        private Token GetAccessTokenParamsFromSalesForce()
+        public Token GetAccessTokenParamsFromSalesForce()
         {
             HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(Delivery.Parameters["AuthenticationUrl"].ToString());
             myRequest.Method = "POST";
@@ -190,7 +190,7 @@ namespace Edge.Services.SalesForce
             StreamReader readStream = new StreamReader(responseBody, encode);
             Token token = JsonConvert.DeserializeObject<Token>(readStream.ReadToEnd());
             token.UpdateTime = DateTime.Now;
-            token.Save(this.Delivery.Parameters["SalesForceClientID"].ToString());
+            token.Save(this.Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);  //SalesForceClientID is the Consumer Key
             //return string itself (easier to work with)
             return token;
         }
@@ -214,7 +214,7 @@ namespace Edge.Services.SalesForce
         public string access_token { get; set; }
         public string ClientID { get; set; }
 
-        internal void Save(string clientID)
+        internal void Save(string clientID,int accountId)
         {
 
             Token tokenResponse = new Token();
@@ -225,6 +225,7 @@ namespace Edge.Services.SalesForce
                 {
                     conn.Open();
                     command.Connection = conn;
+                    command.Parameters["@AccountID"].Value = accountId;
                     command.Parameters["@Id"].Value = this.id;
                     command.Parameters["@ClientID"].Value = clientID;
                     command.Parameters["@Instance_url"].Value = this.instance_url;
@@ -241,7 +242,7 @@ namespace Edge.Services.SalesForce
 
         }
 
-        internal static Token Get(string clientID)
+        public static Token Get(string clientID,int accountId)
         {
             Token tokenResponse = new Token();
             using (SqlConnection conn = new SqlConnection(AppSettings.GetConnectionString(tokenResponse, "DB")))
@@ -251,6 +252,7 @@ namespace Edge.Services.SalesForce
                     conn.Open();
                     command.Connection = conn;
                     command.Parameters["@ClientID"].Value = clientID;
+                    command.Parameters["@AccountID"].Value = accountId;
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
                         if (reader.HasRows)
