@@ -19,7 +19,8 @@ namespace Edge.Services.Facebook.GraphApi
 		private Uri _baseAddress;
 		private string _accessToken;
 		private string _appSecretProof;
-		const double firstBatchRatio = 0.5; 
+		const double _firstBatchRatio = 0.5;
+		const double _secondBatchRatio = 0.5; 
 		#endregion
 
 		#region Override Methods
@@ -29,7 +30,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 			//Get Access token
 
-			_accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.AccessToken];
+			_accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
 			_appSecretProof = GetAppSecretProof();
 
 			BatchDownloadOperation countBatch = new BatchDownloadOperation();
@@ -84,52 +85,52 @@ namespace Edge.Services.Facebook.GraphApi
 					offset = 0;
 				}
 			}
-			BatchDownloadOperation batch = new BatchDownloadOperation();
 			foreach (var file in files)
 				this.Delivery.Files.Add(file);
 			this.Delivery.Save();
 
+			BatchDownloadOperation batch = new BatchDownloadOperation();
 			foreach (DeliveryFile file in files.Where(fi => fi.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data)))
 			{
 				FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
 				batch.Add(fileDownloadOperation);
 			}
 
-			batch.Progressed += new EventHandler(batch_Progressed);
+			//batch.Progressed += new EventHandler(batch_Progressed);
 			batch.Start();
 			batch.Wait();
 			batch.EnsureSuccess();
-
 			this.Delivery.Save();
+
 			return ServiceOutcome.Success;
 		} 
 		#endregion
 
 		#region Event Handlers
-		void batch_Progressed(object sender, EventArgs e)
-		{
-			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
-			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
-		}
-
 		void counted_Batch_Progressed(object sender, EventArgs e)
 		{
 			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
-			this.ReportProgress(batchDownloadOperation.Progress * firstBatchRatio);
+			this.ReportProgress(batchDownloadOperation.Progress * _firstBatchRatio);
 		} 
+
+		void batch_Progressed(object sender, EventArgs e)
+		{
+			BatchDownloadOperation batchDownloadOperation = (BatchDownloadOperation)sender;
+			this.ReportProgress(batchDownloadOperation.Progress * _secondBatchRatio);
+		}
 		#endregion
 
 		#region Private Methods
 		private HttpWebRequest CreateRequest(string baseUrl, string[] extraParams = null)
 		{
-			//HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}", baseUrl, _accessToken));
-			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}&appsecret_proof={2}", baseUrl, _accessToken, _appSecretProof));
+			HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}", baseUrl, _accessToken));
+			//HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(string.Format("{0}&access_token={1}&appsecret_proof={2}", baseUrl, _accessToken, _appSecretProof));
 			return request;
 		}
 
 		private string GetAppSecretProof()
 		{
-            string appSecret = Instance.Configuration.Options[FacebookConfigurationOptions.AppSecret];
+            string appSecret = Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AppSecret];
             //var secretByte = Encoding.UTF8.GetBytes(appSecret);
             //var hmacsha256 = new HMACSHA256(secretByte);
             //var tokenBytes = Encoding.UTF8.GetBytes(_accessToken);

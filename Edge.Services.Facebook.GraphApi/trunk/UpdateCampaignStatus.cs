@@ -19,11 +19,7 @@ namespace Edge.Services.Facebook.GraphApi
 {
 	public class UpdateCampaignStatus : Service
 	{
-		//string _urlAuth;
-		//string _redirectUri;
-		//string _apiKey;
-		//string _appSecret;
-
+		
 		protected override ServiceOutcome DoWork()
 		{
 			HttpWebRequest request;
@@ -32,10 +28,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 			Dictionary<int, FacbookAccountParams> facbookAccountParams = new Dictionary<int, FacbookAccountParams>();
 			StringBuilder strAccounts = new StringBuilder();
-			//_urlAuth = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AuthenticationUrl];
-			//_redirectUri = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_RedirectUri];
-			//_apiKey = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_ApiKey];
-			//_appSecret = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AppSecret];
+
 			foreach (AccountElement account in EdgeServicesConfiguration.Current.Accounts)
 			{
 				foreach (AccountServiceElement service in account.Services)
@@ -46,7 +39,7 @@ namespace Edge.Services.Facebook.GraphApi
 						facbookAccountParams.Add(account.ID, new FacbookAccountParams()
 						{
 							FacebookAccountID = activeService.Options[FacebookConfigurationOptions.Account_ID],
-							AccessToken = activeService.Options[FacebookConfigurationOptions.AccessToken]
+							AccessToken = activeService.Options[FacebookConfigurationOptions.Auth_AccessToken]
 						});
 						strAccounts.AppendFormat("{0},", account.ID);
 					}

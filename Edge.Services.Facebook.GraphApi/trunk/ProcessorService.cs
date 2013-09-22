@@ -318,12 +318,12 @@ namespace Edge.Services.Facebook.GraphApi
 								{
 
 									List<Ad> adsByCreativeID = null;
-									if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
+									if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.id))
 									{
-										if (!usedCreatives.ContainsKey(adGroupCreativesReader.Current.creative_id))
+										if (!usedCreatives.ContainsKey(adGroupCreativesReader.Current.id))
 										{
-											usedCreatives.Add(adGroupCreativesReader.Current.creative_id, adGroupCreativesReader.Current.creative_id);
-											adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.creative_id];
+											usedCreatives.Add(adGroupCreativesReader.Current.id, adGroupCreativesReader.Current.id);
+											adsByCreativeID = adsBycreatives[adGroupCreativesReader.Current.id];
 										}
 									}
 									if (adsByCreativeID != null)
@@ -347,17 +347,17 @@ namespace Edge.Services.Facebook.GraphApi
 											ad.Creatives = new List<Creative>();
 											switch ((string)adGroupCreativesReader.Current.type)
 											{
-												case "8":
-												case "9":
-												case "10":
-												case "16":
-												case "17":
-												case "19":
+												//case "8": // deprecated
+												//case "9":  // deprecated
+												//case "10":  // deprecated
+												//case "16":  // deprecated
+												//case "17":  // deprecated
+												//case "19":  // deprecated
 												case "25":													
 													{
 														TextCreative sponserStory = new TextCreative()
 														{
-															OriginalID = adGroupCreativesReader.Current.creative_id,
+															OriginalID = adGroupCreativesReader.Current.id,
 															TextType = TextCreativeType.Title,
 															Text = "Sponsored Story",
 														
@@ -373,7 +373,7 @@ namespace Edge.Services.Facebook.GraphApi
 													{
 														TextCreative sponserStory = new TextCreative()
 														{
-															OriginalID = adGroupCreativesReader.Current.creative_id,
+															OriginalID = adGroupCreativesReader.Current.id,
 															TextType = TextCreativeType.Title,
 															Text = "Page Ads for a Page post"
 
@@ -392,7 +392,7 @@ namespace Edge.Services.Facebook.GraphApi
 														ImageCreative ic = new ImageCreative()
 														{
 															ImageUrl = adGroupCreativesReader.Current.image_url,
-															OriginalID = adGroupCreativesReader.Current.creative_id
+															OriginalID = adGroupCreativesReader.Current.id
 
 															//Name = adGroupCreativesReader.Current.name
 
@@ -401,7 +401,7 @@ namespace Edge.Services.Facebook.GraphApi
 															ad.Creatives.Add(ic);
 														TextCreative bc = new TextCreative()
 														{
-															OriginalID = adGroupCreativesReader.Current.creative_id,
+															OriginalID = adGroupCreativesReader.Current.id,
 															TextType = TextCreativeType.Body,
 															Text = adGroupCreativesReader.Current.body
 															//Name = adGroupCreativesReader.Current.name
@@ -414,7 +414,7 @@ namespace Edge.Services.Facebook.GraphApi
 														//bug creative type =9 story like
 														TextCreative tc = new TextCreative()
 														{
-															OriginalID = adGroupCreativesReader.Current.creative_id,
+															OriginalID = adGroupCreativesReader.Current.id,
 															TextType = TextCreativeType.Title,
 															Text = adGroupCreativesReader.Current.title
 														};
@@ -426,7 +426,7 @@ namespace Edge.Services.Facebook.GraphApi
 													{
 														TextCreative unknown = new TextCreative()
 														{
-															OriginalID = adGroupCreativesReader.Current.creative_id,
+															OriginalID = adGroupCreativesReader.Current.id,
 															TextType = TextCreativeType.Title,
 															Text = "UnKnown creative"
 

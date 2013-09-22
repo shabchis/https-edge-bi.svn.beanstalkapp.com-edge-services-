@@ -11,13 +11,13 @@ namespace Edge.Services.Facebook.GraphApi
 		public const string BaseServiceAddress = "Facebook.BaseServiceAdress";
 		public const string Account_ID = "Facebook.Account.ID";
 		public const string Account_Name = "Facebook.Account.Name";
-		public const string AccessToken = "Facebook.AccessToken";
+		public const string Auth_AccessToken = "Facebook.Auth.AccessToken";
+        public const string Auth_AppSecret = "Facebook.Auth.AppSecret";
 		public const string Ads_XPath_GetAdGroups = "Facebook.Ads.XPath.GetAdGroups";
 		public const string Ads_XPath_GetCampaigns = "Facebook.Ads.XPath.GetCampaigns";
 		public const string Ads_XPath_GetAdGroupStats = "Facebook.Ads.XPath.GetAdGroupStats";
 		public const string Ads_XPath_GetAdGroupTargeting = "Facebook.Ads.XPath.GetAdGroupTargeting";
 		public const string Ads_XPath_GetAdGroupCreatives = "Facebook.Ads.XPath.GetAdGroupCreatives";
-        public const string AppSecret = "Facebook.Auth.AppSecret";
 		public const string AdGroupCreativeFields = "Facebook.Fields.AdGroupCreative";
 		public const string AdGroupFields = "Facebook.Fields.AdGroup";
 		public const string CampaignFields = "Facebook.Fields.Campaign";
