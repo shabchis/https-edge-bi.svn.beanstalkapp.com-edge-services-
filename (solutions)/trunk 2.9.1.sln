@@ -37,8 +37,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Processes", "Processes", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Processes.DirectoryWatcher", "..\..\edge-processes\Edge.Processes.DirectoryWatcher\trunk\Edge.Processes.DirectoryWatcher.csproj", "{FB21EF04-FB87-484C-B15E-DCEBD1185977}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Processes.SchedulingHost", "..\..\edge-processes\Edge.Processes.SchedulingHost\trunk\Edge.Processes.SchedulingHost.csproj", "{F392CC5C-789E-4411-BFC2-8E590ED290B5}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Processes.SchedulingCaller", "..\..\edge-processes\Edge.Processes.SchedulingCaller\trunk\Edge.Processes.SchedulingCaller.csproj", "{D38C000D-2899-41D6-892B-4A431FB0DDBF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Edge.Applications.PM.SchedulerControl", "..\..\..\Codebase\2.9\Utilities\Edge.Applications.PM.SchedulerControl\Edge.Applications.PM.SchedulerControl.csproj", "{8AC78599-AD3B-46BE-86CC-F51A474AFA3C}"
@@ -487,45 +485,13 @@ Global
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Seperia|Mixed Platforms.ActiveCfg = Seperia|Any CPU
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Seperia|Mixed Platforms.Build.0 = Seperia|Any CPU
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977}.Seperia|x86.ActiveCfg = Seperia|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|Any CPU.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|x86.ActiveCfg = DebubNewScheduling|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.DebubNewScheduling|x86.Build.0 = DebubNewScheduling|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|x86.ActiveCfg = Debug|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Debug|x86.Build.0 = Debug|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Edge|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Edge|Any CPU.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Edge|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Edge|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Edge|x86.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|x86.ActiveCfg = Release|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Release|x86.Build.0 = Release|x86
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia.Facebook.UpdateCampaignStatus|Any CPU.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia.Facebook.UpdateCampaignStatus|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia.Facebook.UpdateCampaignStatus|x86.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia|Any CPU.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia|Any CPU.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia|Mixed Platforms.ActiveCfg = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia|Mixed Platforms.Build.0 = DebubNewScheduling|Any CPU
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5}.Seperia|x86.ActiveCfg = DebubNewScheduling|Any CPU
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.DebubNewScheduling|Any CPU.ActiveCfg = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.DebubNewScheduling|Mixed Platforms.ActiveCfg = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.DebubNewScheduling|Mixed Platforms.Build.0 = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.DebubNewScheduling|x86.ActiveCfg = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.DebubNewScheduling|x86.Build.0 = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.Debug|Any CPU.Build.0 = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF}.Debug|x86.ActiveCfg = Debug|x86
@@ -631,7 +597,6 @@ Global
 		{1C3E1103-65B9-48D0-8583-A38B0AD6E771} = {BCD2B713-C80C-4E2C-8851-A4796A4A46A4}
 		{8AC78599-AD3B-46BE-86CC-F51A474AFA3C} = {BCD2B713-C80C-4E2C-8851-A4796A4A46A4}
 		{FB21EF04-FB87-484C-B15E-DCEBD1185977} = {1E140078-FA5E-47D4-98C5-49D5590CED73}
-		{F392CC5C-789E-4411-BFC2-8E590ED290B5} = {1E140078-FA5E-47D4-98C5-49D5590CED73}
 		{D38C000D-2899-41D6-892B-4A431FB0DDBF} = {1E140078-FA5E-47D4-98C5-49D5590CED73}
 	EndGlobalSection
 EndGlobal
