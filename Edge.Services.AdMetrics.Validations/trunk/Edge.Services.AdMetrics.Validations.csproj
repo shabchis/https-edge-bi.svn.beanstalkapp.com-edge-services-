@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.AdWords.V201109">
-      <HintPath>..\..\..\thirdparty\GoogleAdwords\Google.AdWords.V201109.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.AnalysisServices.AdomdClient, Version=10.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\(third party)\ADOMD\Microsoft.AnalysisServices.AdomdClient.dll</HintPath>
