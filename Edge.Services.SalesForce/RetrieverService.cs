@@ -47,27 +47,10 @@ namespace Edge.Services.SalesForce
                 {
                     
 
-                    string Lead_query = "SELECT  CreatedDate,Edge_BI_Tracker__c ,Company_Type__c  FROM Lead WHERE TimePeriod.EqualToCalendarUnits(CreatedDate) AND Edge_BI_Tracker__c != null";
-                    string Demo_query = "SELECT CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c FROM Task WHERE CreatedDate > 2013-06-28T00:00:00.00Z  AND Subject = '**Demo**' AND What.Type = 'Account' AND Status LIKE 'Waiting on someone else'";
-
-                    //Check for closed date
-                    string Completed_demo_query = "SELECT CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c  FROM Task WHERE CreatedDate > 2013-06-28T00:00:00.00Z  AND Subject = '**Demo**' AND What.Type = 'Account' AND Status LIKE 'Completed'";
-
-                    //To do :
-                    string Opportunity_query = "SELECT CreatedBy.CreatedDate,StageName,CloseDate,RecordTypeId,Edge_BI_Tracker__c FROM Opportunity WHERE CALENDAR_YEAR(CloseDate)=2013 AND CALENDAR_MONTH(CloseDate)=6 AND DAY_IN_MONTH(CloseDate) > 26 AND StageName IN('In Process','Pending Closing - No POC','Pending Closing - With POC','In POC,Renew/Expand','Stage equals SMB - Qualified','SMB - Tech Review','SMB - Procurment / Negotiation') AND RecordTypeId IN(012D0000000BUcUIAW,012D0000000BUcPIAW)";
-                    string Closed_Deal_query = "SELECT StageName,CloseDate,RecordTypeId,Amount FROM Opportunity WHERE CALENDAR_YEAR(CloseDate)=2013 AND CALENDAR_MONTH(CloseDate)=6 AND DAY_IN_MONTH(CloseDate) > 26 AND StageName IN('Closed Won','SMB - Closed Won')";
-
-                    //Tests
-                    string test_closed_Opportunity = "SELECT StageName,CloseDate FROM Opportunity WHERE CALENDAR_YEAR(CloseDate)=2013 AND CALENDAR_MONTH(CloseDate)=6 AND DAY_IN_MONTH(CloseDate) > 26  AND StageName IN('In Process')LIMIT 100";
-                    string test_closed_Opportunity2 = "SELECT What.Id ,(SELECT Id,Amount FROM Opportunity) FROM Task  WHERE Opportunity.Id = What.Id LIMIT 30";
-                    string test_closed_Opportunity3 = "SELECT Id, What.Amount FROM Task WHERE What.Type ='Opportunity' LIMIT 30";
-
-
                     string query = file.Parameters["Query"].ToString();
 
-
                     //Regex for Calendar units.
-                    MatchCollection calendarMatches = Regex.Matches(query, @"TimePeriod.EqualToCalendarUnits\(([A-Z\.a-z]+)\)", RegexOptions.IgnoreCase);
+                    MatchCollection calendarMatches = Regex.Matches(query, @"TimePeriod.EqualToCalendarUnits\(([A-Z\.a-z_]+)\)", RegexOptions.IgnoreCase);
                     if (calendarMatches.Count > 0)
                     {
                         foreach (Match calendarMatch in calendarMatches)
@@ -78,7 +61,7 @@ namespace Edge.Services.SalesForce
                     }
 
                     //Regex for TimePeriodStringFormat units.
-                    MatchCollection timeMatches = Regex.Matches(query, @"TimePeriod.EqualToString\(([A-Z\.a-z]+)\)", RegexOptions.IgnoreCase);
+                    MatchCollection timeMatches = Regex.Matches(query, @"TimePeriod.EqualToString\(([A-Z\.a-z_]+)\)", RegexOptions.IgnoreCase);
                     if (timeMatches.Count > 0)
                     {
                         foreach (Match calendarMatch in timeMatches)
@@ -90,16 +73,6 @@ namespace Edge.Services.SalesForce
                         }
                     }
                  
-
-
-                    //Tests:
-                    // string query = "SELECT (SELECT ActivityDate, Description,IsTask, Subject, Status  FROM OpenActivities WHERE ActivityDate ORDER BY ActivityDate DESC) FROM Account LIMIT 100";
-                    //string query = "SELECT (SELECT ActivityDate,ActivityType, IsTask, Subject, Status FROM ActivityHistories WHERE Subject LIKE '**Demo**' AND Status LIKE 'Waiting on someone else'  ORDER BY ActivityDate DESC) FROM Account  LIMIT 100";
-                    // string query = "SELECT Id FROM Account WHERE ((CALENDAR_YEAR(CreatedDate)=2013 AND CALENDAR_MONTH(CreatedDate)=8 AND DAY_IN_MONTH(CreatedDate)=7)";
-                    //"SELECT CreatedDate,CloseDate Description,Subject, Status, Edge_BI_Tracker__c  FROM Task WHERE CloseDate > 2013-06-28T00:00:00.00Z  AND What.Type = 'Opportunity' LIMIT 100";
-                    //CreatedDate, Description,Subject, Status, Edge_BI_Tracker__c,Amount
-                    //string query = string.Format(file.Parameters["Query"].ToString(), Delivery.TimePeriodStart.Year, Delivery.TimePeriodStart.Month, Delivery.TimePeriodStart.Day);
-                    Console.WriteLine("#################"+query);
                     file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}", tokenResponse.instance_url, query);
 
                     HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
