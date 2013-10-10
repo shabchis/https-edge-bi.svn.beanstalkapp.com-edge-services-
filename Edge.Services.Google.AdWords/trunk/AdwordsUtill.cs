@@ -6,7 +6,7 @@ using GA = Google.Api.Ads.AdWords;
 using Edge.Data.Pipeline;
 using System.Web;
 using System.Xml;
-using ADWORDS_V201302 = Google.Api.Ads.AdWords.v201302;
+using ADWORDS_V201302 = Google.Api.Ads.AdWords.v201309;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;

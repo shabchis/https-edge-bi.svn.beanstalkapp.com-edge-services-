@@ -34,11 +34,12 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.Ads.Common, Version=1.6.0.0, Culture=neutral, PublicKeyToken=52807268f2b614dc, processorArchitecture=MSIL">
+    <Reference Include="Google.Ads.Common, Version=1.7.0.0, Culture=neutral, PublicKeyToken=52807268f2b614dc, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\thirdparty\GoogleAdwords\V201309\Google.Ads.Common.dll</HintPath>
     </Reference>
-    <Reference Include="Google.AdWords.V201309">
+    <Reference Include="Google.AdWords.V201309, Version=15.8.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\thirdparty\GoogleAdwords\V201309\Google.AdWords.V201309.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
