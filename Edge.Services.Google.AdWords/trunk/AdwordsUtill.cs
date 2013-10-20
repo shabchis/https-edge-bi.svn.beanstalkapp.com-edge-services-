@@ -6,7 +6,7 @@ using GA = Google.Api.Ads.AdWords;
 using Edge.Data.Pipeline;
 using System.Web;
 using System.Xml;
-using ADWORDS_V201302 = Google.Api.Ads.AdWords.v201309;
+using ADWORDS = Google.Api.Ads.AdWords.v201309;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
@@ -122,27 +122,27 @@ namespace Edge.Services.Google.AdWords
 
 	public static class GoogleStaticReportsNamesUtill
 	{
-		public static Dictionary<ADWORDS_V201302.ReportDefinitionReportType, string> _reportNames = new Dictionary<ADWORDS_V201302.ReportDefinitionReportType, string>()
+		public static Dictionary<ADWORDS.ReportDefinitionReportType, string> _reportNames = new Dictionary<ADWORDS.ReportDefinitionReportType, string>()
 		{
-			{ADWORDS_V201302.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT, "KEYWORDS_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, "AD_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.URL_PERFORMANCE_REPORT, "URL_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.ADGROUP_PERFORMANCE_REPORT, "ADGROUP_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.CAMPAIGN_PERFORMANCE_REPORT, "CAMPAIGN_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.ACCOUNT_PERFORMANCE_REPORT, "ACCOUNT_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.GEO_PERFORMANCE_REPORT, "GEO_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.SEARCH_QUERY_PERFORMANCE_REPORT, "SEARCH_QUERY_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT, "MANAGED_PLAC_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT, "AUTOMATIC_PLAC_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_KEYWORDS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_KEYWORDS_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_PLACEMENTS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_PLACEMENTS_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.AD_EXTENSIONS_PERFORMANCE_REPORT, "AD_EXTENSIONS_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.DESTINATION_URL_REPORT, "DEST_URL_REP"},
-			{ADWORDS_V201302.ReportDefinitionReportType.CREATIVE_CONVERSION_REPORT, "CREATIVE_CONV_REP"},
-			{ADWORDS_V201302.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT, "DISPLAY_TOPIC_PREF"},
-			{ADWORDS_V201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT, "PLACEHOLDER_REPORT"},
-			{ADWORDS_V201302.ReportDefinitionReportType.UNKNOWN, ""}
+			{ADWORDS.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT, "KEYWORDS_PERF"},
+			{ADWORDS.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, "AD_PERF"},
+			{ADWORDS.ReportDefinitionReportType.URL_PERFORMANCE_REPORT, "URL_PERF"},
+			{ADWORDS.ReportDefinitionReportType.ADGROUP_PERFORMANCE_REPORT, "ADGROUP_PERF"},
+			{ADWORDS.ReportDefinitionReportType.CAMPAIGN_PERFORMANCE_REPORT, "CAMPAIGN_PERF"},
+			{ADWORDS.ReportDefinitionReportType.ACCOUNT_PERFORMANCE_REPORT, "ACCOUNT_PERF"},
+			{ADWORDS.ReportDefinitionReportType.GEO_PERFORMANCE_REPORT, "GEO_PERF"},
+			{ADWORDS.ReportDefinitionReportType.SEARCH_QUERY_PERFORMANCE_REPORT, "SEARCH_QUERY_PERF"},
+			{ADWORDS.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT, "MANAGED_PLAC_PERF"},
+			{ADWORDS.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT, "AUTOMATIC_PLAC_PERF"},
+			{ADWORDS.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_KEYWORDS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_KEYWORDS_PERF"},
+			{ADWORDS.ReportDefinitionReportType.CAMPAIGN_NEGATIVE_PLACEMENTS_PERFORMANCE_REPORT, "CAMPAIGN_NEG_PLACEMENTS_PERF"},
+			{ADWORDS.ReportDefinitionReportType.AD_EXTENSIONS_PERFORMANCE_REPORT, "AD_EXTENSIONS_PERF"},
+			{ADWORDS.ReportDefinitionReportType.DESTINATION_URL_REPORT, "DEST_URL_REP"},
+			{ADWORDS.ReportDefinitionReportType.CREATIVE_CONVERSION_REPORT, "CREATIVE_CONV_REP"},
+			{ADWORDS.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT, "CRITERIA_PERF"},
+			{ADWORDS.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT, "DISPLAY_TOPIC_PREF"},
+			{ADWORDS.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT, "PLACEHOLDER_REPORT"},
+			{ADWORDS.ReportDefinitionReportType.UNKNOWN, ""}
 		};
 
 	}
@@ -192,42 +192,42 @@ namespace Edge.Services.Google.AdWords
 
 		#endregion Reports fields
 
-		public static Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>> REPORTS_FIELDS = new Dictionary<ADWORDS_V201302.ReportDefinitionReportType, Dictionary<string, string[]>>()
+		public static Dictionary<ADWORDS.ReportDefinitionReportType, Dictionary<string, string[]>> REPORTS_FIELDS = new Dictionary<ADWORDS.ReportDefinitionReportType, Dictionary<string, string[]>>()
 		{
 			
-			{ADWORDS_V201302.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
+			{ADWORDS.ReportDefinitionReportType.KEYWORDS_PERFORMANCE_REPORT,
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,KEYWORDS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.STATUS,KEYWORDS_PERFORMANCE_REPORT_FIELDS_STATUS}
 												  }
 			},
-			{ADWORDS_V201302.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
+			{ADWORDS.ReportDefinitionReportType.AD_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AD_PERFORMANCE_REPORT_FIELDS} , 
 													{ReportDefinitionReportFieldsType.CONVERSION,AD_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION},
 													{ReportDefinitionReportFieldsType.STATUS,AD_PERFORMANCE_REPORT_FIELDS_STATUS},
 												  }
 			},
-			{ADWORDS_V201302.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT, 
+			{ADWORDS.ReportDefinitionReportType.PLACEMENT_PERFORMANCE_REPORT, 
 				new Dictionary<string, string[]>(){ 
 													{ReportDefinitionReportFieldsType.DEFAULT,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.STATUS,MANAGED_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_STATUS},
 												  }
 			},
-			{ADWORDS_V201302.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
+			{ADWORDS.ReportDefinitionReportType.AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
 				}
 			},
-			{ADWORDS_V201302.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
+			{ADWORDS.ReportDefinitionReportType.CRITERIA_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS},
 													{ReportDefinitionReportFieldsType.CONVERSION,AUTOMATIC_PLACEMENTS_PERFORMANCE_REPORT_FIELDS_WITH_CONVERSION	}
 				}
 			},
-			{ADWORDS_V201302.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT,  
+			{ADWORDS.ReportDefinitionReportType.DISPLAY_TOPICS_PERFORMANCE_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,Display_Topics_Performance_Report}
 												
 				}
 			},
-            {ADWORDS_V201302.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT,  
+            {ADWORDS.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT,  
 				new Dictionary<string, string[]>(){ {ReportDefinitionReportFieldsType.DEFAULT,PLACEHOLDER_FEED_ITEM_REPORT}
 												
 				}
