@@ -396,8 +396,11 @@ namespace Edge.Services.Google.AdWords
                             CampaignId = Convert.ToInt64(_adsReader.Current[Const.CampaignIdFieldName])
                         };
 
-                        //Check if keyword file contains this kwdkey.
-                        if (kwdKey.KeywordId != Convert.ToInt64(this.Delivery.Parameters["KeywordContentId"]) && _keywordsData.ContainsKey(kwdKey.ToString()))
+                        //Check if keyword file contains this kwdkey and not a GDN Keyword
+
+                        String[] GdnKwdIds = this.Delivery.Parameters["KeywordContentId"].ToString().Split(',');
+                     
+                        if (!GdnKwdIds.Contains(kwdKey.KeywordId.ToString()) && _keywordsData.ContainsKey(kwdKey.ToString()))
                         {
                             KeywordTarget kwd = new KeywordTarget();
                             try
