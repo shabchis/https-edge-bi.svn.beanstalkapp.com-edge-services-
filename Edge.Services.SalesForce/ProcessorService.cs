@@ -77,7 +77,17 @@ namespace Edge.Services.SalesForce
                     if (reportReader.Read())
                         numOfRecordes = int.Parse(reportReader.Current.totalSize);
 
+                    reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.nextRecordsUrl");
+                    string nextRecordPath;
+                    if (reportReader.Read())
+                    {
+                        nextRecordPath = reportReader.Current.nextRecordsUrl;
+                        DeliveryFile nextRecordFile = new DeliveryFile();
+                        nextRecordFile.SourceUrl = ReportFile.Parameters["ServerURL"].ToString() + nextRecordPath;
 
+                        this.Delivery.Files.Add(nextRecordFile);
+
+                    }
                     if (numOfRecordes > 0)
                     {
                         //Get Values

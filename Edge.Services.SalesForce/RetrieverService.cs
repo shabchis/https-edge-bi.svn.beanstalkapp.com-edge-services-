@@ -25,12 +25,14 @@ namespace Edge.Services.SalesForce
         {
             Mutex mutex = new Mutex(false, "SalesForceRetriver");
             BatchDownloadOperation batch = new BatchDownloadOperation();
+           
+
             try
             {
                 mutex.WaitOne();
                 #region Authentication
                 //get access token + refresh token from db (if exist)
-                Token tokenResponse = Token.Get(Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);
+                Token tokenResponse = Token.Get(Delivery.Parameters["SalesForceClientID"].ToString(), this.Delivery.Account.ID);
                 //if not exist
                 if (string.IsNullOrEmpty(tokenResponse.access_token) || (string.IsNullOrEmpty(tokenResponse.refresh_token)))
                     tokenResponse = GetAccessTokenParamsFromSalesForce();
@@ -45,7 +47,7 @@ namespace Edge.Services.SalesForce
                 // exist
                 foreach (var file in Delivery.Files)
                 {
-                    
+
 
                     string query = file.Parameters["Query"].ToString();
 
@@ -72,17 +74,35 @@ namespace Edge.Services.SalesForce
                             query = query.Replace(string.Format("TimePeriod.EqualToString({0})", dataParamName), string.Format("{0}>{1} AND {0}<{2} ", dataParamName, sfTimePeriodStartFormat, sfTimePeriodEndFormat));
                         }
                     }
-                 
+                    file.Parameters.Add("Token", tokenResponse);
                     file.SourceUrl = string.Format("{0}/services/data/v20.0/query?q={1}", tokenResponse.instance_url, query);
 
                     HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(file.SourceUrl);
                     request.Headers.Add("Authorization: OAuth " + tokenResponse.access_token);
+
+                    //check if response contains more than one file 
+
                     FileDownloadOperation fileDownloadOperation = file.Download(request);
                     batch.Add(fileDownloadOperation);
                 }
                 batch.Start();
                 batch.Wait();
                 batch.EnsureSuccess();
+
+                //supporting more than one file per query
+                int offset = 1;
+                while (true)
+                {
+
+                    var unBatchedFiles =
+                         from files in this.Delivery.Files
+                         where (files.Parameters.ContainsKey("Batch") && Convert.ToBoolean(files.Parameters["Batch"]))
+                         select files;
+                    if (unBatchedFiles.Count() > 0)
+                        FetchNext((DeliveryChildList<DeliveryFile>)unBatchedFiles, offset);
+                    else
+                        break;
+                }
 
             }
             finally
@@ -93,6 +113,42 @@ namespace Edge.Services.SalesForce
 
             Delivery.Save();
             return Core.Services.ServiceOutcome.Success;
+        }
+
+        private void FetchNext(DeliveryChildList<DeliveryFile> fetchFrom,int offset)
+        {
+            BatchDownloadOperation nextBatch = new BatchDownloadOperation();
+            List<DeliveryFile> nextRecordsFiles = new List<DeliveryFile>();
+            foreach (DeliveryFile ReportFile in fetchFrom)
+            {
+                //setting cuurent file has batched and batching next file
+                ReportFile.Parameters.Add("Batch", true);
+                
+                
+                string fileName = ReportFile.Name + "-" + offset;
+                
+                JsonDynamicReader reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.nextRecordsUrl");
+                string nextRecordPath;
+                if (reportReader.Read())
+                {
+                    nextRecordPath = reportReader.Current.nextRecordsUrl;
+                    DeliveryFile nextRecordFile = new DeliveryFile();
+                    nextRecordFile.SourceUrl = ((Token)(ReportFile.Parameters["Token"])).instance_url + nextRecordPath;
+
+                    HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(nextRecordFile.SourceUrl);
+                    request.Headers.Add("Authorization: OAuth " + ((Token)(ReportFile.Parameters["Token"])).access_token);
+
+                    //check if response contains more than one file 
+
+                    FileDownloadOperation fileDownloadOperation = nextRecordFile.Download(request);
+                    nextBatch.Add(fileDownloadOperation);
+
+                    nextRecordsFiles.Add(nextRecordFile);
+                }
+            }
+            nextBatch.Start();
+            nextBatch.Wait();
+            nextBatch.EnsureSuccess();
         }
 
         public Token RefreshToken(string refreshToken)
@@ -122,7 +178,7 @@ namespace Edge.Services.SalesForce
             tokenResponse = (Token)JsonConvert.DeserializeObject(readStream.ReadToEnd(), typeof(Token));
             tokenResponse.refresh_token = refreshToken;
             tokenResponse.UpdateTime = DateTime.Now;
-            tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);
+            tokenResponse.Save(Delivery.Parameters["SalesForceClientID"].ToString(), this.Delivery.Account.ID);
             return tokenResponse;
         }
 
@@ -163,7 +219,7 @@ namespace Edge.Services.SalesForce
             StreamReader readStream = new StreamReader(responseBody, encode);
             Token token = JsonConvert.DeserializeObject<Token>(readStream.ReadToEnd());
             token.UpdateTime = DateTime.Now;
-            token.Save(this.Delivery.Parameters["SalesForceClientID"].ToString(),this.Delivery.Account.ID);  //SalesForceClientID is the Consumer Key
+            token.Save(this.Delivery.Parameters["SalesForceClientID"].ToString(), this.Delivery.Account.ID);  //SalesForceClientID is the Consumer Key
             //return string itself (easier to work with)
             return token;
         }
@@ -187,7 +243,7 @@ namespace Edge.Services.SalesForce
         public string access_token { get; set; }
         public string ClientID { get; set; }
 
-        internal void Save(string clientID,int accountId)
+        internal void Save(string clientID, int accountId)
         {
 
             Token tokenResponse = new Token();
@@ -215,7 +271,7 @@ namespace Edge.Services.SalesForce
 
         }
 
-        public static Token Get(string clientID,int accountId)
+        public static Token Get(string clientID, int accountId)
         {
             Token tokenResponse = new Token();
             using (SqlConnection conn = new SqlConnection(AppSettings.GetConnectionString(tokenResponse, "DB")))

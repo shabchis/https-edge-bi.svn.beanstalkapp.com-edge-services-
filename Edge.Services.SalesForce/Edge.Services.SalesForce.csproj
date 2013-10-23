@@ -49,7 +49,6 @@
     <Compile Include="Consts.cs" />
     <Compile Include="InitializerService.cs" />
     <Compile Include="ProcessorService.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="Properties\AssemblyInfo.cs.template" />
     <Compile Include="RetrieverService.cs" />
   </ItemGroup>

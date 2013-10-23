@@ -108,7 +108,7 @@ namespace Edge.Services.SalesForce
             {
                 DeliveryFile file = new DeliveryFile();
                 string[] q = qwry.Split(':');
-                file.Name = q[0];
+                file.Name = q[0]+"-0";
                 DateTime start = TimePeriod.Start.ToDateTime();
                 DateTime end = TimePeriod.End.ToDateTime();
                 if (utcOffset != 0)
