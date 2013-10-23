@@ -25,7 +25,7 @@ namespace Edge.Services.SalesForce
         {
             Mutex mutex = new Mutex(false, "SalesForceRetriver");
             BatchDownloadOperation batch = new BatchDownloadOperation();
-           
+
 
             try
             {
@@ -91,19 +91,8 @@ namespace Edge.Services.SalesForce
 
                 //supporting more than one file per query
                 int offset = 1;
-                while (true)
-                {
-
-                    var unBatchedFiles =
-                         from files in this.Delivery.Files
-                         where (files.Parameters.ContainsKey("Batch") && Convert.ToBoolean(files.Parameters["Batch"]))
-                         select files;
-                    if (unBatchedFiles.Count() > 0)
-                        FetchNext((DeliveryChildList<DeliveryFile>)unBatchedFiles, offset);
-                    else
-                        break;
-                }
-
+                FetchNext(this.Delivery.Files, offset);
+              
             }
             finally
             {
@@ -115,18 +104,18 @@ namespace Edge.Services.SalesForce
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private void FetchNext(DeliveryChildList<DeliveryFile> fetchFrom,int offset)
+        private DeliveryChildList<DeliveryFile> FetchNext(DeliveryChildList<DeliveryFile> fetchFrom, int offset)
         {
             BatchDownloadOperation nextBatch = new BatchDownloadOperation();
-            List<DeliveryFile> nextRecordsFiles = new List<DeliveryFile>();
+            DeliveryChildList<DeliveryFile> nextRecordsFiles = new DeliveryChildList<DeliveryFile>();
             foreach (DeliveryFile ReportFile in fetchFrom)
             {
                 //setting cuurent file has batched and batching next file
                 ReportFile.Parameters.Add("Batch", true);
-                
-                
+
+
                 string fileName = ReportFile.Name + "-" + offset;
-                
+
                 JsonDynamicReader reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.nextRecordsUrl");
                 string nextRecordPath;
                 if (reportReader.Read())
@@ -146,9 +135,19 @@ namespace Edge.Services.SalesForce
                     nextRecordsFiles.Add(nextRecordFile);
                 }
             }
-            nextBatch.Start();
-            nextBatch.Wait();
-            nextBatch.EnsureSuccess();
+            if (nextRecordsFiles.Count > 0)
+            {
+                nextBatch.Start();
+                nextBatch.Wait();
+                nextBatch.EnsureSuccess();
+
+                foreach (DeliveryFile file in FetchNext(nextRecordsFiles, offset))
+                {
+                    this.Delivery.Files.Add(file);
+                }
+            }
+
+            return nextRecordsFiles;
         }
 
         public Token RefreshToken(string refreshToken)
