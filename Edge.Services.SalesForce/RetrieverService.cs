@@ -91,7 +91,7 @@ namespace Edge.Services.SalesForce
 
                 //supporting more than one file per query
                 int offset = 1;
-                FetchNext(this.Delivery.Files, offset);
+               // FetchNext(this.Delivery.Files, offset);
               
             }
             finally
@@ -104,10 +104,10 @@ namespace Edge.Services.SalesForce
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private DeliveryChildList<DeliveryFile> FetchNext(DeliveryChildList<DeliveryFile> fetchFrom, int offset)
+        private List<DeliveryFile> FetchNext(List<DeliveryFile> fetchFrom, int offset)
         {
             BatchDownloadOperation nextBatch = new BatchDownloadOperation();
-            DeliveryChildList<DeliveryFile> nextRecordsFiles = new DeliveryChildList<DeliveryFile>();
+            List<DeliveryFile> nextRecordsFiles = new List<DeliveryFile>();
             foreach (DeliveryFile ReportFile in fetchFrom)
             {
                 //setting cuurent file has batched and batching next file

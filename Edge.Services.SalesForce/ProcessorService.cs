@@ -78,16 +78,11 @@ namespace Edge.Services.SalesForce
                         numOfRecordes = int.Parse(reportReader.Current.totalSize);
 
                     reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.nextRecordsUrl");
-                    string nextRecordPath;
                     if (reportReader.Read())
                     {
-                        nextRecordPath = reportReader.Current.nextRecordsUrl;
-                        DeliveryFile nextRecordFile = new DeliveryFile();
-                        nextRecordFile.SourceUrl = ReportFile.Parameters["ServerURL"].ToString() + nextRecordPath;
-
-                        this.Delivery.Files.Add(nextRecordFile);
-
+                        Log.Write(string.Format("Salesforce Attention - account {0} contains more than 1 file per query {1}", this.Delivery.Account.ID, ReportFile.Parameters["Query"].ToString()),LogMessageType.Warning);
                     }
+
                     if (numOfRecordes > 0)
                     {
                         //Get Values
