@@ -173,24 +173,29 @@ namespace Edge.Services.Google.AdWords
                     {
                         if (_PlacementsReader.Current[Const.PlacementCriteriaID] == Const.EOF)
                             break;
-                        KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
+                        
+                        //Read data only if managed GDN, otherwise it is an automatic GDN so skip
+                        if (!((String)(_PlacementsReader.Current[Const.PlacementCriteriaID])).Trim().Equals("--"))
                         {
-                            KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.PlacementCriteriaID]),
-                            AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
-                            CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
-                        };
-                        PlacementTarget placement = new PlacementTarget()
-                        {
-                            OriginalID = _PlacementsReader.Current[Const.PlacementCriteriaID],
-                            Placement = _PlacementsReader.Current[Const.PlacementFieldName],
-                            PlacementType = PlacementType.Managed,
-                            // Status = placement_kwd_Status_Data[placementPrimaryKey.ToString()]
-                        };
-                        //Setting Tracker for placment
-                        if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
-                            placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
+                            KeywordPrimaryKey placementPrimaryKey = new KeywordPrimaryKey()
+                            {
+                                KeywordId = Convert.ToInt64(_PlacementsReader.Current[Const.PlacementCriteriaID]),
+                                AdgroupId = Convert.ToInt64(_PlacementsReader.Current[Const.AdGroupIdFieldName]),
+                                CampaignId = Convert.ToInt64(_PlacementsReader.Current[Const.CampaignIdFieldName])
+                            };
+                            PlacementTarget placement = new PlacementTarget()
+                            {
+                                OriginalID = _PlacementsReader.Current[Const.PlacementCriteriaID],
+                                Placement = _PlacementsReader.Current[Const.PlacementFieldName],
+                                PlacementType = PlacementType.Managed,
+                                // Status = placement_kwd_Status_Data[placementPrimaryKey.ToString()]
+                            };
+                            //Setting Tracker for placment
+                            if (!String.IsNullOrWhiteSpace(Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName])))
+                                placement.DestinationUrl = Convert.ToString(_PlacementsReader.Current[Const.DestUrlFieldName]);
 
-                        _placementsData.Add(placementPrimaryKey.ToString(), placement);
+                            _placementsData.Add(placementPrimaryKey.ToString(), placement);
+                        }
                     }
                 }
                 #endregion
