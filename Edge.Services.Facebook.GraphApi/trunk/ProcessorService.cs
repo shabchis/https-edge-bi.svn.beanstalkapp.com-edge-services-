@@ -332,17 +332,11 @@ namespace Edge.Services.Facebook.GraphApi
 										{
 
 											ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-
-											if (!string.IsNullOrEmpty(ad.DestinationUrl))
-											{
-												/*Sets Tracker*/
+											
+                                            /*Get Data from Mapping E.g Tracker*/
 												if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
 													this.Mappings.Objects[typeof(Ad)].Apply(ad);
 
-												//SegmentValue tracker = this.AutoSegments.ExtractSegmentValue(Segment.TrackerSegment, ad.DestinationUrl);
-												//if (tracker != null)
-												//    ad.Segments[Segment.TrackerSegment] = tracker;
-											}
 
 											ad.Creatives = new List<Creative>();
 											switch ((string)adGroupCreativesReader.Current.type)
