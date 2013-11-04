@@ -30,8 +30,10 @@ namespace Edge.Services.Google.AdWords
             if (this.Instance.Configuration.Options.ContainsKey("AppendSitelinks"))
                 this.Delivery.Parameters.Add("AppendSitelinks", this.Instance.Configuration.Options["AppendSitelinks"]);
 
-            if (this.Instance.Configuration.Options.ContainsKey("ConstCurrencyRate"))
-                this.Delivery.Parameters.Add("ConstCurrencyRate", this.Instance.Configuration.Options["ConstCurrencyRate"]);
+            if (this.Instance.Configuration.Options.ContainsKey("CurrencyCode"))
+                this.Delivery.Parameters.Add("CurrencyCode", this.Instance.Configuration.Options["CurrencyCode"]);
+            else
+                throw new Exception("Missing Configuration Param , CurrencyCode");
 
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
                 throw new Exception("Missing Configuration Param , KeywordContentId");

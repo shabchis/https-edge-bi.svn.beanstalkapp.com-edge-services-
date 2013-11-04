@@ -281,7 +281,7 @@ namespace Edge.Services.Google.AdWords
                                 switch (measure.Key)
                                 {
                                     case Measure.Common.Clicks: _totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks); break;
-                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] = this.ConvertToUSD(currencyCode,(Convert.ToDouble(_adsReader.Current.Cost)) / 1000000); break;
+                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] = this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000); break;
                                     case Measure.Common.Impressions: _totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions); break;
                                 }
                             }
