@@ -35,6 +35,11 @@ namespace Edge.Services.Google.AdWords
             else
                 throw new Exception("Missing Configuration Param , CurrencyCode");
 
+            if (this.Instance.Configuration.Options.ContainsKey("ConvertToUSD"))
+                this.Delivery.Parameters.Add("ConvertToUSD", this.Instance.Configuration.Options["ConvertToUSD"]);
+            else
+                throw new Exception("Missing Configuration Param , ConvertToUSD");
+
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["KeywordContentId"]))
                 throw new Exception("Missing Configuration Param , KeywordContentId");
 

@@ -89,7 +89,7 @@ namespace Edge.Services.Google.AdWords
         {
             bool includeConversionTypes = Boolean.Parse(this.Delivery.Parameters["includeConversionTypes"].ToString());
             bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
-
+            bool ConvertToUSD = Boolean.Parse(this.Delivery.Parameters["ConvertToUSD"].ToString());
             //double ConstCurrencyRate = this.Delivery.Parameters.ContainsKey("ConstCurrencyRate") ? Convert.ToDouble(this.Delivery.Parameters["ConstCurrencyRate"]) : 1;
             double ConstCurrencyRate = 1;
 
@@ -175,7 +175,7 @@ namespace Edge.Services.Google.AdWords
                     {
                         if (_PlacementsReader.Current[Const.PlacementCriteriaID] == Const.EOF)
                             break;
-                        
+
                         //Read data only if managed GDN, otherwise it is an automatic GDN so skip
                         if (!((String)(_PlacementsReader.Current[Const.PlacementCriteriaID])).Trim().Equals("--"))
                         {
@@ -269,7 +269,7 @@ namespace Edge.Services.Google.AdWords
                     {
 
                         string currencyCode = ((string)(_adsReader.Current.Currency)).ToUpper();
-                        
+
                         // Adding totals line for validation (checksum)
                         if (_adsReader.Current[Const.AdIDFieldName] == Const.EOF)
                         {
@@ -281,7 +281,9 @@ namespace Edge.Services.Google.AdWords
                                 switch (measure.Key)
                                 {
                                     case Measure.Common.Clicks: _totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks); break;
-                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] = this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000); break;
+                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] = ConvertToUSD ?
+                                        this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
+                                        break;
                                     case Measure.Common.Impressions: _totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions); break;
                                 }
                             }
@@ -409,7 +411,7 @@ namespace Edge.Services.Google.AdWords
                         //Check if keyword file contains this kwdkey and not a GDN Keyword
 
                         String[] GdnKwdIds = this.Delivery.Parameters["KeywordContentId"].ToString().Split(',');
-                     
+
                         if (!GdnKwdIds.Contains(kwdKey.KeywordId.ToString()) && _keywordsData.ContainsKey(kwdKey.ToString()))
                         {
                             KeywordTarget kwd = new KeywordTarget();
@@ -450,7 +452,8 @@ namespace Edge.Services.Google.AdWords
                         //INSERTING METRICS DATA
                         adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
-                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], this.ConvertToUSD(currencyCode,(Convert.ToDouble(_adsReader.Current.Cost)) / 1000000));
+                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost],
+                            ConvertToUSD ? this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPositionFieldName]));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClickFieldName]));
@@ -556,11 +559,11 @@ namespace Edge.Services.Google.AdWords
                                     Text2 = sitelinkAttr[3]
                                 });
 
-                            sitelinkAd.Name = "[Sitelink] "+sitelinkAttr[0];
+                            sitelinkAd.Name = "[Sitelink] " + sitelinkAttr[0];
                             sitelinkAd.Creatives.Add(new TextCreative
                             {
                                 TextType = TextCreativeType.Title,
-                                Text = "[Sitelink] "+sitelinkAttr[0]
+                                Text = "[Sitelink] " + sitelinkAttr[0]
                             });
 
                             //Ad Type
