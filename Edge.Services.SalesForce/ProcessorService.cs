@@ -89,7 +89,7 @@ namespace Edge.Services.SalesForce
                         reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.records[*].*");
                         using (reportReader)
                         {
-                            this.Mappings.OnFieldRequired = field => reportReader.Current[field];
+                            this.Mappings.OnFieldRequired = field => reportReader.Current[field]; // change to reportReader.Current.GetMemberByPath(field)
 
                             while (reportReader.Read())
                             {
