@@ -91,9 +91,7 @@ namespace Edge.Services.Google.AdWords
             bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
             bool ConvertToUSD = Boolean.Parse(this.Delivery.Parameters["ConvertToUSD"].ToString());
             //double ConstCurrencyRate = this.Delivery.Parameters.ContainsKey("ConstCurrencyRate") ? Convert.ToDouble(this.Delivery.Parameters["ConstCurrencyRate"]) : 1;
-            double ConstCurrencyRate = 1;
-
-
+            
             //Status Members
             Dictionary<string, ObjectStatus> kwd_Status_Data = new Dictionary<string, ObjectStatus>();
             Dictionary<string, ObjectStatus> placement_kwd_Status_Data = new Dictionary<string, ObjectStatus>();
@@ -122,10 +120,14 @@ namespace Edge.Services.Google.AdWords
                 _keywordsReader.MatchExactColumns = false;
                 Dictionary<string, KeywordTarget> _keywordsData = new Dictionary<string, KeywordTarget>();
 
+                this.ImportManager.BeginImport(this.Delivery);
+
                 using (_keywordsReader)
                 {
                     while (_keywordsReader.Read())
                     {
+                        this.Mappings.OnFieldRequired = field => _keywordsReader.Current[field];
+
                         if (_keywordsReader.Current[Const.KeywordIdFieldName] == Const.EOF)
                             break;
                         KeywordPrimaryKey keywordPrimaryKey = new KeywordPrimaryKey()
@@ -151,6 +153,11 @@ namespace Edge.Services.Google.AdWords
                         if (!String.IsNullOrWhiteSpace(Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName])))
                         {
                             keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
+
+                            //setting kwd tracker
+                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
+                                this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
+  
                         }
                         _keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
                     }
@@ -248,7 +255,7 @@ namespace Edge.Services.Google.AdWords
                 Dictionary<string, Ad> importedAds = new Dictionary<string, Ad>();
 
                 //session.Begin(false);
-                this.ImportManager.BeginImport(this.Delivery);
+                //this.ImportManager.BeginImport(this.Delivery);
 
                 DeliveryOutput currentOutput = Delivery.Outputs.First();
 
@@ -394,7 +401,7 @@ namespace Edge.Services.Google.AdWords
                             //ad.ExtraFields[NetworkType] = networkType;
 
                             importedAds.Add(adId, ad);
-                            this.ImportManager.ImportAd(ad);
+                            //this.ImportManager.ImportAd(ad);
                         }
                         else ad = importedAds[adId];
 
@@ -418,6 +425,11 @@ namespace Edge.Services.Google.AdWords
                             try
                             {
                                 kwd = _keywordsData[kwdKey.ToString()];
+                                //tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]]
+                                if (kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
+                                {
+                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
+                                }
                             }
                             catch (Exception)
                             {
@@ -447,6 +459,9 @@ namespace Edge.Services.Google.AdWords
                             adMetricsUnit.TargetDimensions.Add(placement);
                         }
 
+                        
+                        
+                        this.ImportManager.ImportAd(ad);
 
 
                         //INSERTING METRICS DATA
