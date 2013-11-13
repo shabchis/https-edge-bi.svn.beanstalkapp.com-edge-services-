@@ -91,7 +91,7 @@ namespace Edge.Services.Google.AdWords
             bool includeDisplaytData = Boolean.Parse(this.Delivery.Parameters["includeDisplaytData"].ToString());
             bool ConvertToUSD = Boolean.Parse(this.Delivery.Parameters["ConvertToUSD"].ToString());
             //double ConstCurrencyRate = this.Delivery.Parameters.ContainsKey("ConstCurrencyRate") ? Convert.ToDouble(this.Delivery.Parameters["ConstCurrencyRate"]) : 1;
-            
+
             //Status Members
             Dictionary<string, ObjectStatus> kwd_Status_Data = new Dictionary<string, ObjectStatus>();
             Dictionary<string, ObjectStatus> placement_kwd_Status_Data = new Dictionary<string, ObjectStatus>();
@@ -154,10 +154,11 @@ namespace Edge.Services.Google.AdWords
                         {
                             keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
 
-                            //setting kwd tracker
-                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
-                                this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
-  
+                            //setting kwd tracker incase of using Creative tracking value
+                            if (((String)(_keywordsReader.Current[Const.DestUrlFieldName])).IndexOf(Const.CreativeIDTrackingValue, StringComparison.OrdinalIgnoreCase) >= 0)
+                                if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
+                                    this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
+
                         }
                         _keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
                     }
@@ -459,8 +460,8 @@ namespace Edge.Services.Google.AdWords
                             adMetricsUnit.TargetDimensions.Add(placement);
                         }
 
-                        
-                        
+
+
                         this.ImportManager.ImportAd(ad);
 
 
@@ -696,6 +697,7 @@ namespace Edge.Services.Google.AdWords
 
 
         public const string Sitelink_EOF = "--";
+        public const string CreativeIDTrackingValue = "{creative}";
     }
 }
 
