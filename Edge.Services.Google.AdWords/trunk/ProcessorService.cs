@@ -427,9 +427,14 @@ namespace Edge.Services.Google.AdWords
                             {
                                 kwd = _keywordsData[kwdKey.ToString()];
                                 //tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]]
-                                if (kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
+                                if (ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]]==null && kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
                                 {
-                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
+                                    SegmentObject tracker =  kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
+                                    
+                                    //if value is 100ADID than replace AD ID with AD original id
+                                    tracker.Value.Replace("ADID", ad.OriginalID);
+
+                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = tracker;
                                 }
                             }
                             catch (Exception)
