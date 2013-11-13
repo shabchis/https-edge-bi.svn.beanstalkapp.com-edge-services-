@@ -426,16 +426,18 @@ namespace Edge.Services.Google.AdWords
                             try
                             {
                                 kwd = _keywordsData[kwdKey.ToString()];
-                                //tempUnit.SegmentDimensions[ImportManager.SegmentTypes[Segment.Common.Tracker]]
-                                if (ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]]==null && kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
-                                {
-                                    SegmentObject tracker =  kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
-                                    
-                                    //if value is 100ADID than replace AD ID with AD original id
-                                    tracker.Value.Replace("ADID", ad.OriginalID);
+                                                                
+                                //if Ad doesnt contains tracker than check for kwd tracker
+                                if (ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] == null || string.IsNullOrEmpty(ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value))
+                                    if (kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
+                                    {
+                                        SegmentObject tracker = kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
 
-                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = tracker;
-                                }
+                                        //if value is 100ADID than replace AD ID with AD original id
+                                        tracker.Value.Replace("ADID", ad.OriginalID);
+
+                                        ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = tracker;
+                                    }
                             }
                             catch (Exception)
                             {
