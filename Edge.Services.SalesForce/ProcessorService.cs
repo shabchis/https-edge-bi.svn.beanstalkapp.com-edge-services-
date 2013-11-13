@@ -30,6 +30,8 @@ namespace Edge.Services.SalesForce
         {
             this.Mappings.ExternalMethods.Add("GetConversion", new Func<object, int>(GetConversion));
         }
+
+        //Developed by Alon for Green SQL.
         protected int GetConversion(object d)
         {
             int result = 0;
@@ -89,7 +91,40 @@ namespace Edge.Services.SalesForce
                         reportReader = new JsonDynamicReader(ReportFile.OpenContents(compression: FileCompression.None), "$.records[*].*");
                         using (reportReader)
                         {
-                            this.Mappings.OnFieldRequired = field => reportReader.Current[field]; // change to reportReader.Current.GetMemberByPath(field)
+                            this.Mappings.OnFieldRequired = field =>
+                                {
+                                    object value = new object();
+                                    string[] nestedFields;
+
+                                    try
+                                    {
+                                        if (field.Contains('.'))
+                                        {
+                                            nestedFields = field.Split('.');
+                                            value = reportReader.Current[nestedFields[0]];
+                                            foreach (var item in nestedFields)
+                                            {
+                                              if(item.Equals(nestedFields[0])) continue;
+                                              value = ((Dictionary<string,object>)value)[item];
+                                            }
+                                            value = reportReader.Current[ nestedFields[0]][nestedFields[1]];
+                                            Console.Write(value.ToString());
+                                            return value;
+                                        }
+                                        else
+                                        {
+                                            Console.Write(value.ToString());
+                                            return reportReader.Current[field];
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        throw new Exception(string.Format("Error while trying to map field {0} from mapper", field), ex);
+                                    }
+
+                                    
+                                };
+                        
 
                             while (reportReader.Read())
                             {
