@@ -30,6 +30,12 @@ namespace Edge.Services.Google.AdWords
             if (this.Instance.Configuration.Options.ContainsKey("AppendSitelinks"))
                 this.Delivery.Parameters.Add("AppendSitelinks", this.Instance.Configuration.Options["AppendSitelinks"]);
 
+            
+            if (this.Instance.Configuration.Options.ContainsKey("UseKwdTrackerAsAdTracker"))
+                this.Delivery.Parameters.Add("UseKwdTrackerAsAdTracker", this.Instance.Configuration.Options["UseKwdTrackerAsAdTracker"]);
+            else
+                throw new Exception("Missing Configuration Param , UseKwdTrackerAsAdTracker");
+
             if (this.Instance.Configuration.Options.ContainsKey("CurrencyCode"))
                 this.Delivery.Parameters.Add("CurrencyCode", this.Instance.Configuration.Options["CurrencyCode"]);
             else

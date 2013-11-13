@@ -154,8 +154,9 @@ namespace Edge.Services.Google.AdWords
                         {
                             keyword.DestinationUrl = Convert.ToString(_keywordsReader.Current[Const.DestUrlFieldName]);
 
-                            //setting kwd tracker incase of using Creative tracking value
-                            if (((String)(_keywordsReader.Current[Const.DestUrlFieldName])).IndexOf(Const.CreativeIDTrackingValue, StringComparison.OrdinalIgnoreCase) >= 0)
+                            //setting kwd tracker
+                            //if (((String)(_keywordsReader.Current[Const.DestUrlFieldName])).IndexOf(Const.CreativeIDTrackingValue, StringComparison.OrdinalIgnoreCase) >= 0)
+                            if(Convert.ToBoolean(this.Delivery.Parameters["UseKwdTrackerAsAdTracker"]))
                                 if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
                                     this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
 
