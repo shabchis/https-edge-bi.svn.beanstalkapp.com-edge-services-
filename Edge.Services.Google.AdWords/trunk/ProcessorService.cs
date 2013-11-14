@@ -156,7 +156,7 @@ namespace Edge.Services.Google.AdWords
 
                             //setting kwd tracker
                             //if (((String)(_keywordsReader.Current[Const.DestUrlFieldName])).IndexOf(Const.CreativeIDTrackingValue, StringComparison.OrdinalIgnoreCase) >= 0)
-                            if(Convert.ToBoolean(this.Delivery.Parameters["UseKwdTrackerAsAdTracker"]))
+                            if (Convert.ToBoolean(this.Delivery.Parameters["UseKwdTrackerAsAdTracker"]))
                                 if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
                                     this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
 
@@ -304,7 +304,9 @@ namespace Edge.Services.Google.AdWords
                         Ad ad;
 
                         #region Try Get SearchKWD
-                        //SERACH KEYWORD IN KEYWORD/ Placements  Dictionary
+                        /***********************************************************************************/
+
+                        //Creating kwd primary key
                         KeywordPrimaryKey kwdKey = new KeywordPrimaryKey()
                         {
                             AdgroupId = Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName]),
@@ -313,10 +315,10 @@ namespace Edge.Services.Google.AdWords
                         };
 
                         //Check if keyword file contains this kwdkey and not a GDN Keyword
-
                         String[] GdnKwdIds = this.Delivery.Parameters["KeywordContentId"].ToString().Split(',');
-                        bool searchKwdFound = false;
+                        bool IsSearchKwd = false;
                         KeywordTarget kwd = null;
+                        PlacementTarget placement = null;
 
                         if (!GdnKwdIds.Contains(kwdKey.KeywordId.ToString()) && _keywordsData.ContainsKey(kwdKey.ToString()))
                         {
@@ -333,10 +335,25 @@ namespace Edge.Services.Google.AdWords
                                 kwd = new KeywordTarget { OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]) };
                             }
 
-                            searchKwdFound = true;
+                            IsSearchKwd = true;
                         }
+                        else
+                        {
+                            placement = new PlacementTarget();
+                            try
+                            {
+                                placement = _placementsData[kwdKey.ToString()];
+                            }
+                            catch (Exception)
+                            {
+                                placement.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
+                                placement.PlacementType = PlacementType.Automatic;
+                                placement.Placement = Const.AutoDisplayNetworkName;
+                            }
+                        }
+                        /***********************************************************************************/
                         #endregion
-                      
+
                         string adId = _adsReader.Current[Const.AdIDFieldName];
                         if (!importedAds.ContainsKey(adId))
                         {
@@ -369,7 +386,7 @@ namespace Edge.Services.Google.AdWords
                             ad.ExtraFields[AdType] = (int)(EdgeAdType)Enum.Parse(typeof(EdgeAdType), adTypeEdgeValue, true); ;
                             /****************************************************************/
                             #endregion
-                           
+
 
                             //Creative
                             ad.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = _adsReader.Current[Const.DisplayURLFieldName] });
@@ -386,8 +403,8 @@ namespace Edge.Services.Google.AdWords
                             }
 
                             //if Ad doesnt contains tracker than check for kwd tracker
-                            if (ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] == null || string.IsNullOrEmpty(ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value))
-                                if (kwd.Segments != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
+                            if (Convert.ToBoolean(this.Delivery.Parameters["UseKwdTrackerAsAdTracker"]))
+                                if (kwd!=null && kwd.Segments != null && kwd.Segments.ContainsKey(this.ImportManager.SegmentTypes[Segment.Common.Tracker]))
                                 {
                                     SegmentObject tracker = kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
 
@@ -398,7 +415,7 @@ namespace Edge.Services.Google.AdWords
                                 }
                             /******************************************************/
                             #endregion
-                            
+
                             #region Campaign
                             /****************************************************************/
                             ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
@@ -410,7 +427,7 @@ namespace Edge.Services.Google.AdWords
                             };
                             /****************************************************************/
                             #endregion
-                          
+
                             #region Image
                             /****************************************************************/
                             //Image Type > Create Image
@@ -427,7 +444,7 @@ namespace Edge.Services.Google.AdWords
                             }
                             /****************************************************************/
                             #endregion
-                           
+
                             #region Text od Display
                             /****************************************************************/
                             else //Text ad or Display ad
@@ -447,7 +464,7 @@ namespace Edge.Services.Google.AdWords
                             }
                             /****************************************************************/
                             #endregion
-                        
+
                             #region Adgroup
                             /****************************************************************/
                             //Insert Adgroup 
@@ -460,7 +477,7 @@ namespace Edge.Services.Google.AdWords
                             };
                             /****************************************************************/
                             #endregion
-                            
+
                             #region Network
                             /****************************************************************/
                             //Insert Network Type Display Network / Search Network
@@ -483,25 +500,14 @@ namespace Edge.Services.Google.AdWords
                         adMetricsUnit.Ad = ad;
 
                         //INSERTING SEARCH KEYWORD INTO METRICS
-                        if (searchKwdFound & kwd != null)
+                        if (IsSearchKwd & kwd != null)
                         {
                             adMetricsUnit.TargetDimensions = new List<Target>();
                             adMetricsUnit.TargetDimensions.Add(kwd);
                         }
                         //INSERTING GDN KEYWORD INTO METRICS
-                        else 
+                        else if (placement != null)
                         {
-                            PlacementTarget placement = new PlacementTarget();
-                            try
-                            {
-                                placement = _placementsData[kwdKey.ToString()];
-                            }
-                            catch (Exception)
-                            {
-                                placement.OriginalID = Convert.ToString(_adsReader.Current[Const.KeywordIdFieldName]);
-                                placement.PlacementType = PlacementType.Automatic;
-                                placement.Placement = Const.AutoDisplayNetworkName;
-                            }
                             //INSERTING KEYWORD INTO METRICS
                             adMetricsUnit.TargetDimensions = new List<Target>();
                             adMetricsUnit.TargetDimensions.Add(placement);
