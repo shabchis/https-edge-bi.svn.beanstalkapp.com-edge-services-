@@ -5,14 +5,16 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
+using Edge.Core.Services;
 
 namespace Edge.Services.Currencies
 {
 	public class InitializerService : PipelineService
 	{
 
-		protected override Edge.Core.Services.ServiceOutcome DoPipelineWork()
+		protected override ServiceOutcome DoPipelineWork()
 		{
+           
 			this.Delivery = this.NewDelivery(); // setup delivery
 			this.Delivery.FileDirectory = Instance.Configuration.Options[Edge.Data.Pipeline.Services.Const.DeliveryServiceConfigurationOptions.FileDirectory];
 			this.Delivery.Account = new Account()
@@ -91,12 +93,12 @@ namespace Edge.Services.Currencies
 			}
 
 			// Create an import manager that will handle rollback, if necessary
-			CurrencyImportManager importManager = new CurrencyImportManager(this.Instance.InstanceID,null);
+			//CurrencyImportManager importManager = new CurrencyImportManager(this.Instance.InstanceID,null);
 			//TO DO: Add rollback
 			
 
 			// will use ConflictBehavior configuration option to abort or rollback if any conflicts occur
-			this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
+			//this.HandleConflicts(importManager, DeliveryConflictBehavior.Abort);
 
 
 			this.Delivery.Save();
