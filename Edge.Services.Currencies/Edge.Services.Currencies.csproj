@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlAgilityPack">
+      <HintPath>..\..\thirdparty\HTML\Net40\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -43,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="YahooFinance\YahooFinanceInitializerService.cs" />
+    <Compile Include="YahooFinance\YahooFinanceRetrieverService.cs" />
+    <Compile Include="YahooFinance\YahooFinanceProcessorService.cs" />
     <Compile Include="CurrencyImportManager.cs" />
     <Compile Include="MetricsCommitService.cs" />
     <Compile Include="ProcessorService.cs" />

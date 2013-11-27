@@ -26,6 +26,9 @@ namespace Edge.Services.Currencies
 
 			string fileName = string.Empty;
 
+            if (String.IsNullOrEmpty(this.Instance.Configuration.Options["YahhoApiURL"]))
+                this.Delivery.Parameters.Add("YahhoApiURL", this.Instance.Configuration.Options["YahhoApiURL"]);
+
 			//FileName
 			if (String.IsNullOrEmpty(this.Instance.Configuration.Options["FileName"]))
 				throw new Exception("Missing Configuration Param , FileName");
