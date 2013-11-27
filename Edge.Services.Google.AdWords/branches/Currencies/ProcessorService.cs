@@ -291,8 +291,8 @@ namespace Edge.Services.Google.AdWords
                                 switch (measure.Key)
                                 {
                                     case Measure.Common.Clicks: _totals[Measure.Common.Clicks] = Convert.ToInt64(_adsReader.Current.Clicks); break;
-                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] = ConvertToUSD ?
-                                        this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
+                                    case Measure.Common.Cost: _totals[Measure.Common.Cost] =
+                                        ConvertToUSD ? this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000;
                                         break;
                                     case Measure.Common.Impressions: _totals[Measure.Common.Impressions] = Convert.ToInt64(_adsReader.Current.Impressions); break;
                                 }
@@ -518,8 +518,13 @@ namespace Edge.Services.Google.AdWords
                         //INSERTING METRICS DATA
                         adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
+                        
+                        //Currencies Conversion Support
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost],
-                            ConvertToUSD ? this.ConvertToUSD(this.Delivery.Parameters["CurrencyCode"].ToString().ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+                            ConvertToUSD ? this.ConvertToUSD(currencyCode.ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.CostBeforeConversion], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.USDConversionRate], Convert.ToDouble( this.ImportManager.CurrencyRates[currencyCode].RateValue));
+
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPositionFieldName]));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClickFieldName]));
@@ -529,7 +534,7 @@ namespace Edge.Services.Google.AdWords
                         string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
                         Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 
-                        //Dictionary<string, double> totalConvSum2 = new Dictionary<string, double>();
+                   
 
                         if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
                         {
