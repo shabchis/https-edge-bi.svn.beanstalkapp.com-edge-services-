@@ -522,9 +522,11 @@ namespace Edge.Services.Google.AdWords
                         //Currencies Conversion Support
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost],
                             ConvertToUSD ? this.ConvertToUSD(currencyCode.ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
-                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.CostBeforeConversion], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
-                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.USDConversionRate], Convert.ToDouble( this.ImportManager.CurrencyRates[currencyCode].RateValue));
-
+                        if (ConvertToUSD)
+                        {
+                            adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.CostBeforeConversion], (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
+                            adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.USDConversionRate], Convert.ToDouble(this.ImportManager.CurrencyRates[currencyCode].RateValue));
+                        }
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], Convert.ToInt64(_adsReader.Current.Impressions));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], Convert.ToDouble(_adsReader.Current[Const.AvgPositionFieldName]));
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], Convert.ToDouble(_adsReader.Current[Const.ConversionOnePerClickFieldName]));
