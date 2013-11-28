@@ -46,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CurrencyRerun\CurrencyReruneInitializerService.cs" />
+    <Compile Include="CurrencyRerun\CurrencyRerunProcessorService.cs" />
+    <Compile Include="CurrencyRerun\CurrencyRerunRetrieverService.cs" />
     <Compile Include="YahooFinance\YahooFinanceInitializerService.cs" />
     <Compile Include="YahooFinance\YahooFinanceRetrieverService.cs" />
     <Compile Include="YahooFinance\YahooFinanceProcessorService.cs" />
