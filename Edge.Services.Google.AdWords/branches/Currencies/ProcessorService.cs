@@ -586,7 +586,7 @@ namespace Edge.Services.Google.AdWords
                             if (((String)_sitelinkReader.Current[Const.SiteLinkAttributeValuesHeader]).Equals(Const.Sitelink_EOF))
                                 break;
 
-                            string sitelinkId = _sitelinkReader.Current[Const.PlaceholderFeedItemID];
+                            string sitelinkId = string.Format("{0}{1}{2}", _sitelinkReader.Current[Const.PlaceholderFeedItemID], _sitelinkReader.Current[Const.CampaignIdFieldName], _sitelinkReader.Current[Const.AdGroupIdFieldName]);
                             sitelinkAd = new Ad();
                             sitelinkAd.OriginalID = sitelinkId;
                             sitelinkAd.Channel = new Channel() { ID = 1 };
