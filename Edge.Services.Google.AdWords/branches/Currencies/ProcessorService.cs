@@ -159,7 +159,7 @@ namespace Edge.Services.Google.AdWords
                                 if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(KeywordTarget)))
                                     this.Mappings.Objects[typeof(KeywordTarget)].Apply(keyword);
                         }
-                     
+
 
 
                         _keywordsData.Add(keywordPrimaryKey.ToString(), keyword);
@@ -406,14 +406,14 @@ namespace Edge.Services.Google.AdWords
                             //if Ad doesnt contains tracker than check for kwd tracker
                             if (Convert.ToBoolean(this.Delivery.Parameters["UseKwdTrackerAsAdTracker"]))
                                 if (kwd != null && kwd.Segments != null && kwd.Segments.ContainsKey(this.ImportManager.SegmentTypes[Segment.Common.Tracker]))
-                                    if (kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null)
+                                    if (kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] != null && kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value != null)
                                     {
                                         SegmentObject tracker = kwd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]];
 
                                         //if value contains ADID than replace ADID with AD original id
-                                        tracker.Value.Replace("ADID", ad.OriginalID);
-
+                                        tracker.Value = tracker.Value.Replace("ADID", ad.OriginalID);
                                         ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]] = tracker;
+
                                     }
                             /******************************************************/
                             #endregion
@@ -518,7 +518,7 @@ namespace Edge.Services.Google.AdWords
                         //INSERTING METRICS DATA
                         adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], Convert.ToInt64(_adsReader.Current.Clicks));
-                        
+
                         //Currencies Conversion Support
                         adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost],
                             ConvertToUSD ? this.ConvertToUSD(currencyCode.ToUpper(), (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000) : (Convert.ToDouble(_adsReader.Current.Cost)) / 1000000);
@@ -536,7 +536,7 @@ namespace Edge.Services.Google.AdWords
                         string conversionKey = String.Format("{0}#{1}", ad.OriginalID, _adsReader.Current[Const.KeywordIdFieldName]);
                         Dictionary<string, long> conversionDic = new Dictionary<string, long>();
 
-                   
+
 
                         if (importedAdsWithConv.TryGetValue(conversionKey, out conversionDic))
                         {
