@@ -643,7 +643,7 @@ namespace Edge.Services.Google.AdWords
 
                             //Ad Type
                             //Note: changed to "sitelink" following Amir request
-                           // sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Sitelink);
+                            sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Sitelink);
 
 
                             siteLinkMetricsUnit.Ad = sitelinkAd;
