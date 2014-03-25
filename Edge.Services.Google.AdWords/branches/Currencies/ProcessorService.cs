@@ -36,7 +36,8 @@ namespace Edge.Services.Google.AdWords
             Other = 9,
             Mobile_text = 10,
             Mobile_image = 11,
-            Mobile_display = 12
+            Mobile_display = 12,
+            Sitelink = 14
         }
 
         public ProcessorService()
@@ -591,6 +592,7 @@ namespace Edge.Services.Google.AdWords
                             sitelinkAd.OriginalID = sitelinkId;
                             sitelinkAd.Channel = new Channel() { ID = 1 };
                             sitelinkAd.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
+                            
 
                             //Creative
 
@@ -640,17 +642,17 @@ namespace Edge.Services.Google.AdWords
                             });
 
                             //Ad Type
-                            string devicePreferenceColumnValue = Convert.ToString(_sitelinkReader.Current[Const.AdDevicePreferenceFieldName]);
-
-                            //is mobile ad ? 
-                            if (devicePreferenceColumnValue.Equals(Const.AdDevicePreferenceMobileFieldValue))
-                            {
-                                sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Mobile_text);
-                            }
-                            else sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Text_ad);
+                            //Note: changed to "sitelink" following Amir request
+                           // sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Sitelink);
 
 
                             siteLinkMetricsUnit.Ad = sitelinkAd;
+
+                            //Setting Default Currency as USD following Amir's request from March 2014
+                            siteLinkMetricsUnit.Currency = new Currency
+                            {
+                                Code = "USD"
+                            };
 
                             //INSERTING METRICS DATA
                             siteLinkMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
