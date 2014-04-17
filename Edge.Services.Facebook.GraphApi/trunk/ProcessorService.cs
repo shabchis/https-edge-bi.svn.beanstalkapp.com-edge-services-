@@ -70,19 +70,19 @@ namespace Edge.Services.Facebook.GraphApi
 								OriginalID = Convert.ToString(campaignsReader.Current.id),
 							};
 
-							long campaignStatus = long.Parse(campaignsReader.Current.campaign_status);
-							switch (campaignStatus)
-							{
-								case 1:
-									camp.Status = ObjectStatus.Active;
-									break;
-								case 2:
-									camp.Status = ObjectStatus.Paused;
-									break;
-								case 3:
-									camp.Status = ObjectStatus.Deleted;
-									break;
-							}
+                            //string campaignStatus = campaignsReader.Current.campaign_status;
+                            //switch (campaignStatus)
+                            //{
+                            //    case "ACTIVE":
+                            //        camp.Status = ObjectStatus.Active;
+                            //        break;
+                            //    case "PAUSED":
+                            //        camp.Status = ObjectStatus.Paused;
+                            //        break;
+                            //    case "DELETED":
+                            //        camp.Status = ObjectStatus.Deleted;
+                            //        break;
+                            //}
 							campaignsData.Add(camp.OriginalID, camp);
 						}
 					}
@@ -217,6 +217,26 @@ namespace Edge.Services.Facebook.GraphApi
 				}
 
 				#endregion
+
+
+                if (filesByType.ContainsKey(Consts.FileTypes.ConversionsStats))
+                {
+                    List<string> convStatsFiles = filesByType[Consts.FileTypes.ConversionsStats];
+                    foreach (var convStat in convStatsFiles)
+                    {
+                        DeliveryFile conversionStatsFile = this.Delivery.Files[convStat];
+
+                        //Getting Next conversion file URL
+                        var conversionStatsReader = new JsonDynamicReader(conversionStatsFile.OpenContents(), "$.data[*].*");
+
+                        using (conversionStatsReader)
+                        {
+                            //Get Stats from conversion file
+                        }
+                    }
+
+                }
+
 
 				if (filesByType.ContainsKey(Consts.FileTypes.AdGroupStats))
 				{

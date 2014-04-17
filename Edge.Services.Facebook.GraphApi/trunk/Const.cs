@@ -32,6 +32,7 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string GetAdGroups = "adgroups";
 			public const string GetAdGroupCreatives = "adcreatives";
 			public const string GetAdGroupStats = "adgroupstats";
+            public const string GetConversionStats = "adgroupconversions";
 		}
 		public static class FacebookMethodsParams
 		{
@@ -43,6 +44,7 @@ namespace Edge.Services.Facebook.GraphApi
 		}
 		public static class DeliveryFilesNames
 		{
+            public const string ConversionsStats = "ConversionsStats-{0}.json";
 			public const string AdGroupTargeting = "AdGroupTargeting-{0}.json";
 			public const string Campaigns = "Campaigns-{0}.json";
 			public const string AdGroup = "AdGroups-{0}.json";
@@ -54,6 +56,7 @@ namespace Edge.Services.Facebook.GraphApi
 			Campaigns,
 			AdGroups,
 			AdGroupStats,
+            ConversionsStats,
 			Creatives			
 		}
 		public  enum FileSubType
