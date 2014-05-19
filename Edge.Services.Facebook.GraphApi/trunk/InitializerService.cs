@@ -107,7 +107,14 @@ namespace Edge.Services.Facebook.GraphApi
             #endregion Conversions
 
             //this.ReportProgress(0.4);
-            #region adgroup
+            #region adgroup 
+            /*
+             * Summary
+             * An ad group contains the data necessary for an ad, such as bid type, bid info,
+             * targeting data, creative elements, and campaign information. Each ad group is
+             * associated with a campaign and all ad groups in a campaign have the same daily
+             * or lifetime budget and schedule.
+             * */
 
             deliveryFile = new DeliveryFile();
             deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
@@ -125,18 +132,37 @@ namespace Edge.Services.Facebook.GraphApi
 
             //this.ReportProgress(0.6);
 
-            #region Campaigns
+            #region AdSet- Formally Campaigns
 
             deliveryFile = new DeliveryFile();
             deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
             if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignFields))
-                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
+              methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
 
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaigns);
+           // methodParams.Add("redownload", "true");
+
+            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsAdSets);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Campaigns);
+            this.Delivery.Files.Add(deliveryFile);
+
+            #endregion
+
+
+            #region Campaigns - New Structure
+
+            deliveryFile = new DeliveryFile();
+            deliveryFile.Name = Consts.DeliveryFilesNames.CampaignGroups;
+            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+            if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignGroupsFields))
+                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignGroupsFields].ToString());
+
+            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsGroups);
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.CampaignGroups);
             this.Delivery.Files.Add(deliveryFile);
 
             #endregion

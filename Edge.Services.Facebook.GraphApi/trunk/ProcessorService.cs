@@ -351,7 +351,7 @@ namespace Edge.Services.Facebook.GraphApi
 										foreach (Ad ad in adsByCreativeID)
 										{
 
-											ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+                                            ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
 											
                                             /*Get Data from Mapping E.g Tracker*/
 												if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))

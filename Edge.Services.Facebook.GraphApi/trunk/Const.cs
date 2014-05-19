@@ -20,7 +20,8 @@ namespace Edge.Services.Facebook.GraphApi
 		public const string Ads_XPath_GetAdGroupCreatives = "Facebook.Ads.XPath.GetAdGroupCreatives";
 		public const string AdGroupCreativeFields = "Facebook.Fields.AdGroupCreative";
 		public const string AdGroupFields = "Facebook.Fields.AdGroup";
-		public const string CampaignFields = "Facebook.Fields.Campaign";
+        public const string CampaignFields = "Facebook.Fields.Campaign";
+        public const string CampaignGroupsFields = "Facebook.Fields.CampaignGroups";
 	}
 
 	public class Consts
@@ -28,7 +29,8 @@ namespace Edge.Services.Facebook.GraphApi
 		public static class FacebookMethodsNames
 		{
 			public const string GetAdGroupTargeting = "adgrouptargeting";
-			public const string GetCampaigns = "adcampaigns";
+			public const string GetCampaignsAdSets = "adcampaigns";
+            public const string GetCampaignsGroups = "adcampaign_groups";
 			public const string GetAdGroups = "adgroups";
 			public const string GetAdGroupCreatives = "adcreatives";
 			public const string GetAdGroupStats = "adgroupstats";
@@ -46,7 +48,8 @@ namespace Edge.Services.Facebook.GraphApi
 		{
             public const string ConversionsStats = "ConversionsStats-{0}.json";
 			public const string AdGroupTargeting = "AdGroupTargeting-{0}.json";
-			public const string Campaigns = "Campaigns-{0}.json";
+			public const string Campaigns = "AdSets_Formally_Campaign-{0}.json";
+            public const string CampaignGroups = "CampaignGroups-{0}.json";
 			public const string AdGroup = "AdGroups-{0}.json";
 			public const string AdGroupStats = "AdGroupStats-{0}.json";
 			public const string Creatives = "AdGroupCreatives-{0}.json";
@@ -54,6 +57,7 @@ namespace Edge.Services.Facebook.GraphApi
 		public  enum FileTypes
 		{			
 			Campaigns,
+            CampaignGroups,
 			AdGroups,
 			AdGroupStats,
             ConversionsStats,
