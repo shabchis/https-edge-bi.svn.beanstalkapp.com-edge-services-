@@ -10,6 +10,7 @@ using Edge.Data.Pipeline;
 using Newtonsoft.Json;
 using System.Collections;
 using System.Security.Cryptography;
+using FileInfo = Edge.Data.Pipeline.FileInfo;
 
 
 namespace Edge.Services.Facebook.GraphApi
@@ -22,6 +23,7 @@ namespace Edge.Services.Facebook.GraphApi
 		private string _appSecretProof;
 		const double _firstBatchRatio = 0.5;
 		const double _secondBatchRatio = 0.5;
+	   // private List<DeliveryFile> files;
         Dictionary<Consts.FileTypes, List<string>> filesByType = new Dictionary<Consts.FileTypes, List<string>>();
 		#endregion
 
@@ -46,15 +48,16 @@ namespace Edge.Services.Facebook.GraphApi
 
 			}
 
-            List<DeliveryFile> files = new List<DeliveryFile>();
-            
+
+            //files = new List<DeliveryFile>();
             Delivery.Parameters.Add("FilesByType", filesByType);
-		    
+		    FileDownloadOperation fileDownloadOperation;
+
 			foreach (DeliveryFile file in Delivery.Files)
 			{
 				if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length))
 				{
-                    FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
+                    fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
 					countBatch.Add(fileDownloadOperation);
 				}
 			}
@@ -63,62 +66,77 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 		    var nextfiles = Delivery.Files.Where(f => f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long) Consts.FileSubType.Length));
-            int counter = 100;
+            int counter = 1000;
 
-		    foreach (DeliveryFile file in nextfiles)
-		    {
-		        DownloadNextFiles(file, counter);
-		    }
+            Next(nextfiles, counter);
 
-            this.Delivery.Save();
-
-            //foreach (var file in files)
-            //    this.Delivery.Files.Add(file);
-            //this.Delivery.Save();
-
-
-            //batch = new BatchDownloadOperation();
-            //AddDataFilesToBatch(batch, files);
+		    
+            
 
             ////batch.Progressed += new EventHandler(batch_Progressed);
             //RunBatch(batch);
             //this.Delivery.Save();
 			return ServiceOutcome.Success;
 		}
+        private void Next(IEnumerable<DeliveryFile> nextfiles, int counter)
+        {
+            if (nextfiles.Count() == 0)
+                return;
 
-        private void DownloadNextFiles(DeliveryFile file, int counter)
-	    {
-            BatchDownloadOperation batch;
+            var newFiles = new List<DeliveryFile>();
 
+            foreach (DeliveryFile file in nextfiles)
+            {                
+                counter = counter + 1;
+                CreateNextFiles(file, counter, newFiles);
+            }
+
+            if (newFiles.Count() == 0)
+            {
+                return;
+            }
+
+            foreach (var file in newFiles)
+                this.Delivery.Files.Add(file);
+            this.Delivery.Save();
+
+            BatchDownloadOperation batch = new BatchDownloadOperation();
+            foreach (DeliveryFile file in newFiles.Where(fi => fi.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.New)))
+            {
+                file.Parameters[Consts.DeliveryFileParameters.FileSubType] = Consts.FileSubType.Data;
+                FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
+                batch.Add(fileDownloadOperation);
+            }
+
+            RunBatch(batch);
+
+            Next(newFiles, counter);
+
+        }
+
+        private void CreateNextFiles(DeliveryFile file, int counter,List<DeliveryFile> list)
+        {
             string next = GetNextUrl(file);
-
 
             if (!string.IsNullOrEmpty(next))
             {
                 var url = FixUrlChars(next);
-                var fileName = file.Name +  counter;
+                var fileName = string.Format(file.Name,counter);
+                
                 var fileType = file.Parameters[Consts.DeliveryFileParameters.FileType].ToString();
                 var f = CreateDeliveryFile(fileName, url, fileType);
-                    
-
-                if (!filesByType.ContainsKey((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]))
-                    filesByType.Add((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType], new List<string>());
-                filesByType[(Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]].Add(f.Name);
 
 
-                this.Delivery.Files.Add(f);
-               // this.Delivery.Save();
-                batch = new BatchDownloadOperation();
-                //create download file operation
-                AddDataFilesToBatch(batch, f);
-                //execute download
-                RunBatch(batch);
-                //f.Delivery.Save();
-                DownloadNextFiles(f, counter + 1);
-                //next = GetNextUrl(f);
+                if (!filesByType.ContainsKey((Consts.FileTypes) f.Parameters[Consts.DeliveryFileParameters.FileType]))
+                    filesByType.Add((Consts.FileTypes) f.Parameters[Consts.DeliveryFileParameters.FileType],
+                                    new List<string>());
+                filesByType[(Consts.FileTypes) f.Parameters[Consts.DeliveryFileParameters.FileType]].Add(f.Name);
+
+                list.Add(f);
             }
-            
-	    }
+        }
+
+       
 
 	    #endregion
         private string GetNextUrl(DeliveryFile file)
@@ -139,7 +157,7 @@ namespace Edge.Services.Facebook.GraphApi
              var f = new DeliveryFile();
             f.Name = name;
             f.Parameters.Add(Consts.DeliveryFileParameters.Url, string.Format("{0}", url));
-            f.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, (long)Consts.FileSubType.Data);
+            f.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, (long)Consts.FileSubType.New);
             f.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), type));
             return f;
         }
@@ -151,13 +169,16 @@ namespace Edge.Services.Facebook.GraphApi
             batch.EnsureSuccess();
         }
 
-        private void AddDataFilesToBatch(BatchDownloadOperation batch, DeliveryFile file)
+        private FileInfo AddDataFilesToBatch(BatchDownloadOperation batch, DeliveryFile file)
         {
             if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data))
             {
                 FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
                 batch.Add(fileDownloadOperation);
+                return fileDownloadOperation.FileInfo;
             }
+
+            return null;
 
         }
 
