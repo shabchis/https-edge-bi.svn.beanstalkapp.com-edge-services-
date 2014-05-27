@@ -67,6 +67,7 @@ namespace Edge.Services.Facebook.GraphApi
 		{
 			Length=0,
 			Data=1,
+            New=2,
 		}
 		public static class DeliveryFileParameters
 		{
