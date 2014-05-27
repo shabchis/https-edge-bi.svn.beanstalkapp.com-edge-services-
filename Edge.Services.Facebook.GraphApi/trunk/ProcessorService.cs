@@ -131,8 +131,6 @@ namespace Edge.Services.Facebook.GraphApi
 								else
 									delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
 
-
-                                //Note for Ronen - this section if relevant for AD SETS 
 								ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
 								{
 									Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
@@ -352,9 +350,12 @@ namespace Edge.Services.Facebook.GraphApi
 									{
 										foreach (Ad ad in adsByCreativeID)
 										{
-                                            // Ronen , please see Naama's file of Ad types
-                                            ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
-											
+                                            if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
+                                                ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
+
+                                            else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
+                                                ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+
                                             /*Get Data from Mapping E.g Tracker*/
 												if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
 													this.Mappings.Objects[typeof(Ad)].Apply(ad);

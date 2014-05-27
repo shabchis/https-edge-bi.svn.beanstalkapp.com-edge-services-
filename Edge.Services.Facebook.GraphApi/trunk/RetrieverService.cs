@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.Collections;
 using System.Security.Cryptography;
 
+
 namespace Edge.Services.Facebook.GraphApi
 {
 	class RetrieverService : PipelineService
@@ -20,7 +21,8 @@ namespace Edge.Services.Facebook.GraphApi
 		private string _accessToken;
 		private string _appSecretProof;
 		const double _firstBatchRatio = 0.5;
-		const double _secondBatchRatio = 0.5; 
+		const double _secondBatchRatio = 0.5;
+        Dictionary<Consts.FileTypes, List<string>> filesByType = new Dictionary<Consts.FileTypes, List<string>>();
 		#endregion
 
 		#region Override Methods
@@ -44,67 +46,129 @@ namespace Edge.Services.Facebook.GraphApi
 
 			}
 
+            List<DeliveryFile> files = new List<DeliveryFile>();
+            
+            Delivery.Parameters.Add("FilesByType", filesByType);
+		    
 			foreach (DeliveryFile file in Delivery.Files)
 			{
 				if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length))
 				{
-					FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString() + "limit=1"));
+                    FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
 					countBatch.Add(fileDownloadOperation);
 				}
 			}
 			countBatch.Progressed += new EventHandler(counted_Batch_Progressed);
-			countBatch.Start();
-			countBatch.Wait();
-			countBatch.EnsureSuccess();
-			List<DeliveryFile> files = new List<DeliveryFile>();
-			Dictionary<Consts.FileTypes, List<string>> filesByType = new Dictionary<Consts.FileTypes, List<string>>();
-			Delivery.Parameters.Add("FilesByType", filesByType);
+            RunBatch(countBatch);
 
-			foreach (DeliveryFile file in Delivery.Files.Where(f => f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Length)))
-			{
-				using (StreamReader reader = new StreamReader(file.OpenContents()))
-				{
-					int offset = 0;
-					int limit = 500;
-					string json = reader.ReadToEnd();
-					MyType t = JsonConvert.DeserializeObject<MyType>(json);
-					while (offset < t.count)
-					{
-						DeliveryFile f = new DeliveryFile();
-						f.Name = string.Format(file.Name, offset);
-						f.Parameters.Add(Consts.DeliveryFileParameters.Url, string.Format("{0}&limit={1}&offset={2}", file.Parameters[Consts.DeliveryFileParameters.Url], limit, offset));
-						f.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, (long)Consts.FileSubType.Data);
-						f.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), file.Parameters[Consts.DeliveryFileParameters.FileType].ToString()));
-						files.Add(f);
-						if (!filesByType.ContainsKey((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]))
-							filesByType.Add((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType], new List<string>());
-						filesByType[(Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]].Add(f.Name);
 
-						offset += limit;
-					}
-					offset = 0;
-				}
-			}
-			foreach (var file in files)
-				this.Delivery.Files.Add(file);
-			this.Delivery.Save();
+		    var nextfiles = Delivery.Files.Where(f => f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long) Consts.FileSubType.Length));
+            int counter = 100;
 
-			BatchDownloadOperation batch = new BatchDownloadOperation();
-			foreach (DeliveryFile file in files.Where(fi => fi.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data)))
-			{
-				FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
-				batch.Add(fileDownloadOperation);
-			}
+		    foreach (DeliveryFile file in nextfiles)
+		    {
+		        DownloadNextFiles(file, counter);
+		    }
 
-			//batch.Progressed += new EventHandler(batch_Progressed);
-			batch.Start();
-			batch.Wait();
-			batch.EnsureSuccess();
-			this.Delivery.Save();
+            this.Delivery.Save();
 
+            //foreach (var file in files)
+            //    this.Delivery.Files.Add(file);
+            //this.Delivery.Save();
+
+
+            //batch = new BatchDownloadOperation();
+            //AddDataFilesToBatch(batch, files);
+
+            ////batch.Progressed += new EventHandler(batch_Progressed);
+            //RunBatch(batch);
+            //this.Delivery.Save();
 			return ServiceOutcome.Success;
-		} 
-		#endregion
+		}
+
+        private void DownloadNextFiles(DeliveryFile file, int counter)
+	    {
+            BatchDownloadOperation batch;
+
+            string next = GetNextUrl(file);
+
+
+            if (!string.IsNullOrEmpty(next))
+            {
+                var url = FixUrlChars(next);
+                var fileName = file.Name +  counter;
+                var fileType = file.Parameters[Consts.DeliveryFileParameters.FileType].ToString();
+                var f = CreateDeliveryFile(fileName, url, fileType);
+                    
+
+                if (!filesByType.ContainsKey((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]))
+                    filesByType.Add((Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType], new List<string>());
+                filesByType[(Consts.FileTypes)f.Parameters[Consts.DeliveryFileParameters.FileType]].Add(f.Name);
+
+
+                this.Delivery.Files.Add(f);
+               // this.Delivery.Save();
+                batch = new BatchDownloadOperation();
+                //create download file operation
+                AddDataFilesToBatch(batch, f);
+                //execute download
+                RunBatch(batch);
+                //f.Delivery.Save();
+                DownloadNextFiles(f, counter + 1);
+                //next = GetNextUrl(f);
+            }
+            
+	    }
+
+	    #endregion
+        private string GetNextUrl(DeliveryFile file)
+        {
+            string next = string.Empty;
+
+            using (StreamReader reader = new StreamReader(file.OpenContents()))
+            {
+                string json = reader.ReadToEnd();
+                dynamic dynamicObject = JsonConvert.DeserializeObject(json);
+                next = dynamicObject.paging.next;
+            }
+
+            return next;
+        }
+        private DeliveryFile CreateDeliveryFile(string name, string url, string type)
+        {
+             var f = new DeliveryFile();
+            f.Name = name;
+            f.Parameters.Add(Consts.DeliveryFileParameters.Url, string.Format("{0}", url));
+            f.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, (long)Consts.FileSubType.Data);
+            f.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), type));
+            return f;
+        }
+
+        private void RunBatch(BatchDownloadOperation batch)
+        {
+            batch.Start();
+            batch.Wait();
+            batch.EnsureSuccess();
+        }
+
+        private void AddDataFilesToBatch(BatchDownloadOperation batch, DeliveryFile file)
+        {
+            if (file.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long)Consts.FileSubType.Data))
+            {
+                FileDownloadOperation fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
+                batch.Add(fileDownloadOperation);
+            }
+
+        }
+
+
+       
+
+        private string FixUrlChars(string url)
+        {
+            url = url.Replace("\u0025", "%");
+            return url.Replace("\\", "");
+        }
 
 		#region Event Handlers
 		void counted_Batch_Progressed(object sender, EventArgs e)
