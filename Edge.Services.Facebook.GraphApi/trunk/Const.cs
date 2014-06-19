@@ -41,6 +41,8 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string StartTime = "start_time";
 			public const string EndTime = "end_time";
 			public const string IncludeDeleted = "include_deleted";
+            public const string AdgroupStatus = "adgroup_status";
+            public const string CampaignStatus = "campaign_group_status";
 			public const string StatsMode = "stats_mode";
 			public const string Fields = "fields";
 		}
@@ -56,7 +58,7 @@ namespace Edge.Services.Facebook.GraphApi
 		}
 		public  enum FileTypes
 		{			
-			Campaigns,
+			AdSets,
             CampaignGroups,
 			AdGroups,
 			AdGroupStats,

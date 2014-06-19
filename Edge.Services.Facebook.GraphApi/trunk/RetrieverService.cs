@@ -23,6 +23,7 @@ namespace Edge.Services.Facebook.GraphApi
 		private string _appSecretProof;
 		const double _firstBatchRatio = 0.5;
 		const double _secondBatchRatio = 0.5;
+        static int counter = 1000;
 	   // private List<DeliveryFile> files;
         Dictionary<Consts.FileTypes, List<string>> filesByType = new Dictionary<Consts.FileTypes, List<string>>();
 		#endregion
@@ -66,9 +67,10 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 		    var nextfiles = Delivery.Files.Where(f => f.Parameters[Consts.DeliveryFileParameters.FileSubType].Equals((long) Consts.FileSubType.Length));
-            int counter = 1000;
 
-            Next(nextfiles, counter);
+            Next(nextfiles);
+
+            this.Delivery.Save();
 
 		    
             
@@ -78,7 +80,7 @@ namespace Edge.Services.Facebook.GraphApi
             //this.Delivery.Save();
 			return ServiceOutcome.Success;
 		}
-        private void Next(IEnumerable<DeliveryFile> nextfiles, int counter)
+        private void Next(IEnumerable<DeliveryFile> nextfiles)
         {
             if (nextfiles.Count() == 0)
                 return;
@@ -110,7 +112,7 @@ namespace Edge.Services.Facebook.GraphApi
 
             RunBatch(batch);
 
-            Next(newFiles, counter);
+            Next(newFiles);
 
         }
 
@@ -121,7 +123,9 @@ namespace Edge.Services.Facebook.GraphApi
             if (!string.IsNullOrEmpty(next))
             {
                 var url = FixUrlChars(next);
-                var fileName = string.Format(file.Name,counter);
+                var name = file.Name.Substring(0, file.Name.IndexOf('-'));
+                var nameFormat = "{0}-{1}.json";
+                var fileName = string.Format(nameFormat, name,counter);
                 
                 var fileType = file.Parameters[Consts.DeliveryFileParameters.FileType].ToString();
                 var f = CreateDeliveryFile(fileName, url, fileType);

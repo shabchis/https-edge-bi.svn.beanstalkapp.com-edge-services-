@@ -39,6 +39,7 @@ namespace Edge.Services.Facebook.GraphApi
 			Dictionary<Consts.FileTypes, List<string>> filesByType = (Dictionary<Consts.FileTypes, List<string>>)Delivery.Parameters["FilesByType"];
 			StringBuilder warningsStr = new StringBuilder();
 			Dictionary<string, Campaign> campaignsData = new Dictionary<string, Campaign>();
+            Dictionary<string, AdGroup> adGroupsData = new Dictionary<string, AdGroup>();
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
 			Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
 			DeliveryOutput currentOutput = Delivery.Outputs.First();
@@ -53,8 +54,8 @@ namespace Edge.Services.Facebook.GraphApi
 			}))
 			{
 				this.ImportManager.BeginImport(this.Delivery);
-				#region Campaigns
-				List<string> campaignsFiles = filesByType[Consts.FileTypes.Campaigns];
+				#region AdSets
+                List<string> campaignsFiles = filesByType[Consts.FileTypes.CampaignGroups];
 				foreach (var campaignFile in campaignsFiles)
 				{
 
@@ -88,6 +89,33 @@ namespace Edge.Services.Facebook.GraphApi
 					}
 				}
 				#endregion
+
+                #region AdGroups
+                List<string> adSetList = filesByType[Consts.FileTypes.AdSets];
+                foreach (var adSet in adSetList)
+                {
+
+                    DeliveryFile adSetDF = this.Delivery.Files[adSet];
+                    var adSetReader = new JsonDynamicReader(adSetDF.OpenContents(), "$.data[*].*");
+                    using (adSetReader)
+                    {
+                        while (adSetReader.Read())
+                        {
+                            var adGroupObj = new AdGroup()
+                            {
+                                Value = adSetReader.Current.name,
+                                OriginalID = Convert.ToString(adSetReader.Current.id),
+                                
+                            };
+
+                            if (campaignsData.ContainsKey(adSetReader.Current.campaign_group_id))
+                                adGroupObj.Campaign = campaignsData[adSetReader.Current.campaign_group_id];
+                          
+                            adGroupsData.Add(adGroupObj.OriginalID, adGroupObj);
+                        }
+                    }
+                }
+                #endregion
 				this.ReportProgress(0.1);
 
 				#region adGroups And Targeting
@@ -103,95 +131,109 @@ namespace Edge.Services.Facebook.GraphApi
 
 						while (adGroupsReader.Read())
 						{
-							Ad ad = new Ad();
-							ad.OriginalID = Convert.ToString(adGroupsReader.Current.id);
-							ad.Segments = new Dictionary<Segment, SegmentObject>();
-							ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = campaignsData[Convert.ToString(adGroupsReader.Current.campaign_id)];
+						    var campaignId = Convert.ToString(adGroupsReader.Current.campaign_id);
+						    if (adGroupsData.ContainsKey(campaignId) && ((AdGroup)adGroupsData[campaignId]).Campaign != null)
+						    {
+						        Ad ad = new Ad();
+						        ad.OriginalID = Convert.ToString(adGroupsReader.Current.id);
+						        ad.Segments = new Dictionary<Segment, SegmentObject>();
+						        ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] =
+						            ((AdGroup) adGroupsData[Convert.ToString(adGroupsReader.Current.campaign_id)]).Campaign;
 
-							ad.Name = adGroupsReader.Current.name;
+						        ad.Name = adGroupsReader.Current.name;
 
-							ad.Channel = new Channel()
-							{
-								ID = 6
-							};
+						        ad.Channel = new Channel()
+						            {
+						                ID = 6
+						            };
 
-							ad.Account = new Account()
-							{
-								ID = this.Delivery.Account.ID,
-								OriginalID = this.Delivery.Account.OriginalID.ToString()
-							};
+						        ad.Account = new Account()
+						            {
+						                ID = this.Delivery.Account.ID,
+						                OriginalID = this.Delivery.Account.OriginalID.ToString()
+						            };
 
+						        /*
+                                if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
+                                {
+                                    string[] delimiter = new string[1];
+                                    delimiter[0] = string.Empty;
+                                    if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
+                                        Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
+                                    else
+                                        delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
 
-							if (Instance.Configuration.Options.ContainsKey("AutoAdGroupSegment") && Instance.Configuration.Options["AutoAdGroupSegment"].ToLower() == "true")
-							{
-								string[] delimiter = new string[1];
-								delimiter[0] = string.Empty;
-								if (!Instance.Configuration.Options.ContainsKey("AdGroupDelimiter"))
-									Edge.Core.Utilities.Log.Write(string.Format("Facebook{0}", this), Core.Utilities.LogMessageType.Warning);
-								else
-									delimiter[0] = Instance.Configuration.Options["AdGroupDelimiter"];
+                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+                                    {
+                                        Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
+                                        Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
+                                        OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID) :
+                                                                    (ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID)
+                                    };
+                                }
+                                else
+                                {
+                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+                                    {
+                                        Value = ad.Name,
+                                        OriginalID = ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID
 
-								ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
-								{
-									Campaign = (Campaign)ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
-									Value = delimiter[0] == string.Empty ? ad.Name : ad.Name.Split(delimiter, StringSplitOptions.None)[0],
-									OriginalID = delimiter[0] == string.Empty ? (ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID) :
-																(ad.Name.Split(delimiter, StringSplitOptions.None)[0] + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID)
-								};
-							}
-							else
-							{
-								ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
-								{
-									Value = ad.Name,
-									OriginalID = ad.Name + ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]].OriginalID + ad.Account.ID
+                                    };
 
-								};
+                                }
+                                 * */
+						        if (adGroupsData.ContainsKey(adGroupsReader.Current.campaign_id))
+						            ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] =
+						                adGroupsData[adGroupsReader.Current.campaign_id];
 
-							}
-							// adgroup targeting
-							string age_min = string.Empty;
-							if (((Dictionary<string, object>)adGroupsReader.Current.targeting).ContainsKey("age_min"))
-								age_min = adGroupsReader.Current.targeting["age_min"];
+						        // adgroup targeting
+						        string age_min = string.Empty;
+						        if (((Dictionary<string, object>) adGroupsReader.Current.targeting).ContainsKey("age_min"))
+						            age_min = adGroupsReader.Current.targeting["age_min"];
 
-							if (!string.IsNullOrEmpty(age_min))
-							{
-								AgeTarget ageTarget = new AgeTarget() { FromAge = int.Parse(age_min), ToAge = int.Parse(adGroupsReader.Current.targeting["age_max"]) };
-								ad.Targets.Add(ageTarget);
-							}
-							List<object> genders = null;
-							if (((Dictionary<string, object>)adGroupsReader.Current.targeting).ContainsKey("genders"))
-								genders = adGroupsReader.Current.targeting["genders"];
+						        if (!string.IsNullOrEmpty(age_min))
+						        {
+						            AgeTarget ageTarget = new AgeTarget()
+						                {
+						                    FromAge = int.Parse(age_min),
+						                    ToAge = int.Parse(adGroupsReader.Current.targeting["age_max"])
+						                };
+						            ad.Targets.Add(ageTarget);
+						        }
+						        List<object> genders = null;
+						        if (((Dictionary<string, object>) adGroupsReader.Current.targeting).ContainsKey("genders"))
+						            genders = adGroupsReader.Current.targeting["genders"];
 
-							if (genders != null)
-							{
-								foreach (object gender in genders)
-								{
-									GenderTarget genderTarget = new GenderTarget();
-									if (gender.ToString() == "1")
-										genderTarget.Gender = Gender.Male;
-									else if (gender.ToString() == "2")
-										genderTarget.Gender = Gender.Female;
-									else
-										genderTarget.Gender = Gender.Unspecified;
+						        if (genders != null)
+						        {
+						            foreach (object gender in genders)
+						            {
+						                GenderTarget genderTarget = new GenderTarget();
+						                if (gender.ToString() == "1")
+						                    genderTarget.Gender = Gender.Male;
+						                else if (gender.ToString() == "2")
+						                    genderTarget.Gender = Gender.Female;
+						                else
+						                    genderTarget.Gender = Gender.Unspecified;
 
-									genderTarget.OriginalID = gender.ToString();
-									ad.Targets.Add(genderTarget);
+						                genderTarget.OriginalID = gender.ToString();
+						                ad.Targets.Add(genderTarget);
 
-								}
+						            }
 
-							}
-							if (adGroupsReader.Current.creative_ids != null)
-							{
-								foreach (string creative in adGroupsReader.Current.creative_ids)
-								{
-									if (!adsBycreatives.ContainsKey(creative))
-										adsBycreatives.Add(creative, new List<Ad>());
-									adsBycreatives[creative].Add(ad);
+						        }
+						        if (adGroupsReader.Current.creative_ids != null)
+						        {
+						            foreach (string creative in adGroupsReader.Current.creative_ids)
+						            {
+						                if (!adsBycreatives.ContainsKey(creative))
+						                    adsBycreatives.Add(creative, new List<Ad>());
+						                adsBycreatives[creative].Add(ad);
 
-								}
-							}
-							ads.Add(ad.OriginalID, ad);
+						            }
+						        }
+						        ads.Add(ad.OriginalID, ad);
+						    }
 						}
 
 					}
@@ -218,24 +260,24 @@ namespace Edge.Services.Facebook.GraphApi
 
 				#endregion
 
+                
+                //if (filesByType.ContainsKey(Consts.FileTypes.ConversionsStats))
+                //{
+                //    List<string> convStatsFiles = filesByType[Consts.FileTypes.ConversionsStats];
+                //    foreach (var convStat in convStatsFiles)
+                //    {
+                //        DeliveryFile conversionStatsFile = this.Delivery.Files[convStat];
 
-                if (filesByType.ContainsKey(Consts.FileTypes.ConversionsStats))
-                {
-                    List<string> convStatsFiles = filesByType[Consts.FileTypes.ConversionsStats];
-                    foreach (var convStat in convStatsFiles)
-                    {
-                        DeliveryFile conversionStatsFile = this.Delivery.Files[convStat];
+                //        //Getting Next conversion file URL
+                //        var conversionStatsReader = new JsonDynamicReader(conversionStatsFile.OpenContents(), "$.data[*].*");
 
-                        //Getting Next conversion file URL
-                        var conversionStatsReader = new JsonDynamicReader(conversionStatsFile.OpenContents(), "$.data[*].*");
+                //        using (conversionStatsReader)
+                //        {
+                //            //Get Stats from conversion file
+                //        }
+                //    }
 
-                        using (conversionStatsReader)
-                        {
-                            //Get Stats from conversion file
-                        }
-                    }
-
-                }
+                //}
 
 
 				if (filesByType.ContainsKey(Consts.FileTypes.AdGroupStats))
@@ -255,6 +297,15 @@ namespace Edge.Services.Facebook.GraphApi
 								adMetricsUnit.Output = currentOutput;
 								adMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
 								Ad tempAd;
+							    try
+							    {
+							        var x = adGroupStatsReader.Current.adgroup_id;
+							    }
+							    catch (Exception)
+							    {
+							        continue;
+							    }
+
 								if (adGroupStatsReader.Current.adgroup_id != null)
 								{
 									if (ads.TryGetValue(adGroupStatsReader.Current.adgroup_id, out tempAd))
