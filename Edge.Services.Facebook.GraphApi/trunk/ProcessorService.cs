@@ -406,6 +406,8 @@ namespace Edge.Services.Facebook.GraphApi
 
                                             else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
                                                 ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+                                            else
+                                                ad.DestinationUrl = "UnKnown Url";
 
                                             /*Get Data from Mapping E.g Tracker*/
 												if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
@@ -413,100 +415,58 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 											ad.Creatives = new List<Creative>();
-											switch ((string)adGroupCreativesReader.Current.type)
-											{
-												//case "8": // deprecated
-												//case "9":  // deprecated
-												//case "10":  // deprecated
-												//case "16":  // deprecated
-												//case "17":  // deprecated
-												//case "19":  // deprecated
-												case "25":													
-													{
-														TextCreative sponserStory = new TextCreative()
-														{
-															OriginalID = adGroupCreativesReader.Current.id,
-															TextType = TextCreativeType.Title,
-															Text = "Sponsored Story",
-														
-															
 
-														};
-														ad.DestinationUrl = "Sponsored Story";
-														ad.Creatives.Add(sponserStory);
-														break;
+                                            if (adGroupCreativesReader.Current.image_url != null)
+                                            {
+                                                ImageCreative ic = new ImageCreative()
+                                                {
+                                                    ImageUrl = adGroupCreativesReader.Current.image_url,
+                                                    OriginalID = adGroupCreativesReader.Current.id
 
-													}
-												case "27":
-													{
-														TextCreative sponserStory = new TextCreative()
-														{
-															OriginalID = adGroupCreativesReader.Current.id,
-															TextType = TextCreativeType.Title,
-															Text = "Page Ads for a Page post"
+                                                    //Name = adGroupCreativesReader.Current.name
 
-														};
-														ad.DestinationUrl = "Page Ads for a Page post";
-														ad.Creatives.Add(sponserStory);
-														break;
-													}
-												
-												case "1":
-												case "2":
-												case "3":
-												case "4":
-												case "12":
-													{
-														ImageCreative ic = new ImageCreative()
-														{
-															ImageUrl = adGroupCreativesReader.Current.image_url,
-															OriginalID = adGroupCreativesReader.Current.id
+                                                };
+                                                if (!string.IsNullOrEmpty(ic.ImageUrl))
+                                                    ad.Creatives.Add(ic);
 
-															//Name = adGroupCreativesReader.Current.name
-
-														};
-														if (!string.IsNullOrEmpty(ic.ImageUrl))
-															ad.Creatives.Add(ic);
-														TextCreative bc = new TextCreative()
-														{
-															OriginalID = adGroupCreativesReader.Current.id,
-															TextType = TextCreativeType.Body,
-															Text = adGroupCreativesReader.Current.body
-															//Name = adGroupCreativesReader.Current.name
+                                                TextCreative bc = new TextCreative()
+                                                {
+                                                    OriginalID = adGroupCreativesReader.Current.id,
+                                                    TextType = TextCreativeType.Body,
+                                                    Text = adGroupCreativesReader.Current.body
+                                                    //Name = adGroupCreativesReader.Current.name
 
 
-														};
-														if (!string.IsNullOrEmpty(bc.Text))
-															ad.Creatives.Add(bc);
+                                                };
+                                                if (!string.IsNullOrEmpty(bc.Text))
+                                                    ad.Creatives.Add(bc);
 
-														//bug creative type =9 story like
-														TextCreative tc = new TextCreative()
-														{
-															OriginalID = adGroupCreativesReader.Current.id,
-															TextType = TextCreativeType.Title,
-															Text = adGroupCreativesReader.Current.title
-														};
-														if (!string.IsNullOrEmpty(bc.Text))
-															ad.Creatives.Add(tc);
-														break;
-													}
-												default:
-													{
-														TextCreative unknown = new TextCreative()
-														{
-															OriginalID = adGroupCreativesReader.Current.id,
-															TextType = TextCreativeType.Title,
-															Text = "UnKnown creative"
+                                                //bug creative type =9 story like
+                                                TextCreative tc = new TextCreative()
+                                                {
+                                                    OriginalID = adGroupCreativesReader.Current.id,
+                                                    TextType = TextCreativeType.Title,
+                                                    Text = adGroupCreativesReader.Current.title
+                                                };
+                                                if (!string.IsNullOrEmpty(bc.Text))
+                                                    ad.Creatives.Add(tc);
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                TextCreative tc = new TextCreative()
+                                                {
+                                                    OriginalID = adGroupCreativesReader.Current.id,
+                                                    TextType = TextCreativeType.Title,
+                                                    Text = adGroupCreativesReader.Current.title
 
-														};
-														ad.DestinationUrl = "UnKnown creative";
-														ad.Creatives.Add(unknown);
-														break;
-													}
+                                                };
 
-											}
+                                                ad.Creatives.Add(tc);
+                                                
+                                            }
 
-
+                                           
 
 											this.ImportManager.ImportAd(ad);
 										}
@@ -538,3 +498,100 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 }
+
+
+
+/*
+                                           switch ((string)adGroupCreativesReader.Current.type)
+                                           {
+                                               //case "8": // deprecated
+                                               //case "9":  // deprecated
+                                               //case "10":  // deprecated
+                                               //case "16":  // deprecated
+                                               //case "17":  // deprecated
+                                               //case "19":  // deprecated
+                                               case "25":													
+                                                   {
+                                                       TextCreative sponserStory = new TextCreative()
+                                                       {
+                                                           OriginalID = adGroupCreativesReader.Current.id,
+                                                           TextType = TextCreativeType.Title,
+                                                           Text = "Sponsored Story",
+														
+															
+
+                                                       };
+                                                       ad.DestinationUrl = "Sponsored Story";
+                                                       ad.Creatives.Add(sponserStory);
+                                                       break;
+
+                                                   }
+                                               case "27":
+                                                   {
+                                                       TextCreative sponserStory = new TextCreative()
+                                                       {
+                                                           OriginalID = adGroupCreativesReader.Current.id,
+                                                           TextType = TextCreativeType.Title,
+                                                           Text = "Page Ads for a Page post"
+
+                                                       };
+                                                       ad.DestinationUrl = "Page Ads for a Page post";
+                                                       ad.Creatives.Add(sponserStory);
+                                                       break;
+                                                   }
+												
+                                               case "1":
+                                               case "2":
+                                               case "3":
+                                               case "4":
+                                               case "12":
+                                                   {
+                                                       ImageCreative ic = new ImageCreative()
+                                                       {
+                                                           ImageUrl = adGroupCreativesReader.Current.image_url,
+                                                           OriginalID = adGroupCreativesReader.Current.id
+
+                                                           //Name = adGroupCreativesReader.Current.name
+
+                                                       };
+                                                       if (!string.IsNullOrEmpty(ic.ImageUrl))
+                                                           ad.Creatives.Add(ic);
+                                                       TextCreative bc = new TextCreative()
+                                                       {
+                                                           OriginalID = adGroupCreativesReader.Current.id,
+                                                           TextType = TextCreativeType.Body,
+                                                           Text = adGroupCreativesReader.Current.body
+                                                           //Name = adGroupCreativesReader.Current.name
+
+
+                                                       };
+                                                       if (!string.IsNullOrEmpty(bc.Text))
+                                                           ad.Creatives.Add(bc);
+
+                                                       //bug creative type =9 story like
+                                                       TextCreative tc = new TextCreative()
+                                                       {
+                                                           OriginalID = adGroupCreativesReader.Current.id,
+                                                           TextType = TextCreativeType.Title,
+                                                           Text = adGroupCreativesReader.Current.title
+                                                       };
+                                                       if (!string.IsNullOrEmpty(bc.Text))
+                                                           ad.Creatives.Add(tc);
+                                                       break;
+                                                   }
+                                               default:
+                                                   {
+                                                       TextCreative unknown = new TextCreative()
+                                                       {
+                                                           OriginalID = adGroupCreativesReader.Current.id,
+                                                           TextType = TextCreativeType.Title,
+                                                           Text = "UnKnown creative"
+
+                                                       };
+                                                       ad.DestinationUrl = "UnKnown creative";
+                                                       ad.Creatives.Add(unknown);
+                                                       break;
+                                                   }
+
+                                           }
+                                           */
