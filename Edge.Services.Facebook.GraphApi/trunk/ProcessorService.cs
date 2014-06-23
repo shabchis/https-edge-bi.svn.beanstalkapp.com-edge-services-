@@ -450,7 +450,7 @@ namespace Edge.Services.Facebook.GraphApi
                                                 };
                                                 if (!string.IsNullOrEmpty(bc.Text))
                                                     ad.Creatives.Add(tc);
-                                                break;
+                                                
                                             }
                                             else
                                             {
