@@ -61,6 +61,15 @@ namespace Edge.Services.Facebook.GraphApi
                     fileDownloadOperation = file.Download(CreateRequest(file.Parameters[Consts.DeliveryFileParameters.Url].ToString()));
 					countBatch.Add(fileDownloadOperation);
 				}
+
+                var fileTypeStr =  Convert.ToString(file.Parameters[Consts.DeliveryFileParameters.FileType]);
+
+                Consts.FileTypes fileType = (Consts.FileTypes)Enum.Parse(typeof(Consts.FileTypes), fileTypeStr);
+
+                if (!filesByType.ContainsKey(fileType))
+                    filesByType.Add(fileType,new List<string>());
+
+                filesByType[fileType].Add(file.Name);              
 			}
 			countBatch.Progressed += new EventHandler(counted_Batch_Progressed);
             RunBatch(countBatch);
