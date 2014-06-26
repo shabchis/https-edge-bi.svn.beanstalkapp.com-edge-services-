@@ -383,8 +383,9 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 							using (adGroupCreativesReader)
-							{
-								this.Mappings.OnFieldRequired = field => adGroupCreativesReader.Current[field];
+							{                                       
+                                //this.Mappings.OnFieldRequired = field => if((field == "object_url" && adGroupCreativesReader.Current[field] != null) || field != "object_url")adGroupCreativesReader.Current[field];
+                                this.Mappings.OnFieldRequired = field => adGroupCreativesReader.Current[field];
 								while (adGroupCreativesReader.Read())
 								{
 
@@ -492,7 +493,16 @@ namespace Edge.Services.Facebook.GraphApi
 		}
 
 
+        static Func<string, object> CheckObjectUrl(JsonDynamicReader adGroupCreativesReader)
+        {
+            Func<string, object> OnFieldRequired;
+            if (adGroupCreativesReader.Current.object_url != null)
+                OnFieldRequired = field => adGroupCreativesReader.Current[field];
+            else
+                OnFieldRequired = field => null;
 
+            return OnFieldRequired;
+        }
 
 	}
 
