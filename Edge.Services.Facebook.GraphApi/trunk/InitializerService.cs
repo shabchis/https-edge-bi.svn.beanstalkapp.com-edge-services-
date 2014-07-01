@@ -122,7 +122,7 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
             methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27DELETED%27,%27ACTIVE%27,%27PAUSED%27]");
+            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27DELETED%27,%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27]");
             if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
                 methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupFields].ToString());
 
