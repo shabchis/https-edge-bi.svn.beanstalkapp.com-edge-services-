@@ -42,6 +42,8 @@ namespace Edge.Services.Facebook.GraphApi
             Dictionary<string, AdGroup> adGroupsData = new Dictionary<string, AdGroup>();
 			Dictionary<string, Ad> ads = new Dictionary<string, Ad>();
 			Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
+            var adStatIds = new Dictionary<string, string>();
+            var insertedAds = new Dictionary<string, string>();
 			DeliveryOutput currentOutput = Delivery.Outputs.First();
 			currentOutput.Checksum = new Dictionary<string, double>();
 			using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -308,6 +310,8 @@ namespace Edge.Services.Facebook.GraphApi
 
 								if (adGroupStatsReader.Current.adgroup_id != null)
 								{
+                                    adStatIds[adGroupStatsReader.Current.adgroup_id] = adGroupStatsReader.Current.adgroup_id;
+
 									if (ads.TryGetValue(adGroupStatsReader.Current.adgroup_id, out tempAd))
 									{
 										adMetricsUnit.Ad = tempAd;
@@ -387,8 +391,7 @@ namespace Edge.Services.Facebook.GraphApi
                                 //this.Mappings.OnFieldRequired = field => if((field == "object_url" && adGroupCreativesReader.Current[field] != null) || field != "object_url")adGroupCreativesReader.Current[field];
                                 this.Mappings.OnFieldRequired = field => adGroupCreativesReader.Current[field];
 								while (adGroupCreativesReader.Read())
-								{
-
+								{     
 									List<Ad> adsByCreativeID = null;
 									if (adsBycreatives.ContainsKey(adGroupCreativesReader.Current.id))
 									{
@@ -402,6 +405,9 @@ namespace Edge.Services.Facebook.GraphApi
 									{
 										foreach (Ad ad in adsByCreativeID)
 										{
+                                            if (!adStatIds.ContainsKey(ad.OriginalID))
+                                                continue;
+
                                             if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
                                                 ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
 
@@ -468,8 +474,11 @@ namespace Edge.Services.Facebook.GraphApi
                                             }
 
                                            
-
-											this.ImportManager.ImportAd(ad);
+                                            if(!insertedAds.ContainsKey(ad.OriginalID))
+                                            {
+                                                insertedAds[ad.OriginalID] = ad.OriginalID;
+											    this.ImportManager.ImportAd(ad);
+                                            }
 										}
 									}
 
