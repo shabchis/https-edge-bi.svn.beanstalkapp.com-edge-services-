@@ -6,7 +6,7 @@ using GA = Google.Api.Ads.AdWords;
 using Edge.Data.Pipeline;
 using System.Web;
 using System.Xml;
-using ADWORDS = Google.Api.Ads.AdWords.v201309;
+using ADWORDS = Google.Api.Ads.AdWords.v201406;
 using System.Data.SqlClient;
 using Edge.Core.Configuration;
 using Edge.Core.Data;
@@ -85,7 +85,7 @@ namespace Edge.Services.Google.AdWords
 
 		}
 
-		private static string GetAuthFromDB(string mccEmail, out string mccPassword)
+		private static string GetAuthFromDB(string )
 		{
 			string auth = "";
 			mccPassword = "";
@@ -164,7 +164,7 @@ namespace Edge.Services.Google.AdWords
 		private static string[] AD_PERFORMANCE_REPORT_FIELDS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName", "Impressions","Clicks", "Cost","Headline",
 		                                                   "Description1","Description2", "KeywordId", "DisplayUrl","CreativeDestinationUrl","CampaignStatus","AccountTimeZoneId",
 		                                                   "AdType","AccountCurrencyCode","Ctr","Status","AveragePosition","Conversions","DevicePreference",
-		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionsManyPerClick","ConversionValue","TotalConvValue"
+		                                                   "ConversionRate","ConversionRateManyPerClick","ConversionsManyPerClick","ConversionValue"
 		                                                  
 		                                               };
         private static string[] AD_PERFORMANCE_REPORT_FIELDS_STATUS = { "Id", "AdGroupId", "AdGroupName", "AdGroupStatus", "CampaignId", "CampaignName","CampaignStatus",

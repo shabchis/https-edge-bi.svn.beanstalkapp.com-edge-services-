@@ -5,7 +5,7 @@ using System.Text;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using System.Net;
-using GA201309 = Google.Api.Ads.AdWords.v201309;
+using GA201406 = Google.Api.Ads.AdWords.v201406;
 using Google.Api.Ads.AdWords.Util;
 using System.Threading;
 using Edge.Core.Utilities;
@@ -29,7 +29,7 @@ namespace Edge.Services.Google.AdWords
         private BatchDownloadOperation _batchDownloadOperation;
         private int _filesInProgress = 0;
         private double _minProgress = 0.05;
-        GA201309.ReportDefinitionDateRangeType _dateRange;
+        GA201406.ReportDefinitionDateRangeType _dateRange;
         private AutoResetEvent _waitHandle;
         long _reportId;
 
@@ -45,7 +45,7 @@ namespace Edge.Services.Google.AdWords
 
 
             //Sets Date Range and time period
-            _dateRange = GA201309.ReportDefinitionDateRangeType.CUSTOM_DATE;
+            _dateRange = GA201406.ReportDefinitionDateRangeType.CUSTOM_DATE;
             string startDate = this.TimePeriod.Start.ToDateTime().ToString("yyyyMMdd");
             string endDate = this.TimePeriod.End.ToDateTime().ToString("yyyyMMdd");
             _waitHandle = new AutoResetEvent(false);
@@ -76,16 +76,16 @@ namespace Edge.Services.Google.AdWords
 
                 foreach (DeliveryFile file in files)
                 {
-                    GA201309.ReportDefinitionReportType reportType;
+                    GA201406.ReportDefinitionReportType reportType;
 
                     //Get Google report type 
-                    if (Enum.IsDefined(typeof(GA201309.ReportDefinitionReportType), file.Parameters["ReportType"].ToString()))
-                        reportType = (GA201309.ReportDefinitionReportType)Enum.Parse(typeof(GA201309.ReportDefinitionReportType), file.Parameters["ReportType"].ToString(), true);
+                    if (Enum.IsDefined(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString()))
+                        reportType = (GA201406.ReportDefinitionReportType)Enum.Parse(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString(), true);
                     else
                         throw new Exception("Google Adwords Report Type Error ! Could not find Enum value for report type");
 
-                    if (Enum.IsDefined(typeof(GA201309.ReportDefinitionReportType), file.Parameters["ReportType"].ToString()))
-                        reportType = (GA201309.ReportDefinitionReportType)Enum.Parse(typeof(GA201309.ReportDefinitionReportType), file.Parameters["ReportType"].ToString(), true);
+                    if (Enum.IsDefined(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString()))
+                        reportType = (GA201406.ReportDefinitionReportType)Enum.Parse(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString(), true);
                     else
                         throw new Exception("Google Adwords Report Type Error ! Could not find Enum value for report type");
 
@@ -109,7 +109,7 @@ namespace Edge.Services.Google.AdWords
                         sb.Append(" WHERE Impressions > 0");
 
 
-                    if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201309.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT]))
+                    if (file.Name.Equals(GoogleStaticReportsNamesUtill._reportNames[GA201406.ReportDefinitionReportType.PLACEHOLDER_FEED_ITEM_REPORT]))
                     //Site link file
                     {
                         if (sb.ToString().Contains("WHERE"))
@@ -122,8 +122,8 @@ namespace Edge.Services.Google.AdWords
                     AdWordsAppConfig config = (AdWordsAppConfig)user.Config;
 
                     string QUERY_REPORT_URL_FORMAT = "{0}/api/adwords/reportdownload/{1}?" + "__fmt={2}";
-                    string reportVersion = "v201309";
-                    string format = GA201309.DownloadFormat.GZIPPED_CSV.ToString();
+                    string reportVersion = "v201406";
+                    string format = GA201406.DownloadFormat.GZIPPED_CSV.ToString();
                     file.SourceUrl = string.Format(QUERY_REPORT_URL_FORMAT, config.AdWordsApiServer, reportVersion, format);
                     string query = sb.ToString();
                     string postData = string.Format("__rdquery={0}", HttpUtility.UrlEncode(query));
@@ -137,7 +137,7 @@ namespace Edge.Services.Google.AdWords
                         if (!ValidateReport(file, user, postData, out error))
                         {
                             //CHEKING FOR INVALID AUTHTOKEN
-                            if (error.Contains(GA201309.AuthenticationErrorReason.GOOGLE_ACCOUNT_COOKIE_INVALID.ToString()))
+                            if (error.Contains(GA201406.AuthenticationErrorReason.GOOGLE_ACCOUNT_COOKIE_INVALID.ToString()))
                             {
                                 //RENEWING AUTHTOKEN
                                 (user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user, generateNew: true);
@@ -205,7 +205,7 @@ namespace Edge.Services.Google.AdWords
                 request.Headers["Authorization"] = "GoogleLogin auth=" + authToken;
             }
 
-            request.Headers.Add("returnMoneyInMicros: true");
+           // request.Headers.Add("returnMoneyInMicros: true");
             request.Headers.Add("developerToken: " + (user.Config as AdWordsAppConfig).DeveloperToken);
 
             //Try to unmark the following comment in case of api error 
@@ -254,7 +254,7 @@ namespace Edge.Services.Google.AdWords
                 {
                     //BUG fix due to adwords new version changes
                     //if (Regex.IsMatch(previewString, REPORT_ERROR_REGEX))
-                    if ((previewString.Contains(typeof(GA201309.AuthorizationError).Name)) || (previewString.Contains(typeof(GA201309.AuthenticationError).Name)))
+                    if ((previewString.Contains(typeof(GA201406.AuthorizationError).Name)) || (previewString.Contains(typeof(GA201406.AuthenticationError).Name)))
                     {
                         ErrorMsg = previewString;
                         return false;

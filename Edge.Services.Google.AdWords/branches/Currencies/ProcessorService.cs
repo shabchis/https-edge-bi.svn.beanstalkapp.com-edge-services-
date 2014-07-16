@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Edge.Data.Pipeline.Services;
 using Edge.Data.Pipeline;
 using Edge.Data.Objects;
-using GA = Google.Api.Ads.AdWords.v201309;
+using GA = Google.Api.Ads.AdWords.v201406;
 using System.IO;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;

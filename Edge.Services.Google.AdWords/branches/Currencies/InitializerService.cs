@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Edge.Data.Pipeline;
 using Edge.Data.Pipeline.Services;
-using GA = Google.Api.Ads.AdWords.v201309;
+using GA = Google.Api.Ads.AdWords.v201406;
 using Edge.Core.Services;
 using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
