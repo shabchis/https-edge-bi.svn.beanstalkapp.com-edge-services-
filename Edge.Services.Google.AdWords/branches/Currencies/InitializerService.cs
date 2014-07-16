@@ -22,6 +22,9 @@ namespace Edge.Services.Google.AdWords
         {
             this.Delivery = this.NewDelivery(); // setup delivery
 
+             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["OAuth2ClientId"]))
+                throw new Exception("Missing Configuration Param , OAuth2ClientId");
+            this.Delivery.Parameters["OAuth2ClientId"] = this.Instance.Configuration.Options["OAuth2ClientId"];
 
             if (String.IsNullOrEmpty(this.Instance.Configuration.Options["FilterDeleted"]))
                 throw new Exception("Missing Configuration Param , FilterDeleted");

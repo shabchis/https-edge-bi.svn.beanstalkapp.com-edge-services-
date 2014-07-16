@@ -699,11 +699,11 @@ namespace Edge.Services.Google.AdWords
         public const string KeywordStatusFieldName = "Keyword state";
         public const string PlacementCriteriaID = "Criterion ID";
 
-        public const string ConversionManyPerClickFieldName = "Conv. (many-per-click)";
-        public const string ConversionOnePerClickFieldName = "Conv. (1-per-click)";
-        //public const string ConversionManyPerClick = "Conv. rate (many-per-click)";
-        public const string TotalConversionsOnePerClickFieldName = "TotalConversionsOnePerClick";
-        public const string ConversionTrackingPurposeFieldName = "Conversion tracking purpose";
+        public const string ConversionManyPerClickFieldName = "Conversions";
+        public const string ConversionOnePerClickFieldName = "Converted clicks";
+        //public const string ConversionManyPerClick = "Click conversion rate";
+        public const string TotalConversionsOnePerClickFieldName = "Total conv. value";
+        public const string ConversionTrackingPurposeFieldName = "Conversion category";
 
         public const string AdGroupIdFieldName = "Ad group ID";
         public const string AdGroupFieldName = "Ad group";

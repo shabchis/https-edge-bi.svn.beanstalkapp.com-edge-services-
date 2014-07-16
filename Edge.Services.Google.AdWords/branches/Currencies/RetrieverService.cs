@@ -57,20 +57,23 @@ namespace Edge.Services.Google.AdWords
                             where f.Parameters["AdwordsClientID"].ToString() == clientId
                             select f;
 
-                //Setting Adwords User
+                #region Adwords User
+                //==================================================================================
                 Dictionary<string, string> headers = new Dictionary<string, string>()
 						{
 							{"DeveloperToken" ,this.Delivery.Parameters["DeveloperToken"].ToString()},
-							{"UserAgent" , FileManager.UserAgentString},
+							{"UserAgent" ,FileManager.UserAgentString},
 							{"EnableGzipCompression","true"},
 							{"ClientCustomerId",clientId},
-							{"Email",this.Delivery.Parameters["MccEmail"].ToString()},
-                            {"AuthorizationMethod" , AdWordsAuthorizationMethod.ClientLogin.ToString()}
-							//{"Password",this.Delivery.Parameters["MccPass"].ToString()}
+							{"Email",this.Delivery.Parameters["MccEmail"].ToString()}
 						};
-
                 AdWordsUser user = new AdWordsUser(headers);
-                (user.Config as AdWordsAppConfig).AuthorizationMethod = AdWordsAuthorizationMethod.ClientLogin;
+                (user.Config as AdWordsAppConfig).AuthorizationMethod = AdWordsAuthorizationMethod.OAuth2;
+                AdwordsUtill.GetOAuthDetailsFromDB(this.Delivery.Parameters["OAuth2ClientId"].ToString(), user);
+                //==================================================================================   
+                #endregion Adwords User
+            
+
                 bool firstCheck = true;
                 List<string> awqls = new List<string>();
 
@@ -78,7 +81,7 @@ namespace Edge.Services.Google.AdWords
                 {
                     GA201406.ReportDefinitionReportType reportType;
 
-                    //Get Google report type 
+                    //Validate Google report type 
                     if (Enum.IsDefined(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString()))
                         reportType = (GA201406.ReportDefinitionReportType)Enum.Parse(typeof(GA201406.ReportDefinitionReportType), file.Parameters["ReportType"].ToString(), true);
                     else
@@ -89,11 +92,7 @@ namespace Edge.Services.Google.AdWords
                     else
                         throw new Exception("Google Adwords Report Type Error ! Could not find Enum value for report type");
 
-
-
-                    //Getting AuthToken
-                    (user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user);
-
+                   
                     //Creating AWQL
                     StringBuilder sb = new StringBuilder();
                     sb.Append("SELECT ");
@@ -140,7 +139,8 @@ namespace Edge.Services.Google.AdWords
                             if (error.Contains(GA201406.AuthenticationErrorReason.GOOGLE_ACCOUNT_COOKIE_INVALID.ToString()))
                             {
                                 //RENEWING AUTHTOKEN
-                                (user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user, generateNew: true);
+                                throw new Exception("GOOGLE_ACCOUNT_COOKIE_INVALID, RENEWING AUTHTOKEN is not supported on version V201406");
+                                //(user.Config as AdWordsAppConfig).AuthToken = AdwordsUtill.GetAuthToken(user, generateNew: true);
                             }
                             else throw new Exception("Google Adwords API Error: " + error);
                         }
@@ -198,12 +198,21 @@ namespace Edge.Services.Google.AdWords
                 (request as HttpWebRequest).AutomaticDecompression = DecompressionMethods.None;
             }
 
-            if ((user.Config as AdWordsAppConfig).AuthorizationMethod == AdWordsAuthorizationMethod.ClientLogin)
+            if (user.OAuthProvider != null)
             {
-                string authToken = AdwordsUtill.GetAuthToken(user);
-                (user.Config as AdWordsAppConfig).AuthToken = authToken;
-                request.Headers["Authorization"] = "GoogleLogin auth=" + authToken;
+                request.Headers["Authorization"] = user.OAuthProvider.GetAuthHeader();
             }
+            else
+            {
+                throw new Exception("AdWordsErrorMessages.OAuthProviderCannotBeNull");
+            }
+
+            //if ((user.Config as AdWordsAppConfig).AuthorizationMethod == AdWordsAuthorizationMethod.ClientLogin)
+            //{
+            //    string authToken = AdwordsUtill.GetAuthToken(user);
+            //    (user.Config as AdWordsAppConfig).AuthToken = authToken;
+            //    request.Headers["Authorization"] = "GoogleLogin auth=" + authToken;
+            //}
 
            // request.Headers.Add("returnMoneyInMicros: true");
             request.Headers.Add("developerToken: " + (user.Config as AdWordsAppConfig).DeveloperToken);
