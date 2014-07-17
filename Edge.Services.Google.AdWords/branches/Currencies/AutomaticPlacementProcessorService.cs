@@ -116,7 +116,7 @@ namespace Edge.Services.Google.AdWords
 						{
 							OriginalID = _autoPlacReader.Current[Const.CampaignIdFieldName],
 							Name = _autoPlacReader.Current[Const.CampaignFieldName],
-							Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatusFieldName]).ToUpper()]
+							//Status = ObjectStatusDic[((string)_autoPlacReader.Current[Const.CampaignStatusFieldName]).ToUpper()]
 						};
 
 						autoPlacMetricsUnit.SegmentDimensions.Add(this.ImportManager.SegmentTypes[Segment.Common.Campaign], campaign);
