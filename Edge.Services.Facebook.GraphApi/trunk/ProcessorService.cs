@@ -449,23 +449,43 @@ namespace Edge.Services.Facebook.GraphApi
                                                     ad.Creatives.Add(bc);
 
                                                 //bug creative type =9 story like
+                                                string  text;
+                                                try
+                                                {
+                                                    text = adGroupCreativesReader.Current.title;
+                                                }
+                                                catch (Exception)
+                                                {
+                                                    text = adGroupCreativesReader.Current.name;
+                                                }
+
                                                 TextCreative tc = new TextCreative()
                                                 {
                                                     OriginalID = adGroupCreativesReader.Current.id,
                                                     TextType = TextCreativeType.Title,
-                                                    Text = adGroupCreativesReader.Current.title
+                                                    Text = text
                                                 };
-                                                if (!string.IsNullOrEmpty(bc.Text))
+                                                if (!string.IsNullOrEmpty(tc.Text))
                                                     ad.Creatives.Add(tc);
                                                 
                                             }
                                             else
                                             {
+                                                string text;
+                                                try
+                                                {
+                                                    text = adGroupCreativesReader.Current.title;
+                                                }
+                                                catch (Exception)
+                                                {
+                                                    text = adGroupCreativesReader.Current.name;
+                                                }
+
                                                 TextCreative tc = new TextCreative()
                                                 {
                                                     OriginalID = adGroupCreativesReader.Current.id,
                                                     TextType = TextCreativeType.Title,
-                                                    Text = adGroupCreativesReader.Current.title
+                                                    Text = text
 
                                                 };
 
