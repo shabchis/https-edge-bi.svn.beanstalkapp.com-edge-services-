@@ -160,7 +160,9 @@ namespace Edge.Services.Facebook.GraphApi
             {
                 string json = reader.ReadToEnd();
                 dynamic dynamicObject = JsonConvert.DeserializeObject(json);
-                next = dynamicObject.paging.next;
+
+                if(dynamicObject.paging != null)
+                    next = dynamicObject.paging.next;
             }
 
             return next;

@@ -11,7 +11,9 @@ using Edge.Data.Pipeline.Metrics;
 using Edge.Data.Pipeline.Metrics.Services;
 using Edge.Data.Pipeline.Metrics.GenericMetrics;
 using Edge.Data.Pipeline.Common.Importing;
-
+using System.Net;
+using System.IO;
+using System.Web.Helpers;
 
 namespace Edge.Services.Facebook.GraphApi
 {
@@ -408,97 +410,64 @@ namespace Edge.Services.Facebook.GraphApi
                                             if (!adStatIds.ContainsKey(ad.OriginalID))
                                                 continue;
 
-                                            if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
-                                                ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
+                                            ad.Creatives = new List<Creative>();
 
-                                            else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
-                                                ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-                                            else
-                                                ad.DestinationUrl = "UnKnown Url";
-
-                                            /*Get Data from Mapping E.g Tracker*/
-												if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-													this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-
-											ad.Creatives = new List<Creative>();
-
-                                            if (adGroupCreativesReader.Current.image_url != null)
+                                            if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_type))
                                             {
-                                                ImageCreative ic = new ImageCreative()
+                                                string objectType = adGroupCreativesReader.Current.object_type;
+
+                                                if (objectType.ToUpper() == "SHARE")
                                                 {
-                                                    ImageUrl = adGroupCreativesReader.Current.image_url,
-                                                    OriginalID = adGroupCreativesReader.Current.id
+                                                    if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_story_id))
+                                                    {
+                                                        string object_story_id = adGroupCreativesReader.Current.object_story_id;
+                                                        var accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
+                                                        var shareCreativeData = GetShareCreativeData(object_story_id, accessToken);
+                                                        ad.DestinationUrl = shareCreativeData["link"];
 
-                                                    //Name = adGroupCreativesReader.Current.name
+                                                        if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                            this.Mappings.Objects[typeof(Ad)].Apply(ad);
 
-                                                };
-                                                if (!string.IsNullOrEmpty(ic.ImageUrl))
-                                                    ad.Creatives.Add(ic);
-
-                                                TextCreative bc = new TextCreative()
-                                                {
-                                                    OriginalID = adGroupCreativesReader.Current.id,
-                                                    TextType = TextCreativeType.Body,
-                                                    Text = adGroupCreativesReader.Current.body
-                                                    //Name = adGroupCreativesReader.Current.name
-
-
-                                                };
-                                                if (!string.IsNullOrEmpty(bc.Text))
-                                                    ad.Creatives.Add(bc);
-
-                                                //bug creative type =9 story like
-                                                string  text;
-                                                try
-                                                {
-                                                    text = adGroupCreativesReader.Current.title;
+                                                        ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
+                                                        ad.Creatives.Add(GetTextCreative(shareCreativeData["description"], adGroupCreativesReader));
+                                                    }
                                                 }
-                                                catch (Exception)
+                                                else
                                                 {
-                                                    text = adGroupCreativesReader.Current.name;
+                                                    if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
+                                                        ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
+
+                                                    else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
+                                                        ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+                                                    else
+                                                        ad.DestinationUrl = "UnKnown Url";
+
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+
+
+
+                                                    if (adGroupCreativesReader.Current.image_url != null)
+                                                    {
+                                                        CreateImageCreatives(ad, adGroupCreativesReader);
+                                                    }
+                                                    else
+                                                    {
+                                                        ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
+                                                    }
+
+                                                    
                                                 }
 
-                                                TextCreative tc = new TextCreative()
+                                                if (!insertedAds.ContainsKey(ad.OriginalID))
                                                 {
-                                                    OriginalID = adGroupCreativesReader.Current.id,
-                                                    TextType = TextCreativeType.Title,
-                                                    Text = text
-                                                };
-                                                if (!string.IsNullOrEmpty(tc.Text))
-                                                    ad.Creatives.Add(tc);
-                                                
+                                                    insertedAds[ad.OriginalID] = ad.OriginalID;
+                                                    this.ImportManager.ImportAd(ad);
+                                                }
                                             }
-                                            else
-                                            {
-                                                string text;
-                                                try
-                                                {
-                                                    text = adGroupCreativesReader.Current.title;
-                                                }
-                                                catch (Exception)
-                                                {
-                                                    text = adGroupCreativesReader.Current.name;
-                                                }
-
-                                                TextCreative tc = new TextCreative()
-                                                {
-                                                    OriginalID = adGroupCreativesReader.Current.id,
-                                                    TextType = TextCreativeType.Title,
-                                                    Text = text
-
-                                                };
-
-                                                ad.Creatives.Add(tc);
-                                                
-                                            }
-
-                                           
-                                            if(!insertedAds.ContainsKey(ad.OriginalID))
-                                            {
-                                                insertedAds[ad.OriginalID] = ad.OriginalID;
-											    this.ImportManager.ImportAd(ad);
-                                            }
+                                            
 										}
 									}
 
@@ -521,6 +490,105 @@ namespace Edge.Services.Facebook.GraphApi
 			return Core.Services.ServiceOutcome.Success;
 		}
 
+        private Dictionary<string,string> GetShareCreativeData(string storyId,string token)
+        {
+            var dic = new Dictionary<string, string>();
+            var url = "https://graph.facebook.com/v1.0/";
+            string responseString;
+            try
+            {               
+                using (var webClient = new System.Net.WebClient())
+                {
+                    responseString = webClient.DownloadString(string.Format("{0}{1}?access_token={2}", url, storyId, token));
+                }
+                
+                dynamic data = Json.Decode(responseString);
+
+                dic["link"] = data.link;
+                dic["text"] = data.name;
+                dic["description"] = data.description;  
+            }
+            catch (System.Net.ProtocolViolationException ex)
+            {
+                dic["link"] = "error download";
+                dic["text"] = "error download";
+                dic["description"] = "error download";               
+            }
+
+            return dic;
+        }
+        private void CreateImageCreatives(Ad ad, JsonDynamicReader adGroupCreativesReader)
+        {
+            var imgCreative = GetImageCreative(adGroupCreativesReader);
+
+            if (!string.IsNullOrEmpty(imgCreative.ImageUrl))
+                ad.Creatives.Add(imgCreative);
+
+            var bodyCreative = GetBodyCreative(adGroupCreativesReader);
+
+            if (!string.IsNullOrEmpty(bodyCreative.Text))
+                ad.Creatives.Add(bodyCreative);
+
+            //bug creative type =9 story like
+            ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
+        }
+
+        private ImageCreative GetImageCreative(JsonDynamicReader adGroupCreativesReader)
+        {
+            return new ImageCreative()
+            {
+                ImageUrl = adGroupCreativesReader.Current.image_url,
+                OriginalID = adGroupCreativesReader.Current.id
+
+                //Name = adGroupCreativesReader.Current.name
+
+            };
+        }
+
+        private TextCreative GetBodyCreative(JsonDynamicReader adGroupCreativesReader)
+        {
+            return new TextCreative()
+            {
+                OriginalID = adGroupCreativesReader.Current.id,
+                TextType = TextCreativeType.Body,
+                Text = adGroupCreativesReader.Current.body
+                //Name = adGroupCreativesReader.Current.name
+            };           
+        }
+
+        private TextCreative GetTextCreative(string text, JsonDynamicReader adGroupCreativesReader)
+        {
+            return new TextCreative()
+            {
+                OriginalID = adGroupCreativesReader.Current.id,
+                TextType = TextCreativeType.Title,
+                Text = text
+                //Name = adGroupCreativesReader.Current.name
+            };
+        }
+        private TextCreative GetTextCreative(JsonDynamicReader adGroupCreativesReader)
+        {
+            string text;
+            try
+            {
+                text = adGroupCreativesReader.Current.title;
+            }
+            catch (Exception)
+            {
+                text = adGroupCreativesReader.Current.name;
+            }
+
+            TextCreative tc = new TextCreative()
+            {
+                OriginalID = adGroupCreativesReader.Current.id,
+                TextType = TextCreativeType.Title,
+                Text = text
+
+            };
+
+            return tc;
+        }
+
 
         static Func<string, object> CheckObjectUrl(JsonDynamicReader adGroupCreativesReader)
         {
@@ -537,8 +605,6 @@ namespace Edge.Services.Facebook.GraphApi
 
 
 }
-
-
 
 /*
                                            switch ((string)adGroupCreativesReader.Current.type)
