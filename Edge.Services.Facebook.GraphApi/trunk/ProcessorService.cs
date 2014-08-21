@@ -431,6 +431,9 @@ namespace Edge.Services.Facebook.GraphApi
                                                         ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
                                                         ad.Creatives.Add(GetBodyCreative(shareCreativeData["description"], adGroupCreativesReader));
                                                         ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
+
+                                                        if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                            this.Mappings.Objects[typeof(Ad)].Apply(ad);
                                                     }
                                                 }
                                                 else
