@@ -439,9 +439,11 @@ namespace Edge.Services.Facebook.GraphApi
 
                                                                 string trackerValue = ApplyRegex(ad.DestinationUrl, command.RegexPattern);
 
-                                                                ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value = trackerValue;
-                                                                ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].OriginalID = trackerValue;
-
+                                                                if (!String.IsNullOrEmpty(trackerValue))
+                                                                {
+                                                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value = trackerValue;
+                                                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].OriginalID = trackerValue;
+                                                                }
                                                             }
 
 
