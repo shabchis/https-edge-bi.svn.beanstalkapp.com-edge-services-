@@ -429,13 +429,17 @@ namespace Edge.Services.Facebook.GraphApi
                                                             this.Mappings.Objects[typeof(Ad)].Apply(ad);
 
                                                         ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
-                                                        ad.Creatives.Add(GetTextCreative(shareCreativeData["description"], adGroupCreativesReader));
+                                                        ad.Creatives.Add(GetBodyCreative(shareCreativeData["description"], adGroupCreativesReader));
+                                                        ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
                                                     }
                                                 }
                                                 else
                                                 {
                                                     if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
+                                                    {
+                                                        if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
                                                         ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
+                                                    }
 
                                                     else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
                                                         ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
@@ -506,13 +510,15 @@ namespace Edge.Services.Facebook.GraphApi
 
                 dic["link"] = data.link;
                 dic["text"] = data.name;
-                dic["description"] = data.description;  
+                dic["description"] = data.description;
+                dic["picture"] = data.picture; 
             }
             catch (System.Net.ProtocolViolationException ex)
             {
                 dic["link"] = "error download";
                 dic["text"] = "error download";
-                dic["description"] = "error download";               
+                dic["description"] = "error download";
+                dic["picture"] = "error download";  
             }
 
             return dic;
@@ -539,9 +545,15 @@ namespace Edge.Services.Facebook.GraphApi
             {
                 ImageUrl = adGroupCreativesReader.Current.image_url,
                 OriginalID = adGroupCreativesReader.Current.id
+            };
+        }
 
-                //Name = adGroupCreativesReader.Current.name
-
+        private ImageCreative GetImageCreative(string url, JsonDynamicReader adGroupCreativesReader)
+        {
+            return new ImageCreative()
+            {
+                OriginalID = adGroupCreativesReader.Current.id,
+                ImageUrl = url
             };
         }
 
@@ -562,6 +574,17 @@ namespace Edge.Services.Facebook.GraphApi
             {
                 OriginalID = adGroupCreativesReader.Current.id,
                 TextType = TextCreativeType.Title,
+                Text = text
+                //Name = adGroupCreativesReader.Current.name
+            };
+        }
+
+        private TextCreative GetBodyCreative(string text, JsonDynamicReader adGroupCreativesReader)
+        {
+            return new TextCreative()
+            {
+                OriginalID = adGroupCreativesReader.Current.id,
+                TextType = TextCreativeType.Body,
                 Text = text
                 //Name = adGroupCreativesReader.Current.name
             };
