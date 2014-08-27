@@ -47,6 +47,7 @@ namespace Edge.Services.Facebook.GraphApi
             Dictionary<string, List<Ad>> adsBycreatives = new Dictionary<string, List<Ad>>();
             var adStatIds = new Dictionary<string, string>();
             var insertedAds = new Dictionary<string, string>();
+            var storyIds = new Dictionary<string, Dictionary<string, string>>();
             DeliveryOutput currentOutput = Delivery.Outputs.First();
             currentOutput.Checksum = new Dictionary<string, double>();
             using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -421,9 +422,19 @@ namespace Edge.Services.Facebook.GraphApi
                                                 {
                                                     if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_story_id))
                                                     {
+                                                        Dictionary<string, string> shareCreativeData;
                                                         string object_story_id = adGroupCreativesReader.Current.object_story_id;
-                                                        var accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
-                                                        var shareCreativeData = GetShareCreativeData(object_story_id, accessToken);
+
+                                                        if (storyIds.ContainsKey(object_story_id))
+                                                        {
+                                                            shareCreativeData = storyIds[object_story_id];
+                                                        }
+                                                        else
+                                                        {
+                                                            var accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
+                                                            shareCreativeData = GetShareCreativeData(object_story_id, accessToken);
+                                                        }
+
                                                         ad.DestinationUrl = shareCreativeData["link"];
 
                                                         if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
@@ -448,6 +459,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 
                                                         }
+
 
 
 
@@ -518,72 +530,17 @@ namespace Edge.Services.Facebook.GraphApi
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private string ApplyRegex(string DestinationUrl, string RegexPattern)
-        {
-
-            Regex regex = null;
-            Regex _fixRegex = new Regex(@"\(\?\{(\w+)\}");
-            string _fixReplace = @"(?<$1>";
-            string[] RawGroupNames = null;
-            Regex _varName = new Regex("^[A-Za-z_][A-Za-z0-9_]*$");
-            string[] _fragments = null;
-
-
-            try
-            {
-                regex = new Regex(_fixRegex.Replace(RegexPattern, _fixReplace), RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-
-                // skip the '0' group which is always first, the asshole
-                string[] groupNames = regex.GetGroupNames();
-                RawGroupNames = groupNames.Length > 0 ? groupNames.Skip(1).ToArray() : groupNames;
-
-                List<string> frags = new List<string>();
-                foreach (string frag in RawGroupNames)
-                {
-                    if (_varName.IsMatch(frag))
-                        frags.Add(frag);
-                    else
-                        throw new Exception();
-                    //throw new MappingConfigurationException(String.Format("'{0}' is not a valid read command fragment name. Use C# variable naming rules.", frag));
-                }
-                _fragments = frags.ToArray();
-
-                Match m = regex.Match(DestinationUrl);
-                if (m.Success)
-                {
-
-                    return m.Groups[_fragments[0]].Value;
-
-                    //foreach (string fragment in _fragments)
-                    //{
-                    //    Group g = m.Groups[fragment];
-                    //    if (g.Success)
-                    //    {
-                    //        this.RegexRes.Items.Add(fragment + " = " + g.Value);
-                    //    }
-
-                    //}
-                }
-                else return string.Empty;
-            }
-            catch (Exception ex)
-            {
-                Log.Write("Error while trying to export tracker from link_url", ex);
-                return string.Empty;
-            }
-
-        }
-
-        private Dictionary<string, string> GetShareCreativeData(string storyId, string token)
+        private Dictionary<string, string> GetShareCreativeData(string storyId, string token,bool retry = true)
         {
             var dic = new Dictionary<string, string>();
             var url = "https://graph.facebook.com/v1.0/";
             string responseString;
+            string downloadStringUrl = string.Format("{0}{1}?access_token={2}", url, storyId, token);
             try
             {
                 using (var webClient = new System.Net.WebClient())
                 {
-                    responseString = webClient.DownloadString(string.Format("{0}{1}?access_token={2}", url, storyId, token));
+                    responseString = webClient.DownloadString(downloadStringUrl);
                 }
 
                 dynamic data = Json.Decode(responseString);
@@ -595,10 +552,15 @@ namespace Edge.Services.Facebook.GraphApi
             }
             catch (System.Net.ProtocolViolationException ex)
             {
-                dic["link"] = "error download";
-                dic["text"] = "error download";
-                dic["description"] = "error download";
-                dic["picture"] = "error download";
+                if (!retry)
+                {
+                    Log.Write("error while trying to download linked story " + downloadStringUrl, ex);
+                    dic["link"] = "error download";
+                    dic["text"] = "error download";
+                    dic["description"] = "error download";
+                    dic["picture"] = "error download";
+                }
+                else return GetShareCreativeData(storyId, token, retry: false);
             }
 
             return dic;
@@ -692,6 +654,62 @@ namespace Edge.Services.Facebook.GraphApi
             return tc;
         }
 
+
+        private string ApplyRegex(string DestinationUrl, string RegexPattern)
+        {
+
+            Regex regex = null;
+            Regex _fixRegex = new Regex(@"\(\?\{(\w+)\}");
+            string _fixReplace = @"(?<$1>";
+            string[] RawGroupNames = null;
+            Regex _varName = new Regex("^[A-Za-z_][A-Za-z0-9_]*$");
+            string[] _fragments = null;
+
+
+            try
+            {
+                regex = new Regex(_fixRegex.Replace(RegexPattern, _fixReplace), RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+
+                // skip the '0' group which is always first, the asshole
+                string[] groupNames = regex.GetGroupNames();
+                RawGroupNames = groupNames.Length > 0 ? groupNames.Skip(1).ToArray() : groupNames;
+
+                List<string> frags = new List<string>();
+                foreach (string frag in RawGroupNames)
+                {
+                    if (_varName.IsMatch(frag))
+                        frags.Add(frag);
+                    else
+                        throw new Exception();
+                    //throw new MappingConfigurationException(String.Format("'{0}' is not a valid read command fragment name. Use C# variable naming rules.", frag));
+                }
+                _fragments = frags.ToArray();
+
+                Match m = regex.Match(DestinationUrl);
+                if (m.Success)
+                {
+
+                    return m.Groups[_fragments[0]].Value;
+
+                    //foreach (string fragment in _fragments)
+                    //{
+                    //    Group g = m.Groups[fragment];
+                    //    if (g.Success)
+                    //    {
+                    //        this.RegexRes.Items.Add(fragment + " = " + g.Value);
+                    //    }
+
+                    //}
+                }
+                else return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Log.Write("Error while trying to export tracker from link_url", ex);
+                return string.Empty;
+            }
+
+        }
 
         static Func<string, object> CheckObjectUrl(JsonDynamicReader adGroupCreativesReader)
         {
