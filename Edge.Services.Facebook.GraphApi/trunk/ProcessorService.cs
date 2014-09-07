@@ -469,7 +469,7 @@ namespace Edge.Services.Facebook.GraphApi
                                                         ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
                                                     }
                                                 }
-                                                else
+                                                else if (objectType.ToUpper() == "DOMAIN")
                                                 {
                                                     if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
                                                     {
@@ -540,7 +540,7 @@ namespace Edge.Services.Facebook.GraphApi
             {
                 using (var webClient = new System.Net.WebClient())
                 {
-                    responseString = webClient.DownloadString(downloadStringUrl);
+                        responseString = webClient.DownloadString(downloadStringUrl);
                 }
 
                 dynamic data = Json.Decode(responseString);
@@ -550,7 +550,7 @@ namespace Edge.Services.Facebook.GraphApi
                 dic["description"] = data.description;
                 dic["picture"] = data.picture;
             }
-            catch (System.Net.ProtocolViolationException ex)
+            catch (Exception ex)
             {
                 if (!retry)
                 {
