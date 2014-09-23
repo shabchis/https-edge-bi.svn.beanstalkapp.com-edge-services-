@@ -10,6 +10,7 @@ using Edge.Data.Pipeline.Metrics.AdMetrics;
 using Edge.Data.Pipeline.Metrics;
 using Edge.Data.Pipeline.Common.Importing;
 using System.Linq;
+using Edge.Core.Utilities;
 
 
 namespace Edge.Services.Google.AdWords
@@ -592,7 +593,7 @@ namespace Edge.Services.Google.AdWords
                             sitelinkAd.OriginalID = sitelinkId;
                             sitelinkAd.Channel = new Channel() { ID = 1 };
                             sitelinkAd.Account = new Account { ID = this.Delivery.Account.ID, OriginalID = (String)_adPerformanceFile.Parameters["AdwordsClientID"] };
-                            
+
 
                             //Creative
 
@@ -600,70 +601,90 @@ namespace Edge.Services.Google.AdWords
 
                             bool legacy = sitelinkAttr.Count() != 4 ? true : false;
 
-                            ////Setting Tracker for Ad
-                            if (!String.IsNullOrWhiteSpace(sitelinkAttr[1]))
-                            {
-                                sitelinkAd.DestinationUrl = sitelinkAttr[1];
+                            string destUrl = string.Empty;
+                            bool destUrlParsingError = false;
 
-                                if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                    this.Mappings.Objects[typeof(Ad)].Apply(sitelinkAd);
+                            //Checking desturl errors ( we would like to insert only sitelinks that contains desturl ).
+                            try
+                            {
+                                destUrl = sitelinkAttr[1];
                             }
-
-                            sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
+                            catch (Exception e)
                             {
-                                OriginalID = _sitelinkReader.Current[Const.CampaignIdFieldName],
-                                Name = _sitelinkReader.Current[Const.CampaignFieldName],
-                            };
+                                Log.Write("Error while trying to pars destination url from attribute field on sitelink report", e);
+                                destUrlParsingError = true;
 
-                            //Insert Adgroup 
-                            sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+                            }
+                            if (!destUrlParsingError)
                             {
-                                Campaign = (Campaign)sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
-                                Value = _sitelinkReader.Current[Const.AdGroupFieldName],
-                                OriginalID = _sitelinkReader.Current[Const.AdGroupIdFieldName],
-                                // Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
-                            };
 
-                            sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
+                                ////Setting Tracker for Ad
+                                if (!String.IsNullOrWhiteSpace(sitelinkAttr[1]))
+                                {
+                                    sitelinkAd.DestinationUrl = sitelinkAttr[1];
 
-                            if (!legacy) // only in case it doesnt contains legacy siteink
+                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                        this.Mappings.Objects[typeof(Ad)].Apply(sitelinkAd);
+                                }
+
+                                sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]] = new Campaign()
+                                {
+                                    OriginalID = _sitelinkReader.Current[Const.CampaignIdFieldName],
+                                    Name = _sitelinkReader.Current[Const.CampaignFieldName],
+                                };
+
+                                //Insert Adgroup 
+                                sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.AdGroup]] = new AdGroup()
+                                {
+                                    Campaign = (Campaign)sitelinkAd.Segments[this.ImportManager.SegmentTypes[Segment.Common.Campaign]],
+                                    Value = _sitelinkReader.Current[Const.AdGroupFieldName],
+                                    OriginalID = _sitelinkReader.Current[Const.AdGroupIdFieldName],
+                                    // Status = adGroup_Status_Data[Convert.ToInt64(_adsReader.Current[Const.AdGroupIdFieldName])]
+                                };
+
+                                sitelinkAd.Creatives.Add(new TextCreative { TextType = TextCreativeType.DisplayUrl, Text = sitelinkAttr[1] });
+
+                                if (!legacy) // only in case it doesnt contains legacy siteink
+                                    sitelinkAd.Creatives.Add(new TextCreative
+                                    {
+                                        TextType = TextCreativeType.Body,
+                                        Text = sitelinkAttr[2],
+                                        Text2 = sitelinkAttr[3]
+                                    });
+
+                                sitelinkAd.Name = "[Sitelink] " + sitelinkAttr[0];
                                 sitelinkAd.Creatives.Add(new TextCreative
                                 {
-                                    TextType = TextCreativeType.Body,
-                                    Text = sitelinkAttr[2],
-                                    Text2 = sitelinkAttr[3]
+                                    TextType = TextCreativeType.Title,
+                                    Text = "[Sitelink] " + sitelinkAttr[0]
                                 });
 
-                            sitelinkAd.Name = "[Sitelink] " + sitelinkAttr[0];
-                            sitelinkAd.Creatives.Add(new TextCreative
-                            {
-                                TextType = TextCreativeType.Title,
-                                Text = "[Sitelink] " + sitelinkAttr[0]
-                            });
-
-                            //Ad Type
-                            //Note: changed to "sitelink" following Amir request
-                            sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Sitelink);
+                                //Ad Type
+                                //Note: changed to "sitelink" following Amir request
+                                sitelinkAd.ExtraFields[AdType] = (int)(EdgeAdType.Sitelink);
 
 
-                            siteLinkMetricsUnit.Ad = sitelinkAd;
+                                siteLinkMetricsUnit.Ad = sitelinkAd;
 
-                            //Setting Default Currency as USD following Amir's request from March 2014
-                            siteLinkMetricsUnit.Currency = new Currency
-                            {
-                                Code = "USD"
-                            };
+                                //Setting Default Currency as USD following Amir's request from March 2014
+                                siteLinkMetricsUnit.Currency = new Currency
+                                {
+                                    Code = "USD"
+                                };
 
-                            //INSERTING METRICS DATA
-                            siteLinkMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], 0);
-                            siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], 0);
-                            ImportManager.ImportMetrics(siteLinkMetricsUnit);
-                            ImportManager.ImportAd(sitelinkAd);
+                                //INSERTING METRICS DATA
+                                siteLinkMetricsUnit.MeasureValues = new Dictionary<Measure, double>();
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Clicks], 0);
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Cost], 0);
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.Impressions], 0);
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[Measure.Common.AveragePosition], 0);
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionOnePerClickFieldName]], 0);
+                                siteLinkMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[GoogleMeasuresDic[Const.ConversionManyPerClickFieldName]], 0);
+                                ImportManager.ImportMetrics(siteLinkMetricsUnit);
+                                ImportManager.ImportAd(sitelinkAd);
+
+                            }
+
                         }
                     }
                 }// end if 
