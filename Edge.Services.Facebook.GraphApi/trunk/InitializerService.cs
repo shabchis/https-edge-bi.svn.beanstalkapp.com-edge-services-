@@ -79,7 +79,7 @@ namespace Edge.Services.Facebook.GraphApi
             methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
             methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ACTIVE%27,%27PAUSED%27]");
+            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ARCHIVED%27,%27ACTIVE%27,%27PAUSED%27]");
             methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
             methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
@@ -122,7 +122,7 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
             methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27,%27PENDING_REVIEW%27,%27PREAPPROVED%27,%27DISAPPROVED%27,%27PENDING_BILLING_INFO%27,%27ARCHIVED%27,%27DELETED%27]");
+            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27,%27PENDING_REVIEW%27,%27PREAPPROVED%27,%27DISAPPROVED%27,%27PENDING_BILLING_INFO%27,%27ARCHIVED%27]");
             if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
                 methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupFields].ToString());
 
@@ -159,7 +159,7 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile = new DeliveryFile();
             deliveryFile.Name = Consts.DeliveryFilesNames.CampaignGroups;
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.CampaignStatus, "[%27ACTIVE%27,%27PAUSED%27]");
+            methodParams.Add(Consts.FacebookMethodsParams.CampaignStatus, "[%27ARCHIVED%27,%27ACTIVE%27,%27PAUSED%27]");
             if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignGroupsFields))
                 methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignGroupsFields].ToString());
 
