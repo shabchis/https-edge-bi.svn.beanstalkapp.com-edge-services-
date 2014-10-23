@@ -443,6 +443,30 @@ namespace Edge.Services.Facebook.GraphApi
                                                     #endregion
                                                 }
 
+                                                if (objectType.ToUpper() == "INVALID")
+                                                {
+
+                                                    #region Ads Type INVALID
+
+                                                    ad.DestinationUrl = "Invalid Ad";
+
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+                                                    TextCreative photoTextAd_title = new TextCreative()
+                                                    {
+                                                        OriginalID = ad.OriginalID,
+                                                        TextType = TextCreativeType.Title,
+                                                        Text = "Invalid Ad"
+                                                    };
+
+                                                    ad.Creatives.Add(photoTextAd_title);
+
+
+                                                    #endregion
+                                                }
+
                                                 if (objectType.ToUpper() == "SHARE")
                                                 {
 
