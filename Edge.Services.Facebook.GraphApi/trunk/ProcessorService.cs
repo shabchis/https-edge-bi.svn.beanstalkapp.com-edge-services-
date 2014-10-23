@@ -48,6 +48,7 @@ namespace Edge.Services.Facebook.GraphApi
             var adStatIds = new Dictionary<string, string>();
             var insertedAds = new Dictionary<string, string>();
             var storyIds = new Dictionary<string, Dictionary<string, string>>();
+            var photoIds = new Dictionary<string, Dictionary<string, string>>();
             DeliveryOutput currentOutput = Delivery.Outputs.First();
             currentOutput.Checksum = new Dictionary<string, double>();
             using (this.ImportManager = new AdMetricsImportManager(this.Instance.InstanceID, new MetricsImportManagerOptions()
@@ -418,8 +419,34 @@ namespace Edge.Services.Facebook.GraphApi
                                             {
                                                 string objectType = adGroupCreativesReader.Current.object_type;
 
+                                                if (objectType.ToUpper() == "PHOTO")
+                                                {
+
+                                                    #region Ads Type PHOTO
+
+                                                        ad.DestinationUrl = "Photo Ad";
+
+                                                        /*Get Data from Mapping E.g Tracker*/
+                                                        if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                            this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+                                                        TextCreative photoTextAd_title = new TextCreative()
+                                                        {
+                                                            OriginalID = adGroupCreativesReader.Current.object_story_id,
+                                                            TextType = TextCreativeType.Title,
+                                                            Text = "Photo Ad Type"
+                                                        };
+
+                                                        ad.Creatives.Add(photoTextAd_title);
+                                                       
+                                                    
+                                                    #endregion
+                                                }
+
                                                 if (objectType.ToUpper() == "SHARE")
                                                 {
+
+                                                    #region Ads Type SHARE
                                                     if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_story_id))
                                                     {
                                                         Dictionary<string, string> shareCreativeData;
@@ -467,10 +494,12 @@ namespace Edge.Services.Facebook.GraphApi
                                                         ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
                                                         ad.Creatives.Add(GetBodyCreative(shareCreativeData["description"], adGroupCreativesReader));
                                                         ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
-                                                    }
+                                                    } 
+                                                    #endregion
                                                 }
                                                 else if (objectType.ToUpper() == "DOMAIN")
                                                 {
+                                                    #region Ads Type DOMAIN
                                                     if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
                                                     {
                                                         if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
@@ -496,10 +525,10 @@ namespace Edge.Services.Facebook.GraphApi
                                                     else
                                                     {
                                                         ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
-                                                    }
-
-
+                                                    } 
+                                                    #endregion
                                                 }
+
 
                                                 if (!insertedAds.ContainsKey(ad.OriginalID))
                                                 {
@@ -530,7 +559,7 @@ namespace Edge.Services.Facebook.GraphApi
             return Core.Services.ServiceOutcome.Success;
         }
 
-        private Dictionary<string, string> GetShareCreativeData(string storyId, string token,bool retry = true)
+        private Dictionary<string, string> GetShareCreativeData(string storyId, string token, bool retry = true)
         {
             var dic = new Dictionary<string, string>();
             var url = "https://graph.facebook.com/v1.0/";
@@ -540,7 +569,7 @@ namespace Edge.Services.Facebook.GraphApi
             {
                 using (var webClient = new System.Net.WebClient())
                 {
-                        responseString = webClient.DownloadString(downloadStringUrl);
+                    responseString = webClient.DownloadString(downloadStringUrl);
                 }
 
                 dynamic data = Json.Decode(responseString);

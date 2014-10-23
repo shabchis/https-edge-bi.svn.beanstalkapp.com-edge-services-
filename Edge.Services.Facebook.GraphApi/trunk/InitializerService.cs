@@ -91,6 +91,36 @@ namespace Edge.Services.Facebook.GraphApi
             //this.ReportProgress(0.4);
 
 
+            #region Creating report stats for conversion data
+            ///<summary>
+            ///Ad Report Stats provides Ads API to fetch statistics at the adaccount level. You can query data per ad account,
+            ///campaigns or ads. One query will always return data for one ad account only.
+            ///The API is very generic and enables you to fetch data for arbitrary time ranges. You can group the data by 1-90 days, monthly or all days.
+            ///You can break down the data by gender, age, placement or country. You can filter by specific values (spend > 100) and sort by most columns.
+            ///By default the API returns data for all ads/campaigns that had delivery during given time range. That means you don't need to set any status
+            ///filters to display ARCHIVED and DELETED adgroups/campaigns, as they are all included as far as they have delivery.
+            ///
+            /// data_columns=['campaign_group_id','campaign_id','adgroup_id','actions']
+            /// time_ranges=[{'day_start':{'day':1,'month':8,'year':2014},'day_stop':{'day':2,'month':8,'year':2014}}]
+            /// access_token=CAACZAMUPZCAd0BAK5eHzaiDVgvM0tGaP8b2EPpxpzj5upCkKThsfH5eUf8TLGpsmQVHpoKbTahNBE5AcJ3XkVu0hun4Woi7ZCx5lx560FBSmfUkGOOBh7eOVbZBLsAeAfs5ojZBeiXWJkpYNF2OksZCv7qk0OYZCQ6u0xA4TgOQSMQUJRqPM0oSrJg2zJaXTO0ZD&method=post&async=true&actions_group_by=['action_type']
+            ///</summary>
+
+            /*
+            deliveryFile.Name = Consts.DeliveryFilesNames.AdReportStats;
+            methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
+            methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
+            methodParams.Add("data_columns", "[%27campaign_group_id%27,%27campaign_id%27,%27adgroup_id%27,%27actions%27]");
+            methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
+            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
+            this.Delivery.Files.Add(deliveryFile);
+
+            */
+
+            #endregion
+
             //#region Conversions
             ////======================================================================================
             //deliveryFile = new DeliveryFile();
@@ -109,7 +139,7 @@ namespace Edge.Services.Facebook.GraphApi
             //#endregion Conversions
 
             //this.ReportProgress(0.4);
-            #region adgroup 
+            #region adgroup
             /*
              * Summary
              * An ad group contains the data necessary for an ad, such as bid type, bid info,
@@ -141,9 +171,9 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
             methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
             if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignFields))
-              methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
+                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
 
-           // methodParams.Add("redownload", "true");
+            // methodParams.Add("redownload", "true");
 
             methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsAdSets);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
@@ -192,7 +222,7 @@ namespace Edge.Services.Facebook.GraphApi
             //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
             //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Data);
             //this.Delivery.Files.Add(deliveryFile);
-            
+
             #endregion
 
 
