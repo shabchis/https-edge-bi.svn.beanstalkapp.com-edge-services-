@@ -540,16 +540,16 @@ namespace Edge.Services.Facebook.GraphApi
                                                         this.Mappings.Objects[typeof(Ad)].Apply(ad);
 
 
-
-
                                                     if (adGroupCreativesReader.Current.image_url != null)
                                                     {
                                                         CreateImageCreatives(ad, adGroupCreativesReader);
                                                     }
-                                                    else
-                                                    {
+                                                    
+                                                  
+                                                    
                                                         ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
-                                                    } 
+                                                        ad.Creatives.Add(GetBodyCreative(adGroupCreativesReader));
+                                                    
                                                     #endregion
                                                 }
 
@@ -600,7 +600,7 @@ namespace Edge.Services.Facebook.GraphApi
 
                 dic["link"] = data.link;
                 dic["text"] = data.name;
-                dic["description"] = data.description;
+                dic["description"] = data.message;
                 dic["picture"] = data.picture;
             }
             catch (Exception ex)
