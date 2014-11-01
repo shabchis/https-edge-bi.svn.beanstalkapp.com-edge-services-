@@ -74,7 +74,7 @@ namespace Edge.Services.Facebook.GraphApi
             DeliveryFile deliveryFile = new DeliveryFile();
 
             #region adgroupstats
-
+/*DEBUG
             deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
             methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
             methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
@@ -86,6 +86,7 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
             this.Delivery.Files.Add(deliveryFile);
+ */
             #endregion
 
             //this.ReportProgress(0.4);
@@ -93,53 +94,64 @@ namespace Edge.Services.Facebook.GraphApi
 
             #region Creating report stats for conversion data
             ///<summary>
+            ///27.10.2014
+            ///
             ///Ad Report Stats provides Ads API to fetch statistics at the adaccount level. You can query data per ad account,
             ///campaigns or ads. One query will always return data for one ad account only.
             ///The API is very generic and enables you to fetch data for arbitrary time ranges. You can group the data by 1-90 days, monthly or all days.
             ///You can break down the data by gender, age, placement or country. You can filter by specific values (spend > 100) and sort by most columns.
             ///By default the API returns data for all ads/campaigns that had delivery during given time range. That means you don't need to set any status
             ///filters to display ARCHIVED and DELETED adgroups/campaigns, as they are all included as far as they have delivery.
-            ///
+            ///method=post&async=true
             /// data_columns=['campaign_group_id','campaign_id','adgroup_id','actions']
             /// time_ranges=[{'day_start':{'day':1,'month':8,'year':2014},'day_stop':{'day':2,'month':8,'year':2014}}]
             /// access_token=CAACZAMUPZCAd0BAK5eHzaiDVgvM0tGaP8b2EPpxpzj5upCkKThsfH5eUf8TLGpsmQVHpoKbTahNBE5AcJ3XkVu0hun4Woi7ZCx5lx560FBSmfUkGOOBh7eOVbZBLsAeAfs5ojZBeiXWJkpYNF2OksZCv7qk0OYZCQ6u0xA4TgOQSMQUJRqPM0oSrJg2zJaXTO0ZD&method=post&async=true&actions_group_by=['action_type']
             ///</summary>
 
-            /*
-            deliveryFile.Name = Consts.DeliveryFilesNames.AdReportStats;
-            methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
-            methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
+
+            //getting conversion report Id from facebook 
+            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetReportStats);
+            methodParams.Add("time_ranges", ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime(), datetimeRangeFormat: true));
             methodParams.Add("data_columns", "[%27campaign_group_id%27,%27campaign_id%27,%27adgroup_id%27,%27actions%27]");
-            methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupStats);
+            methodParams.Add("method", "post");
+            methodParams.Add("async", "true");
+            methodParams.Add("actions_group_by", "['action_type']");
+            
+            string downloadStringUrl = string.Format("{0}access_token={1}",GetMethodUrl(methodUrl, methodParams),this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken]);
+            Int64 reportId;
+
+            try
+            {
+                using (var webClient = new System.Net.WebClient())
+                {
+                   string Id = webClient.DownloadString(downloadStringUrl);
+
+                   reportId = Int64.Parse(Id.Trim('"'));
+                    
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(string.Format("Error while trying to parse conversion report id , for more details {0}", downloadStringUrl), e);
+            }
+
+            deliveryFile = new DeliveryFile();
+            deliveryFile.Name = Consts.DeliveryFilesNames.ConversionsStats;
+            
+            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetReportStats);
+            methodParams.Add("report_run_id", reportId.ToString());
+
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
+            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.ConversionsStats.ToString()));
+
             this.Delivery.Files.Add(deliveryFile);
 
-            */
 
             #endregion
 
-            //#region Conversions
-            ////======================================================================================
-            //deliveryFile = new DeliveryFile();
-            //deliveryFile.Name = Consts.DeliveryFilesNames.ConversionsStats;
-            //methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
-            //methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
-            //methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            //methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27DELETED%27,%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27]");
-            //methodParams.Add(Consts.FacebookMethodsParams.StatsMode, "with_delivery");
-            //methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetConversionStats);
-            //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.ConversionsStats.ToString()));
-            //this.Delivery.Files.Add(deliveryFile);
-            ////======================================================================================
-            //#endregion Conversions
-
-            //this.ReportProgress(0.4);
             #region adgroup
+           
             /*
              * Summary
              * An ad group contains the data necessary for an ad, such as bid type, bid info,
@@ -147,81 +159,75 @@ namespace Edge.Services.Facebook.GraphApi
              * associated with a campaign and all ad groups in a campaign have the same daily
              * or lifetime budget and schedule.
              * */
+            /*DEBUG
+           deliveryFile = new DeliveryFile();
+           deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
+           methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
+           methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+           methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27,%27PENDING_REVIEW%27,%27PREAPPROVED%27,%27DISAPPROVED%27,%27PENDING_BILLING_INFO%27,%27ARCHIVED%27]");
+           if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
+               methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupFields].ToString());
 
-            deliveryFile = new DeliveryFile();
-            deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
-            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.AdgroupStatus, "[%27ACTIVE%27,%27PAUSED%27,%27CAMPAIGN_PAUSED%27,%27CAMPAIGN_GROUP_PAUSED%27,%27PENDING_REVIEW%27,%27PREAPPROVED%27,%27DISAPPROVED%27,%27PENDING_BILLING_INFO%27,%27ARCHIVED%27]");
-            if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupFields))
-                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupFields].ToString());
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdGroups);
 
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdGroups);
+           this.Delivery.Files.Add(deliveryFile);
+            */
+           #endregion
 
-            this.Delivery.Files.Add(deliveryFile);
-            #endregion
+           /*DEBUG
 
-            //this.ReportProgress(0.6);
+           #region AdSet- Formally Campaigns
 
-            #region AdSet- Formally Campaigns
+           deliveryFile = new DeliveryFile();
+           deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
+           methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+           if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignFields))
+               methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
 
-            deliveryFile = new DeliveryFile();
-            deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
-            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignFields))
-                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignFields].ToString());
+           // methodParams.Add("redownload", "true");
 
-            // methodParams.Add("redownload", "true");
+           methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsAdSets);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdSets);
+           this.Delivery.Files.Add(deliveryFile);
 
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsAdSets);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdSets);
-            this.Delivery.Files.Add(deliveryFile);
-
-            #endregion
+           #endregion
 
 
-            #region Campaigns - New Structure
+           #region Campaigns - New Structure
 
-            deliveryFile = new DeliveryFile();
-            deliveryFile.Name = Consts.DeliveryFilesNames.CampaignGroups;
-            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            methodParams.Add(Consts.FacebookMethodsParams.CampaignStatus, "[%27ARCHIVED%27,%27ACTIVE%27,%27PAUSED%27]");
-            if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignGroupsFields))
-                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignGroupsFields].ToString());
+           deliveryFile = new DeliveryFile();
+           deliveryFile.Name = Consts.DeliveryFilesNames.CampaignGroups;
+           methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+           methodParams.Add(Consts.FacebookMethodsParams.CampaignStatus, "[%27ARCHIVED%27,%27ACTIVE%27,%27PAUSED%27]");
+           if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.CampaignGroupsFields))
+               methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.CampaignGroupsFields].ToString());
 
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsGroups);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.CampaignGroups);
-            this.Delivery.Files.Add(deliveryFile);
+           methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetCampaignsGroups);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.CampaignGroups);
+           this.Delivery.Files.Add(deliveryFile);
 
-            #endregion
+           #endregion
 
-            #region Creatives
-            deliveryFile = new DeliveryFile();
-            deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
-            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
-            if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
-                methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupCreativeFields].ToString());
+           #region Creatives
+           deliveryFile = new DeliveryFile();
+           deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
+           methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
+           if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
+               methodParams.Add(Consts.FacebookMethodsParams.Fields, Instance.Configuration.Options[FacebookConfigurationOptions.AdGroupCreativeFields].ToString());
 
-            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
-            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Creatives);
-            this.Delivery.Files.Add(deliveryFile);
-            #endregion
-
-            //#region AdGroupTargeting
-            //deliveryFile = new DeliveryFile();
-            //deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupTargeting;			
-            //methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupTargeting);
-            //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
-            //deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Data);
-            //this.Delivery.Files.Add(deliveryFile);
+           methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroupCreatives);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.Url, GetMethodUrl(methodUrl, methodParams));
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
+           deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Creatives);
+           this.Delivery.Files.Add(deliveryFile);
+           #endregion
+           */
 
             #endregion
 
@@ -265,8 +271,34 @@ namespace Edge.Services.Facebook.GraphApi
             TimeSpan diff = value - origin;
             return Math.Floor(diff.TotalSeconds);
         }
-        private string ConvertToFacebookDateTime(DateTime value)
+        private string ConvertToFacebookDateTime(DateTime value, bool datetimeRangeFormat = false)
         {
+
+            if (datetimeRangeFormat)
+            //[{'day_start':{'day':1,'month':8,'year':2014},'day_stop':{'day':2,'month':8,'year':2014}}]
+            {
+
+                Dictionary<string, Dictionary<string, string>> dateRageFormat = new Dictionary<string, Dictionary<string, string>>()
+                {
+                 {"day_start",new Dictionary<string, string>()
+                    {
+                        {"day",value.Day.ToString()},
+                        {"month",value.Month.ToString()},
+                        {"year",value.Year.ToString()},
+
+                    }
+                 },
+                 {"day_stop",new Dictionary<string, string>()
+                    {
+                        {"day",value.AddDays(1).Day.ToString()},
+                        {"month",value.Month.ToString()},
+                        {"year",value.Year.ToString()},
+
+                    }
+                 },
+                };
+                return string.Format("[{0}]",Newtonsoft.Json.JsonConvert.SerializeObject(dateRageFormat));
+            }
             int timeZone;
             int offset;
             if (!Instance.Configuration.Options.ContainsKey("TimeZone"))
@@ -279,6 +311,8 @@ namespace Edge.Services.Facebook.GraphApi
 
             value = value.AddHours(-timeZone);
             value = value.AddHours(offset);
+
+
             return value.ToString("yyyy-MM-ddTHH:mm:ss");
         }
     }

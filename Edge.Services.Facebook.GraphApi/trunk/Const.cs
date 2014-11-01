@@ -35,6 +35,7 @@ namespace Edge.Services.Facebook.GraphApi
 			public const string GetAdGroupCreatives = "adcreatives";
 			public const string GetAdGroupStats = "adgroupstats";
             public const string GetConversionStats = "adgroupconversions";
+            public const string GetReportStats = "reportstats";
 		}
 		public static class FacebookMethodsParams
 		{
