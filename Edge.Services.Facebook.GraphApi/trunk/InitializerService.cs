@@ -74,7 +74,7 @@ namespace Edge.Services.Facebook.GraphApi
             DeliveryFile deliveryFile = new DeliveryFile();
 
             #region adgroupstats
-/*DEBUG
+
             deliveryFile.Name = Consts.DeliveryFilesNames.AdGroupStats;
             methodParams.Add(Consts.FacebookMethodsParams.StartTime, ConvertToFacebookDateTime(TimePeriod.Start.ToDateTime()));
             methodParams.Add(Consts.FacebookMethodsParams.EndTime, ConvertToFacebookDateTime(TimePeriod.End.ToDateTime()));
@@ -86,7 +86,7 @@ namespace Edge.Services.Facebook.GraphApi
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
             deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Enum.Parse(typeof(Consts.FileTypes), Consts.FileTypes.AdGroupStats.ToString()));
             this.Delivery.Files.Add(deliveryFile);
- */
+ 
             #endregion
 
             //this.ReportProgress(0.4);
@@ -159,7 +159,7 @@ namespace Edge.Services.Facebook.GraphApi
              * associated with a campaign and all ad groups in a campaign have the same daily
              * or lifetime budget and schedule.
              * */
-            /*DEBUG
+            
            deliveryFile = new DeliveryFile();
            deliveryFile.Name = Consts.DeliveryFilesNames.AdGroup;
            methodUrl = string.Format("act_{0}/{1}", Delivery.Account.OriginalID, Consts.FacebookMethodsNames.GetAdGroups);
@@ -173,10 +173,9 @@ namespace Edge.Services.Facebook.GraphApi
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdGroups);
 
            this.Delivery.Files.Add(deliveryFile);
-            */
+            
            #endregion
 
-           /*DEBUG
 
            #region AdSet- Formally Campaigns
 
@@ -227,7 +226,7 @@ namespace Edge.Services.Facebook.GraphApi
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.Creatives);
            this.Delivery.Files.Add(deliveryFile);
            #endregion
-           */
+          
 
             #endregion
 

@@ -428,134 +428,168 @@ namespace Edge.Services.Facebook.GraphApi
                                     {
                                         string objectType = adGroupCreativesReader.Current.object_type;
 
-                                        if (objectType.ToUpper() == "PHOTO")
+                                        switch (objectType.ToUpper())
                                         {
-
-                                            #region Ads Type PHOTO
-
-                                            ad.DestinationUrl = "Photo Ad";
-
-                                            /*Get Data from Mapping E.g Tracker*/
-                                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-                                            TextCreative photoTextAd_title = new TextCreative()
-                                            {
-                                                OriginalID = adGroupCreativesReader.Current.object_story_id,
-                                                TextType = TextCreativeType.Title,
-                                                Text = "Photo Ad Type"
-                                            };
-
-                                            ad.Creatives.Add(photoTextAd_title);
-
-
-                                            #endregion
-                                        }
-
-                                        if (objectType.ToUpper() == "INVALID")
-                                        {
-
-                                            #region Ads Type INVALID
-
-                                            ad.DestinationUrl = "Invalid Ad";
-
-                                            /*Get Data from Mapping E.g Tracker*/
-                                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-                                            TextCreative photoTextAd_title = new TextCreative()
-                                            {
-                                                OriginalID = ad.OriginalID,
-                                                TextType = TextCreativeType.Title,
-                                                Text = "Invalid Ad"
-                                            };
-
-                                            ad.Creatives.Add(photoTextAd_title);
-
-
-                                            #endregion
-                                        }
-
-                                        if (objectType.ToUpper() == "SHARE")
-                                        {
-
-                                            #region Ads Type SHARE
-                                            if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_story_id))
-                                            {
-                                                Dictionary<string, string> shareCreativeData;
-                                                string object_story_id = adGroupCreativesReader.Current.object_story_id;
-
-                                                if (storyIds.ContainsKey(object_story_id))
+                                            case "PHOTO":
                                                 {
-                                                    shareCreativeData = storyIds[object_story_id];
-                                                }
-                                                else
-                                                {
-                                                    var accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
-                                                    shareCreativeData = GetShareCreativeData(object_story_id, accessToken);
-                                                }
+                                                    #region Ads Type PHOTO
 
-                                                ad.DestinationUrl = shareCreativeData["link"];
+                                                    ad.DestinationUrl = "Photo Ad";
 
-                                                if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                {
-                                                    this.Mappings.Objects[typeof(Ad)].Apply(ad);
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
 
-                                                    var trackersReadCommands = from n in this.Mappings.Objects[typeof(Ad)].ReadCommands
-                                                                               where n.Field.Equals("link_url")
-                                                                               select n;
-
-                                                    foreach (var command in trackersReadCommands)
+                                                    TextCreative photoTextAd_title = new TextCreative()
                                                     {
+                                                        OriginalID = adGroupCreativesReader.Current.object_story_id,
+                                                        TextType = TextCreativeType.Title,
+                                                        Text = "Photo Ad Type"
+                                                    };
 
-                                                        string trackerValue = ApplyRegex(ad.DestinationUrl, command.RegexPattern);
+                                                    ad.Creatives.Add(photoTextAd_title);
 
-                                                        if (!String.IsNullOrEmpty(trackerValue))
+
+                                                    #endregion
+                                                    break;
+                                                }
+
+                                            case "INVALID":
+                                                {
+
+                                                    #region Ads Type INVALID
+
+                                                    ad.DestinationUrl = "Invalid Ad";
+
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+                                                    TextCreative photoTextAd_title = new TextCreative()
+                                                    {
+                                                        OriginalID = ad.OriginalID,
+                                                        TextType = TextCreativeType.Title,
+                                                        Text = "Invalid Ad"
+                                                    };
+
+                                                    ad.Creatives.Add(photoTextAd_title);
+
+
+                                                    #endregion
+                                                    break;
+                                                }
+
+                                            case "SHARE":
+                                                {
+
+                                                    #region Ads Type SHARE
+                                                    if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_story_id))
+                                                    {
+                                                        Dictionary<string, string> shareCreativeData;
+                                                        string object_story_id = adGroupCreativesReader.Current.object_story_id;
+
+                                                        if (storyIds.ContainsKey(object_story_id))
                                                         {
-                                                            ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value = trackerValue;
-                                                            ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].OriginalID = trackerValue;
+                                                            shareCreativeData = storyIds[object_story_id];
                                                         }
+                                                        else
+                                                        {
+                                                            var accessToken = this.Instance.Configuration.Options[FacebookConfigurationOptions.Auth_AccessToken];
+                                                            shareCreativeData = GetShareCreativeData(object_story_id, accessToken);
+                                                        }
+
+                                                        ad.DestinationUrl = shareCreativeData["link"];
+
+                                                        if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        {
+                                                            this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+                                                            var trackersReadCommands = from n in this.Mappings.Objects[typeof(Ad)].ReadCommands
+                                                                                       where n.Field.Equals("link_url")
+                                                                                       select n;
+
+                                                            foreach (var command in trackersReadCommands)
+                                                            {
+
+                                                                string trackerValue = ApplyRegex(ad.DestinationUrl, command.RegexPattern);
+
+                                                                if (!String.IsNullOrEmpty(trackerValue))
+                                                                {
+                                                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].Value = trackerValue;
+                                                                    ad.Segments[this.ImportManager.SegmentTypes[Segment.Common.Tracker]].OriginalID = trackerValue;
+                                                                }
+                                                            }
+
+
+                                                        }
+                                                        ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
+                                                        ad.Creatives.Add(GetBodyCreative(shareCreativeData["description"], adGroupCreativesReader));
+                                                        ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
+                                                    }
+                                                    #endregion
+                                                    break;
+                                                }
+                                            case "DOMAIN":
+                                                {
+                                                    #region Ads Type DOMAIN
+                                                    if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
+                                                    {
+                                                        if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
+                                                            ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
+                                                    }
+
+                                                    else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
+                                                        ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
+                                                    else
+                                                        ad.DestinationUrl = "UnKnown Url";
+
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+
+                                                    if (adGroupCreativesReader.Current.image_url != null)
+                                                    {
+                                                        CreateImageCreatives(ad, adGroupCreativesReader);
                                                     }
 
 
+
+                                                    ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
+                                                    ad.Creatives.Add(GetBodyCreative(adGroupCreativesReader));
+
+                                                    #endregion
+                                                    break;
                                                 }
-                                                ad.Creatives.Add(GetTextCreative(shareCreativeData["text"], adGroupCreativesReader));
-                                                ad.Creatives.Add(GetBodyCreative(shareCreativeData["description"], adGroupCreativesReader));
-                                                ad.Creatives.Add(GetImageCreative(shareCreativeData["picture"], adGroupCreativesReader));
-                                            }
-                                            #endregion
+                                            default:
+                                                {
+                                                    #region Ads Type  not handeled
+
+                                                    string adtype = objectType.ToUpper();
+
+                                                    ad.DestinationUrl = adtype + " Ad Type";
+
+                                                    /*Get Data from Mapping E.g Tracker*/
+                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
+                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
+
+                                                    TextCreative unhandeledTextAd_title = new TextCreative()
+                                                    {
+                                                        OriginalID = ad.OriginalID,
+                                                        TextType = TextCreativeType.Title,
+                                                        Text = adtype + " Ad Type"
+                                                    };
+
+                                                    ad.Creatives.Add(unhandeledTextAd_title);
+
+
+                                                    #endregion
+                                                    break;
+                                                }
                                         }
-                                        else if (objectType.ToUpper() == "DOMAIN")
-                                        {
-                                            #region Ads Type DOMAIN
-                                            if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.object_url))
-                                            {
-                                                if (Instance.Configuration.Options.ContainsKey(FacebookConfigurationOptions.AdGroupCreativeFields))
-                                                    ad.DestinationUrl = adGroupCreativesReader.Current.object_url;
-                                            }
-
-                                            else if (!string.IsNullOrEmpty(adGroupCreativesReader.Current.link_url))
-                                                ad.DestinationUrl = adGroupCreativesReader.Current.link_url;
-                                            else
-                                                ad.DestinationUrl = "UnKnown Url";
-
-                                            /*Get Data from Mapping E.g Tracker*/
-                                            if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-
-                                            if (adGroupCreativesReader.Current.image_url != null)
-                                            {
-                                                CreateImageCreatives(ad, adGroupCreativesReader);
-                                            }
 
 
 
-                                            ad.Creatives.Add(GetTextCreative(adGroupCreativesReader));
-                                            ad.Creatives.Add(GetBodyCreative(adGroupCreativesReader));
-
-                                            #endregion
-                                        }
 
 
                                         if (!insertedAds.ContainsKey(ad.OriginalID))
