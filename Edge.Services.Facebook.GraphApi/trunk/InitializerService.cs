@@ -64,7 +64,13 @@ namespace Edge.Services.Facebook.GraphApi
             if (string.IsNullOrEmpty(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]))
                 throw new Exception("facebook base url must be configured!");
             _baseAddress = new Uri(this.Instance.Configuration.Options[FacebookConfigurationOptions.BaseServiceAddress]);
-            //this.ReportProgress(0.2);
+
+            if (string.IsNullOrEmpty(this.Instance.Configuration.Options["API_Purchases_Field_Name"]))
+                throw new Exception("facebook 'API_Purchases_Field_Name' must be configured!");
+            
+            this.Delivery.Parameters.Add("API_Purchases_Field_Name", this.Instance.Configuration.Options["API_Purchases_Field_Name"]);
+
+           
             #endregion
 
             #region Init Delivery Files
@@ -178,7 +184,7 @@ namespace Edge.Services.Facebook.GraphApi
 
 
            #region AdSet- Formally Campaigns
-
+            
            deliveryFile = new DeliveryFile();
            deliveryFile.Name = Consts.DeliveryFilesNames.Campaigns;
            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
@@ -192,12 +198,12 @@ namespace Edge.Services.Facebook.GraphApi
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.AdSets);
            this.Delivery.Files.Add(deliveryFile);
-
+            
            #endregion
 
 
            #region Campaigns - New Structure
-
+            
            deliveryFile = new DeliveryFile();
            deliveryFile.Name = Consts.DeliveryFilesNames.CampaignGroups;
            methodParams.Add(Consts.FacebookMethodsParams.IncludeDeleted, "true");
@@ -210,9 +216,10 @@ namespace Edge.Services.Facebook.GraphApi
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileSubType, Consts.FileSubType.Length);
            deliveryFile.Parameters.Add(Consts.DeliveryFileParameters.FileType, Consts.FileTypes.CampaignGroups);
            this.Delivery.Files.Add(deliveryFile);
-
+            
            #endregion
 
+            
            #region Creatives
            deliveryFile = new DeliveryFile();
            deliveryFile.Name = Consts.DeliveryFilesNames.Creatives;
@@ -227,7 +234,7 @@ namespace Edge.Services.Facebook.GraphApi
            this.Delivery.Files.Add(deliveryFile);
            #endregion
           
-
+            
             #endregion
 
 

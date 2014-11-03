@@ -35,6 +35,11 @@ namespace Edge.Services.Facebook.GraphApi
             public const string SocialUniqueClicks = "SocialUniqueClicks";
             public const string SocialImpressions = "SocialImpressions";
             public const string SocialUniqueImpressions = "SocialUniqueImpressions";
+            public const string TotalConversionsManyPerClick = "TotalConversionsManyPerClick";
+            public const string Leads = "Leads";
+            public const string Signups = "Signups";
+            public const string Purchases = "Purchases";
+         
         }
 
         protected override Core.Services.ServiceOutcome DoPipelineWork()
@@ -239,14 +244,14 @@ namespace Edge.Services.Facebook.GraphApi
                 #endregion
 
 
-                /*
+                Dictionary<string, List<Dictionary<string, object>>> conversion_data = new Dictionary<string, List<Dictionary<string, object>>>();
                 if (filesByType.ContainsKey(Consts.FileTypes.ConversionsStats))
                 {
 
                     #region Conversions
                     List<string> conversionFiles = filesByType[Consts.FileTypes.ConversionsStats];
 
-                    Dictionary<string, List<Dictionary<string, object>>> conversion_data = new Dictionary<string, List<Dictionary<string, object>>>();
+                  
 
                     foreach (string conversionFile in conversionFiles)
                     {
@@ -261,8 +266,9 @@ namespace Edge.Services.Facebook.GraphApi
                             this.Mappings.OnFieldRequired = field => conversionCreativesReader.Current[field];
                             while (conversionCreativesReader.Read())
                             {
-                                var data = conversionCreativesReader.Current.data;
-                                //TO DO: Check 
+
+                                if (((Edge.Data.Pipeline.DynamicDictionaryObject)(conversionCreativesReader.Current)).Values == null) break; // in case of empty data (e.g. data [] )
+
                                 if (!conversion_data.ContainsKey(conversionCreativesReader.Current.adgroup_id))
                                 {
 
@@ -282,9 +288,9 @@ namespace Edge.Services.Facebook.GraphApi
                                                 dict["action_type"].ToString().Equals("offsite_conversion.lead") ||
                                                 dict["action_type"].ToString().Equals("offsite_conversion.registration") ||
                                                 dict["action_type"].ToString().Equals("offsite_conversion.add_to_cart") ||
-                                                dict["action_type"].ToString().Equals("offsite_conversion.offsite_conversion.checkout") ||
-                                                dict["action_type"].ToString().Equals("offsite_conversion.offsite_conversion.offsite_conversion.key_page_view") ||
-                                                dict["action_type"].ToString().Equals("offsite_conversion.offsite_conversion.offsite_conversion.other")
+                                                dict["action_type"].ToString().Equals("offsite_conversion.checkout") ||
+                                                dict["action_type"].ToString().Equals("offsite_conversion.key_page_view") ||
+                                                dict["action_type"].ToString().Equals("offsite_conversion.other")
                                             )
                                             ).ToList();
 
@@ -302,7 +308,7 @@ namespace Edge.Services.Facebook.GraphApi
                     #endregion
                 }//End if contains conversion file
 
-                */
+                
                 #region AdGroupStats start new import session
                 List<string> adGroupStatsFiles = filesByType[Consts.FileTypes.AdGroupStats];
                 foreach (var adGroupStat in adGroupStatsFiles)
@@ -364,6 +370,33 @@ namespace Edge.Services.Facebook.GraphApi
                                     adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.SocialCost], Convert.ToDouble(adGroupStatsReader.Current.social_spent) / 100d);
                                     adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Actions], 0);
                                     //adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Connections], double.Parse(adGroupStatsReader.Current.connections));
+
+                                    
+                                    
+                                    //Setting conversions from conversion files data
+                                    List<Dictionary<string, object>> adgroup_conversion_data;
+
+                                    if (conversion_data.TryGetValue(adGroupStatsReader.Current.adgroup_id,out adgroup_conversion_data))
+                                    {
+
+                                        var TotalConversionsManyPerClick = from element in adgroup_conversion_data where element["action_type"].Equals("offsite_conversion") select element["value"];
+                                        var Leads = from element in adgroup_conversion_data where element["action_type"].Equals("offsite_conversion.lead") select element["value"];
+                                        var Signups = from element in adgroup_conversion_data where element["action_type"].Equals("offsite_conversion.registration") select element["value"];
+                                        
+                                        //TO DO : Get field from Configuration
+                                        var Purchases = from element in adgroup_conversion_data where element["action_type"].Equals(this.Delivery.Parameters["API_Purchases_Field_Name"]) select element["value"];
+                                        
+                                        //add values to metrics unit
+
+                                                                          
+
+                                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.TotalConversionsManyPerClick], Convert.ToDouble(TotalConversionsManyPerClick.DefaultIfEmpty("0").FirstOrDefault()));
+                                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Leads], Convert.ToDouble(Leads.DefaultIfEmpty("0").FirstOrDefault()));
+                                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Signups], Convert.ToDouble(Signups.DefaultIfEmpty("0").FirstOrDefault()));
+                                        adMetricsUnit.MeasureValues.Add(this.ImportManager.Measures[MeasureNames.Purchases], Convert.ToDouble(Purchases.DefaultIfEmpty("0").FirstOrDefault()));
+                                    }
+                                    
+
 
                                     this.ImportManager.ImportMetrics(adMetricsUnit);
                                 }
@@ -430,55 +463,7 @@ namespace Edge.Services.Facebook.GraphApi
 
                                         switch (objectType.ToUpper())
                                         {
-                                            case "PHOTO":
-                                                {
-                                                    #region Ads Type PHOTO
-
-                                                    ad.DestinationUrl = "Photo Ad";
-
-                                                    /*Get Data from Mapping E.g Tracker*/
-                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-                                                    TextCreative photoTextAd_title = new TextCreative()
-                                                    {
-                                                        OriginalID = adGroupCreativesReader.Current.object_story_id,
-                                                        TextType = TextCreativeType.Title,
-                                                        Text = "Photo Ad Type"
-                                                    };
-
-                                                    ad.Creatives.Add(photoTextAd_title);
-
-
-                                                    #endregion
-                                                    break;
-                                                }
-
-                                            case "INVALID":
-                                                {
-
-                                                    #region Ads Type INVALID
-
-                                                    ad.DestinationUrl = "Invalid Ad";
-
-                                                    /*Get Data from Mapping E.g Tracker*/
-                                                    if (this.Mappings != null && this.Mappings.Objects.ContainsKey(typeof(Ad)))
-                                                        this.Mappings.Objects[typeof(Ad)].Apply(ad);
-
-                                                    TextCreative photoTextAd_title = new TextCreative()
-                                                    {
-                                                        OriginalID = ad.OriginalID,
-                                                        TextType = TextCreativeType.Title,
-                                                        Text = "Invalid Ad"
-                                                    };
-
-                                                    ad.Creatives.Add(photoTextAd_title);
-
-
-                                                    #endregion
-                                                    break;
-                                                }
-
+                                            
                                             case "SHARE":
                                                 {
 
