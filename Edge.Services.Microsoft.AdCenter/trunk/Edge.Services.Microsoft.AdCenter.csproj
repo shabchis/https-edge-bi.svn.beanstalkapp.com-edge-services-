@@ -81,10 +81,7 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Properties\AssemblyInfo.cs.template" />
-    <None Include="Service References\AdCenter.Reporting\Edge.Services.Microsoft.AdCenter.AdCenter.Reporting.PollGenerateReportResponse.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
-    <None Include="Service References\AdCenter.Reporting\Edge.Services.Microsoft.AdCenter.AdCenter.Reporting.SubmitGenerateReportResponse.datasource">
+    <None Include="Service References\AdCenter.Reporting\Edge.Services.Microsoft.AdCenter.AdCenter.Reporting.ReportRequestStatus.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
     <None Include="Service References\AdCenter.Reporting\ReportingService.wsdl" />
@@ -117,6 +114,9 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadataStorage Include="Service References\AdCenter.Reporting\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Service References\AdCenter.Reporting\ReportingService.disco" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Service References\AdCenter.Reporting\configuration91.svcinfo" />

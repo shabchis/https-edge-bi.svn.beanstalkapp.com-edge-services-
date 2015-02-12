@@ -294,7 +294,7 @@ namespace Edge.Services.Microsoft.AdCenter
 			kwdTarget.DestinationUrl = values[WS.KeywordPerformanceReportColumn.DestinationUrl.ToString()];
 			kwdTarget.Keyword = values[WS.KeywordPerformanceReportColumn.Keyword.ToString()];
 			kwdTarget.QualityScore = values[WS.KeywordPerformanceReportColumn.QualityScore.ToString()];
-			string macthType = values[WS.KeywordPerformanceReportColumn.MatchType.ToString()];
+            string macthType = values[WS.KeywordPerformanceReportColumn.DeliveredMatchType.ToString()];
 			switch (macthType)
 			{
 				case "Exact":

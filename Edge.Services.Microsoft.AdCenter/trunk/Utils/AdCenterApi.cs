@@ -81,6 +81,7 @@ namespace Edge.Services.Microsoft.AdCenter
 
 		public string SubmitReportRequest(WS.ReportRequest request, out string innerFileName)
 		{
+            request.ReturnOnlyCompleteData = false;
 			// Create the API request
 			var submitRequest = new WS.SubmitGenerateReportRequest()
 			{
@@ -89,7 +90,7 @@ namespace Edge.Services.Microsoft.AdCenter
 				UserName = _service.Instance.Configuration.Options["AdCenter.Username"],
 				Password = _service.Instance.Configuration.Options["AdCenter.Password"],
 				CustomerId = _service.Instance.Configuration.Options["AdCenter.CustomerID"],
-				CustomerAccountId = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"],				
+				CustomerAccountId = _service.Instance.Configuration.Options["AdCenter.CustomerAccountID"],				                
 				ReportRequest = request
 				
 			};
@@ -100,9 +101,19 @@ namespace Edge.Services.Microsoft.AdCenter
 			{
 				try
 				{
+                    
+                    string reportRequestId = null;
 					// Submit the report request
-					WS.SubmitGenerateReportResponse queueResponse = service.SubmitGenerateReport(submitRequest);
-					innerFileName = queueResponse.ReportRequestId;
+                   var response = service.SubmitGenerateReport(submitRequest.ApplicationToken,
+                        submitRequest.AuthenticationToken,
+                        submitRequest.CustomerAccountId,
+                        submitRequest.CustomerId,
+                        submitRequest.DeveloperToken,
+                        submitRequest.Password,
+                        submitRequest.UserName,
+                        submitRequest.ReportRequest,
+                        out reportRequestId);
+                    innerFileName = reportRequestId;
 					// Poll to get the status of the report until it is complete.
 					TimeSpan interval = _service.Instance.Configuration.Options["AdCenter.PollInterval"] != null ?
 						TimeSpan.Parse(_service.Instance.Configuration.Options["AdCenter.PollInterval"]) :
@@ -114,24 +125,33 @@ namespace Edge.Services.Microsoft.AdCenter
 						DeveloperToken = submitRequest.DeveloperToken,
 						UserName = submitRequest.UserName,
 						Password = submitRequest.Password,
-						ReportRequestId = queueResponse.ReportRequestId
+                        ReportRequestId = reportRequestId
 					};
 
-					WS.PollGenerateReportResponse pollResponse = null;
+					
+                    WS.ReportRequestStatus reportRequestStatus = null;
 					do
 					{
 						// Wait the specified number of minutes before polling.
 						System.Threading.Thread.Sleep(interval);
-
+                        
 						// Get the status of the report.
-						pollResponse = service.PollGenerateReport(pollRequest);
+                        service.PollGenerateReport(submitRequest.ApplicationToken,
+                        submitRequest.AuthenticationToken,
+                        submitRequest.CustomerAccountId,
+                        submitRequest.CustomerId,
+                        submitRequest.DeveloperToken,
+                        submitRequest.Password,
+                        submitRequest.UserName,
+                        reportRequestId,                        
+                        out reportRequestStatus);
 
-						if (pollResponse.ReportRequestStatus.Status == WS.ReportRequestStatusType.Success)
+                        if (reportRequestStatus.Status == WS.ReportRequestStatusType.Success)
 						{
 							// The report is ready.
 							break;
 						}
-						else if (pollResponse.ReportRequestStatus.Status == WS.ReportRequestStatusType.Pending)
+                        else if (reportRequestStatus.Status == WS.ReportRequestStatusType.Pending)
 						{
 							// The report is not ready yet.
 							continue;
@@ -145,15 +165,15 @@ namespace Edge.Services.Microsoft.AdCenter
 					while (true);
 
 					// If the report was created, return the download URL
-					if (pollResponse != null && pollResponse.ReportRequestStatus.Status == WS.ReportRequestStatusType.Success)
+                    if (reportRequestStatus != null && reportRequestStatus.Status == WS.ReportRequestStatusType.Success)
 					{
-						return pollResponse.ReportRequestStatus.ReportDownloadUrl;
+                        return reportRequestStatus.ReportDownloadUrl;
 					}
 					else
 					{
-						throw new Exception(String.Format("Report request status came back as '{0}' but no exception was thrown (tracking ID: {1}).",
-							pollResponse.ReportRequestStatus.Status,
-							pollResponse.TrackingId
+						throw new Exception(String.Format("Report request status came back as '{0}' but no exception was thrown.",
+                            reportRequestStatus.Status
+                            
 							));
 					}
 				}

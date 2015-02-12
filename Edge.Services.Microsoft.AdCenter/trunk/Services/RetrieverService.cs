@@ -151,7 +151,7 @@ namespace Edge.Services.Microsoft.AdCenter
                     WS.KeywordPerformanceReportColumn.Keyword,
                     WS.KeywordPerformanceReportColumn.KeywordId,
                     WS.KeywordPerformanceReportColumn.DestinationUrl,
-                    WS.KeywordPerformanceReportColumn.MatchType,
+                    WS.KeywordPerformanceReportColumn.DeliveredMatchType,
                     WS.KeywordPerformanceReportColumn.CurrencyCode,
                     WS.KeywordPerformanceReportColumn.Impressions,
                     WS.KeywordPerformanceReportColumn.Clicks,
