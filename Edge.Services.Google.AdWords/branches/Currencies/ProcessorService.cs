@@ -38,7 +38,9 @@ namespace Edge.Services.Google.AdWords
             Mobile_text = 10,
             Mobile_image = 11,
             Mobile_display = 12,
-            Sitelink = 14
+            Sitelink = 14,
+            Dynamic_search = 16,
+            Call_only_ad = 18
         }
 
         public ProcessorService()
@@ -56,7 +58,10 @@ namespace Edge.Services.Google.AdWords
 				{Const.AdTypeValues.Other,EdgeAdType.Other},
                 {Const.AdTypeValues.Mobile_text,EdgeAdType.Mobile_text},
                 {Const.AdTypeValues.Mobile_image,EdgeAdType.Mobile_image},
-                {Const.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display}
+                {Const.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display},
+                {Const.AdTypeValues.Dynamic_search,EdgeAdType.Dynamic_search},
+                {Const.AdTypeValues.Call_only_ad,EdgeAdType.Call_only_ad}
+                
 			};
 
             GoogleMeasuresDic = new Dictionary<string, string>()
@@ -773,6 +778,9 @@ namespace Edge.Services.Google.AdWords
             public const string Mobile_text = "Mobile Text ad";
             public const string Mobile_image = "Mobile Image ad";
             public const string Mobile_display = "Mobile Display ad";
+            public const string Dynamic_search = "Dynamic search ad";
+            public const string Call_only_ad = "Call only ad";
+
         }
 
 
