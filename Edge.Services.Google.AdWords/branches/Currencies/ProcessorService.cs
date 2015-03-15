@@ -39,8 +39,8 @@ namespace Edge.Services.Google.AdWords
             Mobile_image = 11,
             Mobile_display = 12,
             Sitelink = 14,
-            Dynamic_search = 16,
-            Call_only_ad = 18
+            //Dynamic_search = 16,
+            //Call_only_ad = 18
         }
 
         public ProcessorService()
@@ -59,8 +59,8 @@ namespace Edge.Services.Google.AdWords
                 {Const.AdTypeValues.Mobile_text,EdgeAdType.Mobile_text},
                 {Const.AdTypeValues.Mobile_image,EdgeAdType.Mobile_image},
                 {Const.AdTypeValues.Mobile_display,EdgeAdType.Mobile_display},
-                {Const.AdTypeValues.Dynamic_search,EdgeAdType.Dynamic_search},
-                {Const.AdTypeValues.Call_only_ad,EdgeAdType.Call_only_ad}
+                //{Const.AdTypeValues.Dynamic_search,EdgeAdType.Dynamic_search},
+                //{Const.AdTypeValues.Call_only_ad,EdgeAdType.Call_only_ad}
                 
 			};
 
@@ -375,7 +375,12 @@ namespace Edge.Services.Google.AdWords
                             /****************************************************************/
                             string adTypeColumnValue = Convert.ToString(_adsReader.Current[Const.AdTypeFieldName]);
                             string devicePreferenceColumnValue = Convert.ToString(_adsReader.Current[Const.AdDevicePreferenceFieldName]);
+
+                            if (!GoogleAdTypeDic.ContainsKey(adTypeColumnValue))
+                                continue;
+
                             string adTypeEdgeValue = GoogleAdTypeDic[adTypeColumnValue].ToString();
+
 
                             //EdgeAdType atv = (EdgeAdType)Enum.Parse(typeof(EdgeAdType), adTypeEdgeValue, true);
 
@@ -778,8 +783,8 @@ namespace Edge.Services.Google.AdWords
             public const string Mobile_text = "Mobile Text ad";
             public const string Mobile_image = "Mobile Image ad";
             public const string Mobile_display = "Mobile Display ad";
-            public const string Dynamic_search = "Dynamic search ad";
-            public const string Call_only_ad = "Call only ad";
+            //public const string Dynamic_search = "Dynamic search ad";
+            //public const string Call_only_ad = "Call only ad";
 
         }
 
